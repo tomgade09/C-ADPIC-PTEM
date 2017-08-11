@@ -4,8 +4,8 @@
 #include <iostream>
 #include <cmath>
 
-#define DLLFILE
 #define DEBUGSTDOUTPUT
+#define DLLFILE
 
 #ifdef DLLFILE
 #define DLLEXPORT extern "C" __declspec(dllexport)

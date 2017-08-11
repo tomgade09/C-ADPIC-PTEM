@@ -2,10 +2,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include "include/readsettings.h"
 
-int main(int argc, char *argv[])
+std::vector<double> readSettingsCSV(int argc, char* argv[])
 {
-	//ensure program is being used right
+	//ensure code is being used right
 	if (argc != 2)
 	{
 		std::cout << "Error: Wrong number of arguments!\n";
@@ -50,17 +51,7 @@ int main(int argc, char *argv[])
 		//check for too many settings/not enough?? or just trust the user/config file?
 	}
 
-	std::cout << electronsInSim << "\n" << a << "\n" << dt << "\n" << timeLimit;
+	//std::cout << settings - do this to verify
 
-	/*
-	std::vector<double> particles{ generateParticleDistribution(argv[1]) }; //need to write this function
-	
-	while (simtime < timelimit)
-	{
-		for (unsigned long part = 0, part < (sizeof(particles), ++part) //up to 4.29 billion particles, should be good
-			update_r_v(particle[part]); //need to write this function
-		simtime += dt;
-	}
-	*/
 	return 0;
 }

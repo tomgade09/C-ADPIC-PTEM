@@ -32,8 +32,22 @@
 *.tmp
 *.nogit
 *.csv
+*.bak
+*.old
+*.opendb
+*.db
+*.sln
+*.vcxproj
+*.filters
+*.pdb
 build/
+
+# Project-specific folders
 /codesamples/NormDistribution
 /codesamples/readsettingsfile
 /codesamples/fileIO
 /codesamples/distgraphs
+
+/170810_SimpleDipoleB_ConstE/.vs
+/170810_SimpleDipoleB_ConstE/x64
+/170810_SimpleDipoleB_ConstE/distgraphs
