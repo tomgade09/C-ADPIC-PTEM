@@ -37,6 +37,7 @@
 *.opendb
 *.db
 *.sln
+*.pdb
 *.vcxproj
 *.filters
 *.pdb

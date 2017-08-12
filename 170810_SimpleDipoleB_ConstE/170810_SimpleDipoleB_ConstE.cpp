@@ -9,6 +9,7 @@
 // C std lib includes
 #include <cmath>
 #include <iostream>
+#include <chrono>
 
 //Other dependencies
 
@@ -28,176 +29,112 @@
 //Useful snippets
 //pitch[iii] = atan2(vperp[iii], vpara[iii]) * 180 / C_PI;
 
-double*** dllmain()
+struct retStruct
+{
+	double*** dblRes{ nullptr };
+	bool** inSim{ nullptr };
+};
+
+retStruct dllmain()
 {
 	bool loopBool{ true };
 	unsigned long int loopIdx{ 0 };
 
-	double** h_electrons;
-	double** h_ions;
-	bool* h_eInPlay = new bool[NUMPARTICLES];
-	bool* h_iInPlay = new bool[NUMPARTICLES];
+	double** electrons;
+	double** ions;
+	bool* e_in_sim = new bool[NUMPARTICLES];
+	bool* i_in_sim = new bool[NUMPARTICLES];
 
 	//don't forget to deallocate memory later... returns array of pointers to arrays of [vpara, vperp, z, null] for particles
-	h_electrons = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
-	h_ions = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
+	electrons = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
+	ions = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
 
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{//converting vperp (variable) to mu (constant) - only has to be done once
-		h_electrons[1][iii] = 0.5 * MASS_ELECTRON * h_electrons[1][iii] * h_electrons[1][iii] / BFieldatZ(h_electrons[2][iii]);
-		h_ions[1][iii] = 0.5 * MASS_PROTON * h_ions[1][iii] * h_ions[1][iii] / BFieldatZ(h_ions[2][iii]);
+		electrons[1][iii] = 0.5 * MASS_ELECTRON * electrons[1][iii] * electrons[1][iii] / BFieldatZ(electrons[2][iii]);
+		ions[1][iii] = 0.5 * MASS_PROTON * ions[1][iii] * ions[1][iii] / BFieldatZ(ions[2][iii]);
 	}
 
-	double accel{ 0.0 };
-	double args[6];
-
-	while (loopIdx < NUMITERATIONS)
-	{
-		for (int iii = 0; iii < NUMPARTICLES; iii++) //run every iteration
-		{
-			h_eInPlay[iii] = !((h_electrons[2][iii] > MAGSPH_MAX_Z) || (h_electrons[2][iii] < IONSPH_MIN_Z)); //Makes sure particles are within bounds
-			h_iInPlay[iii] = !((h_ions[2][iii] > MAGSPH_MAX_Z) || (h_ions[2][iii] < IONSPH_MIN_Z));
-
-			/*if (h_eInPlay[iii] == false)
-				std::cout << "Electron outside of range: " << iii << "  " << h_electrons[2][iii] << " outside of " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << "\n";
-			if (h_iInPlay[iii] == false)
-				std::cout << "Ion outside of range: " << iii << "  " << h_ions[2][iii] << " outside of " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << "\n";*/
-		}
-
-		for (int iii = 0; iii < NUMPARTICLES; iii++) //updates position of every particle
-		{//args array: [dt, vz, mu, q, m, pz_0]
-			//electrons
-			if (h_eInPlay[iii] == true)
-			{//if electrons leave the simulation, stop doing calculations on them
-				args[0] = 0.0;
-				args[1] = h_electrons[0][iii];
-				args[2] = h_electrons[1][iii];
-				args[3] = CHARGE_ELEM * -1;
-				args[4] = MASS_ELECTRON;
-				args[5] = h_electrons[2][iii];
-				accel = fourthOrderRungeKutta1D(accel1DCB, args, 6, DT);
-				h_electrons[0][iii] += accel * DT;
-			}
-
-			//ions
-			if (h_iInPlay[iii] == true)
-			{
-				args[1] = h_ions[0][iii];
-				args[2] = h_ions[1][iii];
-				args[3] = CHARGE_ELEM;
-				args[4] = MASS_PROTON;
-				args[5] = h_ions[2][iii];
-				accel = fourthOrderRungeKutta1D(accel1DCB, args, 6, DT);
-				h_ions[0][iii] += accel * DT;
-			}
-		}
-		
-		loopIdx++;
-		if (loopIdx % 100 == 0)
-			std::cout << loopIdx << "\n";
-	}
+	//CUDA implementation
+	std::chrono::steady_clock::time_point cudaBegin, cudaEnd;
+	cudaBegin = std::chrono::steady_clock::now();
+	mainCUDA(electrons, ions, e_in_sim, i_in_sim);
+	cudaEnd = std::chrono::steady_clock::now();
 
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{//converting mu back to vperp
-		h_electrons[1][iii] = sqrt(2 * h_electrons[1][iii] * BFieldatZ(h_electrons[2][iii]) / MASS_ELECTRON);
-		h_ions[1][iii] = sqrt(2 * h_ions[1][iii] * BFieldatZ(h_ions[2][iii]) / MASS_PROTON);
+		electrons[1][iii] = sqrt(2 * electrons[1][iii] * BFieldatZ(electrons[2][iii]) / MASS_ELECTRON);
+		ions	 [1][iii] = sqrt(2 * ions	  [1][iii] * BFieldatZ(ions		[2][iii]) / MASS_PROTON);
 	}
 
-	double*** ret = new double**[2];
-	ret[0] = h_electrons;
-	ret[1] = h_ions;
+	std::cout << "Parallel Execution Time (ms) " << std::chrono::duration_cast<std::chrono::milliseconds>(cudaEnd - cudaBegin).count() << std::endl;
 
-	std::cout << "checking ret (pointer to pointer to pointer): " << ret[0][0][0] << ret[1][0][0] << "\n";
-	std::cout << "checking ret (pointer to pointer to pointer): " << ret[0][0][NUMPARTICLES - 1] << ret[1][0][NUMPARTICLES - 1] << "\n";
+	retStruct ret;
 
-	int ionCount{ 0 };
-	int electronCount{ 0 };
+	double*** dbls = new double**[2];
+	dbls[0] = electrons;
+	dbls[1] = ions;
 
-	for (int iii = 0; iii < NUMPARTICLES; iii++)
-	{
-		if (h_eInPlay[iii] == true)
-			electronCount++;
-		if (h_iInPlay[iii] == true)
-			ionCount++;
-	}
+	bool** bools = new bool*[2];
+	bools[0] = e_in_sim;
+	bools[1] = i_in_sim;
 
-	std::cout << "electrons left: " << electronCount << "  ions left: " << ionCount << "\n";
+	ret.dblRes = dbls;
+	ret.inSim = bools;
 
     return ret;
 }
 
 DLLEXPORT double* dllmainPyWrapper()
 {
-	double* yut = new double[NUMPARTICLES * 3 * 2];
-	double*** yutyut{ nullptr };
+	retStruct yutyut;
 
 	yutyut = dllmain();
+	
+	int e_in_sim{ 0 };
+	int i_in_sim{ 0 };
+	int eidx{ 1 };
+	int iidx{ 2 };
 
-	for (int iii = 0; iii < 2; iii++)
+	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{
-		for (int jjj = 0; jjj < 3; jjj++)
-		{
-			for (int kkk = 0; kkk < NUMPARTICLES; kkk++)
-			{
-				yut[iii * 3 * NUMPARTICLES + jjj * NUMPARTICLES + kkk] = yutyut[iii][jjj][kkk];
-			}
-			delete[] yutyut[iii][jjj];
-		}
-		delete[] yutyut[iii];
+		if (yutyut.inSim[0][iii])
+			e_in_sim++;
+		if (yutyut.inSim[1][iii])
+			i_in_sim++;
 	}
-	delete[] yutyut;
+
+	std::cout << "C++: " << e_in_sim << " " << i_in_sim << " " << ((e_in_sim + i_in_sim) * 3) + 2 << "\n";
+
+	double* yut = new double[((e_in_sim + i_in_sim) * 3) + 2];
+
+	yut[0] = static_cast<double>(e_in_sim);
+	yut[e_in_sim * 3 + 1] = static_cast<double>(i_in_sim);
+
+	for (int iii = 0; iii < 3; iii++)
+	{
+		for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
+		{
+			if (yutyut.inSim[0][jjj])
+			{
+				yut[eidx] = yutyut.dblRes[0][iii][jjj];
+				eidx++;
+				if (eidx > e_in_sim * (iii + 1) + 1)
+				{
+					std::cout << "Index error (electrons).  Your results are somewhat suspect. " << eidx << "\n";
+				}
+			}
+			if (yutyut.inSim[1][jjj])
+			{
+				yut[3 * e_in_sim + iidx] = yutyut.dblRes[1][iii][jjj];
+				iidx++;
+				if (iidx > i_in_sim * (iii + 1) + 2)
+				{
+					std::cout << "Index error (ions).  Your results are somewhat suspect." << iidx << "\n";
+				}
+			}
+		}
+	}
 
 	return yut;
 }
-	///Print particle characteristics
-	/*for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
-	{
-		std::cout << "vpara, vperp, z, InPlay? : " << h_electrons[0][jjj] << ", " << h_electrons[1][jjj] << ", ";
-		std::cout << h_electrons[2][jjj] << ", " << h_electrons[3][jjj] << " \n";
-	}
-
-	for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
-	{
-		std::cout << "vpara, vperp, z, InPlay? : " << h_ions[0][jjj] << ", " << h_ions[1][jjj] << ", ";
-		std::cout << h_ions[2][jjj] << ", " << h_ions[3][jjj] << " \n";
-	}*/
-
-	///FOR CODE THAT REPLACES BOOL WITH DOUBLE AND APPENDS TO THE END OF H_ELEC/H_IONS - FROM MAIN
-	//double* h_eInPlay = new double[NUMPARTICLES]; //positive - particle is in sim, negative - it isn't
-	//double* h_iInPlay = new double[NUMPARTICLES]; //making this double instead of bool will allow me to "bundle" everything together without complicated structs, etc
-	//h_electrons[3] = h_eInPlay;
-	//h_ions[3] = h_iInPlay;
-
-	/*for (int iii = 0; iii < NUMPARTICLES; iii++) //May want to do this differently later
-	{
-		if ((h_electrons[2][iii] > MAGSPH_MAX_Z) || (h_electrons[2][iii] < IONSPH_MIN_Z))
-		{
-			h_eInPlay[iii] = -10.0;
-			std::cout << "Electrons outside of range: " << iii << "  " << h_electrons[2][iii] << " outside of " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << "\n";
-		}
-		else
-			h_eInPlay[iii] = 10.0;
-	}
-
-	for (int iii = 0; iii < NUMPARTICLES; iii++) //May want to do this differently later
-	{
-		if ((h_ions[2][iii] > MAGSPH_MAX_Z) || (h_ions[2][iii] < IONSPH_MIN_Z))
-		{
-			h_iInPlay[iii] = -10.0;
-			std::cout << "Ions outside of range: " << iii << "  " << h_ions[2][iii] << " outside of " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << "\n";
-		}
-		else
-			h_iInPlay[iii] = 10.0;
-	}*/
-
-	/*for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
-	{
-		std::cout << "vpara, vperp, z, InPlay? : " << h_electrons[0][jjj] << ", " << h_electrons[1][jjj] << ", ";
-		std::cout << h_electrons[2][jjj] << ", " << h_electrons[3][jjj] << " \n";
-	}
-
-	for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
-	{
-		std::cout << "vpara, vperp, z, InPlay? : " << h_ions[0][jjj] << ", " << h_ions[1][jjj] << ", ";
-		std::cout << h_ions[2][jjj] << ", " << h_ions[3][jjj] << " \n";
-	}*/

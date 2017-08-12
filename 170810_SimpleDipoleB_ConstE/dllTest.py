@@ -27,7 +27,7 @@ os.chdir(savedir)
 
 #DLLEXPORT double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma, double zmean, double zsigma)
 def cppDLLTest():
-    cppDLL = ctypes.CDLL('./../170810_SimpleDipoleB_ConstE.dll')
+    cppDLL = ctypes.CDLL('./../x64/Release/170810_SimpleDipoleB_ConstE.dll')
     cppDLL.dllmainPyWrapper.argtypes = None
     cppDLL.dllmainPyWrapper.restype = ctypes.POINTER(ctypes.c_double)
 
@@ -43,33 +43,40 @@ def cppDLLTest():
 
     dllmainreturn = cppDLL.dllmainPyWrapper()
 
-    for iii in range(100000):
-        v_e_para.append(dllmainreturn[iii])
-        v_e_perp.append(dllmainreturn[iii+100000])
-        z_e.append(dllmainreturn[iii+200000])
+    electrons = int(dllmainreturn[0])
+    ions = int(dllmainreturn[electrons * 3 + 1])
+    length = (electrons + ions) * 3 + 2
+
+    print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
+
+    for iii in range(electrons):
+        v_e_para.append(dllmainreturn[iii + 1])
+        v_e_perp.append(dllmainreturn[iii + electrons + 1])
+        z_e.append(dllmainreturn[iii + 2 * electrons + 1])
         #inplay_e.append(dllmainreturn[iii+300000])
-        v_i_para.append(dllmainreturn[iii+300000])
-        v_i_perp.append(dllmainreturn[iii+400000])
-        z_i.append(dllmainreturn[iii+500000])
+        v_i_para.append(dllmainreturn[iii + 3 * electrons + 2])
+        v_i_perp.append(dllmainreturn[iii + 3 * electrons + ions + 2])
+        z_i.append(dllmainreturn[iii + 3 * electrons + 2 * ions + 2])
         #inplay_i.append(dllmainreturn[iii+700000])
 
     return v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i
 
 def plotNormParticles(v_e_para, v_e_perp, v_i_para, v_i_perp):
     plt.figure(1)
-    #plt.scatter(v_e_para, v_e_perp, '.')
     plt.plot(v_e_para, v_e_perp, '.')
+    plt.axis([-1.5,1.5,0.0,1.2])
     plt.title('Electrons')
-    plt.ylabel('Vperp')
     plt.xlabel('Vpara')
+    plt.ylabel('Vperp')
     plt.savefig('electrons.png')
 
     plt.figure(2)
     #plt.scatter(v_i_para, v_i_perp, '.')
     plt.plot(v_i_para, v_i_perp, '.')
+    plt.axis([-0.3,0.7,0.0,0.4])
     plt.title('Ions')
-    plt.ylabel('Vperp')
     plt.xlabel('Vpara')
+    plt.ylabel('Vperp')
     plt.savefig('ions.png')
 
     #plt.show()

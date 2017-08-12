@@ -3,6 +3,7 @@
 //#include <iostream> //remove when done
 
 #include "include\numericaltools.h"
+#include "include\_simulationvariables.h"
 
 double fourthOrderRungeKutta1D(FncPnt1d_t funcPointer, double* funcArg, int arrayLen, double h)
 {	// funcArg requirements: [dt, y_0, ...] where dt = {0, h/2, h}, initial dt should be 0, this func will take care of the rest
@@ -32,7 +33,7 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 	std::random_device randDev;
 	std::mt19937 mtgen(randDev());
 
-	std::normal_distribution<> vpara_nd(vmean, vsigma);
+	std::normal_distribution<> vpara_nd(vmean, PARACONST * vsigma);
 	std::normal_distribution<> vperp_nd(vmean, vsigma);
 	std::normal_distribution<> z_nd(zmean, zsigma);
 
