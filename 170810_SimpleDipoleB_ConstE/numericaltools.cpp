@@ -1,6 +1,6 @@
 #include <random>
 #include <cmath>
-//#include <iostream> //remove when done
+#include <iostream>
 
 #include "include\numericaltools.h"
 #include "include\_simulationvariables.h"
@@ -35,7 +35,7 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 
 	std::normal_distribution<> vpara_nd(vmean, VPARACONST * vsigma);
 	std::normal_distribution<> vperp_nd(vmean, vsigma);
-	std::normal_distribution<> z_nd(zmean, zsigma);
+	//std::normal_distribution<> z_nd(zmean, zsigma);
 
 	double* vpara = new double[numOfParticles];
 	double* vperp = new double[numOfParticles];
@@ -46,7 +46,17 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 	{
 		vpara[iii] = vpara_nd(mtgen);
 		vperp[iii] = vperp_nd(mtgen);
-		z[iii] = z_nd(mtgen);
+		//z[iii] = z_nd(mtgen);
+		if (iii % 2 == 0)
+		{ //alternates placing the electron at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
+			z[iii] = IONSPH_MIN_Z + 0.1;
+			vpara[iii] = abs(vpara[iii]);
+		}
+		else
+		{
+			z[iii] = MAGSPH_MAX_Z - 0.1;
+			vpara[iii] = -abs(vpara[iii]);
+		}
 	}
 
 	vpara_vperp_z[0] = vpara;

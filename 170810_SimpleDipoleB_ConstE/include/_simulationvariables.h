@@ -17,7 +17,7 @@ constexpr double NORMFACTOR{ RADIUS_EARTH };
 constexpr double DT{ 0.01 }; //in s, at v para of 0.15 (T = 2.5) and dt of 0.1, ~415 iterations is a bounce period
 constexpr double MIN_Z_FROM_RE{ 2.0e6 + RADIUS_EARTH }; //in m - how far up from earth's core is minimum height for sim
 constexpr double MAX_Z_FROM_RE{ 2.0e8 + RADIUS_EARTH }; //in m - how far up is max height for sim
-constexpr int	 NUMPARTICLES{ 100000 }; //number of particles in simulation
+constexpr int	 NUMPARTICLES{ 100000 }; //number of particles in simulation - needs to be an even number
 constexpr unsigned long int NUMITERATIONS{ 10000 };
 constexpr double TOTPOTDROP{ 1.0e3 }; //total electric potential drop in V across model
 constexpr double DIPOLETHETA{ 20.0 }; // theta (in rad) - to calculate dipole electric field
