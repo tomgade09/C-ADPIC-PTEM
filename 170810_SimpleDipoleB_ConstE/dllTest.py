@@ -53,33 +53,32 @@ def cppDLLTest():
         v_e_para.append(dllmainreturn[iii + 1])
         v_e_perp.append(dllmainreturn[iii + electrons + 1])
         z_e.append(dllmainreturn[iii + 2 * electrons + 1])
-        #inplay_e.append(dllmainreturn[iii+300000])
+        
+    for iii in range(ions):
         v_i_para.append(dllmainreturn[iii + 3 * electrons + 2])
         v_i_perp.append(dllmainreturn[iii + 3 * electrons + ions + 2])
         z_i.append(dllmainreturn[iii + 3 * electrons + 2 * ions + 2])
-        #inplay_i.append(dllmainreturn[iii+700000])
 
     return v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i
 
 def plotNormParticles(v_e_para, v_e_perp, v_i_para, v_i_perp):
     plt.figure(1)
     plt.plot(v_e_para, v_e_perp, '.')
-    plt.axis([-1.5,1.5,0.0,1.2])
+    plt.axis([-5,5,0.0,5])
     plt.title('Electrons')
     plt.xlabel('Vpara')
     plt.ylabel('Vperp')
     plt.savefig('electrons.png')
 
     plt.figure(2)
-    #plt.scatter(v_i_para, v_i_perp, '.')
     plt.plot(v_i_para, v_i_perp, '.')
-    plt.axis([-0.3,0.7,0.0,0.4])
+    #plt.axis([-0.3,0.7,0.0,0.4])
     plt.title('Ions')
     plt.xlabel('Vpara')
     plt.ylabel('Vperp')
     plt.savefig('ions.png')
 
-    #plt.show()
+    plt.show()
 
 if __name__ == '__main__':
     v_e_pr, v_e_pp, z_e, v_i_pr, v_i_pp, z_i = cppDLLTest()

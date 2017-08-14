@@ -119,6 +119,10 @@ DLLEXPORT double* dllmainPyWrapper()
 			{
 				yut[eidx] = yutyut.dblRes[0][iii][jjj];
 				eidx++;
+				/*if (eidx == e_in_sim * (iii + 1) + 1)
+				{
+					std::cout << "Done electron idx " << iii << "\n";
+				}*/
 				if (eidx > e_in_sim * (iii + 1) + 1)
 				{
 					std::cout << "Index error (electrons).  Your results are somewhat suspect. " << eidx << "\n";
@@ -128,6 +132,10 @@ DLLEXPORT double* dllmainPyWrapper()
 			{
 				yut[3 * e_in_sim + iidx] = yutyut.dblRes[1][iii][jjj];
 				iidx++;
+				/*if (iidx == i_in_sim * (iii + 1) + 2)
+				{
+					std::cout << "Done ion idx " << iii << "\n";
+				}*/
 				if (iidx > i_in_sim * (iii + 1) + 2)
 				{
 					std::cout << "Index error (ions).  Your results are somewhat suspect." << iidx << "\n";
@@ -138,3 +146,12 @@ DLLEXPORT double* dllmainPyWrapper()
 
 	return yut;
 }
+
+#ifndef DLLFILE
+int main()
+{//right now, doesn't do anything with the results - just included so the exe will compile and run
+	dllmain();
+	
+	return 0;
+}
+#endif

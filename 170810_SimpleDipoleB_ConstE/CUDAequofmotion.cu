@@ -1,6 +1,7 @@
 #include <iostream>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "cuda_profiler_api.h"
 
 #include "include\_simulationvariables.h"
 
@@ -8,7 +9,7 @@ __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Four
 {//args array: [dt, vz, mu, q, m, pz_0]
 	double F_lor, F_mir;
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * CONSTEFIELD / RADIUS_EARTH; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * CONSTEFIELD / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
 	F_mir = -args[2] * (-3 / pow(args[5], 4)) * DIPOLECONST; //have function for gradB based on dipole B field - will need to change later
@@ -42,8 +43,8 @@ __global__ void computeKernel(double* v_e_d, double* mu_e_d, double* z_e_d, doub
 {//dblArray: v_e_para, mu_e, z_e, v_i_para, mu_i, z_i
 	int iii = blockIdx.x * blockDim.x + threadIdx.x;
 	//make sure particle is still in bounds
-	elecBool[iii] = ((z_e_d[iii] < MAGSPH_MAX_Z) || (z_e_d[iii] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
-	ionsBool[iii] = ((z_i_d[iii] < MAGSPH_MAX_Z) || (z_i_d[iii] > IONSPH_MIN_Z));
+	elecBool[iii] = ((z_e_d[iii] < MAGSPH_MAX_Z) && (z_e_d[iii] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
+	ionsBool[iii] = ((z_i_d[iii] < MAGSPH_MAX_Z) && (z_i_d[iii] > IONSPH_MIN_Z));
 
 	double elecargs[6];
 	double ionargs[6];
@@ -138,6 +139,8 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 	cudaFree(z_i_dev);
 	cudaFree(elec_in_sim_dev);
 	cudaFree(ions_in_sim_dev);
+
+	cudaProfilerStop(); //For profiling
 
 	//return values
 	//double** eDataPtrArray = new double*[3];

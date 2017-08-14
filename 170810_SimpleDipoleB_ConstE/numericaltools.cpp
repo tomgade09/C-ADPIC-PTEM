@@ -33,7 +33,7 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 	std::random_device randDev;
 	std::mt19937 mtgen(randDev());
 
-	std::normal_distribution<> vpara_nd(vmean, PARACONST * vsigma);
+	std::normal_distribution<> vpara_nd(vmean, VPARACONST * vsigma);
 	std::normal_distribution<> vperp_nd(vmean, vsigma);
 	std::normal_distribution<> z_nd(zmean, zsigma);
 
