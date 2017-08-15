@@ -36,19 +36,21 @@
 *.old
 *.opendb
 *.db
-*.sln
+# *.sln
 *.pdb
-*.vcxproj
+# *.vcxproj
 *.filters
 *.user
 *.pdb
+*.gitattributes
 build/
 
 # Project-specific folders
-/codesamples/NormDistribution
-/codesamples/readsettingsfile
-/codesamples/fileIO
-/codesamples/distgraphs
+/codesamples
+#/codesamples/NormDistribution
+#/codesamples/readsettingsfile
+#/codesamples/fileIO
+#/codesamples/distgraphs
 
 /170810_SimpleDipoleB_ConstE/.vs
 /170810_SimpleDipoleB_ConstE/x64
