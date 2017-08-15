@@ -23,8 +23,3 @@ double accel1DCB(double* args, int len) //made to pass into 1D Fourth Order Rung
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
-
-double BFieldatZ(double z) //this will change in future iterations
-{//for now, a simple dipole field
-	return DIPOLECONST / pow(z,3);
-}

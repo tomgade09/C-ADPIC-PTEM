@@ -53,6 +53,8 @@ retStruct dllmain()
 	{//converting vperp (variable) to mu (constant) - only has to be done once
 		electrons[1][iii] = 0.5 * MASS_ELECTRON * electrons[1][iii] * electrons[1][iii] / BFieldatZ(electrons[2][iii]);
 		ions[1][iii] = 0.5 * MASS_PROTON * ions[1][iii] * ions[1][iii] / BFieldatZ(ions[2][iii]);
+		e_in_sim[iii] = true;
+		i_in_sim[iii] = true;
 	}
 
 	//CUDA implementation

@@ -1,6 +1,5 @@
 #include <random>
 #include <cmath>
-#include <iostream>
 
 #include "include\numericaltools.h"
 #include "include\_simulationvariables.h"
@@ -35,7 +34,6 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 
 	std::normal_distribution<> vpara_nd(vmean, VPARACONST * vsigma);
 	std::normal_distribution<> vperp_nd(vmean, vsigma);
-	//std::normal_distribution<> z_nd(zmean, zsigma);
 
 	double* vpara = new double[numOfParticles];
 	double* vperp = new double[numOfParticles];
@@ -46,9 +44,8 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 	{
 		vpara[iii] = vpara_nd(mtgen);
 		vperp[iii] = vperp_nd(mtgen);
-		//z[iii] = z_nd(mtgen);
 		if (iii % 2 == 0)
-		{ //alternates placing the electron at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
+		{ //alternates placing the electron, ion at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
 			z[iii] = IONSPH_MIN_Z + 0.1;
 			vpara[iii] = abs(vpara[iii]);
 		}
@@ -63,10 +60,6 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 	vpara_vperp_z[1] = vperp;
 	vpara_vperp_z[2] = z;
 	vpara_vperp_z[3] = nullptr;
-
-	/*std::cout << "Distribution function... " << vpara_vperp_z[0][0] << vpara_vperp_z[1][0] << vpara_vperp_z[2][0];
-	std::cout << vpara_vperp_z[0][numOfParticles - 1] << vpara_vperp_z[1][numOfParticles - 1] << vpara_vperp_z[2][numOfParticles - 1];
-	std::cout << "\nDone with dist function.\n";*/
 
 	return vpara_vperp_z;
 }

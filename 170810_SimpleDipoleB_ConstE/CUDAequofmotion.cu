@@ -1,9 +1,39 @@
+//Standard Library includes
 #include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <time.h>
+
+//CUDA includes
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "cuda_profiler_api.h"
+#include "curand_kernel.h"
+#include "device_functions.h" //for __syncthreads()
 
+//Project specific includes
 #include "include\_simulationvariables.h"
+
+__host__ __device__ double BFieldatZ(double z) //this will change in future iterations
+{//for now, a simple dipole field
+	return DIPOLECONST / pow(z, 3);
+}
+
+__global__ void initKernel(curandStateMRG32k3a* state, unsigned long long seed)
+{
+	unsigned long long id = blockIdx.x * blockDim.x + threadIdx.x;
+	curand_init(seed, id, 0, &state[id]);
+}
+
+__device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, unsigned long long id, double mean, double sigma)
+{
+	curandStateMRG32k3a localState = state[id];
+	
+	double res = sigma * curand_normal_double(&localState) + mean;
+	state[id] = localState;
+
+	return res;
+}
 
 __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Fourth Order Runge Kutta code
 {//args array: [dt, vz, mu, q, m, pz_0]
@@ -38,10 +68,35 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double h)
 	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns units of y, not dy / dt
 }
 
-__global__ void computeKernel(double* v_e_d, double* mu_e_d, double* z_e_d, double* v_i_d, double* mu_i_d, double* z_i_d, bool* elecBool, bool* ionsBool)
-							//double** elecDbls, double** ionsDbls, bool* elecBool, bool* ionsBool) //each thread does one electron and one ion
-{//dblArray: v_e_para, mu_e, z_e, v_i_para, mu_i, z_i
+__global__ void computeKernel(double* v_e_d, double* mu_e_d, double* z_e_d, double* v_i_d, double* mu_i_d, double* z_i_d, bool* elecBool, bool* ionsBool, curandStateMRG32k3a* crndStateA)
+{
 	int iii = blockIdx.x * blockDim.x + threadIdx.x;
+
+#ifdef CUDANORMAL_TEST
+	v_e_d[iii] = normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ));
+	v_i_d[iii] = normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ));
+	mu_e_d[iii] = normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ)) * 1e-21;
+	mu_i_d[iii] = normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ)) * 1e-21;
+	
+	if (iii % 2 == 0)
+	{
+		z_e_d[iii] = IONSPH_MIN_Z + 0.1;
+		v_e_d[iii] = abs(v_e_d[iii]);
+		z_i_d[iii] = IONSPH_MIN_Z + 0.1;
+		v_i_d[iii] = abs(v_i_d[iii]);
+	}
+	else
+	{
+		z_e_d[iii] = MAGSPH_MAX_Z - 0.1;
+		v_e_d[iii] = -abs(v_e_d[iii]);
+		z_i_d[iii] = MAGSPH_MAX_Z - 0.1;
+		v_i_d[iii] = -abs(v_i_d[iii]);
+	}
+	elecBool[iii] = true;
+	ionsBool[iii] = true;
+	return;
+#endif
+
 	//make sure particle is still in bounds
 	elecBool[iii] = ((z_e_d[iii] < MAGSPH_MAX_Z) && (z_e_d[iii] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
 	ionsBool[iii] = ((z_i_d[iii] < MAGSPH_MAX_Z) && (z_i_d[iii] > IONSPH_MIN_Z));
@@ -49,7 +104,47 @@ __global__ void computeKernel(double* v_e_d, double* mu_e_d, double* z_e_d, doub
 	double elecargs[6];
 	double ionargs[6];
 
-	if (elecBool[iii] == true)
+	if (!elecBool[iii])
+	{
+		if (REPLENISH_E_I)
+		{
+			elecBool[iii] = true;
+			v_e_d[iii] = normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
+			if (z_e_d[iii] < IONSPH_MIN_Z)
+			{ //alternates placing the electron, ion at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
+				z_e_d[iii] = IONSPH_MIN_Z + 0.1;
+				v_e_d[iii] = abs(v_e_d[iii]);
+			}
+			else
+			{
+				z_e_d[iii] = MAGSPH_MAX_Z - 0.1;
+				v_e_d[iii] = -abs(v_e_d[iii]);
+			}
+			mu_e_d[iii] = pow(normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * MASS_ELECTRON / BFieldatZ(z_e_d[iii]);
+		}
+	}
+
+	if (!ionsBool[iii])
+	{
+		if (REPLENISH_E_I)
+		{
+			ionsBool[iii] = true;
+			v_i_d[iii] = normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
+			if (z_i_d[iii] < IONSPH_MIN_Z)
+			{ //alternates placing the electron, ion at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
+				z_i_d[iii] = IONSPH_MIN_Z + 0.1;
+				v_i_d[iii] = abs(v_i_d[iii]);
+			}
+			else
+			{
+				z_i_d[iii] = MAGSPH_MAX_Z - 0.1;
+				v_i_d[iii] = -abs(v_i_d[iii]);
+			}
+			mu_i_d[iii] = pow(normalGeneratorCUDA(crndStateA, (blockIdx.x * 4) + (threadIdx.x % 4), V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * MASS_PROTON / BFieldatZ(z_i_d[iii]);
+		}
+	}
+
+	if (elecBool[iii])
 	{
 		elecargs[0] = 0.0;
 		elecargs[1] = v_e_d[iii];
@@ -61,8 +156,8 @@ __global__ void computeKernel(double* v_e_d, double* mu_e_d, double* z_e_d, doub
 		v_e_d[iii] += foRungeKuttaCUDA(elecargs, 6, DT);
 		z_e_d[iii] += v_e_d[iii] * DT;
 	}
-	
-	if (ionsBool[iii] == true)
+
+	if (ionsBool[iii])
 	{
 		ionargs[0] = 0.0;
 		ionargs[1] = v_i_d[iii];
@@ -74,6 +169,8 @@ __global__ void computeKernel(double* v_e_d, double* mu_e_d, double* z_e_d, doub
 		v_i_d[iii] += foRungeKuttaCUDA(ionargs, 6, DT);
 		z_i_d[iii] += v_i_d[iii] * DT;
 	}
+
+	__syncthreads();
 }
 
 void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* ions_in_sim_host)
@@ -111,14 +208,30 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 	cudaMemcpy(z_i_dev, z_i_host, DBLARRAY_BYTES, cudaMemcpyHostToDevice);
 	cudaMemcpy(elec_in_sim_dev, elec_in_sim_host, BOOLARRAY_BYTES, cudaMemcpyHostToDevice);
 	cudaMemcpy(ions_in_sim_dev, ions_in_sim_host, BOOLARRAY_BYTES, cudaMemcpyHostToDevice);
-
+	
+	//Code to prepare random number generator to produce pseudo-random numbers (for normal dist)
+	curandStateMRG32k3a* mrgStates_dev;
+	
+	if (REPLENISH_E_I)
+	{
+		unsigned long long seed = time(NULL);
+		cudaMalloc((void **) &mrgStates_dev, 1000 * 4 * sizeof(curandStateMRG32k3a));
+		initKernel<<< 1000, 4 >>>(mrgStates_dev, seed);
+	}
+	
+	//Loop code
 	while (cudaloopind < NUMITERATIONS)
-	{									//computeKernel(v_e_d,			mu_e_d, z_e_d,		v_i_d,		mu_i_d,   z_i_d,	elecBool,		  ionsBool)
-		computeKernel<<< NUMPARTICLES / 1000, 1000 >>> (v_e_para_dev, mu_e_dev, z_e_dev, v_i_para_dev, mu_i_dev, z_i_dev, elec_in_sim_dev, ions_in_sim_dev);
+	{
+		computeKernel<<< NUMPARTICLES / 1000, 1000 >>> (v_e_para_dev, mu_e_dev, z_e_dev, v_i_para_dev, mu_i_dev, z_i_dev, elec_in_sim_dev, ions_in_sim_dev, mrgStates_dev);
 		cudaloopind++;
+		cudaDeviceSynchronize();
 		if (cudaloopind % 1000 == 0)
 			std::cout << cudaloopind << " / " << NUMITERATIONS << "\n";
 	}
+
+	//Destroy previously created rn generator
+	if (REPLENISH_E_I)
+		cudaFree(mrgStates_dev);
 
 	//Copy data back out
 	cudaMemcpy(v_e_para_host, v_e_para_dev, DBLARRAY_BYTES, cudaMemcpyDeviceToHost);
@@ -141,10 +254,4 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 	cudaFree(ions_in_sim_dev);
 
 	cudaProfilerStop(); //For profiling
-
-	//return values
-	//double** eDataPtrArray = new double*[3];
-	//double** iDataPtrArray = new double*[3];
-	//double*** ret = new double**[2];
-	return; //modify original array, so no need to pass anything back
 }
