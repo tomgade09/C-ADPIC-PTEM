@@ -43,6 +43,7 @@
 *.user
 *.pdb
 *.gitattributes
+*.snip
 build/
 
 # Project-specific folders

@@ -18,7 +18,7 @@
 #include "include\numericaltools.h"
 
 //Defines for making into a DLL File
-#define DLLFILE
+//#define DLLFILE
 
 #ifdef DLLFILE
 #define DLLEXPORT extern "C" __declspec(dllexport)
