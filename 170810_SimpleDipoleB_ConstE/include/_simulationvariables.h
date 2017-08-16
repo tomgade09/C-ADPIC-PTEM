@@ -22,7 +22,7 @@ constexpr unsigned long int NUMITERATIONS{ 10000 };
 constexpr double TOTPOTDROP{ 1.0e3 }; //total electric potential drop in V across model
 constexpr double DIPOLETHETA{ 20.0 }; // theta (in rad) - to calculate dipole electric field
 constexpr double INITIAL_T_EV{ 2.5 }; //magical "2.5" is from Chiu/Schultz temperature (in eV) for the studied plasma, then convert to velocity - kT = 1/2 m v^2
-constexpr bool REPLENISH_E_I{ false }; //determines whether or not to replenish lost electrons/ions - same distribution is used that generates initial characteristics
+constexpr bool REPLENISH_E_I{ true }; //determines whether or not to replenish lost electrons/ions - same distribution is used that generates initial characteristics
 
 //Distribution Variables - for now I use the same values for ions as electrons
 constexpr double Z_DIST_MEAN{ 30.0 * (RADIUS_EARTH / NORMFACTOR) }; //in units of Re (if normalized), otherwise m
