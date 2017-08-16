@@ -38,7 +38,7 @@ struct retStruct
 retStruct dllmain()
 {
 	bool loopBool{ true };
-	unsigned long int loopIdx{ 0 };
+	long loopIdx{ 0 };
 
 	double** electrons;
 	double** ions;
@@ -57,10 +57,12 @@ retStruct dllmain()
 		i_in_sim[iii] = true;
 	}
 
-	//CUDA implementation
 	std::chrono::steady_clock::time_point cudaBegin, cudaEnd;
 	cudaBegin = std::chrono::steady_clock::now();
+	
+	//CUDA implementation
 	mainCUDA(electrons, ions, e_in_sim, i_in_sim);
+
 	cudaEnd = std::chrono::steady_clock::now();
 
 	for (int iii = 0; iii < NUMPARTICLES; iii++)

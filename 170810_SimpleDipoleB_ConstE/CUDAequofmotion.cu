@@ -18,13 +18,13 @@ __host__ __device__ double BFieldatZ(double z) //this will change in future iter
 	return DIPOLECONST / pow(z, 3);
 }
 
-__global__ void initKernel(curandStateMRG32k3a* state, unsigned long long seed)
+__global__ void initKernel(curandStateMRG32k3a* state, long long seed)
 {
-	unsigned long long id = blockIdx.x * blockDim.x + threadIdx.x;
+	long long id = blockIdx.x * blockDim.x + threadIdx.x;
 	curand_init(seed, id, 0, &state[id]);
 }
 
-__device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, unsigned long long id, double mean, double sigma)
+__device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, long long id, double mean, double sigma)
 {
 	curandStateMRG32k3a localState = state[id];
 	
@@ -70,7 +70,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double h)
 __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, bool elecTF, curandStateMRG32k3a* crndStateA)
 {
 	int iii = blockIdx.x * blockDim.x + threadIdx.x;
-	int nrmGenIdx = (blockIdx.x * 4) + (threadIdx.x % 4);
+	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);
 	double mass;
 	double q;
 
@@ -103,58 +103,47 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 	return;
 #endif
 
-	//Copy commonly accessed variables from global to local memory
-	double z_local = z_d[iii];
-	double v_local = v_d[iii];
-	bool inSimBool_local = inSimBool[iii];
-	
-	//make sure particle is still in bounds
-	inSimBool_local = ((z_local < MAGSPH_MAX_Z) && (z_local > IONSPH_MIN_Z)); //Makes sure particles are within bounds
+	inSimBool[iii] = ((z_d[iii] < MAGSPH_MAX_Z) && (z_d[iii] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
 
 	double args[6];
 
 	if (REPLENISH_E_I)
 	{
-		if (!inSimBool_local)
+		if (!inSimBool[iii])
 		{
-			inSimBool_local = true;
-			v_local = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
-			if (z_local < IONSPH_MIN_Z)
-			{ //alternates placing the electron, ion at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
-				z_local = IONSPH_MIN_Z + 0.1;
-				v_local = abs(v_local);
+			inSimBool[iii] = true;
+			v_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
+			if (z_d[iii] < IONSPH_MIN_Z)
+			{
+				z_d[iii] = IONSPH_MIN_Z + 0.1;
+				v_d[iii] = abs(v_d[iii]);
 			}
 			else
 			{
-				z_local = MAGSPH_MAX_Z - 0.1;
-				v_local = -abs(v_local);
+				z_d[iii] = MAGSPH_MAX_Z - 0.1;
+				v_d[iii] = -abs(v_d[iii]);
 			}
-			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_local);
+			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[iii]);
 		}
 	}
 
-	if (inSimBool_local)
+	if (inSimBool[iii])
 	{
 		args[0] = 0.0;
-		args[1] = v_local;
+		args[1] = v_d[iii];
 		args[2] = mu_d[iii];
 		args[3] = CHARGE_ELEM * q;
 		args[4] = mass;
-		args[5] = z_local;
+		args[5] = z_d[iii];
 
-		v_local += foRungeKuttaCUDA(args, 6, DT);
-		z_local += v_local * DT;
-
-		//Copy local variables back to global memory (only if changed)
-		z_d[iii] = z_local;
-		v_d[iii] = v_local;
-		inSimBool[iii] = inSimBool_local;
+		v_d[iii] += foRungeKuttaCUDA(args, 6, DT);
+		z_d[iii] += v_d[iii] * DT;
 	}
 }
 
 void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* ions_in_sim_host)
 {
-	unsigned long int cudaloopind{ 0 };
+	long cudaloopind{ 0 };
 	double* v_e_para_host; double* mu_e_host; double* z_e_host; double* v_i_para_host; double* mu_i_host; double* z_i_host;
 	double* v_e_para_dev; double* mu_e_dev; double* z_e_dev; double* v_i_para_dev; double* mu_i_dev; double* z_i_dev;
 	bool* elec_in_sim_dev; bool* ions_in_sim_dev;
@@ -193,16 +182,16 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 	
 	if (REPLENISH_E_I)
 	{
-		unsigned long long seed = time(NULL);
-		cudaMalloc((void **) &mrgStates_dev, 1000 * 4 * sizeof(curandStateMRG32k3a));
-		initKernel<<< 1000, 4 >>>(mrgStates_dev, seed);
+		long long seed = time(NULL);
+		cudaMalloc((void **) &mrgStates_dev, 392 * 2 * sizeof(curandStateMRG32k3a));
+		initKernel<<< 49, 16 >>>(mrgStates_dev, seed); //2 per block, 128 threads per random generator
 	}
 	
 	//Loop code
 	while (cudaloopind < NUMITERATIONS)
 	{
-		computeKernel<<< NUMPARTICLES / 250, 250 >>>(v_e_para_dev, mu_e_dev, z_e_dev, elec_in_sim_dev, 1, mrgStates_dev);
-		computeKernel<<< NUMPARTICLES / 250, 250 >>>(v_i_para_dev, mu_i_dev, z_i_dev, ions_in_sim_dev, 0, mrgStates_dev);
+		computeKernel<<< NUMPARTICLES / BLOCKSIZE, BLOCKSIZE >>>(v_e_para_dev, mu_e_dev, z_e_dev, elec_in_sim_dev, 1, mrgStates_dev);
+		computeKernel<<< NUMPARTICLES / BLOCKSIZE, BLOCKSIZE >>>(v_i_para_dev, mu_i_dev, z_i_dev, ions_in_sim_dev, 0, mrgStates_dev);
 		cudaloopind++;
 		cudaDeviceSynchronize();
 		if (cudaloopind % 1000 == 0)
