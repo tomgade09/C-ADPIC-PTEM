@@ -5,7 +5,7 @@ import math
 import ctypes
 import time
 
-import os, sys, inspect
+import os, sys, inspect, shutil
 pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 os.chdir(pyfiledir)
 dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M")
@@ -13,6 +13,8 @@ savedir = './distgraphs' + dtg
 if (not(os.path.isdir(savedir))):
     os.makedirs(savedir)
 os.chdir(savedir)
+srcfile = '../../include/_simulationvariables.h'
+shutil.copy(srcfile, './')
 
 def cppDLLTest():
     cppDLL = ctypes.CDLL('./../../x64/Release/170810_SimpleDipoleB_ConstE.dll')

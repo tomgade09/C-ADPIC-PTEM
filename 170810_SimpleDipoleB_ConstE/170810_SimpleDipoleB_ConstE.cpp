@@ -45,6 +45,13 @@ retStruct dllmain()
 	bool* e_in_sim = new bool[NUMPARTICLES];
 	bool* i_in_sim = new bool[NUMPARTICLES];
 
+	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << " Re\n";
+	std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << " Re\n";
+	std::cout << "Const E:          " << CONSTEFIELD << " V/m\n\n";
+	std::cout << "Particle Number:  " << NUMPARTICLES << "\n";
+	std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
+	std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
+
 	//don't forget to deallocate memory later... returns array of pointers to arrays of [vpara, vperp, z, null] for particles
 	electrons = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
 	ions = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);

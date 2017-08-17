@@ -13,6 +13,13 @@
 //Project specific includes
 #include "include\_simulationvariables.h"
 
+__host__ __device__ double EFieldatZ(double z)
+{
+	if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
+		return 0.0;
+	return CONSTEFIELD;
+}
+
 __host__ __device__ double BFieldatZ(double z) //this will change in future iterations
 {//for now, a simple dipole field
 	return DIPOLECONST / pow(z, 3);
@@ -38,7 +45,7 @@ __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Four
 {//args array: [dt, vz, mu, q, m, pz_0]
 	double F_lor, F_mir;
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * CONSTEFIELD / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(args[5]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
 	F_mir = -args[2] * (-3 / pow(args[5], 4)) * DIPOLECONST; //have function for gradB based on dipole B field - will need to change later
