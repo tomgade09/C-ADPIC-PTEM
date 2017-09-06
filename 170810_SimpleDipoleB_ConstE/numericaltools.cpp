@@ -4,8 +4,8 @@
 #include "include\numericaltools.h"
 #include "include\_simulationvariables.h"
 
-double fourthOrderRungeKutta1D(FncPnt1d_t funcPointer, double* funcArg, int arrayLen, double h)
-{	// funcArg requirements: [dt, y_0, ...] where dt = {0, h/2, h}, initial dt should be 0, this func will take care of the rest
+double fourthOrderRungeKutta1D(FncPnt1d_t funcPointer, double* funcArg, int arrayLen)
+{	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
 	double k1, k2, k3, k4, y_0;
@@ -13,18 +13,18 @@ double fourthOrderRungeKutta1D(FncPnt1d_t funcPointer, double* funcArg, int arra
 
 	k1 = funcPointer(funcArg, arrayLen); //k1 = f(t_n, y_n), units of dy / dt
 
-	funcArg[0] = h / 2;
+	funcArg[0] = DT / 2;
 	funcArg[1] = y_0 + k1 * funcArg[0];
 	k2 = funcPointer(funcArg, arrayLen); //k2 = f(t_n + h/2, y_n + h/2 k1)
 
 	funcArg[1] = y_0 + k2 * funcArg[0];
 	k3 = funcPointer(funcArg, arrayLen); //k3 = f(t_n + h/2, y_n + h/2 k2)
 
-	funcArg[0] = h;
+	funcArg[0] = DT;
 	funcArg[1] = y_0 + k3 * funcArg[0];
 	k4 = funcPointer(funcArg, arrayLen); //k4 = f(t_n + h, y_n + h k3)
 
-	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns units of y, not dy / dt
+	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns units of y, not dy / dt, returns the increase/decrease in the original, NOT the sum
 }
 
 double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma, double zmean, double zsigma)

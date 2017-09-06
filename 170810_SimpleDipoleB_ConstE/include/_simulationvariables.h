@@ -26,8 +26,8 @@ constexpr double INITIAL_T_EV{ 2.5 }; //magical "2.5" is from Chiu/Schultz tempe
 constexpr bool   REPLENISH_E_I{ true }; //determines whether or not to replenish lost electrons/ions - same distribution is used that generates initial characteristics
 
 //E+M Variables
-constexpr double DIPOLETHETA{ 20.0 }; // theta (in rad) - to calculate dipole electric field
-constexpr double DIPOLECONST{ BFIELD_EARTH *  1.910253 };//sqrt(1 + 3 * pow(cos(DIPOLETHETA * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))
+//constexpr double DIPOLETHETA{ 20.0 }; // theta (in deg) - to calculate dipole electric field
+constexpr double DIPOLECONST{ BFIELD_EARTH *  1.910253037 };//sqrt(1 + 3 * pow(cos(DIPOLETHETA * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))
 constexpr double TOTPOTDROP{ 2.0e3 }; //total electric potential drop in V across model
 constexpr double E_RNG_CENTER{ (2 * RADIUS_EARTH) / NORMFACTOR }; //Where is the E Field centered?
 constexpr double E_RNG_DELTA{ 1.0e6 / NORMFACTOR }; //in m, How far up and down from the center will the E field be "felt"?
