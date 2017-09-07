@@ -22,7 +22,7 @@ __host__ __device__ double EFieldatZ(double z)
 
 __host__ __device__ double BFieldatZ(double z) //this will change in future iterations
 {//for now, a simple dipole field
-	return DIPOLECONST / pow(z, 3);
+	return DIPOLECONST / pow(z / (RADIUS_EARTH / NORMFACTOR), 3);
 }
 
 __global__ void initKernel(curandStateMRG32k3a* state, long long seed)
@@ -43,14 +43,14 @@ __device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, long long id, 
 
 __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Fourth Order Runge Kutta code
 {//args array: [t_RK, vz, mu, q, m, pz_0]
-	double F_lor, F_mir, ptmp;
-	ptmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
+	double F_lor, F_mir, ztmp;
+	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(ptmp) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(ztmp) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
-	F_mir = -args[2] * (-3 / pow(ptmp, 4)) * DIPOLECONST; //have function for gradB based on dipole B field - will need to change later
+	F_mir = -args[2] * (-3 / (ztmp * pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 3))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
@@ -85,7 +85,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 	double mass;
 	double q;
 
-	if (elecTF)
+	if (elecTF)//would have to be changed in the event of multiple ion species
 	{
 		mass = MASS_ELECTRON;
 		q = -1.0;
@@ -124,15 +124,15 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 		{
 			inSimBool[iii] = true;
 			v_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
+			numEscaped[iii] += 1;
 			if (z_d[iii] < IONSPH_MIN_Z)
 			{
-				numEscaped[iii] += 1;
-				z_d[iii] = IONSPH_MIN_Z + 0.1;
+				z_d[iii] = IONSPH_MIN_Z + 0.01;
 				v_d[iii] = abs(v_d[iii]);
 			}
 			else
 			{
-				z_d[iii] = MAGSPH_MAX_Z - 0.1;
+				z_d[iii] = MAGSPH_MAX_Z - 0.01;
 				v_d[iii] = -abs(v_d[iii]);
 			}
 			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[iii]);
@@ -153,7 +153,17 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 	}
 }
 
-void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* ions_in_sim_host)
+void arrayOfB_E(double* B_z, double* E_z, double* B_E_z_dim)
+{
+	for (int iii = 0; iii < GRAPH_E_B_BINS; iii++)
+	{
+		B_z[iii] = BFieldatZ(IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS);
+		E_z[iii] = EFieldatZ(IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS);
+		B_E_z_dim[iii] = IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS;
+	}
+}
+
+void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* ions_in_sim_host, double* B_z, double* E_z, double* B_E_z_dim)
 {
 	long cudaloopind{ 0 };
 	double* v_e_para_host; double* mu_e_host; double* z_e_host; double* v_i_para_host; double* mu_i_host; double* z_i_host;
@@ -171,9 +181,9 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 	int* escapedElec_dev{ nullptr };
 	int* escapedIons_dev{ nullptr };
 
-	const int DBLARRAY_BYTES{ NUMPARTICLES * sizeof(double) };
+	const int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) };
 	const int BOOLARRAY_BYTES{ NUMPARTICLES * sizeof(bool) };
-	const int INTARRAY_BYTES{ NUMPARTICLES * sizeof(int) };
+	const int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
 	//allocate memory on GPU
 	cudaMalloc((void **) &v_e_para_dev, DBLARRAY_BYTES);
@@ -260,6 +270,8 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 
 	std::cout << "Electrons escaped (Ionsph): " << sumElecEscaped << "\n";
 	std::cout << "Ions escaped (Ionsph):      " << sumIonsEscaped << "\n";
+
+	arrayOfB_E(B_z, E_z, B_E_z_dim);
 
 	delete[] escapedElec_host;
 	delete[] escapedIons_host;

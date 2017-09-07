@@ -33,6 +33,9 @@ struct retStruct
 {
 	double*** dblRes{ nullptr };
 	bool** inSim{ nullptr };
+	double* B_z{ nullptr };
+	double* E_z{ nullptr };
+	double* B_E_z_dim{ nullptr };
 };
 
 retStruct dllmain()
@@ -44,6 +47,9 @@ retStruct dllmain()
 	double** ions;
 	bool* e_in_sim = new bool[NUMPARTICLES];
 	bool* i_in_sim = new bool[NUMPARTICLES];
+	double* B_z = new double[GRAPH_E_B_BINS];
+	double* E_z = new double[GRAPH_E_B_BINS];
+	double* B_E_z_dim = new double[GRAPH_E_B_BINS];
 
 	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << " Re\n";
 	std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << " Re\n";
@@ -68,7 +74,7 @@ retStruct dllmain()
 	cudaBegin = std::chrono::steady_clock::now();
 	
 	//CUDA implementation
-	mainCUDA(electrons, ions, e_in_sim, i_in_sim);
+	mainCUDA(electrons, ions, e_in_sim, i_in_sim, B_z, E_z, B_E_z_dim);
 
 	cudaEnd = std::chrono::steady_clock::now();
 
@@ -92,6 +98,9 @@ retStruct dllmain()
 
 	ret.dblRes = dbls;
 	ret.inSim = bools;
+	ret.B_z = B_z;
+	ret.E_z = E_z;
+	ret.B_E_z_dim = B_E_z_dim;
 
     return ret;
 }
@@ -116,11 +125,21 @@ DLLEXPORT double* dllmainPyWrapper()
 	}
 
 	std::cout << "C++: " << e_in_sim << " " << i_in_sim << " " << ((e_in_sim + i_in_sim) * 3) + 2 << "\n";
+	
+	//Structure of returned array: [number of electrons remaining in simulation, v_para for electrons, v_perp for electrons, z for electrons,
+	//								number of ions remaining in sim, v_para for ions, v_perp for ions, z for ions,
+	//                              number of B and E bins, B(z) data, E(z) data]
+	//This is a 1D array which has the number of elements appended before the elements are listed.  So, the number of electrons that have not
+	//escaped is listed followed by the three electron properties measured: v_para, v_perp, and z.  This is followed by the ions:
+	//number of ions, ion properties: v_para, v_perp, z.  Finally, B and E are measured along z in accordance with the number of bins in the
+	//_simulationvariables.h header file.  This is appended to the array followed by the data.  This is done because Python doesn't handle
+	//complex C++ structures and such well (at least, it's quite a bit more work).
 
-	double* yut = new double[((e_in_sim + i_in_sim) * 3) + 2];
+	double* yut = new double[((e_in_sim + i_in_sim) * 3) + 2 + (GRAPH_E_B_BINS * 3) + 1];
 
 	yut[0] = static_cast<double>(e_in_sim);
 	yut[e_in_sim * 3 + 1] = static_cast<double>(i_in_sim);
+	yut[((e_in_sim + i_in_sim) * 3) + 2] = static_cast<double>(GRAPH_E_B_BINS);
 
 	for (int iii = 0; iii < 3; iii++)
 	{
@@ -153,6 +172,13 @@ DLLEXPORT double* dllmainPyWrapper()
 				}
 			}
 		}
+	}
+	
+	for (int iii = 0; iii < GRAPH_E_B_BINS; iii++)
+	{
+		yut[((e_in_sim + i_in_sim) * 3) + 3 + iii] = yutyut.B_z[iii];
+		yut[((e_in_sim + i_in_sim) * 3) + 3 + GRAPH_E_B_BINS + iii] = yutyut.E_z[iii];
+		yut[((e_in_sim + i_in_sim) * 3) + 3 + 2 * GRAPH_E_B_BINS + iii] = yutyut.B_E_z_dim[iii];
 	}
 
 	return yut;

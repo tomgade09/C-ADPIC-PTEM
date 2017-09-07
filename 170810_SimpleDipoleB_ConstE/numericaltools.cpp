@@ -46,12 +46,12 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 		vperp[iii] = vperp_nd(mtgen);
 		if (iii % 2 == 0)
 		{ //alternates placing the electron, ion at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
-			z[iii] = IONSPH_MIN_Z + 0.1;
+			z[iii] = IONSPH_MIN_Z + 0.01;
 			vpara[iii] = abs(vpara[iii]);
 		}
 		else
 		{
-			z[iii] = MAGSPH_MAX_Z - 0.1;
+			z[iii] = MAGSPH_MAX_Z - 0.01;
 			vpara[iii] = -abs(vpara[iii]);
 		}
 	}
