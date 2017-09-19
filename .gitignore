@@ -44,19 +44,12 @@
 *.pdb
 *.gitattributes
 *.snip
-build/
 *.bin
 
 # Project-specific folders
-/codesamples
-#/codesamples/NormDistribution
-#/codesamples/readsettingsfile
-#/codesamples/fileIO
-#/codesamples/distgraphs
-
-/*/.vs
-/*/x64
-/*/distgraphs
-#/170810_SimpleDipoleB_ConstE/.vs
-#/170810_SimpleDipoleB_ConstE/x64
-#/170810_SimpleDipoleB_ConstE/distgraphs
+build/
+x64/
+.vs/
+bin/
+distgraphs/
+codesamples/
