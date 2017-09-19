@@ -13,14 +13,14 @@
 //Project specific includes
 #include "include\_simulationvariables.h"
 
-__host__ __device__ double EFieldatZ(double z)
-{
+__host__ __device__ double EFieldatZ(double z, double simtime)
+{//E Field in the direction of B (radially outward)
 	if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
 		return 0.0;
 	return CONSTEFIELD;
 }
 
-__host__ __device__ double BFieldatZ(double z) //this will change in future iterations
+__host__ __device__ double BFieldatZ(double z, double simtime) //this will change in future iterations
 {//for now, a simple dipole field
 	return DIPOLECONST / pow(z / (RADIUS_EARTH / NORMFACTOR), 3);
 }
@@ -42,12 +42,12 @@ __device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, long long id, 
 }
 
 __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [t_RK, vz, mu, q, m, pz_0]
+{//args array: [t_RK, vz, mu, q, m, pz_0, simtime]
 	double F_lor, F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(ztmp) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
 	F_mir = -args[2] * (-3 / (ztmp * pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 3))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
@@ -78,7 +78,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen)
 	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns units of y, not dy / dt
 }
 
-__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA)
+__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime)
 {
 	int iii = blockIdx.x * blockDim.x + threadIdx.x;
 	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);
@@ -116,7 +116,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 
 	inSimBool[iii] = ((z_d[iii] < MAGSPH_MAX_Z) && (z_d[iii] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
 
-	double args[6];
+	double args[7];
 
 	if (REPLENISH_E_I)
 	{
@@ -135,18 +135,19 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 				z_d[iii] = MAGSPH_MAX_Z - 0.01;
 				v_d[iii] = -abs(v_d[iii]);
 			}
-			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[iii]);
+			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[iii], simtime);
 		}
 	}
 
 	if (inSimBool[iii])
-	{//args array: [t_RKiter, vz, mu, q, m, pz_0]
+	{//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime]
 		args[0] = 0.0;
 		args[1] = v_d[iii];
 		args[2] = mu_d[iii];
 		args[3] = CHARGE_ELEM * q;
 		args[4] = mass;
 		args[5] = z_d[iii];
+		args[6] = simtime;
 
 		v_d[iii] += foRungeKuttaCUDA(args, 6);
 		z_d[iii] += v_d[iii] * DT;
@@ -154,11 +155,11 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 }
 
 void arrayOfB_E(double* B_z, double* E_z, double* B_E_z_dim)
-{
+{ //for now measured at time 0.0 - could include a time of interest, or multiple graphs/pics later?? - could make a dll callable function for python?
 	for (int iii = 0; iii < GRAPH_E_B_BINS; iii++)
 	{
-		B_z[iii] = BFieldatZ(IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS);
-		E_z[iii] = EFieldatZ(IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS);
+		B_z[iii] = BFieldatZ(IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS, 0.0); //time is 0.0 for now - right now, doesn't matter
+		E_z[iii] = EFieldatZ(IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS, 0.0);
 		B_E_z_dim[iii] = IONSPH_MIN_Z + iii * (MAGSPH_MAX_Z - IONSPH_MIN_Z) / GRAPH_E_B_BINS;
 	}
 }
@@ -222,8 +223,8 @@ void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* i
 	//Loop code
 	while (cudaloopind < NUMITERATIONS)
 	{
-		computeKernel<<< NUMPARTICLES / BLOCKSIZE, BLOCKSIZE >>>(v_e_para_dev, mu_e_dev, z_e_dev, elec_in_sim_dev, escapedElec_dev, 1, mrgStates_dev);
-		computeKernel<<< NUMPARTICLES / BLOCKSIZE, BLOCKSIZE >>>(v_i_para_dev, mu_i_dev, z_i_dev, ions_in_sim_dev, escapedIons_dev, 0, mrgStates_dev);
+		computeKernel<<< NUMPARTICLES / BLOCKSIZE, BLOCKSIZE >>>(v_e_para_dev, mu_e_dev, z_e_dev, elec_in_sim_dev, escapedElec_dev, 1, mrgStates_dev, cudaloopind * DT);
+		computeKernel<<< NUMPARTICLES / BLOCKSIZE, BLOCKSIZE >>>(v_i_para_dev, mu_i_dev, z_i_dev, ions_in_sim_dev, escapedIons_dev, 0, mrgStates_dev, cudaloopind * DT);
 		cudaloopind++;
 		//cudaDeviceSynchronize(); //don't think is necessary
 		if (cudaloopind % 1000 == 0)

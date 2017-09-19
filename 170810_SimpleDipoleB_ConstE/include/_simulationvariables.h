@@ -52,7 +52,7 @@ constexpr double V_SIGMA_SQ{ INITIAL_T_EV * 1.60218e-19 * 2 / (MASS_ELECTRON * N
 
 //Functions I can't bring myself to write a header for
 double accel1DCB(double* args, int len);
-double BFieldatZ(double z);
+double BFieldatZ(double z, double simtime);
 void mainCUDA(double** electrons, double** ions, bool* elec_in_sim_host, bool* ions_in_sim_host, double* B_z, double* E_z, double* B_E_z_dim);
 
 #endif

@@ -45,6 +45,7 @@
 *.gitattributes
 *.snip
 build/
+*.bin
 
 # Project-specific folders
 /codesamples
@@ -53,6 +54,9 @@ build/
 #/codesamples/fileIO
 #/codesamples/distgraphs
 
-/170810_SimpleDipoleB_ConstE/.vs
-/170810_SimpleDipoleB_ConstE/x64
-/170810_SimpleDipoleB_ConstE/distgraphs
+/*/.vs
+/*/x64
+/*/distgraphs
+#/170810_SimpleDipoleB_ConstE/.vs
+#/170810_SimpleDipoleB_ConstE/x64
+#/170810_SimpleDipoleB_ConstE/distgraphs

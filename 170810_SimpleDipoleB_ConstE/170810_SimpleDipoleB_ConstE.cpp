@@ -64,8 +64,8 @@ retStruct dllmain()
 
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{//converting vperp (variable) to mu (constant) - only has to be done once
-		electrons[1][iii] = 0.5 * MASS_ELECTRON * electrons[1][iii] * electrons[1][iii] / BFieldatZ(electrons[2][iii]);
-		ions[1][iii] = 0.5 * MASS_PROTON * ions[1][iii] * ions[1][iii] / BFieldatZ(ions[2][iii]);
+		electrons[1][iii] = 0.5 * MASS_ELECTRON * electrons[1][iii] * electrons[1][iii] / BFieldatZ(electrons[2][iii], 0.0);
+		ions[1][iii] = 0.5 * MASS_PROTON * ions[1][iii] * ions[1][iii] / BFieldatZ(ions[2][iii], 0.0);
 		e_in_sim[iii] = true;
 		i_in_sim[iii] = true;
 	}
@@ -80,8 +80,8 @@ retStruct dllmain()
 
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{//converting mu back to vperp
-		electrons[1][iii] = sqrt(2 * electrons[1][iii] * BFieldatZ(electrons[2][iii]) / MASS_ELECTRON);
-		ions	 [1][iii] = sqrt(2 * ions	  [1][iii] * BFieldatZ(ions		[2][iii]) / MASS_PROTON);
+		electrons[1][iii] = sqrt(2 * electrons[1][iii] * BFieldatZ(electrons[2][iii], DT * NUMITERATIONS) / MASS_ELECTRON);
+		ions	 [1][iii] = sqrt(2 * ions	  [1][iii] * BFieldatZ(ions		[2][iii], DT * NUMITERATIONS) / MASS_PROTON);
 	}
 
 	std::cout << "Parallel Execution Time (ms) " << std::chrono::duration_cast<std::chrono::milliseconds>(cudaEnd - cudaBegin).count() << std::endl;
