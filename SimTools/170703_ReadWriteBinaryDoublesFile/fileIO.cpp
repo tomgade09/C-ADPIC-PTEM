@@ -3,8 +3,9 @@
 
 namespace dblBinIO
 {
-	DLLEXPORT double* readDblBin(const std::string& filename, unsigned int numOfDblsToRead)
+	DLLEXPORT double* readDblBin(const char* filename, long numOfDblsToRead)
 	{
+		std::cout << "read: " << filename << "\n";
 		std::ifstream binFile;
 		binFile.open(filename, std::ios::in | std::ios::binary);
 
@@ -22,8 +23,9 @@ namespace dblBinIO
 		return dataArray;
 	}
 
-	DLLEXPORT void writeDblBin(const std::string& filename, double* dataarray, long numelements)
+	DLLEXPORT void writeDblBin(const char* filename, double* dataarray, long numelements)
 	{
+		std::cout << "write: " << filename << "\n";
 		std::ofstream binfile;
 		binfile.open(filename, std::ios::binary | std::ios::out);
 

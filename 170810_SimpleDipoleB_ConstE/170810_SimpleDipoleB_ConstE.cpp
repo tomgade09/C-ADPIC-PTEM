@@ -10,12 +10,14 @@
 #include <cmath>
 #include <iostream>
 #include <chrono>
+#include <string>
 
 //Other dependencies
 
 //Project specific includes (mine)
 #include "include\_simulationvariables.h" //as a bonus, also includes physicalconstants.h !
 #include "include\numericaltools.h"
+#include "include\iowrapper.h"
 
 //Defines for making into a DLL File
 #define DLLFILE
@@ -51,8 +53,14 @@ retStruct dllmain()
 	double* E_z = new double[GRAPH_E_B_BINS];
 	double* B_E_z_dim = new double[GRAPH_E_B_BINS];
 
-	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << " Re\n";
-	std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << " Re\n";
+#ifdef NO_NORMALIZE_M
+	std::string unitstring{ " m" };
+#else
+	std::string unitstring{ " Re" };
+#endif
+
+	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << unitstring << "\n";
+	std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << unitstring << "\n";
 	std::cout << "Const E:          " << CONSTEFIELD << " V/m\n\n";
 	std::cout << "Particle Number:  " << NUMPARTICLES << "\n";
 	std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
@@ -61,6 +69,12 @@ retStruct dllmain()
 	//don't forget to deallocate memory later... returns array of pointers to arrays of [vpara, vperp, z, null] for particles
 	electrons = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
 	ions = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
+
+	double*** dbls = new double**[2];
+	dbls[0] = electrons;
+	dbls[1] = ions;
+
+	writeParticlesToBin(dbls, "./particles_init");
 
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{//converting vperp (variable) to mu (constant) - only has to be done once
@@ -86,11 +100,9 @@ retStruct dllmain()
 
 	std::cout << "Parallel Execution Time (ms) " << std::chrono::duration_cast<std::chrono::milliseconds>(cudaEnd - cudaBegin).count() << std::endl;
 
-	retStruct ret;
+	writeParticlesToBin(dbls, "./particles_final");
 
-	double*** dbls = new double**[2];
-	dbls[0] = electrons;
-	dbls[1] = ions;
+	retStruct ret;
 
 	bool** bools = new bool*[2];
 	bools[0] = e_in_sim;
@@ -105,10 +117,10 @@ retStruct dllmain()
     return ret;
 }
 
-DLLEXPORT double* dllmainPyWrapper()
+DLLEXPORT double* dllmainPyWrapper(char* notusednow)
 {
 	retStruct yutyut;
-
+	
 	yutyut = dllmain();
 	
 	int e_in_sim{ 0 };

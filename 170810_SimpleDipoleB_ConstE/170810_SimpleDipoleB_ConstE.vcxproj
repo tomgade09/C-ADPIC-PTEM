@@ -19,13 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\SimTools\170703_ReadWriteBinaryDoublesFile\include\fileIO.h" />
+    <ClInclude Include="include\iowrapper.h" />
     <ClInclude Include="include\numericaltools.h" />
     <ClInclude Include="include\physicalconstants.h" />
     <ClInclude Include="include\_simulationvariables.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\SimTools\170703_ReadWriteBinaryDoublesFile\fileIO.cpp" />
     <ClCompile Include="170810_SimpleDipoleB_ConstE.cpp" />
     <ClCompile Include="forcesandfields.cpp" />
+    <ClCompile Include="iowrapper.cpp" />
     <ClCompile Include="numericaltools.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +160,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Tom\src\geoplasmasim\SimTools\170703_ReadWriteBinaryDoublesFile;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

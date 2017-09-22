@@ -19,6 +19,10 @@ int main()
 		partArray1D[iii + 2 * NUMPARTICLES] = particles[2][iii];
 	}
 
+	dblBinIO::writeDblBin("vpara.bin", particles[0], NUMPARTICLES);
+	dblBinIO::writeDblBin("vperp.bin", particles[1], NUMPARTICLES);
+	dblBinIO::writeDblBin("z.bin", particles[2], NUMPARTICLES);
+
 	delete[] particles[0];
 	delete[] particles[1];
 	delete[] particles[2];

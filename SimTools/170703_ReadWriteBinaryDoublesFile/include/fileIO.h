@@ -14,8 +14,8 @@
 
 namespace dblBinIO
 {
-	DLLEXPORT double* readDblBin(const std::string& filename, unsigned int numOfDblsToRead);
-	DLLEXPORT void writeDblBin(const std::string& filename, double* dataarray, long numelements);
+	DLLEXPORT double* readDblBin(const char* filename, long numOfDblsToRead);
+	DLLEXPORT void writeDblBin(const char* filename, double* dataarray, long numelements);
 	DLLEXPORT void clrDataMemory(double* dataArray);
 }
 
