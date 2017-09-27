@@ -4,7 +4,6 @@ import os, sys, inspect
 a = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 os.chdir(a)
 
-from VPyDraw import *
 import numpy as np
 import ctypes
 import math

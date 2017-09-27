@@ -19,44 +19,43 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SimTools\FileIO\include\fileIO.h" />
-    <ClInclude Include="include\iowrapper.h" />
-    <ClInclude Include="include\numericaltools.h" />
-    <ClInclude Include="include\physicalconstants.h" />
-    <ClInclude Include="include\_simulationvariables.h" />
+    <CudaCompile Include="equationofmotion.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SimTools\FileIO\src\fileIO.cpp" />
-    <ClCompile Include="src\170810_SimpleDipoleB_ConstE.cpp" />
-    <ClCompile Include="src\forcesandfields.cpp" />
-    <ClCompile Include="src\iowrapper.cpp" />
-    <ClCompile Include="src\numericaltools.cpp" />
+    <ClCompile Include="..\..\SimTools\FileIO\src\fileIO.cpp" />
+    <ClCompile Include="..\..\SimTools\SimulationClass\src\api.cpp" />
+    <ClCompile Include="..\..\SimTools\SimulationClass\src\Simulation.cpp" />
+    <ClCompile Include="..\src\170925_DipoleB_CSVSpecifiedE.cpp" />
+    <ClCompile Include="..\src\Simulation170925.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\CUDAequofmotion.cu">
-      <Include Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Include)</Include>
-    </CudaCompile>
+    <ClInclude Include="..\..\SimTools\FileIO\include\fileIO.h" />
+    <ClInclude Include="..\..\SimTools\SimulationClass\include\api.h" />
+    <ClInclude Include="..\..\SimTools\SimulationClass\include\Simulation.h" />
+    <ClInclude Include="..\include\physicalconstants.h" />
+    <ClInclude Include="..\include\Simulation170925.h" />
+    <ClInclude Include="..\include\_simulationvariables.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DC7BD012-2955-4870-942C-04F9C70BFE23}</ProjectGuid>
-    <RootNamespace>_170810_SimpleDipoleB_ConstE</RootNamespace>
+    <ProjectGuid>{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}</ProjectGuid>
+    <RootNamespace>_170925_DipoleB_CSVSpecifiedE</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
@@ -68,7 +67,6 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
-    <UseIntelMKL>No</UseIntelMKL>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -114,6 +112,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Tom\src\geoplasmasim\SimTools\FileIO;C:\Users\Tom\src\geoplasmasim\170925_DipoleB_CSVSpecifiedE;C:\Users\Tom\src\geoplasmasim\SimTools\SimulationClass;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -127,7 +126,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
-      <MaxRegCount>0</MaxRegCount>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -137,6 +135,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Tom\src\geoplasmasim\SimTools\SimulationClass;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -149,6 +148,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_50,sm_50</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -157,7 +159,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Tom\src\geoplasmasim\170810_SimpleDipoleB_ConstE;C:\Users\Tom\src\geoplasmasim\SimTools\FileIO;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Tom\src\geoplasmasim\SimTools\FileIO;C:\Users\Tom\src\geoplasmasim\170925_DipoleB_CSVSpecifiedE;C:\Users\Tom\src\geoplasmasim\SimTools\SimulationClass;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -172,10 +174,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <FastMath>false</FastMath>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
-      <MaxRegCount>0</MaxRegCount>
-      <AdditionalOptions>--ptxas-options=-v %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

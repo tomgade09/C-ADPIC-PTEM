@@ -140,7 +140,7 @@ DLLEXPORT double* dllmainPyWrapper(char* notusednow)
 	
 	//Structure of returned array: [number of electrons remaining in simulation, v_para for electrons, v_perp for electrons, z for electrons,
 	//								number of ions remaining in sim, v_para for ions, v_perp for ions, z for ions,
-	//                              number of B and E bins, B(z) data, E(z) data]
+	//                              number of B and E bins, B(z) data, E(z) data, z bins]
 	//This is a 1D array which has the number of elements appended before the elements are listed.  So, the number of electrons that have not
 	//escaped is listed followed by the three electron properties measured: v_para, v_perp, and z.  This is followed by the ions:
 	//number of ions, ion properties: v_para, v_perp, z.  Finally, B and E are measured along z in accordance with the number of bins in the

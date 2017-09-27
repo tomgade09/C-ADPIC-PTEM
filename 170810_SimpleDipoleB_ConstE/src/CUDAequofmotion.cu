@@ -1,6 +1,5 @@
 //Standard Library includes
 #include <iostream>
-#include <stdio.h>
 #include <cmath>
 #include <time.h>
 

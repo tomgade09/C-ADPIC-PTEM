@@ -36,12 +36,11 @@
 *.old
 *.opendb
 *.db
-# *.sln
 *.pdb
+# *.sln
 # *.vcxproj
 *.filters
 *.user
-*.pdb
 *.gitattributes
 *.snip
 *.bin
@@ -52,4 +51,4 @@ x64/
 .vs/
 bin/
 distgraphs/
-codesamples/
+__*/

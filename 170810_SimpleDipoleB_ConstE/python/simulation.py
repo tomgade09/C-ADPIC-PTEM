@@ -4,12 +4,13 @@ import numpy as np
 import math
 import ctypes
 import time
+import particleFileTest
 
 import os, sys, inspect, shutil
 pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 os.chdir(pyfiledir)
 dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M")
-savedir = './distgraphs' + dtg
+savedir = './../distgraphs' + dtg
 if (not(os.path.isdir(savedir))):
     os.makedirs(savedir)
     os.makedirs(savedir + '/particles_init')
@@ -134,57 +135,9 @@ def plotNormParticles(v_e_para, v_e_perp, v_i_para, v_i_perp, z_e, z_i, B_z, E_z
 
     plt.show()
 
-def readFiles(filename1, filename2, filename3, filename4, filename5, filename6):
-    #bin_e_vpara = open(filename1, 'rb')
-    #bin_e_vperp = open(filename2, 'rb')
-    #bin_e_z = open(filename3, 'rb')
-    #bin_i_vpara = open(filename4, 'rb')
-    #bin_i_vperp = open(filename5, 'rb')
-    #bin_i_z = open(filename6, 'rb')
-
-    #e_vpara = []#bytearray(bin_e_vpara.read())
-    #e_vperp = []#bytearray(bin_e_vperp.read())
-    #e_z = []#bytearray(bin_e_z.read())
-    #i_vpara = []#bytearray(bin_i_vpara.read())
-    #i_vperp = []#bytearray(bin_i_vperp.read())
-    #i_z = []#bytearray(bin_i_z.read())
-
-    fn1 = ctypes.create_string_buffer(bytes(filename1, encoding='utf-8'))
-    fn2 = ctypes.create_string_buffer(bytes(filename2, encoding='utf-8'))
-    fn3 = ctypes.create_string_buffer(bytes(filename3, encoding='utf-8'))
-    fn4 = ctypes.create_string_buffer(bytes(filename4, encoding='utf-8'))
-    fn5 = ctypes.create_string_buffer(bytes(filename5, encoding='utf-8'))
-    fn6 = ctypes.create_string_buffer(bytes(filename6, encoding='utf-8'))
-    e_vpara_c = cppDLL.readDblBin(fn1, 100352)
-    e_vperp_c = cppDLL.readDblBin(fn2, 100352)
-    e_z_c = cppDLL.readDblBin(fn3, 100352)
-    i_vpara_c = cppDLL.readDblBin(fn4, 100352)
-    i_vperp_c = cppDLL.readDblBin(fn5, 100352)
-    i_z_c = cppDLL.readDblBin(fn6, 100352)
-
-    e_vpara = []
-    e_vperp = []
-    e_z = []
-    i_vpara = []
-    i_vperp = []
-    i_z = []
-
-    for i in range(100352):
-        if ((e_z_c[i] < 10) and (e_z_c[i] > (2.0e6 + 6.371e6) / 6.371e6)):
-            e_vpara.append(e_vpara_c[i])
-            e_vperp.append(e_vperp_c[i])
-            e_z.append(e_z_c[i])
-        
-        if ((i_z_c[i] < 10) and (i_z_c[i] > (2.0e6 + 6.371e6) / 6.371e6)):
-            i_vpara.append(i_vpara_c[i])
-            i_vperp.append(i_vperp_c[i])
-            i_z.append(i_z_c[i])
-
-    return e_vpara, e_vperp, e_z, i_vpara, i_vperp, i_z, [0.], [0.], [0.]
-
 if __name__ == '__main__':
-    #v_e_pr, v_e_pp, z_e, v_i_pr, v_i_pp, z_i, B_z, E_z, B_E_z_dim = cppDLLTest()
-    datadir = "./../170922_12.34/particles_final"
-    v_e_pr, v_e_pp, z_e, v_i_pr, v_i_pp, z_i, B_z, E_z, B_E_z_dim = \
-        readFiles(datadir + "/e_vpara.bin", datadir + "/e_vperp.bin", datadir + "/e_z.bin", datadir + "/i_vpara.bin", datadir + "/i_vperp.bin", datadir + "/i_z.bin")
+    v_e_pr, v_e_pp, z_e, v_i_pr, v_i_pp, z_i, B_z, E_z, B_E_z_dim = cppDLLTest()
+    #datadir = "./../170922_12.34/particles_final" #these three lines test distributions written to disk, ignore
+    #v_e_pr, v_e_pp, z_e, v_i_pr, v_i_pp, z_i, B_z, E_z, B_E_z_dim = \
+        #readFiles(datadir + "/e_vpara.bin", datadir + "/e_vperp.bin", datadir + "/e_z.bin", datadir + "/i_vpara.bin", datadir + "/i_vperp.bin", datadir + "/i_z.bin")
     plotNormParticles(v_e_pr, v_e_pp, v_i_pr, v_i_pp, z_e, z_i, B_z, E_z, B_E_z_dim)

@@ -1,4 +1,4 @@
-// 170919_GenerateNormalDistributionFile.cpp
+// GenerateNormalDistributionFile.cpp
 // Generates a normalized distribution of particles, and writes them to a file
 
 #include "include\_simulationvariables.h"
@@ -19,9 +19,9 @@ int main()
 		partArray1D[iii + 2 * NUMPARTICLES] = particles[2][iii];
 	}
 
-	dblBinIO::writeDblBin("vpara.bin", particles[0], NUMPARTICLES);
-	dblBinIO::writeDblBin("vperp.bin", particles[1], NUMPARTICLES);
-	dblBinIO::writeDblBin("z.bin", particles[2], NUMPARTICLES);
+	fileIO::writeDblBin("vpara.bin", particles[0], NUMPARTICLES);
+	fileIO::writeDblBin("vperp.bin", particles[1], NUMPARTICLES);
+	fileIO::writeDblBin("z.bin", particles[2], NUMPARTICLES);
 
 	delete[] particles[0];
 	delete[] particles[1];
@@ -29,7 +29,7 @@ int main()
 	delete[] particles[3];
 	delete[] particles;
 
-	dblBinIO::writeDblBin("normDist.bin", partArray1D, NUMPARTICLES * 3);
+	fileIO::writeDblBin("normDist.bin", partArray1D, NUMPARTICLES * 3);
 
 	delete[] partArray1D;
 
