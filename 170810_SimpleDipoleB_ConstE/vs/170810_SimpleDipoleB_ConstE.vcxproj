@@ -19,23 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SimTools\FileIO\include\fileIO.h" />
-    <ClInclude Include="include\iowrapper.h" />
-    <ClInclude Include="include\numericaltools.h" />
-    <ClInclude Include="include\physicalconstants.h" />
-    <ClInclude Include="include\_simulationvariables.h" />
+    <ClInclude Include="..\..\SimTools\FileIO\include\fileIO.h" />
+    <ClInclude Include="..\include\iowrapper.h" />
+    <ClInclude Include="..\include\numericaltools.h" />
+    <ClInclude Include="..\include\physicalconstants.h" />
+    <ClInclude Include="..\include\_simulationvariables.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SimTools\FileIO\src\fileIO.cpp" />
-    <ClCompile Include="src\170810_SimpleDipoleB_ConstE.cpp" />
-    <ClCompile Include="src\forcesandfields.cpp" />
-    <ClCompile Include="src\iowrapper.cpp" />
-    <ClCompile Include="src\numericaltools.cpp" />
+    <ClCompile Include="..\..\SimTools\FileIO\src\fileIO.cpp" />
+    <ClCompile Include="..\src\170810_SimpleDipoleB_ConstE.cpp" />
+    <ClCompile Include="..\src\forcesandfields.cpp" />
+    <ClCompile Include="..\src\iowrapper.cpp" />
+    <ClCompile Include="..\src\numericaltools.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\CUDAequofmotion.cu">
-      <Include Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Include)</Include>
-    </CudaCompile>
+    <CudaCompile Include="..\src\CUDAequofmotion.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DC7BD012-2955-4870-942C-04F9C70BFE23}</ProjectGuid>

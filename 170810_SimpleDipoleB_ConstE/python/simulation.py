@@ -19,7 +19,7 @@ os.chdir(savedir)
 srcfile = '../../include/_simulationvariables.h'
 shutil.copy(srcfile, './')
 
-cppDLL = ctypes.CDLL('./../../x64/Release/170810_SimpleDipoleB_ConstE.dll')
+cppDLL = ctypes.CDLL('./../../vs/x64/Release/170810_SimpleDipoleB_ConstE.dll')
 cppDLL.dllmainPyWrapper.argtypes = [ctypes.c_char_p]
 cppDLL.dllmainPyWrapper.restype = ctypes.POINTER(ctypes.c_double)
 
