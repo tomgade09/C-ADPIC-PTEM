@@ -81,12 +81,12 @@ class Simulation:
 
     #Run Simulation
     def runSim(self, iterations, inSimOnly=True):
-        self.__initializeSimulation()
-        self.__copyDataToGPU()
-        self.__iterateSimulation(iterations)
-        self.__copyDataToHost()
-        self.__freeGPUMemory()
-        self.__prepareResults()
+        self.initializeSimulation()
+        self.copyDataToGPU()
+        self.iterateSimulation(iterations)
+        self.copyDataToHost()
+        self.freeGPUMemory()
+        self.prepareResults()
         return self.getResultsfrom3D(inSimOnly)
 
     ###Member functions for Simulation class
@@ -210,22 +210,22 @@ class Simulation:
     #Simulation management
     #Functions are prepended with __ because the intent is to simply runSim which will call them all
     #however if more refined control is needed, call them one by one and ignore runSim
-    def __initializeSimulation(self):
+    def initializeSimulation(self):
         self.simDLL_m.initializeSimulationWrapper(self.simulationptr)
 
-    def __copyDataToGPU(self):
+    def copyDataToGPU(self):
         self.simDLL_m.copyDataToGPUWrapper(self.simulationptr)
 
-    def __iterateSimulation(self, numberOfIterations):
+    def iterateSimulation(self, numberOfIterations):
         self.simDLL_m.iterateSimulationWrapper(self.simulationptr, numberOfIterations)
 
-    def __copyDataToHost(self):
+    def copyDataToHost(self):
         self.simDLL_m.copyDataToHostWrapper(self.simulationptr)
 
-    def __freeGPUMemory(self):
+    def freeGPUMemory(self):
         self.simDLL_m.freeGPUMemoryWrapper(self.simulationptr)
 
-    def __prepareResults(self):
+    def prepareResults(self):
         return self.simDLL_m.prepareResultsWrapper(self.simulationptr)
 
 

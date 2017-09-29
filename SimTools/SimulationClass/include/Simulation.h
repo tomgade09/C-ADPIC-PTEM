@@ -15,6 +15,7 @@ protected:
 	const int numberOfParticleTypes_m;
 	const int numberOfParticlesPerType_m;
 	const int numberOfAttributesTracked_m;
+	std::string rootdir_m;
 
 	//Data Array Pointers
 	double*** particles_m{ nullptr };
@@ -34,9 +35,9 @@ protected:
 	bool resultsPrepared_m{ 0 };
 	
 public:
-	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt):
+	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
 		numberOfParticleTypes_m{ numberOfParticleTypes }, numberOfParticlesPerType_m{ numberOfParticlesPerType },
-		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }
+		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }, rootdir_m{ rootdir }
 	{
 		//Form the particle array, boolean "inSim" array, escaped particle count array, and set "inSim" to true for each particle
 		particles_m = new double**[numberOfParticleTypes_m];
@@ -112,6 +113,7 @@ public:
 	//Array tools
 	virtual void saveParticleAttributeToDisk(int particleIndex, int attributeIndex, const char* foldername, const char* name);//what is written to disk needs to be tested - make sure right attributes are in the right file
 	virtual void serializeParticleArray(bool excludeOutOfSim=true);//tested
+	virtual void loadFileIntoParticleAttribute(int particleIndex, int attributeIndex, const char* foldername, const char* name);
 	
 	//Field tools
 	virtual double calculateBFieldAtZandTime(double z, double time) = 0;

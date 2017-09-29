@@ -65,6 +65,18 @@ void Simulation::saveParticleAttributeToDisk(int particleIndex, int attributeInd
 	fileIO::writeDblBin(fn.c_str(), particles_m[particleIndex][attributeIndex], numberOfParticlesPerType_m);
 }
 
+void Simulation::loadFileIntoParticleAttribute(int particleIndex, int attributeIndex, const char* foldername, const char* name)
+{
+	if (initialized_m)
+	{
+		std::cout << "Warning (loadFileToParticleAttribute): Simulation has been initialized.  Any existing data will be overwritten!!\n";
+	}
+	delete[] particles_m[particleIndex][attributeIndex];
+	std::string fn{ foldername };
+	fn = fn + name;
+	particles_m[particleIndex][attributeIndex] = fileIO::readDblBin(fn.c_str(), numberOfParticlesPerType_m);
+}
+
 void Simulation::serializeParticleArray(bool excludeOutOfSim)
 {//Array is structured as: [numberOfParticleTypes_m, numberOfAttributesTracked_m, number of particles[type=0] in sim,
  //part[type=0][attr=0][num=0] data, part[type=0][attr=0][num=1] data...part[type=0][attr=1][num=0] data, part[type=0][attr=1][num=1] data...
@@ -77,7 +89,7 @@ void Simulation::serializeParticleArray(bool excludeOutOfSim)
  //Note: this is just one way of doing it.  The function is virtual so it can be overwritten in derived classes if desired.
 	if (particlesSerialized_m != nullptr)
 	{
-		std::cout << "Warning: Serialized Particle array in class in NOT nullptr.  This means something has been assigned to it previously.  ";
+		std::cout << "Warning (serializeParticleArray): Array in class in NOT nullptr.  This means something has been assigned to it previously.  ";
 		std::cout << "Assigning pointer to vector<void*> otherMemoryPointers.  It's your responsibility to go delete it (or use again).\n";
 		otherMemoryPointers_m.push_back(particlesSerialized_m);
 		std::cout << "Vector index at: " << otherMemoryPointers_m.size() - 1;

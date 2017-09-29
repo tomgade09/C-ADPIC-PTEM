@@ -20,11 +20,24 @@ shutil.copy(srcfile, './')
 
 dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
 
+def terminateSimulation170925(simptr):
+    simDLL = ctypes.CDLL(dllLocation)
+    simDLL.terminateSimulation170925.argtypes = (ctypes.c_void_p,)
+    simDLL.terminateSimulation170925.restype = None
+    simDLL.terminateSimulation170925(simptr)
+
 def simulationRunMain():
 
     sim = Simulation(rootdir, dllLocation)
 
-    results = sim.runSim(10000)
+    #results = sim.runSim(10000)
+    sim.initializeSimulation()
+    sim.copyDataToGPU()
+    sim.iterateSimulation(10000)
+    sim.copyDataToHost()
+    sim.freeGPUMemory()
+    sim.prepareResults()
+    results = sim.getResultsfrom3D(True)
 
     electrons = len(results[0][0])
     ions = len(results[1][0])
@@ -32,6 +45,8 @@ def simulationRunMain():
     print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
     fields = sim.fieldsAtAllZ(0.0, 1000, (10 - 8.371/6.371)/ 1000, 8.371/6.371)
+
+    terminateSimulation170925(sim.simulationptr)
 
     #wrong_para = 0
     #wrong_perp = 0

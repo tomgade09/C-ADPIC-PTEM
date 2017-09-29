@@ -12,7 +12,8 @@ double Simulation170925::calculateBFieldAtZandTime(double z, double time)
 
 double Simulation170925::calculateEFieldAtZandTime(double z, double time)
 {
-	return EFieldatZ(getPointerToElectricFieldData(), z, time);
+	//return EFieldatZ(getPointerToElectricFieldData(), z, time);
+	return EFieldatZ(z, time);
 }
 
 void Simulation170925::convertVPerpToMu()

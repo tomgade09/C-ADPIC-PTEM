@@ -124,7 +124,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 			inSimBool[iii] = true;
 			v_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
 			numEscaped[iii] += 1;
-			if (z_d[iii] < IONSPH_MIN_Z + 0.01)
+			if (z_d[iii] < IONSPH_MIN_Z)
 			{
 				z_d[iii] = IONSPH_MIN_Z + 0.01;
 				v_d[iii] = abs(v_d[iii]);

@@ -20,7 +20,7 @@ const int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) }; //Global vars - not 
 const int BOOLARRAY_BYTES{ NUMPARTICLES * sizeof(bool) };
 const int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
-__host__ __device__ double EFieldatZ(double** LUT, double z, double simtime)
+__host__ __device__ double EFieldatZ(double z, double simtime)
 {//E Field in the direction of B (radially outward)
 	if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
 		return 0.0;
@@ -40,8 +40,8 @@ __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
 
 __device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, long long id, double mean, double sigma)
 {
-	curandStateMRG32k3a localState = state[id]; //not sure if this is faster or not...rather than just accessing the state at its original location
-
+	curandStateMRG32k3a localState = state[id];
+	
 	double res = sigma * curand_normal_double(&localState) + mean;
 	state[id] = localState;
 
@@ -52,11 +52,11 @@ __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Four
 {//args array: [t_RK, vz, mu, q, m, pz_0, simtime]
 	double F_lor, F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
-
+	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(nullptr, ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
-	//Mirror force - look at again
+	//Mirror force
 	F_mir = -args[2] * (-3 / (ztmp * pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 3))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
 
 	return (F_lor + F_mir) / args[4];
@@ -81,7 +81,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen)
 	funcArg[0] = DT;
 	funcArg[1] = y_0 + k3 * funcArg[0];
 	k4 = accel1dCUDA(funcArg, arrayLen); //k4 = f(t_n + h, y_n + h k3)
-
+	
 	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns units of y, not dy / dt
 }
 
@@ -103,7 +103,6 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 		q = 1.0;
 	}
 
-//#define CUDANORMAL_TEST
 #ifdef CUDANORMAL_TEST
 	v_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ));
 	mu_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)) * 1e-21;
@@ -133,7 +132,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 			inSimBool[iii] = true;
 			v_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
 			numEscaped[iii] += 1;
-			if (z_d[iii] < IONSPH_MIN_Z + 0.01)
+			if (z_d[iii] < IONSPH_MIN_Z)
 			{
 				z_d[iii] = IONSPH_MIN_Z + 0.01;
 				v_d[iii] = abs(v_d[iii]);
@@ -144,8 +143,8 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 				v_d[iii] = -abs(v_d[iii]);
 			}
 			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[iii], simtime);
-		}//end if checking if particle is in sim
-	}//end if checking for REPLENISH_E_I flag
+		}
+	}
 
 	if (inSimBool[iii])
 	{//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime]
@@ -176,7 +175,7 @@ void Simulation170925::initializeSimulation()
 			}
 			else
 			{
-				particles_m[iii][2][jjj] = MAGSPH_MAX_Z + 0.01;
+				particles_m[iii][2][jjj] = MAGSPH_MAX_Z - 0.01;
 				particles_m[iii][0][jjj] = -abs(particles_m[iii][0][jjj]);
 			}
 		}//end for jjj

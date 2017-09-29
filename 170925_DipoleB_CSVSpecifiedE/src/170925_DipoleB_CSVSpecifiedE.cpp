@@ -22,7 +22,8 @@
 #include "include\api.h"
 #include "include\Simulation170925.h"
 
-double EFieldatZ(double** LUT, double z, double simtime);
+//double EFieldatZ(double** LUT, double z, double simtime);
+double EFieldatZ(double z, double simtime);
 double BFieldatZ(double z, double simtime);
 
 DLLEXPORT void resetParticlesEscapedCountWrapper(Simulation170925* simulation)
@@ -40,4 +41,10 @@ DLLEXPORT Simulation* createSimulation170925(const char* rootdir)
 	Simulation* ret = new Simulation170925(2, NUMPARTICLES, 3, DT, rootdir, "ez.out");
 
 	return ret;
+}
+
+
+DLLEXPORT void terminateSimulation170925(Simulation170925* simulation)
+{
+	delete simulation;
 }

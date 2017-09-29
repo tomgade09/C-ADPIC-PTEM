@@ -31,6 +31,8 @@
 //Useful snippets
 //pitch[iii] = atan2(vperp[iii], vpara[iii]) * 180 / C_PI;
 
+#include <vector>
+
 struct retStruct
 {
 	double*** dblRes{ nullptr };
@@ -39,6 +41,40 @@ struct retStruct
 	double* E_z{ nullptr };
 	double* B_E_z_dim{ nullptr };
 };
+
+double*** loadAttrsFromFiles()
+{
+	std::string importdir{ "C:\\Users\\Tom\\src\\geoplasmasim\\170925_DipoleB_CSVSpecifiedE" };
+	importdir = importdir + "\\in\\data\\";
+	std::vector<std::vector<std::string>> files;
+	files.resize(2);
+	files[0].resize(3);
+	files[1].resize(3);
+	files[0][0] = "e_vpara.bin";
+	files[0][1] = "e_vperp.bin";
+	files[0][2] = "e_z.bin";
+	files[1][0] = "i_vpara.bin";
+	files[1][1] = "i_vperp.bin";
+	files[1][2] = "i_z.bin";
+	
+	double*** ret = new double**[2];
+	ret[0] = new double*[4];
+	ret[1] = new double*[4];
+
+	for (int iii = 0; iii < 2; iii++)
+	{
+		for (int jjj = 0; jjj < 3; jjj++)
+		{
+			std::string filename{ importdir };
+			filename = filename + files[iii][jjj];
+			ret[iii][jjj] = fileIO::readDblBin(filename.c_str(), NUMPARTICLES);
+		}
+	}
+	ret[0][4] = nullptr;
+	ret[1][4] = nullptr;
+
+	return ret;
+}
 
 retStruct dllmain()
 {
@@ -74,8 +110,12 @@ retStruct dllmain()
 	dbls[0] = electrons;
 	dbls[1] = ions;
 
-	writeParticlesToBin(dbls, "./particles_init");
+	//double*** dbls = loadAttrsFromFiles();
+	//electrons = dbls[0];
+	//ions = dbls[1];
 
+	writeParticlesToBin(dbls, "./particles_init");
+	
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{//converting vperp (variable) to mu (constant) - only has to be done once
 		electrons[1][iii] = 0.5 * MASS_ELECTRON * electrons[1][iii] * electrons[1][iii] / BFieldatZ(electrons[2][iii], 0.0);
@@ -83,6 +123,20 @@ retStruct dllmain()
 		e_in_sim[iii] = true;
 		i_in_sim[iii] = true;
 	}
+
+	retStruct ret;
+
+	bool** bools = new bool*[2];
+	bools[0] = e_in_sim;
+	bools[1] = i_in_sim;
+
+	ret.dblRes = dbls;
+	ret.inSim = bools;
+	ret.B_z = B_z;
+	ret.E_z = E_z;
+	ret.B_E_z_dim = B_E_z_dim;
+
+	//return ret;
 
 	std::chrono::steady_clock::time_point cudaBegin, cudaEnd;
 	cudaBegin = std::chrono::steady_clock::now();
@@ -102,18 +156,6 @@ retStruct dllmain()
 
 	writeParticlesToBin(dbls, "./particles_final");
 
-	retStruct ret;
-
-	bool** bools = new bool*[2];
-	bools[0] = e_in_sim;
-	bools[1] = i_in_sim;
-
-	ret.dblRes = dbls;
-	ret.inSim = bools;
-	ret.B_z = B_z;
-	ret.E_z = E_z;
-	ret.B_E_z_dim = B_E_z_dim;
-
     return ret;
 }
 
@@ -131,8 +173,10 @@ DLLEXPORT double* dllmainPyWrapper(char* notusednow)
 	for (int iii = 0; iii < NUMPARTICLES; iii++)
 	{
 		if (yutyut.inSim[0][iii])
+		//if(true)
 			e_in_sim++;
 		if (yutyut.inSim[1][iii])
+		//if(true)
 			i_in_sim++;
 	}
 
@@ -158,6 +202,7 @@ DLLEXPORT double* dllmainPyWrapper(char* notusednow)
 		for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
 		{
 			if (yutyut.inSim[0][jjj])
+			//if(true)
 			{
 				yut[eidx] = yutyut.dblRes[0][iii][jjj];
 				eidx++;
@@ -171,6 +216,7 @@ DLLEXPORT double* dllmainPyWrapper(char* notusednow)
 				}
 			}
 			if (yutyut.inSim[1][jjj])
+			//if(true)
 			{
 				yut[3 * e_in_sim + iidx] = yutyut.dblRes[1][iii][jjj];
 				iidx++;
