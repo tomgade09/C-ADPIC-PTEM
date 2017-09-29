@@ -6,14 +6,34 @@ DLLEXPORT double getSimulationTimeWrapper(Simulation* simulation)
 	return simulation->getTime();
 }
 
+DLLEXPORT double getDtWrapper(Simulation* simulation)
+{
+	return simulation->getdt();
+}
+
 DLLEXPORT void incrementSimulationTimeByDtWrapper(Simulation* simulation)
 {
 	simulation->incTime();
 }
 
-DLLEXPORT void resetParticlesEscapedCountWrapper(Simulation* simulation)
+DLLEXPORT int getNumberOfParticleTypesWrapper(Simulation* simulation)
 {
-	simulation->resetParticlesEscapedCount();
+	return simulation->getNumberOfParticleTypes();
+}
+
+DLLEXPORT int getNumberOfParticlesPerTypeWrapper(Simulation* simulation)
+{
+	return simulation->getNumberOfParticlesPerType();
+}
+
+DLLEXPORT int getNumberOfAttributesTrackedWrapper(Simulation* simulation)
+{
+	return simulation->getNumberOfAttributesTracked();
+}
+
+DLLEXPORT bool areResultsPreparedWrapper(Simulation* simulation)
+{
+	return simulation->areResultsPrepared();
 }
 
 //Pointer one liners
@@ -32,8 +52,18 @@ DLLEXPORT double* getPointerToSerializedParticleArrayWrapper(Simulation* simulat
 	return simulation->getPointerToSerializedParticleArray();
 }
 
+DLLEXPORT bool* getPointerToParticlesInSimArrayWrapper(Simulation* simulation, int index)
+{
+	return simulation->getPointerToParticlesInSimArray(index);
+}
+
+DLLEXPORT double* getPointerToSingleParticleAttributeArrayWrapper(Simulation* simulation, int partIndex, int attrIndex)
+{
+	return simulation->getPointerToSingleParticleAttributeArray(partIndex, attrIndex);
+}
+
 //Numerical tools
-DLLEXPORT void generateNormallyDistributedValues(Simulation* simulation, int numberOfNormalAttributes, double* means, double* sigmas)
+DLLEXPORT void generateNormallyDistributedValuesWrapper(Simulation* simulation, int numberOfNormalAttributes, double* means, double* sigmas)
 {
 	simulation->generateNormallyDistributedValues(numberOfNormalAttributes, means, sigmas);
 }
@@ -65,7 +95,7 @@ DLLEXPORT double calculateEFieldAtZandTimeWrapper(Simulation* simulation, double
 }
 
 //Simulation Management Function Wrappers
-DLLEXPORT void initializeWrapper(Simulation* simulation)
+DLLEXPORT void initializeSimulationWrapper(Simulation* simulation)
 {
 	simulation->initializeSimulation();
 }
@@ -85,12 +115,12 @@ DLLEXPORT void copyDataToHostWrapper(Simulation* simulation)
 	simulation->copyDataToHost();
 }
 
-DLLEXPORT void terminateSimulationWrapper(Simulation* simulation)
+DLLEXPORT void freeGPUMemoryWrapper(Simulation* simulation)
 {
-	simulation->terminateSimulation();
+	simulation->freeGPUMemory();
 }
 
-DLLEXPORT double* returnResultsWrapper(Simulation* simulation)
+DLLEXPORT void prepareResultsWrapper(Simulation* simulation)
 {
-	return simulation->returnResults();
+	simulation->prepareResults();
 }

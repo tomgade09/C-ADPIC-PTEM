@@ -12,6 +12,11 @@ void Simulation::generateNormallyDistributedValues(int numberOfNormalAttributesP
 		std::cout << "as 'total number of attributes tracked per particle'.  You WILL get an index error.  Returning without changes.";
 		return;
 	}
+
+	if (initialized_m)
+	{
+		std::cout << "Warning: sim has been initialized.  Anything currently exisiting in particles_m will be overwritten!!\n";
+	}
 	
 	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 	{
@@ -22,10 +27,8 @@ void Simulation::generateNormallyDistributedValues(int numberOfNormalAttributesP
 
 			std::normal_distribution<> data_nd(means[iii * numberOfNormalAttributesPerPart + jjj], sigmas[iii * numberOfNormalAttributesPerPart + jjj]);
 
-			for (int kkk = 0; kkk < numberOfParticlesPerType_m; kkk++)
-			{
-				particles_m[iii][jjj][kkk] = data_nd(mtgen);
-			}//end for kkk
+			for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)
+				particles_m[iii][jjj][kk] = data_nd(mtgen);
 		}//end for jjj
 	}//end for iii
 }//end function
@@ -62,7 +65,7 @@ void Simulation::saveParticleAttributeToDisk(int particleIndex, int attributeInd
 	fileIO::writeDblBin(fn.c_str(), particles_m[particleIndex][attributeIndex], numberOfParticlesPerType_m);
 }
 
-void Simulation::serializeParticleArray()
+void Simulation::serializeParticleArray(bool excludeOutOfSim)
 {//Array is structured as: [numberOfParticleTypes_m, numberOfAttributesTracked_m, number of particles[type=0] in sim,
  //part[type=0][attr=0][num=0] data, part[type=0][attr=0][num=1] data...part[type=0][attr=1][num=0] data, part[type=0][attr=1][num=1] data...
  //number of particles[type=1] in sim,
@@ -76,42 +79,59 @@ void Simulation::serializeParticleArray()
 	{
 		std::cout << "Warning: Serialized Particle array in class in NOT nullptr.  This means something has been assigned to it previously.  ";
 		std::cout << "Assigning pointer to vector<void*> otherMemoryPointers.  It's your responsibility to go delete it (or use again).\n";
-		otherMemoryPointers.push_back(particlesSerialized_m);
-		std::cout << "Vector index at: " << otherMemoryPointers.size();
+		otherMemoryPointers_m.push_back(particlesSerialized_m);
+		std::cout << "Vector index at: " << otherMemoryPointers_m.size() - 1;
 	}
 
-	std::vector<int> part_in_sim;
-	part_in_sim.reserve(numberOfParticleTypes_m);
+	std::vector<int> partInSimCnt;
+	partInSimCnt.reserve(numberOfParticleTypes_m);
 	long arraySize{ 2 + numberOfParticleTypes_m };
 	
 	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 	{
-		part_in_sim[iii] = 0;
+		partInSimCnt[iii] = 0;
 		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
 		{
-			if (particlesInSim_m[iii][jjj])
-				part_in_sim[iii]++;
+			if (excludeOutOfSim)
+			{
+				if (particlesInSim_m[iii][jjj])
+					partInSimCnt[iii]++;
+			}
+			else
+				partInSimCnt[iii]++;
 		}
-		arraySize += part_in_sim[iii] * numberOfAttributesTracked_m;
+		arraySize += partInSimCnt[iii] * numberOfAttributesTracked_m;
 	}
 	particlesSerialized_m = new double[arraySize];
 
 	particlesSerialized_m[0] = static_cast<double>(numberOfParticleTypes_m);
 	particlesSerialized_m[1] = static_cast<double>(numberOfAttributesTracked_m);
 
+	long prevPartInSim{ 0 };
 	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 	{
-		particlesSerialized_m[2 + iii + iii * numberOfAttributesTracked_m * part_in_sim[iii]] = static_cast<double>(part_in_sim[iii]);
+		particlesSerialized_m[2 + iii + iii * numberOfAttributesTracked_m * prevPartInSim] = static_cast<double>(partInSimCnt[iii]);
 		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
 		{
-			for (int kkk = 0; kkk < part_in_sim[iii]; kkk++)
+			long particleIndex{ 0 };
+			for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)
 			{
-				if (particlesInSim_m[iii][kkk])
+				if (excludeOutOfSim)
 				{
-					long eidx{ 3 + iii + iii * numberOfAttributesTracked_m * part_in_sim[iii] + jjj * part_in_sim[iii] + kkk };
-					particlesSerialized_m[eidx] = particles_m[iii][jjj][kkk];
-				}//end if
-			}//end kkk
+					if (particlesInSim_m[iii][kk])
+					{
+						long eidx{ 3 + iii + iii * numberOfAttributesTracked_m * prevPartInSim + jjj * partInSimCnt[iii] + particleIndex };
+						particleIndex++;
+						particlesSerialized_m[eidx] = particles_m[iii][jjj][kk];
+					}
+				}
+				else
+				{
+					long eidx{ 3 + iii * numberOfAttributesTracked_m * numberOfParticlesPerType_m + jjj * numberOfParticlesPerType_m + kk };
+					particlesSerialized_m[eidx] = particles_m[iii][jjj][kk];
+				}
+			}//end kk
 		}//end jjj
+		prevPartInSim = partInSimCnt[iii];
 	}//end iii
 }//end function

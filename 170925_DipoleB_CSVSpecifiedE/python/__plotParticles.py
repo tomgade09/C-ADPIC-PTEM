@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 
-def plotParticles(v_e_para, v_e_perp, v_i_para, v_i_perp, z_e, z_i, B_z, E_z, B_E_z_dim):
+def plotParticles(v_e_para, v_e_perp, v_i_para, v_i_perp, z_e, z_i, B_z, E_z, B_E_z_dim, showplot):
     plt.figure(1)
     plt.plot(v_e_para, v_e_perp, '.')
     #plt.axis([-5,5,0.0,5])
@@ -66,4 +66,5 @@ def plotParticles(v_e_para, v_e_perp, v_i_para, v_i_perp, z_e, z_i, B_z, E_z, B_
     plt.ylabel('E (V/m)')
     plt.savefig('E(z).png')
 
-    plt.show()
+    if showplot:
+        plt.show()

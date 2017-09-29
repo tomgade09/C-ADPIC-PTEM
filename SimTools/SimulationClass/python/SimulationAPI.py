@@ -1,158 +1,233 @@
 from __future__ import absolute_import, division, print_function
-
-import os, sys, inspect
-a = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
-
 import ctypes
 
-dllLocation = './../vs/build/SimulationClass.dll'
+class Simulation:
+    def __init__(self, rootdir, DLLloc):
+        self.dllLoc_m = DLLloc
+        self.rootdir_m = rootdir
+        self.simDLL_m = ctypes.CDLL(self.dllLoc_m)
 
-simDLL = ctypes.CDLL(dllLocation)
+        #One liner functions
+        self.simDLL_m.getSimulationTimeWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getSimulationTimeWrapper.restype = ctypes.c_double
+        self.simDLL_m.getDtWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getDtWrapper.restype = ctypes.c_double
+        self.simDLL_m.incrementSimulationTimeByDtWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.incrementSimulationTimeByDtWrapper.restype = None
+        self.simDLL_m.getNumberOfParticleTypesWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfParticleTypesWrapper.restype = ctypes.c_int
+        self.simDLL_m.getNumberOfParticlesPerTypeWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfParticlesPerTypeWrapper.restype = ctypes.c_int
+        self.simDLL_m.getNumberOfAttributesTrackedWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfAttributesTrackedWrapper.restype = ctypes.c_int
+        self.simDLL_m.areResultsPreparedWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.areResultsPreparedWrapper.restype = ctypes.c_bool
+        self.simDLL_m.resetParticlesEscapedCountWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.resetParticlesEscapedCountWrapper.restype = None
 
-#From Simulation
-#One liner functions
-def getSimulationTimeCPP(simulationptr):
-    simDLL.getSimulationTimeWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.getSimulationTimeWrapper.restype = ctypes.c_double
+        #Pointer one liners
+        self.simDLL_m.getPointerToSerializedParticleArrayWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getPointerToSerializedParticleArrayWrapper.restype = ctypes.POINTER(ctypes.c_double)
+        self.simDLL_m.getPointerToParticlesInSimArrayWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int)
+        self.simDLL_m.getPointerToParticlesInSimArrayWrapper.restype = ctypes.POINTER(ctypes.c_bool)
+        self.simDLL_m.getPointerToSingleParticleAttributeArrayWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.getPointerToSingleParticleAttributeArrayWrapper.restype = ctypes.POINTER(ctypes.c_double)
 
-    return simDLL.getSimulationTimeWrapper(simulationptr)
+        #Numerical tools
+        self.simDLL_m.generateNormallyDistributedValuesWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double))
+        self.simDLL_m.generateNormallyDistributedValuesWrapper.restype = None
+        self.simDLL_m.calculateMeanOfParticleAttributeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
+        self.simDLL_m.calculateMeanOfParticleAttributeWrapper.restype = ctypes.c_double
+        self.simDLL_m.calculateStdDevOfParticleAttributeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.calculateStdDevOfParticleAttributeWrapper.restype = ctypes.c_double
 
-def incrementSimulationTimeByDtCPP(simulationptr):
-    simDLL.incrementSimulationTimeByDtWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.incrementSimulationTimeByDtWrapper.restype = None
+        #Array tools
+        self.simDLL_m.serializeParticleArrayWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.serializeParticleArrayWrapper.restype = None
+        self.simDLL_m.calculateBFieldAtZandTimeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
+        self.simDLL_m.calculateBFieldAtZandTimeWrapper.restype = ctypes.c_double
+        self.simDLL_m.calculateEFieldAtZandTimeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
+        self.simDLL_m.calculateEFieldAtZandTimeWrapper.restype = ctypes.c_double
 
-    simDLL.incrementSimulationTimeByDtWrapper(simulationptr)
+        #Simulation management
+        self.simDLL_m.createSimulation170925.argtypes = (ctypes.c_char_p,)
+        self.simDLL_m.createSimulation170925.restype = ctypes.c_void_p
+        self.simDLL_m.initializeSimulationWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.initializeSimulationWrapper.restype = None
+        self.simDLL_m.copyDataToGPUWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.copyDataToGPUWrapper.restype = None
+        self.simDLL_m.iterateSimulationWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int)
+        self.simDLL_m.iterateSimulationWrapper.restype = None
+        self.simDLL_m.copyDataToHostWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.copyDataToHostWrapper.restype = None
+        self.simDLL_m.freeGPUMemoryWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.freeGPUMemoryWrapper.restype = None
+        self.simDLL_m.prepareResultsWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.prepareResultsWrapper.restype = ctypes.POINTER(ctypes.c_double)
 
-def resetParticlesEscapedCountCPP(simulationptr):
-    simDLL.resetParticlesEscapedCountWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.resetParticlesEscapedCountWrapper.restype = None
+        #Now code for init
+        crootdir = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
+        self.simulationptr = ctypes.c_void_p
+        self.simulationptr = self.simDLL_m.createSimulation170925(crootdir)
 
-    simDLL.resetParticlesEscapedCountWrapper(simulationptr)
+        self.types_m = self.simDLL_m.getNumberOfParticleTypesWrapper(self.simulationptr)
+        self.attr_m = self.simDLL_m.getNumberOfAttributesTrackedWrapper(self.simulationptr)
+        self.numPart_m = self.simDLL_m.getNumberOfParticlesPerTypeWrapper(self.simulationptr)
+        self.dt_m = self.simDLL_m.getDtWrapper(self.simulationptr)
 
+        return
+    
+    
 
-#Pointer one liners
-def getPointerTo3DParticleArrayCPP(simulationptr): #Test to see if this is working - will python recognize a triple pointer?
-    simDLL.getPointerTo3DParticleArrayWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.getPointerTo3DParticleArrayWrapper.restype = ctypes.POINTER(ctypes.POINTER(ctypes.POINTER(ctypes.c_double)))
+    #Run Simulation
+    def runSim(self, iterations, inSimOnly=True):
+        self.__initializeSimulation()
+        self.__copyDataToGPU()
+        self.__iterateSimulation(iterations)
+        self.__copyDataToHost()
+        self.__freeGPUMemory()
+        self.__prepareResults()
+        return self.getResultsfrom3D(inSimOnly)
 
-    #convert to python-easy array
-    return simDLL.getPointerTo3DParticleArrayWrapper(simulationptr)
+    ###Member functions for Simulation class
+    #One liner functions
+    def getTime(self):
+        return self.simDLL_m.getSimulationTimeWrapper(self.simulationptr)
 
-def getPointerToSingleParticleTypeArrayCPP(simulationptr, index): #Test to see if this is working - will python recognize a double pointer?
-    simDLL.getPointerToSingleParticleTypeArrayWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int)
-    simDLL.getPointerToSingleParticleTypeArrayWrapper.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+    def incTime(self):
+        self.simDLL_m.incrementSimulationTimeByDtWrapper(self.simulationptr)
 
-    #convert to python-easy array
-    return simDLL.getPointerToSingleParticleTypeArrayWrapper(simulationptr, index)
+    def resetEscapedCount(self):
+        self.simDLL_m.resetParticlesEscapedCountWrapper(self.simulationptr)
+    
+    #Pointer one liners (one liners in CPP obv, not Python)
+    def getResultsfromSerialized(self):
+        serArray = self.simDLL_m.getPointerToSerializedParticleArrayWrapper(self.simulationptr)
+        if (not(serArray)):
+            return [[0,0,0],[0,0,0]]#needs to be tested
+        
+        attributesTracked = int(serArray[1])
+        if not(attributesTracked == self.attr_m):
+            print("Error in getResultsfromSerialized (python): Number of attributes reported in serialized array does not match what was reported from the C++ class.  Something is amiss.")
+            print("Attributes in serialized array: ", attributesTracked, "  Attributes from C++ class: ", self.attr_m)
+            print("Returning.")
+            return [[0,0,0],[0,0,0]]
 
-def getPointerToSerializedParticleArrayCPP(simulationptr): #Test to see if this is working - will python recognize a double pointer?
-    simDLL.getPointerToSerializedParticleArrayWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.getPointerToSerializedParticleArrayWrapper.restype = ctypes.POINTER(ctypes.c_double)
+        electrons = int(serArray[2])
+        ions = int(serArray[electrons * attributesTracked + 3])
+        length = (electrons + ions) * attributesTracked + 4
 
-    #convert to python-easy array
-    return simDLL.getPointerToSerializedParticleArrayWrapper(simulationptr)
+        v_e_para = []#code is specific to electrons/ions and 3 attributes - could make more general with loops, arrays.append(size), etc
+        v_e_perp = []
+        z_e = []
+        v_i_para = []
+        v_i_perp = []
+        z_i = []
 
+        for iii in range(electrons):
+            v_e_para.append(serArray[iii + 3]) 
+            v_e_perp.append(serArray[iii + electrons + 3])
+            z_e.append(serArray[iii + 2 * electrons + 3])
+        
+        for iii in range(ions):
+            v_i_para.append(serArray[iii + 3 * electrons + 4])
+            v_i_perp.append(serArray[iii + 3 * electrons + ions + 4])
+            z_i.append(serArray[iii + 3 * electrons + 2 * ions + 4])
 
-#Numerical tools
-def generateNormallyDistributedCPP(simulationptr, numberOfNormalAttributes, means, sigmas): #Test to see if this is working - will python recognize a double pointer?
-    simDLL.generateNormallyDistributedValues.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double))
-    simDLL.generateNormallyDistributedValues.restype = None
+        return [[v_e_para, v_e_perp, z_e], [v_i_para, v_i_perp, z_i]]
 
-    C_DOUBLEA = ctypes.c_double * numberOfNormalAttributes
-    meanscpp = C_DOUBLEA()
-    sigmascpp = C_DOUBLEA()
+    def getPartInSimBoolArray(self):
+        ret = []
+        partbool = []
+        for iii in range(self.types_m):
+            partbool_c = self.simDLL_m.getPointerToParticlesInSimArrayWrapper(self.simulationptr, iii)
+            for jjj in range(self.numPart_m):
+                partbool.append(partbool_c[jjj])
+            ret.append(partbool)
+            partbool = []
+        return ret
 
-    for iii in range(numberOfNormalAttributes):
-        meanscpp[iii] = means[iii]
-        sigmascpp[iii] = sigmas[iii]
+    def getResultsfrom3D(self, inSimOnly=False):
+        if (inSimOnly):
+            inSimBoolArray = self.getPartInSimBoolArray()
+        
+        ret = [] #Generic form of serialized array above - gets pointers to 1D component arrays of the 3D c++ array and reconstructs the array in python
+        partattr = []
+        partdbl = []
+        for iii in range(self.types_m):
+            for jjj in range(self.attr_m):
+                partdbl_c = self.simDLL_m.getPointerToSingleParticleAttributeArrayWrapper(self.simulationptr, iii, jjj)
+                for kk in range(self.numPart_m):
+                   if(inSimOnly):
+                       if(inSimBoolArray[iii][kk]):
+                           partdbl.append(partdbl_c[kk])
+                   else:
+                       partdbl.append(partdbl_c[kk])
+                partattr.append(partdbl)
+                partdbl = []
+            ret.append(partattr)
+            partattr = []
+        return ret
 
-    simDLL.generateNormallyDistributedValues(simulationptr, numberOfNormalAttributes, meanscpp, sigmascpp)
+    #Numerical tools
+    def __generateNormallyDistributedCPP(self, numberOfNormalAttributes, means, sigmas):
+        C_DOUBLEA = ctypes.c_double * numberOfNormalAttributes#generally, a constructor in the derived c++ class will take care of this - that's why __
+        meanscpp = C_DOUBLEA()
+        sigmascpp = C_DOUBLEA()
 
-def calculateMeanOfParticleAttributeCPP(simulationptr, particleIndex, attributeIndex, absValueBool=False):
-    simDLL.calculateMeanOfParticleAttributeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
-    simDLL.calculateMeanOfParticleAttributeWrapper.restype = ctypes.c_double
+        for iii in range(numberOfNormalAttributes):
+            meanscpp[iii] = means[iii]
+            sigmascpp[iii] = sigmas[iii]
 
-    return simDLL.calculateMeanOfParticleAttributeWrapper(simulationptr, particleIndex, attributeIndex, absValueBool)
+        self.simDLL_m.generateNormallyDistributedValuesWrapper(self.simulationptr, numberOfNormalAttributes, meanscpp, sigmascpp)
 
-def calculateStdDevOfParticleAttributeCPP(simulationptr, particleIndex, attributeIndex):
-    simDLL.calculateStdDevOfParticleAttributeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
-    simDLL.calculateStdDevOfParticleAttributeWrapper.restype = ctypes.c_double
+    def meanOfPartAttr(self, particleIndex, attributeIndex, absValueBool=False):
+        return self.simDLL_m.calculateMeanOfParticleAttributeWrapper(self.simulationptr, particleIndex, attributeIndex, absValueBool)
 
-    return simDLL.calculateStdDevOfParticleAttributeWrapper(simulationptr, particleIndex, attributeIndex)
+    def stddevOfPartAttr(self, particleIndex, attributeIndex):
+        return self.simDLL_m.calculateStdDevOfParticleAttributeWrapper(self.simulationptr, particleIndex, attributeIndex)
 
+    #Array tools
+    def serializeArray(self):
+        self.simDLL_m.serializeParticleArrayWrapper(self.simulationptr)
 
-#Array tools
-def serializeParticleArrayCPP(simulationptr):
-    simDLL.serializeParticleArrayWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.serializeParticleArrayWrapper.restype = None
+    def BFieldatZandT(self, z, time):
+        return self.simDLL_m.calculateBFieldAtZandTimeWrapper(self.simulationptr, z, time)
 
-    simDLL.serializeParticleArrayWrapper(simulationptr)
+    def EFieldatZandT(self, z, time):
+        return self.simDLL_m.calculateEFieldAtZandTimeWrapper(self.simulationptr, z, time)
 
-def calculateBFieldAtZandTimeCPP(simulationptr, z, time):
-    simDLL.calculateBFieldAtZandTimeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-    simDLL.calculateBFieldAtZandTimeWrapper.restype = ctypes.c_double
+    def fieldsAtAllZ(self, time, bins, binsize, z0):
+        B_z = []
+        E_z = []
+        B_E_z_dim = []
+        for iii in range(bins):
+            B_z.append(self.BFieldatZandT(z0 + binsize * iii, time))
+            E_z.append(self.EFieldatZandT(z0 + binsize * iii, time))
+            B_E_z_dim.append(z0 + binsize * iii)
+        return [B_z, E_z, B_E_z_dim]
 
-    return simDLL.calculateBFieldAtZandTimeWrapper(simulationptr, z, time)
+    #Simulation management
+    #Functions are prepended with __ because the intent is to simply runSim which will call them all
+    #however if more refined control is needed, call them one by one and ignore runSim
+    def __initializeSimulation(self):
+        self.simDLL_m.initializeSimulationWrapper(self.simulationptr)
 
-def calculateEFieldAtZandTimeCPP(simulationptr, z, time):
-    simDLL.calculateEFieldAtZandTimeWrapper.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-    simDLL.calculateEFieldAtZandTimeWrapper.restype = ctypes.c_double
+    def __copyDataToGPU(self):
+        self.simDLL_m.copyDataToGPUWrapper(self.simulationptr)
 
-    return simDLL.calculateEFieldAtZandTimeWrapper(simulationptr, z, time)
+    def __iterateSimulation(self, numberOfIterations):
+        self.simDLL_m.iterateSimulationWrapper(self.simulationptr, numberOfIterations)
 
-#Simulation Management Function Wrappers
-def initializeSimCPP(simulationptr):
-    simDLL.initializeWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.initializeWrapper.restype = None
+    def __copyDataToHost(self):
+        self.simDLL_m.copyDataToHostWrapper(self.simulationptr)
 
-    simDLL.initializeWrapper(simulationptr)
+    def __freeGPUMemory(self):
+        self.simDLL_m.freeGPUMemoryWrapper(self.simulationptr)
 
-def copyDataToGPUCPP(simulationptr):
-    simDLL.copyDataToGPUWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.copyDataToGPUWrapper.restype = None
-
-    simDLL.copyDataToGPUWrapper(simulationptr)
-
-def iterateSimulationCPP(simulationptr, numberOfIterations):
-    simDLL.iterateSimulationWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int)
-    simDLL.iterateSimulationWrapper.restype = None
-
-    simDLL.iterateSimulationWrapper(simulationptr, numberOfIterations)
-
-def copyDataToHostCPP(simulationptr):
-    simDLL.copyDataToHostWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.copyDataToHostWrapper.restype = None
-
-    simDLL.copyDataToHostWrapper(simulationptr)
-
-def terminateSimulationWrapper(simulationptr):
-    simDLL.terminateSimulationWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.terminateSimulationWrapper.restype = None
-
-    simDLL.terminateSimulationWrapper(simulationptr)
-
-def returnResultsWrapper(simulationptr):
-    simDLL.returnResultsWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.returnResultsWrapper.restype = ctypes.POINTER(ctypes.c_double)
-
-    return simDLL.returnResultsWrapper(simulationptr)
-
-
-#From Simulation170925
-def getPointerToElectricFieldDataCPP(simulationptr): #Test to see if this is working - will python recognize a double pointer?
-    simDLL.getPointerToElectricFieldDataWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.getPointerToElectricFieldDataWrapper.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
-
-    #convert to python-easy array
-    return simDLL.getPointerToElectricFieldDataWrapper(simulationptr)
-
-#def getPointerToMagneticFieldDataCPP(simulationptr): #Test to see if this is working - will python recognize a double pointer?
-    #simDLL.getPointerToMagneticFieldDataWrapper.argtypes = (ctypes.c_void_p,)
-    #simDLL.getPointerToMagneticFieldDataWrapper.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
-
-    #convert to python-easy array
-    #return simDLL.getPointerToMagneticFieldDataWrapper(simulationptr)
+    def __prepareResults(self):
+        return self.simDLL_m.prepareResultsWrapper(self.simulationptr)
 
 
 if __name__ == '__main__':
-    print("SimulationAPI.py is not meant to be called as main.  Run a simulation file and that will import this automatically.")
+    print("SimulationAPI.py is not meant to be called as main.  Run a simulation file and that will import this.")

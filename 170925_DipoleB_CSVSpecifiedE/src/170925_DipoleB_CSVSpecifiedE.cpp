@@ -11,8 +11,8 @@
 	//>> calculateFieldsAtTime
 	//>> returnResults
 	//>> ~Simulation
-- One last look for correctness
-- Modify Python script
+	//- Modify Python script
+	//- One last look for correctness
 - Test code for similarity to last sim
 
 - Code to read CSV into array and save into simulation
@@ -25,17 +25,9 @@
 double EFieldatZ(double** LUT, double z, double simtime);
 double BFieldatZ(double z, double simtime);
 
-DLLEXPORT double** getPointerToElectricFieldDataWrapper(Simulation170925* simulation);
-//DLLEXPORT double** getPointerToMagneticFieldDataWrapper(Simulation* simulation);
-
-DLLEXPORT double getEatZ(double** LUT, double z, double simtime)
+DLLEXPORT void resetParticlesEscapedCountWrapper(Simulation170925* simulation)
 {
-	return EFieldatZ(nullptr, z, simtime);
-}
-
-DLLEXPORT double getBatZ(double z, double simtime)
-{
-	return BFieldatZ(z, simtime);
+	simulation->resetParticlesEscapedCount();
 }
 
 DLLEXPORT double** getPointerToElectricFieldDataWrapper(Simulation170925* simulation)
@@ -43,14 +35,9 @@ DLLEXPORT double** getPointerToElectricFieldDataWrapper(Simulation170925* simula
 	return simulation->getPointerToElectricFieldData();
 }
 
-/*DLLEXPORT double** getPointerToMagneticFieldDataWrapper(Simulation170925* simulation)
+DLLEXPORT Simulation* createSimulation170925(const char* rootdir)
 {
-	return simulation->getPointerToMagneticFieldData();
-}*/
-
-DLLEXPORT Simulation* newSimInitialize()
-{
-	Simulation* ret = new Simulation170925(2, NUMPARTICLES, 3, DT, "ez.out");
+	Simulation* ret = new Simulation170925(2, NUMPARTICLES, 3, DT, rootdir, "ez.out");
 
 	return ret;
 }

@@ -2,7 +2,7 @@
 
 void Simulation170925::setElecMagLUT(const char* filename, int rows, int cols)
 {
-	 elcFieldLUT_m = fileIO::read2DCSV("ez.out", rows, cols, ' ');
+	 elcFieldLUT_m = fileIO::read2DCSV(filename, rows, cols, ' ');
 }
 
 double Simulation170925::calculateBFieldAtZandTime(double z, double time)
@@ -15,19 +15,42 @@ double Simulation170925::calculateEFieldAtZandTime(double z, double time)
 	return EFieldatZ(getPointerToElectricFieldData(), z, time);
 }
 
-double* Simulation170925::returnResults()
+void Simulation170925::convertVPerpToMu()
 {
-	std::string fold;
-	fold = "./particles_final/";
-	std::vector<std::string> names;
-	names.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m);
-	names = { "v_e_para", "mu_e", "z_e", "v_i_para", "mu_i", "z_i" };
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
+	if (mu_m)
 	{
-		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-			saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
+		std::cout << "v_perp has already been converted to mu.  Returning with no changes.\n";
+		return;
 	}
 
+	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
+	{
+		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
+			particles_m[iii][1][jjj] = 0.5 * mass_m[iii] * particles_m[iii][1][jjj] * particles_m[iii][1][jjj] / BFieldatZ(particles_m[iii][2][jjj], simTime_m);
+	}
+	mu_m = true;
+}
+
+void Simulation170925::convertMuToVPerp()
+{
+	if (!mu_m)
+	{
+		std::cout << "Quantity is v_perp (not mu).  Returning with no changes.\n";
+		return;
+	}
+
+	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
+	{
+		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
+			particles_m[iii][1][jjj] = sqrt(2 * particles_m[iii][1][jjj] * BFieldatZ(particles_m[iii][2][jjj], simTime_m) / mass_m[iii]);
+	}
+	
+	mu_m = false;
+}
+
+void Simulation170925::prepareResults()
+{
+	convertMuToVPerp();
 	serializeParticleArray();
-	return getPointerToSerializedParticleArray();
+	resultsPrepared_m = true;
 }

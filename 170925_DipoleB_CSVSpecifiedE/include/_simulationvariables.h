@@ -52,6 +52,6 @@ constexpr double V_SIGMA_SQ{ INITIAL_T_EV * 1.60218e-19 * 2 / (MASS_ELECTRON * N
 
 //Functions I can't bring myself to write a header for
 double BFieldatZ(double z, double simtime);
-double EFieldatZ(double z, double simtime);
+double EFieldatZ(double** LUT, double z, double simtime);
 
 #endif
