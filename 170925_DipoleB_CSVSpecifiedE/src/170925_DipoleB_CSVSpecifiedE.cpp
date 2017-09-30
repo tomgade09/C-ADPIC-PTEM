@@ -31,9 +31,9 @@ DLLEXPORT void resetParticlesEscapedCountWrapper(Simulation170925* simulation)
 	simulation->resetParticlesEscapedCount();
 }
 
-DLLEXPORT double** getPointerToElectricFieldDataWrapper(Simulation170925* simulation)
+DLLEXPORT double* getPointerToElectricFieldDataWrapper(Simulation170925* simulation, int index)
 {
-	return simulation->getPointerToElectricFieldData();
+	return simulation->getPointerToElectricFieldData(index);
 }
 
 DLLEXPORT Simulation* createSimulation170925(const char* rootdir)

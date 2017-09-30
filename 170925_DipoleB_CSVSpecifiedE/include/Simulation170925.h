@@ -6,8 +6,7 @@
 #include "include\fileIO.h"
 
 double BFieldatZ(double z, double simtime);
-//double EFieldatZ(double** LUT, double z, double simtime);
-double EFieldatZ(double z, double simtime);
+double EFieldatZ(double** LUT, double z, double simtime);
 
 class Simulation170925 : public Simulation
 {
@@ -43,24 +42,7 @@ public:
 		LUT = rootdir_m + "\\in\\" + LUTfilename_m;
 		setElecMagLUT(LUT.c_str(), 2951, 3);
 
-		std::string importdir{ rootdir_m };
-		importdir = importdir + "\\in\\data\\";
-		std::vector<std::vector<std::string>> files;
-		files.resize(2);
-		files[0].resize(3);
-		files[1].resize(3);
-		files[0][0] = "e_vpara.bin";
-		files[0][1] = "e_vperp.bin";
-		files[0][2] = "e_z.bin";
-		files[1][0] = "i_vpara.bin";
-		files[1][1] = "i_vperp.bin";
-		files[1][2] = "i_z.bin";
-
-		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-		{
-			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-				loadFileIntoParticleAttribute(iii, jjj, importdir.c_str(), files[iii][jjj].c_str());
-		}
+		//loadDataFilesIntoParticleArray();
 
 		std::string fold;
 		fold = "./particles_init/";
@@ -70,6 +52,8 @@ public:
 			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
 				saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
 		}
+
+		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
 	}//end constructor
 	~Simulation170925()
 	{
@@ -81,16 +65,23 @@ public:
 			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
 				saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
 		}
+
+		for (int iii = 0; iii < 3; iii++)
+			delete[] elcFieldLUT_m[iii];
+
+		delete[] elcFieldLUT_m;
 	}
 
 	//One liners
-	double**  getPointerToElectricFieldData() { if (elcFieldLUT_m == nullptr) { std::cout << "Array not initialized yet.  Run Simulation::setElecMagLUT.\n"; } return elcFieldLUT_m; }
+	double*  getPointerToElectricFieldData(int column) { if (elcFieldLUT_m == nullptr)
+		{ std::cout << "Array not initialized yet.  Run Simulation::setElecMagLUT.\n"; } return elcFieldLUT_m[column]; }
 	virtual void resetParticlesEscapedCount() { totalElecEscaped_m = 0; totalIonsEscaped_m = 0; return; }
 
 	//Array tools
-	virtual void setElecMagLUT(const char* filename, int rows, int cols);
-	virtual double calculateBFieldAtZandTime(double z, double time);
-	virtual double calculateEFieldAtZandTime(double z, double time);
+	virtual void setElecMagLUT(const char* filename, int rows, int cols) { elcFieldLUT_m = fileIO::read2DCSV(filename, rows, cols, ' '); }
+	virtual double calculateBFieldAtZandTime(double z, double time) { return BFieldatZ(z, time); }
+	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(elcFieldLUT_m, z, time); }
+	virtual void loadDataFilesIntoParticleArray();
 	virtual void convertVPerpToMu();
 	virtual void convertMuToVPerp();
 

@@ -4,13 +4,20 @@ pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 sys.path.append(os.path.normpath(pyfiledir + '/../../SimTools/SimulationClass/python/'))
 from SimulationAPI import *
 
-def getElectricFieldLUT(self, simulationptr): #This is not working.  Needs to be fixed in C++ and here.
-    simDLL.getPointerToElectricFieldDataWrapper.argtypes = (ctypes.c_void_p,)
-    simDLL.getPointerToElectricFieldDataWrapper.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+def getElectricFieldLUT(self, cols, entries):
+    self.simDLL_m.getPointerToElectricFieldDataWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int)
+    self.simDLL_m.getPointerToElectricFieldDataWrapper.restype = ctypes.POINTER(ctypes.c_double)
 
-    #convert to python-easy array
-    #return simDLL.getPointerToElectricFieldDataWrapper(simulationptr)
-    return
+    ret = []
+    for iii in range(cols):
+        col_c = self.simDLL_m.getPointerToElectricFieldDataWrapper(self.simulationptr, iii)
+        column = []
+        for jjj in range(entries):
+            column.append(col_c[jjj])
+        ret.append(column)
+    
+    return ret
+
 Simulation.getElectricFieldLUT = getElectricFieldLUT
 
 if __name__ == '__main__':

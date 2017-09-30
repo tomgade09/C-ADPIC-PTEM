@@ -20,11 +20,35 @@ const int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) }; //Global vars - not 
 const int BOOLARRAY_BYTES{ NUMPARTICLES * sizeof(bool) };
 const int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
-__host__ __device__ double EFieldatZ(double z, double simtime)
+constexpr double OMEGA{ 2 * PI / 10 };
+
+__host__ double EFieldatZ(double** LUT, double z, double simtime)
 {//E Field in the direction of B (radially outward)
-	if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
+	//E-par = (column 2)*cos(omega*t)+(column 3)*sin(omega*t), omega = 2 PI / 10
+	if (z < LUT[0][0] || z > LUT[0][2950])
 		return 0.0;
-	return CONSTEFIELD;
+	double binsize{ LUT[0][1] - LUT[0][0] };
+	double offset{ LUT[0][0] };
+	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / binsize)) };
+	//y = mx + b
+	double linearInterpReal{ ((LUT[1][stepsFromZeroInd + 1] - LUT[1][stepsFromZeroInd]) / binsize) * (z - LUT[0][stepsFromZeroInd]) + LUT[1][stepsFromZeroInd] };
+	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / binsize) * (z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
+	
+	return linearInterpReal * cos(OMEGA * simtime) + linearInterpImag * sin(OMEGA * simtime);
+}
+
+__device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest concern here
+{//E Field in the direction of B (radially outward)
+	if (z < LUT[0] || z > LUT[2950])
+		return 0.0;
+	double binsize{ LUT[1] - LUT[0] };
+	double offset{ LUT[0] };
+	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / binsize)) };
+	//y = mx + b
+	double linearInterpReal{ ((LUT[2951 + stepsFromZeroInd + 1] - LUT[2951 + stepsFromZeroInd]) / binsize) * (z - LUT[stepsFromZeroInd]) + LUT[2951 + stepsFromZeroInd] };
+	double linearInterpImag{ ((LUT[2 * 2951 + stepsFromZeroInd + 1] - LUT[2 * 2951 + stepsFromZeroInd]) / binsize) * (z - LUT[stepsFromZeroInd]) + LUT[2 * 2951 + stepsFromZeroInd] };
+
+	return linearInterpReal * cos(OMEGA * simtime) + linearInterpImag * sin(OMEGA * simtime);
 }
 
 __host__ __device__ double BFieldatZ(double z, double simtime) //this will change in future iterations
@@ -48,13 +72,13 @@ __device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, long long id, 
 	return res;
 }
 
-__device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Fourth Order Runge Kutta code
+__device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass into 1D Fourth Order Runge Kutta code
 {//args array: [t_RK, vz, mu, q, m, pz_0, simtime]
 	double F_lor, F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
 	F_mir = -args[2] * (-3 / (ztmp * pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 3))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
@@ -62,30 +86,30 @@ __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Four
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
 
-__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen)
+__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double* LUT)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
 	double k1, k2, k3, k4, y_0;
 	y_0 = funcArg[1];
 
-	k1 = accel1dCUDA(funcArg, arrayLen); //k1 = f(t_n, y_n), units of dy / dt
+	k1 = accel1dCUDA(funcArg, arrayLen, LUT); //k1 = f(t_n, y_n), units of dy / dt
 
 	funcArg[0] = DT / 2;
 	funcArg[1] = y_0 + k1 * funcArg[0];
-	k2 = accel1dCUDA(funcArg, arrayLen); //k2 = f(t_n + h/2, y_n + h/2 k1)
+	k2 = accel1dCUDA(funcArg, arrayLen, LUT); //k2 = f(t_n + h/2, y_n + h/2 k1)
 
 	funcArg[1] = y_0 + k2 * funcArg[0];
-	k3 = accel1dCUDA(funcArg, arrayLen); //k3 = f(t_n + h/2, y_n + h/2 k2)
+	k3 = accel1dCUDA(funcArg, arrayLen, LUT); //k3 = f(t_n + h/2, y_n + h/2 k2)
 
 	funcArg[0] = DT;
 	funcArg[1] = y_0 + k3 * funcArg[0];
-	k4 = accel1dCUDA(funcArg, arrayLen); //k4 = f(t_n + h, y_n + h k3)
+	k4 = accel1dCUDA(funcArg, arrayLen, LUT); //k4 = f(t_n + h, y_n + h k3)
 	
 	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns units of y, not dy / dt
 }
 
-__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime)
+__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
 {
 	int iii = blockIdx.x * blockDim.x + threadIdx.x;
 	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);
@@ -156,7 +180,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 		args[5] = z_d[iii];
 		args[6] = simtime;
 
-		v_d[iii] += foRungeKuttaCUDA(args, 7);
+		v_d[iii] += foRungeKuttaCUDA(args, 7, LUT);
 		z_d[iii] += v_d[iii] * DT;
 	}
 }
@@ -188,7 +212,7 @@ void Simulation170925::initializeSimulation()
 	convertVPerpToMu();
 	
 	//Allocate memory on GPU for elec/ions variables
-	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m; iii++)
+	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++)
 	{//[0] = v_e_para, [1] = mu_e_para, [2] = z_e, [3-5] = same attributes for ions
 		cudaMalloc((void **)&gpuDblMemoryPointers_m[iii], DBLARRAY_BYTES);
 		if (iii < numberOfParticleTypes_m)
@@ -220,8 +244,8 @@ void Simulation170925::initializeSimulation()
 
 	//Print things related to simulation characteristics
 	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << unitstring << "\n";
-	std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << unitstring << "\n";
-	std::cout << "Const E:          " << CONSTEFIELD << " V/m\n\n";
+	//std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << unitstring << "\n";
+	//std::cout << "Const E:          " << CONSTEFIELD << " V/m\n\n";
 	std::cout << "Particle Number:  " << numberOfParticlesPerType_m << "\n";
 	std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
 	std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
@@ -247,6 +271,15 @@ void Simulation170925::copyDataToGPU()
 		//std::cout << "\n";
 		cudaMemcpy(gpuBoolMemoryPointers_m[iii], particlesInSim_m[iii], BOOLARRAY_BYTES, cudaMemcpyHostToDevice);
 	}
+
+	double LUTtmp[3 * 2951];
+	for (int iii = 0; iii < 3; iii++)
+	{
+		for (int jjj = 0; jjj < 2951; jjj++)
+			LUTtmp[iii * 2951 + jjj] = elcFieldLUT_m[iii][jjj];
+	}
+
+	cudaMemcpy(gpuDblMemoryPointers_m[6], LUTtmp, 3 * 2951 * sizeof(double), cudaMemcpyHostToDevice);
 }
 
 void Simulation170925::iterateSimulation(int numberOfIterations)
@@ -260,16 +293,16 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	long cudaloopind{ 0 };
 	//Loop code
 	while (cudaloopind < numberOfIterations)
-	{//__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime)
+	{
 		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>>(gpuDblMemoryPointers_m[0], gpuDblMemoryPointers_m[1], gpuDblMemoryPointers_m[2], 
-			gpuBoolMemoryPointers_m[0], gpuIntMemoryPointers_m[0], 1, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m);
+			gpuBoolMemoryPointers_m[0], gpuIntMemoryPointers_m[0], 1, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>> (gpuDblMemoryPointers_m[3], gpuDblMemoryPointers_m[4], gpuDblMemoryPointers_m[5], 
-			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m);
+			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		cudaloopind++;
 		incTime();
 
 		if (cudaloopind % 1000 == 0)
-			std::cout << cudaloopind << " / " << numberOfIterations << "\n";
+			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time: " << simTime_m << "\n";
 	}
 }
 
@@ -316,7 +349,7 @@ void Simulation170925::freeGPUMemory()
 	if (REPLENISH_E_I)
 		cudaFree(gpuOtherMemoryPointers_m[0]);
 
-	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m; iii++)
+	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++)
 	{
 		cudaFree(gpuDblMemoryPointers_m[iii]);
 		if (iii < numberOfParticleTypes_m)

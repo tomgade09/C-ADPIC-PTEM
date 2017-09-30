@@ -1,6 +1,8 @@
 #ifndef SIMULATIONAPI_H
 #define SIMULATIONAPI_H
 
+#include <chrono>
+#include <iostream>
 #include "include\Simulation.h"
 
 #define DLLFILE

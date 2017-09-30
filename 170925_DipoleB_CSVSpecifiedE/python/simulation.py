@@ -30,23 +30,23 @@ def simulationRunMain():
 
     sim = Simulation(rootdir, dllLocation)
 
-    #results = sim.runSim(10000)
-    sim.initializeSimulation()
-    sim.copyDataToGPU()
-    sim.iterateSimulation(10000)
-    sim.copyDataToHost()
-    sim.freeGPUMemory()
-    sim.prepareResults()
-    results = sim.getResultsfrom3D(True)
+    results = sim.runSim(10000)
+    #sim.initializeSimulation() #if granular control over execution order is desired...
+    #sim.copyDataToGPU()
+    #sim.iterateSimulation(10000)
+    #sim.copyDataToHost()
+    #sim.freeGPUMemory()
+    #sim.prepareResults()
+    #results = sim.getResultsfrom3D(True)
 
     electrons = len(results[0][0])
     ions = len(results[1][0])
     length = (electrons + ions) * sim.attr_m + 3
     print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
-    fields = sim.fieldsAtAllZ(0.0, 1000, (10 - 8.371/6.371)/ 1000, 8.371/6.371)
+    fields = sim.fieldsAtAllZ(0.0, 10000, (10 - 8.371/6.371)/ 10000, 8.371/6.371)
 
-    terminateSimulation170925(sim.simulationptr)
+
 
     #wrong_para = 0
     #wrong_perp = 0
@@ -77,6 +77,8 @@ def simulationRunMain():
 
     #if (not(wrong_para == 0) or not(wrong_perp == 0) or not(wrong_z == 0)):
         #print("ions wrong: ", wrong_para, wrong_perp, wrong_z)
+
+    terminateSimulation170925(sim.simulationptr)
 
     return results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         results[1][2], fields[0], fields[1], fields[2]

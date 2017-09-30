@@ -107,7 +107,11 @@ DLLEXPORT void copyDataToGPUWrapper(Simulation* simulation)
 
 DLLEXPORT void iterateSimulationWrapper(Simulation* simulation, int numberOfIterations)
 {
+	std::chrono::steady_clock::time_point cudaBegin, cudaEnd;
+	cudaBegin = std::chrono::steady_clock::now();
 	simulation->iterateSimulation(numberOfIterations);
+	cudaEnd = std::chrono::steady_clock::now();
+	std::cout << "Parallel Execution Time (ms) " << std::chrono::duration_cast<std::chrono::milliseconds>(cudaEnd - cudaBegin).count() << std::endl;
 }
 
 DLLEXPORT void copyDataToHostWrapper(Simulation* simulation)
