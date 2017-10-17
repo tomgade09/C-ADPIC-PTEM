@@ -147,3 +147,8 @@ void Simulation::serializeParticleArray(bool excludeOutOfSim)
 		prevPartInSim = partInSimCnt[iii];
 	}//end iii
 }//end function
+
+void Simulation::addParticleObserver(double z)
+{
+
+}

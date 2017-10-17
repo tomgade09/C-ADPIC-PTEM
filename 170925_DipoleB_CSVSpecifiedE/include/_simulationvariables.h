@@ -23,21 +23,13 @@ constexpr double MAGSPH_MAX_Z{ MAX_Z_FROM_RE / NORMFACTOR }; //normalized to Re 
 constexpr int	 NUMPARTICLES{ 100352 }; //number of particles in simulation - best when it's a multiple of 64 (has to be a multiple of BLOCKSIZE)
 constexpr long   NUMITERATIONS{ 10000 };
 constexpr double INITIAL_T_EV{ 2.5 }; //magical "2.5" is from Chiu/Schultz temperature (in eV) for the studied plasma, then convert to velocity - kT = 1/2 m v^2
-constexpr bool   REPLENISH_E_I{ false }; //determines whether or not to replenish lost electrons/ions - same distribution is used that generates initial characteristics
+constexpr bool   REPLENISH_E_I{ true }; //determines whether or not to replenish lost electrons/ions - same distribution is used that generates initial characteristics
 
 //E+M Variables
 //constexpr double DIPOLETHETA{ 20.0 }; // theta (in deg) - to calculate dipole electric field
 constexpr double DIPOLECONST{ BFIELD_EARTH *  1.9102530 };//sqrt(1 + 3 * pow(cos(20.0 * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))
 constexpr double TOTPOTDROP{ 2.0e3 }; //total electric potential drop in V across model
 constexpr int	 GRAPH_E_B_BINS{ 1000 }; //E, B are measured as a function of z at time 0 and passed out to graph
-//E Field centered at 2Re, between about another 1000 km +/- the center
-constexpr double E_RNG_CENTER{ (2 * RADIUS_EARTH) / NORMFACTOR }; //Where is the E Field centered?
-constexpr double E_RNG_DELTA{ 1.0e6 / NORMFACTOR }; //in m, How far up and down from the center will the E field be "felt"?
-constexpr double CONSTEFIELD{ TOTPOTDROP / (2 * E_RNG_DELTA * NORMFACTOR) }; //E Field centered at 2 Re, spread out 2000 km, V / m
-//Const E Field across whole model (comment out three lines above, uncomment three lines below)
-//constexpr double E_RNG_CENTER{ (MAGSPH_MAX_Z + IONSPH_MIN_Z) / 2 }; //Where is the E Field centered?
-//constexpr double E_RNG_DELTA{ (MAGSPH_MAX_Z - IONSPH_MIN_Z) / 2 }; //How far up and down from the center will the E field be "felt"
-//constexpr double CONSTEFIELD{ TOTPOTDROP / (MAX_Z_FROM_RE - MIN_Z_FROM_RE) }; //const E over whole sim range, V / m
 
 //CUDA Variables
 constexpr int    BLOCKSIZE{ 256 }; //Number of threads per block - this is most efficient at a multiple of 128 (256 seems to work well), although 250 has been used with slightly less performance

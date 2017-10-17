@@ -22,10 +22,6 @@
 #include "include\api.h"
 #include "include\Simulation170925.h"
 
-//double EFieldatZ(double** LUT, double z, double simtime);
-double EFieldatZ(double z, double simtime);
-double BFieldatZ(double z, double simtime);
-
 DLLEXPORT void resetParticlesEscapedCountWrapper(Simulation170925* simulation)
 {
 	simulation->resetParticlesEscapedCount();

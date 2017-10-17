@@ -27,7 +27,6 @@ def terminateSimulation170925(simptr):
     simDLL.terminateSimulation170925(simptr)
 
 def simulationRunMain():
-
     sim = Simulation(rootdir, dllLocation)
 
     results = sim.runSim(10000)
@@ -37,7 +36,7 @@ def simulationRunMain():
     #sim.copyDataToHost()
     #sim.freeGPUMemory()
     #sim.prepareResults()
-    #results = sim.getResultsfrom3D(True)
+    #results = sim.getResultsfrom3D()
 
     electrons = len(results[0][0])
     ions = len(results[1][0])
@@ -45,39 +44,6 @@ def simulationRunMain():
     print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
     fields = sim.fieldsAtAllZ(0.0, 10000, (10 - 8.371/6.371)/ 10000, 8.371/6.371)
-
-
-
-    #wrong_para = 0
-    #wrong_perp = 0
-    #wrong_z = 0
-
-    #for iii in range(electrons):
-        #if (v_e_para[iii] != v_e_para_3D[iii]):
-            #wrong_para += 1
-        #if (v_e_perp[iii] != v_e_perp_3D[iii]):
-            #wrong_perp += 1
-        #if (z_e[iii] != z_e_3D[iii]):
-            #wrong_z += 1
-
-    #if (not(wrong_para == 0) or not(wrong_perp == 0) or not(wrong_z == 0)):
-        #print("electrons wrong: ", wrong_para, wrong_perp, wrong_z)
-
-    #wrong_para = 0
-    #wrong_perp = 0
-    #wrong_z = 0
-
-    #for iii in range(ions):
-        #if (v_i_para[iii] != v_i_para_3D[iii]):
-            #wrong_para += 1
-        #if (v_i_perp[iii] != v_i_perp_3D[iii]):
-            #wrong_perp += 1
-        #if (z_i[iii] != z_i_3D[iii]):
-            #wrong_z += 1
-
-    #if (not(wrong_para == 0) or not(wrong_perp == 0) or not(wrong_z == 0)):
-        #print("ions wrong: ", wrong_para, wrong_perp, wrong_z)
-
     terminateSimulation170925(sim.simulationptr)
 
     return results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \

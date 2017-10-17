@@ -25,28 +25,34 @@ constexpr double OMEGA{ 2 * PI / 10 };
 __host__ double EFieldatZ(double** LUT, double z, double simtime)
 {//E Field in the direction of B (radially outward)
 	//E-par = (column 2)*cos(omega*t)+(column 3)*sin(omega*t), omega = 2 PI / 10
+	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re
+		z = z / RADIUS_EARTH; //convert to Re
+	
 	if (z < LUT[0][0] || z > LUT[0][2950])
 		return 0.0;
-	double binsize{ LUT[0][1] - LUT[0][0] };
 	double offset{ LUT[0][0] };
-	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / binsize)) };
+	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[0][1] - LUT[0][0]))) }; //only works for constant bin size - if the binsize changes throughout LUT, need to iterate which will take longer
 	//y = mx + b
-	double linearInterpReal{ ((LUT[1][stepsFromZeroInd + 1] - LUT[1][stepsFromZeroInd]) / binsize) * (z - LUT[0][stepsFromZeroInd]) + LUT[1][stepsFromZeroInd] };
-	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / binsize) * (z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
+	double linearInterpReal{ ((LUT[1][stepsFromZeroInd + 1] - LUT[1][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
+		(z - LUT[0][stepsFromZeroInd]) + LUT[1][stepsFromZeroInd] };
+	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
+		(z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
 	
 	return linearInterpReal * cos(OMEGA * simtime) + linearInterpImag * sin(OMEGA * simtime);
 }
 
 __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest concern here
 {//E Field in the direction of B (radially outward)
+	z = z * (NORMFACTOR / RADIUS_EARTH); //convert to Re if necessary
 	if (z < LUT[0] || z > LUT[2950])
 		return 0.0;
-	double binsize{ LUT[1] - LUT[0] };
 	double offset{ LUT[0] };
-	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / binsize)) };
+	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[1] - LUT[0]))) };
 	//y = mx + b
-	double linearInterpReal{ ((LUT[2951 + stepsFromZeroInd + 1] - LUT[2951 + stepsFromZeroInd]) / binsize) * (z - LUT[stepsFromZeroInd]) + LUT[2951 + stepsFromZeroInd] };
-	double linearInterpImag{ ((LUT[2 * 2951 + stepsFromZeroInd + 1] - LUT[2 * 2951 + stepsFromZeroInd]) / binsize) * (z - LUT[stepsFromZeroInd]) + LUT[2 * 2951 + stepsFromZeroInd] };
+	double linearInterpReal{ ((LUT[2951 + stepsFromZeroInd + 1] - LUT[2951 + stepsFromZeroInd]) / (LUT[stepsFromZeroInd + 1] - LUT[stepsFromZeroInd])) * 
+		(z - LUT[stepsFromZeroInd]) + LUT[2951 + stepsFromZeroInd] };
+	double linearInterpImag{ ((LUT[2 * 2951 + stepsFromZeroInd + 1] - LUT[2 * 2951 + stepsFromZeroInd]) / (LUT[stepsFromZeroInd + 1] - LUT[stepsFromZeroInd])) * 
+		(z - LUT[stepsFromZeroInd]) + LUT[2 * 2951 + stepsFromZeroInd] };
 
 	return linearInterpReal * cos(OMEGA * simtime) + linearInterpImag * sin(OMEGA * simtime);
 }
@@ -78,7 +84,7 @@ __device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
 	F_mir = -args[2] * (-3 / (ztmp * pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 3))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]

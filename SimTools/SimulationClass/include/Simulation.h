@@ -33,6 +33,9 @@ protected:
 	//Calculated Quantities, Flags
 	bool initialized_m{ 0 };
 	bool resultsPrepared_m{ 0 };
+
+	//Maybe some sort of class/struct defining: z height, attribute, pitch?
+	std::vector<double> observers;
 	
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
@@ -126,6 +129,9 @@ public:
 	virtual void copyDataToHost() = 0;
 	virtual void freeGPUMemory() = 0;
 	virtual void prepareResults() = 0;
+
+	//Data observation
+	virtual void addParticleObserver(double z);
 	
 };//end class
 #endif //end header guard

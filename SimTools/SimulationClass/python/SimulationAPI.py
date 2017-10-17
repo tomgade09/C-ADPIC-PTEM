@@ -117,6 +117,9 @@ class Simulation:
         ions = int(serArray[electrons * attributesTracked + 3])
         length = (electrons + ions) * attributesTracked + 4
 
+        self.elecSerial = electrons
+        self.ionsSerial = ions
+
         v_e_para = []#code is specific to electrons/ions and 3 attributes - could make more general with loops, arrays.append(size), etc
         v_e_perp = []
         z_e = []
@@ -147,7 +150,7 @@ class Simulation:
             partbool = []
         return ret
 
-    def getResultsfrom3D(self, inSimOnly=False):
+    def getResultsfrom3D(self, inSimOnly=True):
         if (inSimOnly):
             inSimBoolArray = self.getPartInSimBoolArray()
         
@@ -227,6 +230,42 @@ class Simulation:
 
     def prepareResults(self):
         return self.simDLL_m.prepareResultsWrapper(self.simulationptr)
+
+    ###Tests
+    def compareSerialWith3D(self):
+        results3D = self.getResultsfrom3D()
+        resultsSer = self.getResultsfromSerialized()
+        
+        e_wrong_para = 0
+        e_wrong_perp = 0
+        e_wrong_z = 0
+
+        for iii in range(self.elecSerial):
+            if (results3D[0][0][iii] != resultsSer[0][0][iii]):
+                e_wrong_para += 1
+            if (results3D[0][1][iii] != resultsSer[0][1][iii]):
+                e_wrong_perp += 1
+            if (results3D[0][2][iii] != resultsSer[0][2][iii]):
+                e_wrong_z += 1
+
+        i_wrong_para = 0
+        i_wrong_perp = 0
+        i_wrong_z = 0
+
+        for iii in range(self.ionsSerial):
+            if (results3D[1][0][iii] != resultsSer[1][0][iii]):
+                i_wrong_para += 1
+            if (results3D[1][1][iii] != resultsSer[1][1][iii]):
+                i_wrong_perp += 1
+            if (results3D[1][2][iii] != resultsSer[1][2][iii]):
+                i_wrong_z += 1
+
+        if (((e_wrong_para and e_wrong_perp and e_wrong_z) and (i_wrong_para and i_wrong_perp and i_wrong_z)) == 0):
+            print("Arrays are identical.")
+        if (not(e_wrong_para == 0) or not(e_wrong_perp == 0) or not(e_wrong_z == 0)):
+            print("electrons wrong: ", e_wrong_para, e_wrong_perp, e_wrong_z)
+        if (not(i_wrong_para == 0) or not(i_wrong_perp == 0) or not(i_wrong_z == 0)):
+            print("ions wrong: ", i_wrong_para, i_wrong_perp, i_wrong_z)
 
 
 if __name__ == '__main__':
