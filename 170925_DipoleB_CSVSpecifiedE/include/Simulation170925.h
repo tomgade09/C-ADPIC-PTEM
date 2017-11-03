@@ -55,6 +55,7 @@ public:
 
 		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
 	}//end constructor
+
 	~Simulation170925()
 	{
 		std::string fold;

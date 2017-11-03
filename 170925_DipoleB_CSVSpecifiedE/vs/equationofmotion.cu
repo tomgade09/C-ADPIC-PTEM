@@ -20,6 +20,7 @@ const int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) }; //Global vars - not 
 const int BOOLARRAY_BYTES{ NUMPARTICLES * sizeof(bool) };
 const int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
+//Angular Freq of Efield
 constexpr double OMEGA{ 2 * PI / 10 };
 
 __host__ double EFieldatZ(double** LUT, double z, double simtime)
@@ -118,7 +119,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double* LUT)
 __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
 {
 	int iii = blockIdx.x * blockDim.x + threadIdx.x;
-	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);
+	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);//256 threads per block, 2 random generators per block, 128 threads per RG
 	double mass;
 	double q;
 
@@ -219,7 +220,7 @@ void Simulation170925::initializeSimulation()
 	
 	//Allocate memory on GPU for elec/ions variables
 	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++)
-	{//[0] = v_e_para, [1] = mu_e_para, [2] = z_e, [3-5] = same attributes for ions
+	{//[0] = v_e_para, [1] = mu_e_para, [2] = z_e, [3-5] = same attributes for ions, [6] = E Field LUT
 		cudaMalloc((void **)&gpuDblMemoryPointers_m[iii], DBLARRAY_BYTES);
 		if (iii < numberOfParticleTypes_m)
 		{
@@ -250,8 +251,6 @@ void Simulation170925::initializeSimulation()
 
 	//Print things related to simulation characteristics
 	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << unitstring << "\n";
-	//std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << unitstring << "\n";
-	//std::cout << "Const E:          " << CONSTEFIELD << " V/m\n\n";
 	std::cout << "Particle Number:  " << numberOfParticlesPerType_m << "\n";
 	std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
 	std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
@@ -260,24 +259,23 @@ void Simulation170925::initializeSimulation()
 }
 
 void Simulation170925::copyDataToGPU()
-{
+{//copies particle distribution and associated data to GPU in preparation of iterative calculations over the data
 	if (!initialized_m)
 	{
 		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
 		return;
 	}
 
+	//copies double arrays associated with particle distribution
 	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 	{
 		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-		{
 			cudaMemcpy(gpuDblMemoryPointers_m[iii * numberOfAttributesTracked_m + jjj], particles_m[iii][jjj], DBLARRAY_BYTES, cudaMemcpyHostToDevice);
-			//std::cout << "Dbls cudaMemcpyHostToDevice: " << iii * numberOfAttributesTracked_m + jjj << "  ";
-		}
-		//std::cout << "\n";
+
 		cudaMemcpy(gpuBoolMemoryPointers_m[iii], particlesInSim_m[iii], BOOLARRAY_BYTES, cudaMemcpyHostToDevice);
 	}
 
+	//copies E field LUT to the GPU
 	double LUTtmp[3 * 2951];
 	for (int iii = 0; iii < 3; iii++)
 	{
@@ -286,13 +284,40 @@ void Simulation170925::copyDataToGPU()
 	}
 
 	cudaMemcpy(gpuDblMemoryPointers_m[6], LUTtmp, 3 * 2951 * sizeof(double), cudaMemcpyHostToDevice);
+	
+	copied_m = true;
+	
+#ifdef LUTCOPY_TEST
+	int serializedLUTerr{ 0 };
+	int LUTtblerr{ 0 };
+	double LUTfromGPU[3 * 2951];
+	int tablerow{ -1 };
+	cudaMemcpy(LUTfromGPU, gpuDblMemoryPointers_m[6], 3 * 2951 * sizeof(double), cudaMemcpyDeviceToHost);
+	for (int iii = 0; iii < 3 * 2951; iii++)
+	{
+		if (iii % 2951 == 0)
+			tablerow++;
+		int tablecol{ iii % 2951 };
+		if (LUTfromGPU[iii] != LUTtmp[iii])
+			serializedLUTerr++;
+		if (LUTfromGPU[iii] != elcFieldLUT_m[tablerow][tablecol])
+			LUTtblerr++;
+	}
+	std::cout << "\n\nSerialized Errors: " << serializedLUTerr << "\nTable Errors: " << LUTtblerr << "\n\n";
+#endif
 }
 
 void Simulation170925::iterateSimulation(int numberOfIterations)
-{
+{//conducts iterative calculations of data previously copied to GPU - runs the data through the computeKernel
 	if (!initialized_m)
 	{
-		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
+		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.  You also need to copy data to the GPU with Simulation::copyDataToGPU.\n";
+		return;
+	}
+
+	if (!copied_m)
+	{
+		std::cout << "You haven't copied any data to the GPU with Simulation::copyDataToGPU.  Do that first or the GPU has no numbers to work on.\n";
 		return;
 	}
 
@@ -300,7 +325,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	//Loop code
 	while (cudaloopind < numberOfIterations)
 	{
-		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>>(gpuDblMemoryPointers_m[0], gpuDblMemoryPointers_m[1], gpuDblMemoryPointers_m[2], 
+		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>> (gpuDblMemoryPointers_m[0], gpuDblMemoryPointers_m[1], gpuDblMemoryPointers_m[2], 
 			gpuBoolMemoryPointers_m[0], gpuIntMemoryPointers_m[0], 1, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>> (gpuDblMemoryPointers_m[3], gpuDblMemoryPointers_m[4], gpuDblMemoryPointers_m[5], 
 			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
@@ -313,7 +338,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 }
 
 void Simulation170925::copyDataToHost()
-{
+{//copies data back to host from GPU
 	if (!initialized_m)
 	{
 		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
@@ -323,11 +348,8 @@ void Simulation170925::copyDataToHost()
 	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 	{
 		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-		{
 			cudaMemcpy(particles_m[iii][jjj], gpuDblMemoryPointers_m[iii * numberOfAttributesTracked_m + jjj], DBLARRAY_BYTES, cudaMemcpyDeviceToHost);
-			//std::cout << "Dbls cudaMemcpyDeviceToHost: " << iii * numberOfAttributesTracked_m + jjj << "  ";
-		}
-		//std::cout << "\n";
+		
 		cudaMemcpy(particlesInSim_m[iii], gpuBoolMemoryPointers_m[iii], BOOLARRAY_BYTES, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particlesEscaped_m[iii], gpuIntMemoryPointers_m[iii], INTARRAY_BYTES, cudaMemcpyDeviceToHost);
 	}
@@ -344,7 +366,7 @@ void Simulation170925::copyDataToHost()
 }
 
 void Simulation170925::freeGPUMemory()
-{	
+{//used to free the memory on the GPU that's no longer needed
 	if (!initialized_m)
 	{
 		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
@@ -376,7 +398,5 @@ void Simulation170925::freeGPUMemory()
 	}
 
 	std::cout << "C++: " << e_in_sim << " " << i_in_sim << " " << ((e_in_sim + i_in_sim) * 3) + 4 << "\n";
-	//std::cout << "Sim Characteristics post compute - simTime, dt, # Types, # Particles/Type, # attr tracked: \n" << simTime_m << ", " << dt_m << ", " << numberOfParticleTypes_m;
-	//std::cout << ", " << numberOfParticlesPerType_m << ", " << numberOfAttributesTracked_m << "\n";
 	cudaProfilerStop(); //For profiling
 }

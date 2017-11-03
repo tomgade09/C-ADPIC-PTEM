@@ -29,14 +29,16 @@ def terminateSimulation170925(simptr):
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
 
-    results = sim.runSim(10000)
-    #sim.initializeSimulation() #if granular control over execution order is desired...
-    #sim.copyDataToGPU()
+    #results = sim.runSim(10000)
+
+    sim.initializeSimulation() #if granular control over execution order is desired...
+    sim.copyDataToGPU()
+    sim.iterateSimulation(1)
     #sim.iterateSimulation(10000)
-    #sim.copyDataToHost()
-    #sim.freeGPUMemory()
+    sim.copyDataToHost()
+    sim.freeGPUMemory()
     #sim.prepareResults()
-    #results = sim.getResultsfrom3D()
+    results = sim.getResultsfrom3D()
 
     electrons = len(results[0][0])
     ions = len(results[1][0])

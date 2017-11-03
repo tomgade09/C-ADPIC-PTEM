@@ -1,23 +1,3 @@
-//To-Do
-/*
-	//- Check CUDA kernels for correctness
-	//- Simulation variables, physical constants files (header?)
-	!! Needed? Just provide to python - Correct E_B graph data calculator
-	//- Maybe need to derive a class
-	//- Main body of code (DLL, API) to initialize Simulation instance, run code
-	//- Build Simulation::
-	//>> serialzeParticleArray
-	//>> setElecMagLUT
-	//>> calculateFieldsAtTime
-	//>> returnResults
-	//>> ~Simulation
-	//- Modify Python script
-	//- One last look for correctness
-- Test code for similarity to last sim
-
-- Code to read CSV into array and save into simulation
-- New E, B calculator based on new format
-*/
 #include "include\_simulationvariables.h"
 #include "include\api.h"
 #include "include\Simulation170925.h"
@@ -38,7 +18,6 @@ DLLEXPORT Simulation* createSimulation170925(const char* rootdir)
 
 	return ret;
 }
-
 
 DLLEXPORT void terminateSimulation170925(Simulation170925* simulation)
 {

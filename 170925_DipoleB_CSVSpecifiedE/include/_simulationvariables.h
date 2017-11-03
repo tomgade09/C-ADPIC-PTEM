@@ -23,6 +23,7 @@ constexpr double MAGSPH_MAX_Z{ MAX_Z_FROM_RE / NORMFACTOR }; //normalized to Re 
 constexpr int	 NUMPARTICLES{ 100352 }; //number of particles in simulation - best when it's a multiple of 64 (has to be a multiple of BLOCKSIZE)
 constexpr long   NUMITERATIONS{ 10000 };
 constexpr double INITIAL_T_EV{ 2.5 }; //magical "2.5" is from Chiu/Schultz temperature (in eV) for the studied plasma, then convert to velocity - kT = 1/2 m v^2
+//need one for magnetospheric plasmas
 constexpr bool   REPLENISH_E_I{ true }; //determines whether or not to replenish lost electrons/ions - same distribution is used that generates initial characteristics
 
 //E+M Variables
