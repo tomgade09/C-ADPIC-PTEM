@@ -20,12 +20,6 @@ shutil.copy(srcfile, './')
 
 dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
 
-def terminateSimulation170925(simptr):
-    simDLL = ctypes.CDLL(dllLocation)
-    simDLL.terminateSimulation170925.argtypes = (ctypes.c_void_p,)
-    simDLL.terminateSimulation170925.restype = None
-    simDLL.terminateSimulation170925(simptr)
-
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
 
@@ -46,7 +40,7 @@ def simulationRunMain():
     print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
     fields = sim.fieldsAtAllZ(0.0, 10000, (10 - 8.371/6.371)/ 10000, 8.371/6.371)
-    terminateSimulation170925(sim.simulationptr)
+    sim.terminateSimulation170925()
 
     return results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         results[1][2], fields[0], fields[1], fields[2]
