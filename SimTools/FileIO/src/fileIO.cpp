@@ -59,7 +59,6 @@ namespace fileIO
 
 	DLLEXPORT void writeDblBin(const char* filename, double* dataarray, long numelements)
 	{
-		//std::cout << "write: " << filename << "\n";
 		std::ofstream binfile;
 		binfile.open(filename, std::ios::binary | std::ios::out);
 
@@ -71,6 +70,26 @@ namespace fileIO
 
 		binfile.write(reinterpret_cast<const char*>(dataarray), std::streamsize(numelements * sizeof(double)));
 		binfile.close();
+	}
+
+	DLLEXPORT void write2DCSV(const char* filename, double** dataarray, int numofentries, int numofcols, const char delim)
+	{
+		std::ofstream csv(filename);
+		if (!csv.is_open())
+		{
+			std::cout << "Could not open file: " << filename << "\n";
+			return;
+		}
+
+		for (int iii = 0; iii < numofentries; iii++)
+		{
+			for (int jjj = 0; jjj < numofcols; jjj++)
+				csv << dataarray[jjj][iii] << delim;
+			
+			csv << "\n";
+		}
+		
+		return;
 	}
 
 	DLLEXPORT void clrDataMemory(double* dataArray)

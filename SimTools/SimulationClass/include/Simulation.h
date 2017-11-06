@@ -32,6 +32,7 @@ protected:
 
 	//Calculated Quantities, Flags
 	bool initialized_m{ 0 };
+	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
 
 	//Maybe some sort of class/struct defining: z height, attribute, pitch?

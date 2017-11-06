@@ -25,7 +25,7 @@ constexpr double OMEGA{ 2 * PI / 10 };
 
 __host__ double EFieldatZ(double** LUT, double z, double simtime)
 {//E Field in the direction of B (radially outward)
-	//E-par = (column 2)*cos(omega*t)+(column 3)*sin(omega*t), omega = 2 PI / 10
+	//E-par = (column 2)*cos(omega*t) + (column 3)*sin(omega*t), omega = 2 PI / 10
 	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re
 		z = z / RADIUS_EARTH; //convert to Re
 	
@@ -33,6 +33,7 @@ __host__ double EFieldatZ(double** LUT, double z, double simtime)
 		return 0.0;
 	double offset{ LUT[0][0] };
 	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[0][1] - LUT[0][0]))) }; //only works for constant bin size - if the binsize changes throughout LUT, need to iterate which will take longer
+	
 	//y = mx + b
 	double linearInterpReal{ ((LUT[1][stepsFromZeroInd + 1] - LUT[1][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
 		(z - LUT[0][stepsFromZeroInd]) + LUT[1][stepsFromZeroInd] };
@@ -44,11 +45,14 @@ __host__ double EFieldatZ(double** LUT, double z, double simtime)
 
 __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest concern here
 {//E Field in the direction of B (radially outward)
-	z = z * (NORMFACTOR / RADIUS_EARTH); //convert to Re if necessary
+	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re
+		z = z / RADIUS_EARTH; //convert to Re
+	
 	if (z < LUT[0] || z > LUT[2950])
 		return 0.0;
 	double offset{ LUT[0] };
-	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[1] - LUT[0]))) };
+	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[1] - LUT[0]))) }; //only works for constant bin size - if the binsize changes throughout LUT, need to iterate which will take longer
+	
 	//y = mx + b
 	double linearInterpReal{ ((LUT[2951 + stepsFromZeroInd + 1] - LUT[2951 + stepsFromZeroInd]) / (LUT[stepsFromZeroInd + 1] - LUT[stepsFromZeroInd])) * 
 		(z - LUT[stepsFromZeroInd]) + LUT[2951 + stepsFromZeroInd] };
@@ -331,7 +335,6 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		cudaloopind++;
 		incTime();
-
 		if (cudaloopind % 1000 == 0)
 			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time: " << simTime_m << "\n";
 	}
