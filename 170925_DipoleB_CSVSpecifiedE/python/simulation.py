@@ -42,9 +42,10 @@ def simulationRunMain():
     fields = sim.fieldsAtAllZ(0.0, 10000, (10 - 8.371/6.371)/ 10000, 8.371/6.371)
     sim.terminateSimulation170925()
 
-    return results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
-        results[1][2], fields[0], fields[1], fields[2]
+    plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
+        results[1][2], fields[0], fields[1], fields[2], False)
+
+    return
 
 if __name__ == '__main__':
-    v_e_pr, v_e_pp, z_e, v_i_pr, v_i_pp, z_i, B_z, E_z, B_E_z_dim = simulationRunMain()
-    plotParticles(v_e_pr, v_e_pp, v_i_pr, v_i_pp, z_e, z_i, B_z, E_z, B_E_z_dim, False)
+    simulationRunMain()
