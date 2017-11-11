@@ -54,6 +54,11 @@ public:
 		}
 
 		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
+
+		createSatellite(2, true, "downwardElectrons");
+		createSatellite(2, true, "downwardIons");
+		createSatellite(2, false, "upwardElectrons");
+		createSatellite(2, false, "upwardIons");
 	}//end constructor
 
 	~Simulation170925()
@@ -71,6 +76,8 @@ public:
 			delete[] elcFieldLUT_m[iii];
 
 		delete[] elcFieldLUT_m;
+		for (int iii = 0; iii < satellites_m.size(); iii++)
+			delete satellites_m[iii];
 	}
 
 	//One liners
@@ -93,6 +100,8 @@ public:
 	virtual void copyDataToHost();
 	virtual void freeGPUMemory();
 	virtual void prepareResults();
+
+	virtual void createSatellite(double altitude, bool upwardFacing, std::string name);
 };
 
 #endif //end header guard

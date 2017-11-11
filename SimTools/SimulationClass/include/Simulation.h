@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include "include\Satellite.h"
 
 class Simulation
 {
@@ -23,6 +24,9 @@ protected:
 	bool**    particlesInSim_m{ nullptr };
 	int**     particlesEscaped_m{ nullptr };
 	std::vector<void*> otherMemoryPointers_m;
+	std::vector<Satellite*> satellites_m;
+	//satData[recorded measurement number][satellite number][attribute number]
+	std::vector<std::vector<std::vector<double*>>> satelliteData_m;
 	
 	//GPU Memory Pointers
 	std::vector<double*> gpuDblMemoryPointers_m { nullptr };
@@ -34,9 +38,6 @@ protected:
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
-
-	//Maybe some sort of class/struct defining: z height, attribute, pitch?
-	std::vector<double> observers;
 	
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
@@ -97,6 +98,10 @@ public:
 	int getNumberOfParticlesPerType() { return numberOfParticlesPerType_m; }//tested
 	int getNumberOfAttributesTracked() { return numberOfAttributesTracked_m; }//tested
 	bool areResultsPrepared() { return resultsPrepared_m; }
+	
+	int getNumberOfSatellites() { return satellites_m.size(); }
+	int getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
+	double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m[measurementInd][satelliteInd][attributeInd]; }
 
 	//Pointer one liners
 	double*** getPointerTo3DParticleArray() { return particles_m; }//tested
@@ -131,8 +136,8 @@ public:
 	virtual void freeGPUMemory() = 0;
 	virtual void prepareResults() = 0;
 
-	//Data observation
-	virtual void addParticleObserver(double z);
+	virtual void createSatellite(double altitude, bool upwardFacing, std::string name) = 0;
+	virtual int getSatelliteCount() { return satellites_m.size(); }
 	
 };//end class
 #endif //end header guard

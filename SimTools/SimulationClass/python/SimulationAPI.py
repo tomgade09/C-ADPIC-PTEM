@@ -65,6 +65,17 @@ class Simulation:
         self.simDLL_m.prepareResultsWrapper.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.prepareResultsWrapper.restype = ctypes.POINTER(ctypes.c_double)
 
+        #Satellite functions
+        self.simDLL_m.createSatelliteWrapper.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_bool, ctypes.c_char_p)
+        self.simDLL_m.createSatelliteWrapper.restype = None
+        self.simDLL_m.getNumberOfSatellitesWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfSatellitesWrapper.restype = ctypes.c_int
+        self.simDLL_m.getNumberOfSatelliteMsmtsWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfSatelliteMsmtsWrapper.restype = ctypes.c_int
+        self.simDLL_m.getSatelliteDataPointersWrapper.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.getSatelliteDataPointersWrapper.restype = ctypes.POINTER(ctypes.c_double)
+
+
         #Now code for init
         crootdir = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
         self.simulationptr = ctypes.c_void_p
@@ -230,6 +241,47 @@ class Simulation:
 
     def prepareResults(self):
         return self.simDLL_m.prepareResultsWrapper(self.simulationptr)
+
+    #Satellite functions
+    def createSatellite(self, altitude, upwardFacing, name):
+        self.simDLL_m.createSatelliteWrapper(self.simulationptr, altitude, upwardFacing, name)
+
+    def getNumberOfSatellites(self):
+        return self.simDLL_m.getNumberOfSatellitesWrapper(self.simulationptr)
+
+    def getNumberOfSatelliteMsmts(self):
+        return self.simDLL_m.getNumberOfSatelliteMsmtsWrapper(self.simulationptr)
+
+    def getSatelliteData(self):
+        self.satMsmts_m = getNumberOfSatelliteMsmts()
+        self.satNum_m = getNumberOfSatellites()
+        
+        data = []
+
+        msmtptr = [] #constructs array of double pointers so z value can be checked before recording data
+        for iii in range(self.satMsmts_m):
+            satptr = []
+            for jjj in range(self.satNum_m):
+                attrptr = []
+                for kk in range(self.attr_m):
+                    attrptr.append(self.simDLL_m.getSatelliteDataPointersWrapper(self.simulationptr, iii, jjj, kk))
+                satptr.append(attrptr)
+            msmtptr.append(satptr)
+
+        for iii in range(self.satMsmts_m):
+            sat = []
+            for jjj in range(self.satNum_m):
+                attr = []
+                for kk in range(self.attr_m):
+                    parts=[]
+                    for lll in range(self.numPart_m):
+                        if (msmtptr[iii][jjj][2][lll] > 1):
+                            parts.append(msmtptr[iii][jjj][kk][lll])
+                    attr.append(parts)
+                sat.append(attr)
+            data.append(sat)
+        
+        return data
 
     ###Tests
     def compareSerialWith3D(self):

@@ -1,5 +1,5 @@
 #include "include\_simulationvariables.h"
-#include "include\api.h"
+#include "include\SimulationAPI.h"
 #include "include\Simulation170925.h"
 
 DLLEXPORT void resetParticlesEscapedCountWrapper(Simulation170925* simulation)

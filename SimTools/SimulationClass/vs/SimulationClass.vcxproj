@@ -147,13 +147,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\FileIO\src\fileIO.cpp" />
-    <ClCompile Include="..\src\api.cpp" />
     <ClCompile Include="..\src\Simulation.cpp" />
+    <ClCompile Include="..\src\SimulationAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\FileIO\include\fileIO.h" />
-    <ClInclude Include="..\include\api.h" />
     <ClInclude Include="..\include\Simulation.h" />
+    <ClInclude Include="..\include\SimulationAPI.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

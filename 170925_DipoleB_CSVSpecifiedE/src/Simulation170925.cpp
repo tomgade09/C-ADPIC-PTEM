@@ -61,3 +61,9 @@ void Simulation170925::prepareResults()
 	serializeParticleArray();
 	resultsPrepared_m = true;
 }
+
+void Simulation170925::createSatellite(double altitude, bool upwardFacing, std::string name)
+{
+	Satellite* newSat = new Satellite(altitude, upwardFacing, numberOfAttributesTracked_m, numberOfParticlesPerType_m, name);
+	satellites_m.push_back(newSat);
+}

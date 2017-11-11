@@ -19,22 +19,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="equationofmotion.cu" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\SimTools\FileIO\src\fileIO.cpp" />
-    <ClCompile Include="..\..\SimTools\SimulationClass\src\api.cpp" />
+    <ClCompile Include="..\..\SimTools\SimulationClass\src\SimulationAPI.cpp" />
     <ClCompile Include="..\..\SimTools\SimulationClass\src\Simulation.cpp" />
     <ClCompile Include="..\src\170925_DipoleB_CSVSpecifiedE.cpp" />
     <ClCompile Include="..\src\Simulation170925.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\SimTools\FileIO\include\fileIO.h" />
-    <ClInclude Include="..\..\SimTools\SimulationClass\include\api.h" />
+    <ClInclude Include="..\..\SimTools\Satellite\include\Satellite.h" />
+    <ClInclude Include="..\..\SimTools\SimulationClass\include\SimulationAPI.h" />
     <ClInclude Include="..\..\SimTools\SimulationClass\include\Simulation.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\Simulation170925.h" />
     <ClInclude Include="..\include\_simulationvariables.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\SimTools\Satellite\src\Satellite.cu" />
+    <CudaCompile Include="..\src\CUDA\equationofmotion.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}</ProjectGuid>
@@ -87,9 +89,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\SimTools\Satellite;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\SimTools\Satellite;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\SimTools\Satellite;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\SimTools\Satellite;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

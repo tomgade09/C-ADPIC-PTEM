@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
+import os, sys
 
 def plotXY(xdata, ydata, title, xlabel, ylabel, filename, showplot=False):
     plt.plot(xdata, ydata, '.')
@@ -10,6 +11,7 @@ def plotXY(xdata, ydata, title, xlabel, ylabel, filename, showplot=False):
 
     if showplot:
         plt.show()
+
 
 def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z, B_E_z_dim, showplot=False):
     plt.figure(1)
@@ -38,3 +40,24 @@ def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z,
 
     if showplot:
         plt.show()
+
+
+def plotSatelliteData(dataArray4D, numberMsmts, numberSats, dt, satNamesTuple, showplot=False):
+    #need to add satellite plotting here
+    for iii in range(numberMsmts):
+        for jjj in range(numberSats):
+            if (not(os.path.isdir('./' + satNamesTuple[jjj]))):
+                os.makedirs('./' + satNamesTuple[jjj])
+            os.chdir('./' + satNamesTuple[jjj])
+            if (not(os.path.isdir('./' + iii * 1000 * dt))):
+                os.makedirs('./' + iii)
+            os.chdir('./' + iii)
+            
+            plt.figure(1)
+            plotXY(dataArray4D[iii][jjj][0], dataArray4D[iii][jjj][1], 'Particles', 'Vpara (Re / s)', 'Vperp (Re / s)', 'electrons.png')
+            plt.figure(2)
+            plotXY(dataArray4D[iii][jjj][1], dataArray4D[iii][jjj][2], 'Particles', 'Vperp (Re / s)', 'Z (Re)', 'z_vprp_electrons.png')
+            plt.figure(3)
+            plotXY(dataArray4D[iii][jjj][0], dataArray4D[iii][jjj][2], 'Particles', 'Vpara (Re / s)', 'Z (Re)', 'z_vpra_electrons.png')
+            
+        os.chdir('./../../')

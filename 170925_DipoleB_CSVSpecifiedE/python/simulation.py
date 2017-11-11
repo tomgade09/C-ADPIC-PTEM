@@ -40,10 +40,14 @@ def simulationRunMain():
     print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
     fields = sim.fieldsAtAllZ(0.0, 10000, (10 - 8.371/6.371)/ 10000, 8.371/6.371)
-    sim.terminateSimulation170925()
 
     plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         results[1][2], fields[0], fields[1], fields[2], False)
+
+    #Eventually, read names from satellites and construct into array
+    #plotSatelliteData(sim.getSatelliteData(), sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
+
+    sim.terminateSimulation170925()
 
     return
 
