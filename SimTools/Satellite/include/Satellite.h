@@ -21,7 +21,7 @@ protected:
 
 public:
 	Satellite(double altitude, bool upwardFacing, int numberOfAttributes, int numberOfParticles, std::string name = "Satellite") :
-		altitude_m{ altitude }, upwardFacing_m{ upwardFacing }, numberOfAttributes_m{ numberOfAttributes }, numberOfParticles_m{ numberOfParticles_m },
+		altitude_m{ altitude }, upwardFacing_m{ upwardFacing }, numberOfAttributes_m{ numberOfAttributes }, numberOfParticles_m{ numberOfParticles },
 		name_m{ name }
 	{
 		data_m = new double*[numberOfAttributes_m];
@@ -30,6 +30,7 @@ public:
 		GPUdata_m.reserve(numberOfAttributes_m);
 		
 		initializeSatelliteOnGPU();
+		copyDataToHost();
 	}
 	
 	virtual ~Satellite()

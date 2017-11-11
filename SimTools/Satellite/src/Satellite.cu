@@ -8,6 +8,15 @@
 #include "include\_simulationvariables.h" //didn't add to this vs project - each project this class is attached to will have its own variables header
 #include "include\Satellite.h"
 
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#define CUDA_CALL(x) do { if((x) != cudaSuccess) { \
+    printf("Error at %s:%d  Error Number: %d\n",__FILE__,__LINE__, EXIT_FAILURE);}} while(0)
+
+
+
 __global__ void satelliteDetector(double* v_d, double* mu_d, double* z_d, double* detected_v_d, double* detected_mu_d, double* detected_z_d, double altitude, bool upward)
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
@@ -15,7 +24,7 @@ __global__ void satelliteDetector(double* v_d, double* mu_d, double* z_d, double
 	double z_minus_vdt{ z_d[thdInd] - dz };
 	
 	bool detected{
-		detected_z_d[thdInd] > 1 && ( //no detected particle is in the data array at the thread's index already AND
+		detected_z_d[thdInd] < 1 && ( //no detected particle is in the data array at the thread's index already AND
 		//particle is traveling upward, detector is facing down, and particle crosses altitude
 		(dz > 0 && !upward && z_d[thdInd] > altitude && z_minus_vdt < altitude)
 		|| //OR
@@ -34,8 +43,8 @@ void Satellite::initializeSatelliteOnGPU()
 {
 	for (int iii = 0; iii < numberOfAttributes_m; iii++)
 	{
-		cudaMalloc((void **)&GPUdata_m[iii], sizeof(double) * numberOfParticles_m); //makes room for data of detected particles
-		cudaMemset(GPUdata_m[iii], 0, sizeof(double) * numberOfParticles_m); //sets values to 0
+		CUDA_CALL(cudaMalloc((void **)&GPUdata_m[iii], sizeof(double) * numberOfParticles_m)); //makes room for data of detected particles
+		CUDA_CALL(cudaMemset(GPUdata_m[iii], 0, sizeof(double) * numberOfParticles_m)); //sets values to 0
 	}
 }
 
@@ -48,8 +57,8 @@ void Satellite::copyDataToHost()
 {
 	for (int iii = 0; iii < numberOfAttributes_m; iii++)
 	{
-		cudaMemcpy(data_m[iii], GPUdata_m[iii], sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost);
-		cudaMemset(GPUdata_m[iii], 0, sizeof(double) * numberOfParticles_m); //sets values to 0
+		CUDA_CALL(cudaMemcpy(data_m[iii], GPUdata_m[iii], sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost));
+		CUDA_CALL(cudaMemset(GPUdata_m[iii], 0, sizeof(double) * numberOfParticles_m)); //sets values to 0
 		dataReady_m = true;
 	}
 }

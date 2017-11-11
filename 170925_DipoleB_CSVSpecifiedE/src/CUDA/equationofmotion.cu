@@ -335,7 +335,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	satelliteDataPtrs[1][0] = gpuDblMemoryPointers_m[3];//ions
 	satelliteDataPtrs[1][1] = gpuDblMemoryPointers_m[4];
 	satelliteDataPtrs[1][2] = gpuDblMemoryPointers_m[5];
-
+	
 	long cudaloopind{ 0 };
 	//Loop code
 	while (cudaloopind < numberOfIterations)
@@ -344,22 +344,43 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 			gpuBoolMemoryPointers_m[0], gpuIntMemoryPointers_m[0], 1, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>> (gpuDblMemoryPointers_m[3], gpuDblMemoryPointers_m[4], gpuDblMemoryPointers_m[5], 
 			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
-		for (int iii = 0; iii < 4; iii++)
+		for (int iii = 0; iii < satellites_m.size(); iii++)
 			satellites_m[iii]->iterateDetector(numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE, satelliteDataPtrs[iii % 2]);
-
+		
 		cudaloopind++;
 		incTime();
 		if (cudaloopind % 1000 == 0)
 		{
+			//std::cout << "Here we go\n";
 			std::vector<std::vector<double*>> tmpcont;//vector of satellites[attributes]
 			tmpcont.reserve(satellites_m.size());
+			//std::cout << "subvector reserved\n";
 			for (int iii = 0; iii < satellites_m.size(); iii++)
 			{
 				satellites_m[iii]->copyDataToHost();
+				//std::cout << "copyDataToHost - Sat done!\n";
 				std::vector<double*> tmp;//vector of attributes[individual particles (through double*)]
 				for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-					tmp.push_back(satellites_m[iii]->getDataArrayPointer(jjj));
+				{
+					double* dbltmp = new double[NUMPARTICLES];
+					double* dblret{ satellites_m[iii]->getDataArrayPointer(jjj) };
+					std::copy(&dblret[0], &dblret[NUMPARTICLES - 1], &dbltmp[0]);
+					tmp.push_back(dbltmp);
+					int zeros{ 0 };
+					for (int kk = 0; kk < NUMPARTICLES; kk++)
+					{
+						if (abs(tmp[jjj][kk]) < 1e-30)
+							zeros++;
+					}
+					//std::cout << "Attr: " << jjj << " Zeros: " << zeros << "\n";
+				}
+				//std::cout << "attributes pushed back onto vector\n";
+				for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
+					tmp[1][jjj] = sqrt(2 * tmp[1][jjj] * BFieldatZ(tmp[2][jjj], simTime_m) / mass_m[iii % 2]);
+				//std::cout << "mu to vperp done!!\n";
+				//std::cout << "value from vector: " << tmp[1][1] << " " << tmp[2][500] << "\n";
 				tmpcont.push_back(tmp);
+				//std::cout << "done!\n";
 			}
 			satelliteData_m.push_back(tmpcont);
 			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time: " << simTime_m << "\n";

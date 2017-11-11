@@ -253,8 +253,8 @@ class Simulation:
         return self.simDLL_m.getNumberOfSatelliteMsmtsWrapper(self.simulationptr)
 
     def getSatelliteData(self):
-        self.satMsmts_m = getNumberOfSatelliteMsmts()
-        self.satNum_m = getNumberOfSatellites()
+        self.satMsmts_m = self.getNumberOfSatelliteMsmts()
+        self.satNum_m = self.getNumberOfSatellites()
         
         data = []
 

@@ -46,18 +46,15 @@ def plotSatelliteData(dataArray4D, numberMsmts, numberSats, dt, satNamesTuple, s
     #need to add satellite plotting here
     for iii in range(numberMsmts):
         for jjj in range(numberSats):
-            if (not(os.path.isdir('./' + satNamesTuple[jjj]))):
-                os.makedirs('./' + satNamesTuple[jjj])
-            os.chdir('./' + satNamesTuple[jjj])
-            if (not(os.path.isdir('./' + iii * 1000 * dt))):
-                os.makedirs('./' + iii)
-            os.chdir('./' + iii)
+            if (not(os.path.isdir('./Satellites/' + satNamesTuple[jjj] + '/' + str(iii * 1000 * dt) + 's'))):
+                os.makedirs('./Satellites/' + satNamesTuple[jjj] + '/' + str(iii * 1000 * dt) + 's')
+            os.chdir('./Satellites/' + satNamesTuple[jjj] + '/' + str(iii * 1000 * dt) + 's')
             
-            plt.figure(1)
+            plt.figure(9 + iii * numberSats * 3 + jjj * 3)
             plotXY(dataArray4D[iii][jjj][0], dataArray4D[iii][jjj][1], 'Particles', 'Vpara (Re / s)', 'Vperp (Re / s)', 'electrons.png')
-            plt.figure(2)
+            plt.figure(9 + iii * numberSats * 3 + jjj * 3 + 1)
             plotXY(dataArray4D[iii][jjj][1], dataArray4D[iii][jjj][2], 'Particles', 'Vperp (Re / s)', 'Z (Re)', 'z_vprp_electrons.png')
-            plt.figure(3)
+            plt.figure(9 + iii * numberSats * 3 + jjj * 3 + 2)
             plotXY(dataArray4D[iii][jjj][0], dataArray4D[iii][jjj][2], 'Particles', 'Vpara (Re / s)', 'Z (Re)', 'z_vpra_electrons.png')
             
-        os.chdir('./../../')
+            os.chdir('./../../../')

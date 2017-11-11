@@ -23,16 +23,16 @@ dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
 
-    results = sim.runSim(10000)
+    #results = sim.runSim(10000)
 
-    #sim.initializeSimulation() #if granular control over execution order is desired...
-    #sim.copyDataToGPU()
+    sim.initializeSimulation() #if granular control over execution order is desired...
+    sim.copyDataToGPU()
     #sim.iterateSimulation(1)
-    #sim.iterateSimulation(10000)
-    #sim.copyDataToHost()
-    #sim.freeGPUMemory()
-    #sim.prepareResults()
-    #results = sim.getResultsfrom3D()
+    sim.iterateSimulation(10000)
+    sim.copyDataToHost()
+    sim.freeGPUMemory()
+    sim.prepareResults()
+    results = sim.getResultsfrom3D()
 
     electrons = len(results[0][0])
     ions = len(results[1][0])
@@ -45,7 +45,7 @@ def simulationRunMain():
         results[1][2], fields[0], fields[1], fields[2], False)
 
     #Eventually, read names from satellites and construct into array
-    #plotSatelliteData(sim.getSatelliteData(), sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
+    plotSatelliteData(sim.getSatelliteData(), sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
 
     sim.terminateSimulation170925()
 
