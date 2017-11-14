@@ -50,11 +50,16 @@ def plotSatelliteData(dataArray4D, numberMsmts, numberSats, dt, satNamesTuple, s
                 os.makedirs('./Satellites/' + satNamesTuple[jjj] + '/' + str(iii * 1000 * dt) + 's')
             os.chdir('./Satellites/' + satNamesTuple[jjj] + '/' + str(iii * 1000 * dt) + 's')
             
-            plt.figure(9 + iii * numberSats * 3 + jjj * 3)
+            fignum = 9 + iii * numberSats * 3 + jjj * 3
+            plt.figure(fignum)
             plotXY(dataArray4D[iii][jjj][0], dataArray4D[iii][jjj][1], 'Particles', 'Vpara (Re / s)', 'Vperp (Re / s)', 'electrons.png')
-            plt.figure(9 + iii * numberSats * 3 + jjj * 3 + 1)
+            plt.figure(fignum + 1)
             plotXY(dataArray4D[iii][jjj][1], dataArray4D[iii][jjj][2], 'Particles', 'Vperp (Re / s)', 'Z (Re)', 'z_vprp_electrons.png')
-            plt.figure(9 + iii * numberSats * 3 + jjj * 3 + 2)
+            plt.figure(fignum + 2)
             plotXY(dataArray4D[iii][jjj][0], dataArray4D[iii][jjj][2], 'Particles', 'Vpara (Re / s)', 'Z (Re)', 'z_vpra_electrons.png')
             
+            plt.close(fignum)
+            plt.close(fignum + 1)
+            plt.close(fignum + 2)
+
             os.chdir('./../../../')

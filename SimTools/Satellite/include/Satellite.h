@@ -26,11 +26,14 @@ public:
 	{
 		data_m = new double*[numberOfAttributes_m];
 		for (int iii = 0; iii < numberOfAttributes_m; iii++)
+		{
 			data_m[iii] = new double[numberOfParticles_m];
+			for (int jjj = 0; jjj < numberOfParticles_m; jjj++)
+				data_m[iii][jjj] = 0.0;
+		}
 		GPUdata_m.reserve(numberOfAttributes_m);
 		
 		initializeSatelliteOnGPU();
-		copyDataToHost();
 	}
 	
 	virtual ~Satellite()
@@ -46,7 +49,7 @@ public:
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 
 	//Access functions
-	double* getDataArrayPointer(int index) { return data_m[index]; }
+	double* getDataArrayPointer(int index) { dataReady_m = false; return data_m[index]; }
 	double  getAltitude() { return altitude_m; }
 	bool	getUpward() { return upwardFacing_m; }
 	void	clearDataReady() { dataReady_m = false; }

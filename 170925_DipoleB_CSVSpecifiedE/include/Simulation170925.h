@@ -32,20 +32,46 @@ public:
 		means[1] = V_DIST_MEAN;
 		means[2] = V_DIST_MEAN;
 		means[3] = V_DIST_MEAN;
-		sigmas[0] = V_SIGMA;
-		sigmas[1] = V_SIGMA;
-		sigmas[2] = V_SIGMA;
-		sigmas[3] = V_SIGMA;
+		sigmas[0] = V_SIGMA_ELEC;
+		sigmas[1] = V_SIGMA_ELEC;
+		sigmas[2] = V_SIGMA_IONS;
+		sigmas[3] = V_SIGMA_IONS;
 		generateNormallyDistributedValues(2, means, sigmas);
+		
+		//Generate z values and convert v_perp to mu here
+		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
+		{
+			for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
+			{
+				if (jjj % 2 == 0) //Generate z, every other particle starts at top/bottom of sim respectively
+				{
+					particles_m[iii][2][jjj] = MIN_Z_SIM + 0.01 * (RADIUS_EARTH / NORMFACTOR);
+					particles_m[iii][0][jjj] = abs(particles_m[iii][0][jjj]);
+				}
+				else
+				{
+					particles_m[iii][2][jjj] = MAX_Z_SIM - 0.01 * (RADIUS_EARTH / NORMFACTOR);
+					particles_m[iii][1][jjj] *= sqrt(T_RATIO); //higher energy magnetosphere particles - still velocity, so sqrt(tratio)
+					particles_m[iii][0][jjj] = -abs(particles_m[iii][0][jjj]) * sqrt(T_RATIO);
+				}
+			}//end for jjj
+		}//end for iii
+		
+		//loadDataFilesIntoParticleArray(); //To load other data (previously saved) into particle arrays
 
-		std::string LUT;
-		LUT = rootdir_m + "\\in\\" + LUTfilename_m;
+		//Populate mass array
+		mass_m.reserve(2);
+		mass_m[0] = MASS_ELECTRON;
+		mass_m[1] = MASS_PROTON;
+
+		convertVPerpToMu();
+
+		//Populate E Field LUT
+		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
 		setElecMagLUT(LUT.c_str(), 2951, 3);
 
-		//loadDataFilesIntoParticleArray();
-
-		std::string fold;
-		fold = "./particles_init/";
+		//Save particle distributions to disk
+		std::string fold{ "./particles_init/" };
 		std::vector<std::string> names{ "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
@@ -53,18 +79,30 @@ public:
 				saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
 		}
 
-		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
+		//Create Satellites for observation
+		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), true, "downwardElectrons"); //Later code will take advantage of the interleaved particle order of the satellites
+		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), true, "downwardIons");		 //Look for [SOMEINDEX % 2]
+		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), false, "upwardElectrons");
+		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), false, "upwardIons");
 
-		createSatellite(2, true, "downwardElectrons");
-		createSatellite(2, true, "downwardIons");
-		createSatellite(2, false, "upwardElectrons");
-		createSatellite(2, false, "upwardIons");
+		//Print some simulation data
+#ifdef NO_NORMALIZE_M
+		std::string unitstring{ " m" };
+#else
+		std::string unitstring{ " Re" };
+#endif
+
+		//Print things related to simulation characteristics
+		std::cout << "Sim between:      " << MIN_Z_SIM << " - " << MAX_Z_SIM << unitstring << "\n";
+		std::cout << "Particle Number:  " << numberOfParticlesPerType_m << "\n";
+		std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
+		std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
 	}//end constructor
 
-	~Simulation170925()
+	~Simulation170925() //Destructor
 	{
-		std::string fold;
-		fold = "./particles_final/";
+		//Save final particle distributions to disk
+		std::string fold{ "./particles_final/" };
 		std::vector<std::string> names{ "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
@@ -72,10 +110,12 @@ public:
 				saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
 		}
 
+		//Delete double arrays
 		for (int iii = 0; iii < 3; iii++)
 			delete[] elcFieldLUT_m[iii];
-
 		delete[] elcFieldLUT_m;
+		
+		//Delete satellites
 		for (int iii = 0; iii < satellites_m.size(); iii++)
 			delete satellites_m[iii];
 	}
@@ -100,8 +140,6 @@ public:
 	virtual void copyDataToHost();
 	virtual void freeGPUMemory();
 	virtual void prepareResults();
-
-	virtual void createSatellite(double altitude, bool upwardFacing, std::string name);
 };
 
 #endif //end header guard

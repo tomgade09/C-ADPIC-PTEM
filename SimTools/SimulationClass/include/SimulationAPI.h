@@ -20,6 +20,8 @@ DLLEXPORT int getNumberOfParticleTypesWrapper(Simulation* simulation);
 DLLEXPORT int getNumberOfParticlesPerTypeWrapper(Simulation* simulation);
 DLLEXPORT int getNumberOfAttributesTrackedWrapper(Simulation* simulation);
 DLLEXPORT bool areResultsPreparedWrapper(Simulation* simulation);
+DLLEXPORT bool getNormalizedWrapper(Simulation* simulation);
+DLLEXPORT bool getReplenishWrapper(Simulation* simulation);
 
 //Pointer one liners
 DLLEXPORT double*** getPointerTo3DParticleArrayWrapper(Simulation* simulation);

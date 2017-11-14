@@ -23,23 +23,28 @@ dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
 
-    #results = sim.runSim(10000)
+    if sim.normalized_m:
+        invNormFactor = 1.0
+    else:
+        invNormFactor = 6.371e6
 
-    sim.initializeSimulation() #if granular control over execution order is desired...
-    sim.copyDataToGPU()
+    results = sim.runSim(10000)
+
+    #sim.initializeSimulation() #if granular control over execution order is desired...
+    #sim.copyDataToGPU()
     #sim.iterateSimulation(1)
-    sim.iterateSimulation(10000)
-    sim.copyDataToHost()
-    sim.freeGPUMemory()
-    sim.prepareResults()
-    results = sim.getResultsfrom3D()
+    #sim.iterateSimulation(10000)
+    #sim.copyDataToHost()
+    #sim.freeGPUMemory()
+    #sim.prepareResults()
+    #results = sim.getResultsfrom3D()
 
     electrons = len(results[0][0])
     ions = len(results[1][0])
     length = (electrons + ions) * sim.attr_m + 3
     print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
-    fields = sim.fieldsAtAllZ(0.0, 10000, (10 - 8.371/6.371)/ 10000, 8.371/6.371)
+    fields = sim.fieldsAtAllZ(0.0, 10000, invNormFactor * (10 - 8.371/6.371) / 10000, invNormFactor * 8.371/6.371)
 
     plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         results[1][2], fields[0], fields[1], fields[2], False)

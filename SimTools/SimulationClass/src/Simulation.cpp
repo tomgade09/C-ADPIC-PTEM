@@ -147,3 +147,9 @@ void Simulation::serializeParticleArray(bool excludeOutOfSim)
 		prevPartInSim = partInSimCnt[iii];
 	}//end iii
 }//end function
+
+void Simulation::createSatellite(double altitude, bool upwardFacing, std::string name)
+{
+	Satellite* newSat = new Satellite(altitude, upwardFacing, numberOfAttributesTracked_m, numberOfParticlesPerType_m, name);
+	satellites_m.push_back(newSat);
+}

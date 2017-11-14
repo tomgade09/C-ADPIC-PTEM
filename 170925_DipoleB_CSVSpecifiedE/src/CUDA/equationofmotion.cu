@@ -65,7 +65,7 @@ __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest conc
 
 __host__ __device__ double BFieldatZ(double z, double simtime) //this will change in future iterations
 {//for now, a simple dipole field
-	return DIPOLECONST / pow(z / (RADIUS_EARTH / NORMFACTOR), 3);
+	return DIPOLECONST * pow((RADIUS_EARTH / NORMFACTOR) / z, 3); //Bz = B0 * (r0/rz)^3, r0=DIPOLECONST - B at 1 Re
 }
 
 __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
@@ -118,7 +118,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double* LUT)
 	funcArg[1] = y_0 + k3 * funcArg[0];
 	k4 = accel1dCUDA(funcArg, arrayLen, LUT); //k4 = f(t_n + h, y_n + h k3)
 	
-	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns units of y, not dy / dt
+	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns delta y, not dy / dt, not total y
 }
 
 __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
@@ -127,16 +127,19 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);//256 threads per block, 2 random generators per block, 128 threads per RG
 	double mass;
 	double q;
+	double v_sigma;
 
 	if (elecTF)//would have to be changed in the event of multiple ion species
 	{
 		mass = MASS_ELECTRON;
 		q = -1.0;
+		v_sigma = sqrt(V_SIGMA_SQ_ELEC);
 	}
 	else
 	{
 		mass = MASS_PROTON;
 		q = 1.0;
+		v_sigma = sqrt(V_SIGMA_SQ_IONS);
 	}
 
 #ifdef CUDANORMAL_TEST
@@ -151,13 +154,13 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 	else
 	{
 		z_d[thdInd] = MAGSPH_MAX_Z - 0.1;
-		v_d[thdInd] = -abs(v_d[thdInd]);
+		v_d[thdInd] = -abs(v_d[thdInd]) * sqrt(T_RATIO);
 	}
 	inSimBool[thdInd] = true;
 	return;
 #endif
 
-	inSimBool[thdInd] = ((z_d[thdInd] < MAGSPH_MAX_Z) && (z_d[thdInd] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
+	inSimBool[thdInd] = ((z_d[thdInd] < MAX_Z_SIM) && (z_d[thdInd] > MIN_Z_SIM)); //Makes sure particles are within bounds
 
 	double args[7];
 
@@ -166,19 +169,20 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 		if (!inSimBool[thdInd])
 		{
 			inSimBool[thdInd] = true;
-			v_d[thdInd] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
+			v_d[thdInd] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, v_sigma * VPARACONST);
 			numEscaped[thdInd] += 1;
-			if (z_d[thdInd] < IONSPH_MIN_Z)
+			if (z_d[thdInd] < MIN_Z_SIM)
 			{
-				z_d[thdInd] = IONSPH_MIN_Z + 0.01;
+				z_d[thdInd] = MIN_Z_SIM + 0.01 * (RADIUS_EARTH / NORMFACTOR);
 				v_d[thdInd] = abs(v_d[thdInd]);
 			}
 			else
 			{
-				z_d[thdInd] = MAGSPH_MAX_Z - 0.01;
-				v_d[thdInd] = -abs(v_d[thdInd]);
+				z_d[thdInd] = MAX_Z_SIM - 0.01 * (RADIUS_EARTH / NORMFACTOR);
+				mu_d[thdInd] *= T_RATIO;
+				v_d[thdInd] = -abs(v_d[thdInd]) * sqrt(T_RATIO);
 			}
-			mu_d[thdInd] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[thdInd], simtime);
+			mu_d[thdInd] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, v_sigma), 2) * 0.5 * mass / BFieldatZ(z_d[thdInd], simtime);
 		}
 	}
 
@@ -199,31 +203,8 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 
 void Simulation170925::initializeSimulation()
 {
-	//Generate z values and convert v_perp to mu here
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
-		{
-			if (jjj % 2 == 0) //Generate z, every other particle starts at top/bottom of sim respectively
-			{
-				particles_m[iii][2][jjj] = IONSPH_MIN_Z + 0.01;
-				particles_m[iii][0][jjj] = abs(particles_m[iii][0][jjj]);
-			}
-			else
-			{
-				particles_m[iii][2][jjj] = MAGSPH_MAX_Z - 0.01;
-				particles_m[iii][0][jjj] = -abs(particles_m[iii][0][jjj]);
-			}
-		}//end for jjj
-	}//end for iii
-	
-	mass_m.reserve(2);
-	mass_m[0] = MASS_ELECTRON;
-	mass_m[1] = MASS_PROTON;
-
-	convertVPerpToMu();
-	
 	//Allocate memory on GPU for elec/ions variables
+	gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
 	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++)
 	{//[0] = v_e_para, [1] = mu_e_para, [2] = z_e, [3-5] = same attributes for ions, [6] = E Field LUT
 		cudaMalloc((void **)&gpuDblMemoryPointers_m[iii], DBLARRAY_BYTES);
@@ -247,18 +228,6 @@ void Simulation170925::initializeSimulation()
 	}
 	else
 		gpuOtherMemoryPointers_m[0] = nullptr;
-
-#ifdef NO_NORMALIZE_M
-	std::string unitstring{ " m" };
-#else
-	std::string unitstring{ " Re" };
-#endif
-
-	//Print things related to simulation characteristics
-	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << unitstring << "\n";
-	std::cout << "Particle Number:  " << numberOfParticlesPerType_m << "\n";
-	std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
-	std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
 
 	initialized_m = true;
 }
@@ -326,18 +295,21 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		return;
 	}
 
-	double** satelliteDataPtrs[2];
+	double** satelliteGPUDataPtrs[2];
 	for (int iii = 0; iii < satellites_m.size(); iii++)
-		satelliteDataPtrs[iii] = new double*[3];
-	satelliteDataPtrs[0][0] = gpuDblMemoryPointers_m[0];//electrons
-	satelliteDataPtrs[0][1] = gpuDblMemoryPointers_m[1];
-	satelliteDataPtrs[0][2] = gpuDblMemoryPointers_m[2];
-	satelliteDataPtrs[1][0] = gpuDblMemoryPointers_m[3];//ions
-	satelliteDataPtrs[1][1] = gpuDblMemoryPointers_m[4];
-	satelliteDataPtrs[1][2] = gpuDblMemoryPointers_m[5];
+		satelliteGPUDataPtrs[iii] = new double*[3];
+	satelliteGPUDataPtrs[0][0] = gpuDblMemoryPointers_m[0];//electrons
+	satelliteGPUDataPtrs[0][1] = gpuDblMemoryPointers_m[1];
+	satelliteGPUDataPtrs[0][2] = gpuDblMemoryPointers_m[2];
+	satelliteGPUDataPtrs[1][0] = gpuDblMemoryPointers_m[3];//ions
+	satelliteGPUDataPtrs[1][1] = gpuDblMemoryPointers_m[4];
+	satelliteGPUDataPtrs[1][2] = gpuDblMemoryPointers_m[5];
 	
-	long cudaloopind{ 0 };
+	//Make room for 100 measurements
+	satelliteData_m.reserve(100);
+
 	//Loop code
+	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
 	{
 		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>> (gpuDblMemoryPointers_m[0], gpuDblMemoryPointers_m[1], gpuDblMemoryPointers_m[2], 
@@ -345,47 +317,38 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		computeKernel <<< numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE >>> (gpuDblMemoryPointers_m[3], gpuDblMemoryPointers_m[4], gpuDblMemoryPointers_m[5], 
 			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		for (int iii = 0; iii < satellites_m.size(); iii++)
-			satellites_m[iii]->iterateDetector(numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE, satelliteDataPtrs[iii % 2]);
+			satellites_m[iii]->iterateDetector(numberOfParticlesPerType_m / BLOCKSIZE, BLOCKSIZE, satelliteGPUDataPtrs[iii % 2]);
 		
 		cudaloopind++;
 		incTime();
+
 		if (cudaloopind % 1000 == 0)
+			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time: " << simTime_m << "\n";
+
+		if (cudaloopind % 3000 == 0)
 		{
-			//std::cout << "Here we go\n";
-			std::vector<std::vector<double*>> tmpcont;//vector of satellites[attributes]
+			std::vector<std::vector<double*>> tmpcont; //vector of satellites[attributes]
 			tmpcont.reserve(satellites_m.size());
-			//std::cout << "subvector reserved\n";
 			for (int iii = 0; iii < satellites_m.size(); iii++)
 			{
 				satellites_m[iii]->copyDataToHost();
-				//std::cout << "copyDataToHost - Sat done!\n";
-				std::vector<double*> tmp;//vector of attributes[individual particles (through double*)]
+
+				std::vector<double*> tmp; //vector of attributes[individual particles (through double*)]
 				for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
 				{
 					double* dbltmp = new double[NUMPARTICLES];
-					double* dblret{ satellites_m[iii]->getDataArrayPointer(jjj) };
-					std::copy(&dblret[0], &dblret[NUMPARTICLES - 1], &dbltmp[0]);
+					double* satDat{ satellites_m[iii]->getDataArrayPointer(jjj) };
+					std::copy(&satDat[0], &satDat[NUMPARTICLES - 1], &dbltmp[0]);
 					tmp.push_back(dbltmp);
-					int zeros{ 0 };
-					for (int kk = 0; kk < NUMPARTICLES; kk++)
-					{
-						if (abs(tmp[jjj][kk]) < 1e-30)
-							zeros++;
-					}
-					//std::cout << "Attr: " << jjj << " Zeros: " << zeros << "\n";
 				}
-				//std::cout << "attributes pushed back onto vector\n";
+
 				for (int jjj = 0; jjj < NUMPARTICLES; jjj++)
 					tmp[1][jjj] = sqrt(2 * tmp[1][jjj] * BFieldatZ(tmp[2][jjj], simTime_m) / mass_m[iii % 2]);
-				//std::cout << "mu to vperp done!!\n";
-				//std::cout << "value from vector: " << tmp[1][1] << " " << tmp[2][500] << "\n";
 				tmpcont.push_back(tmp);
-				//std::cout << "done!\n";
 			}
 			satelliteData_m.push_back(tmpcont);
-			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time: " << simTime_m << "\n";
-		}
-	}
+		}//end if (cudaloop...
+	}//end while (cudaloop...
 }
 
 void Simulation170925::copyDataToHost()
@@ -449,5 +412,5 @@ void Simulation170925::freeGPUMemory()
 	}
 
 	std::cout << "C++: " << e_in_sim << " " << i_in_sim << " " << ((e_in_sim + i_in_sim) * 3) + 4 << "\n";
-	cudaProfilerStop(); //For profiling
+	cudaProfilerStop(); //For profiling the profiler in the CUDA bundle
 }

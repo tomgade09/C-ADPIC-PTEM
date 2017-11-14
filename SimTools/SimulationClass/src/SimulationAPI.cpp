@@ -36,6 +36,17 @@ DLLEXPORT bool areResultsPreparedWrapper(Simulation* simulation)
 	return simulation->areResultsPrepared();
 }
 
+DLLEXPORT bool getNormalizedWrapper(Simulation* simulation)
+{
+	return simulation->getNormalized();
+}
+
+DLLEXPORT bool getReplenishWrapper(Simulation* simulation)
+{
+	return simulation->getReplenish();
+}
+
+
 //Pointer one liners
 DLLEXPORT double*** getPointerTo3DParticleArrayWrapper(Simulation* simulation)
 {

@@ -24,6 +24,10 @@ class Simulation:
         self.simDLL_m.areResultsPreparedWrapper.restype = ctypes.c_bool
         self.simDLL_m.resetParticlesEscapedCountWrapper.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.resetParticlesEscapedCountWrapper.restype = None
+        self.simDLL_m.getNormalizedWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNormalizedWrapper.restype = ctypes.c_bool
+        self.simDLL_m.getReplenishWrapper.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getReplenishWrapper.restype = ctypes.c_bool
 
         #Pointer one liners
         self.simDLL_m.getPointerToSerializedParticleArrayWrapper.argtypes = (ctypes.c_void_p,)
@@ -85,6 +89,8 @@ class Simulation:
         self.attr_m = self.simDLL_m.getNumberOfAttributesTrackedWrapper(self.simulationptr)
         self.numPart_m = self.simDLL_m.getNumberOfParticlesPerTypeWrapper(self.simulationptr)
         self.dt_m = self.simDLL_m.getDtWrapper(self.simulationptr)
+        self.normalized_m = self.simDLL_m.getNormalizedWrapper(self.simulationptr)
+        self.replenish_m = self.simDLL_m.getReplenishWrapper(self.simulationptr)
 
         return
     
@@ -185,7 +191,8 @@ class Simulation:
 
     #Numerical tools
     def __generateNormallyDistributedCPP(self, numberOfNormalAttributes, means, sigmas):
-        C_DOUBLEA = ctypes.c_double * numberOfNormalAttributes#generally, a constructor in the derived c++ class will take care of this - that's why __
+        #generally, a constructor in the derived c++ class will take care of this - that's why __
+        C_DOUBLEA = ctypes.c_double * numberOfNormalAttributes
         meanscpp = C_DOUBLEA()
         sigmascpp = C_DOUBLEA()
 

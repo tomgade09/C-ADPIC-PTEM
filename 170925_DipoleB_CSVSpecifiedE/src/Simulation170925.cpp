@@ -29,12 +29,13 @@ void Simulation170925::convertVPerpToMu()
 		std::cout << "v_perp has already been converted to mu.  Returning with no changes.\n";
 		return;
 	}
-
+	
 	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 	{
 		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
 			particles_m[iii][1][jjj] = 0.5 * mass_m[iii] * particles_m[iii][1][jjj] * particles_m[iii][1][jjj] / BFieldatZ(particles_m[iii][2][jjj], simTime_m);
 	}
+	
 	mu_m = true;
 }
 
@@ -60,10 +61,4 @@ void Simulation170925::prepareResults()
 	convertMuToVPerp();
 	serializeParticleArray();
 	resultsPrepared_m = true;
-}
-
-void Simulation170925::createSatellite(double altitude, bool upwardFacing, std::string name)
-{
-	Satellite* newSat = new Satellite(altitude, upwardFacing, numberOfAttributesTracked_m, numberOfParticlesPerType_m, name);
-	satellites_m.push_back(newSat);
 }

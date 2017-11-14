@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include "include\Satellite.h"
+#include "include\_simulationvariables.h" //remove this later, replace with passed in variables
 
 class Simulation
 {
@@ -38,6 +39,8 @@ protected:
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
+	bool normalizedToRe_m{ (NORMFACTOR > 2.0) ? true : false };
+	bool replenish_e_i_m{ REPLENISH_E_I };
 	
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
@@ -57,7 +60,7 @@ public:
 			{
 				particles_m[iii][jjj] = new double[numberOfParticlesPerType_m];
 				for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)
-				{
+				{//values to initialize array
 					particlesInSim_m[iii][kk] = true;
 					particlesEscaped_m[iii][kk] = 0;
 					particles_m[iii][jjj][kk] = 0.0;
@@ -98,7 +101,10 @@ public:
 	int getNumberOfParticlesPerType() { return numberOfParticlesPerType_m; }//tested
 	int getNumberOfAttributesTracked() { return numberOfAttributesTracked_m; }//tested
 	bool areResultsPrepared() { return resultsPrepared_m; }
-	
+
+	bool getNormalized(){ return normalizedToRe_m; }
+	bool getReplenish() { return replenish_e_i_m; }
+
 	int getNumberOfSatellites() { return satellites_m.size(); }
 	int getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
 	double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m[measurementInd][satelliteInd][attributeInd]; }
@@ -136,7 +142,7 @@ public:
 	virtual void freeGPUMemory() = 0;
 	virtual void prepareResults() = 0;
 
-	virtual void createSatellite(double altitude, bool upwardFacing, std::string name) = 0;
+	virtual void createSatellite(double altitude, bool upwardFacing, std::string name);
 	virtual int getSatelliteCount() { return satellites_m.size(); }
 	
 };//end class

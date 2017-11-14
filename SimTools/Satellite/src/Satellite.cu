@@ -11,7 +11,6 @@
 
 
 #include <stdio.h>
-#include <stdlib.h>
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { \
     printf("Error at %s:%d  Error Number: %d\n",__FILE__,__LINE__, EXIT_FAILURE);}} while(0)
 
