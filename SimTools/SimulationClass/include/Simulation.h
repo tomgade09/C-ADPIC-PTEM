@@ -5,8 +5,15 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <chrono>
 #include "include\Satellite.h"
 #include "include\_simulationvariables.h" //remove this later, replace with passed in variables
+
+struct timeStruct
+{
+	std::string label;
+	std::chrono::steady_clock::time_point tp;
+};
 
 class Simulation
 {
@@ -21,13 +28,12 @@ protected:
 
 	//Data Array Pointers
 	double*** particles_m{ nullptr };
-	double*   particlesSerialized_m{ nullptr };
 	bool**    particlesInSim_m{ nullptr };
 	int**     particlesEscaped_m{ nullptr };
 	std::vector<void*> otherMemoryPointers_m;
 	std::vector<Satellite*> satellites_m;
-	//satData[recorded measurement number][satellite number][attribute number]
-	std::vector<std::vector<std::vector<double*>>> satelliteData_m;
+	std::vector<std::vector<std::vector<double*>>> satelliteData_m; //4D satelliteData[recorded measurement number][satellite number][attribute number][particle number]
+	std::vector<timeStruct*> timeStructs_m;
 	
 	//GPU Memory Pointers
 	std::vector<double*> gpuDblMemoryPointers_m { nullptr };
@@ -35,22 +41,28 @@ protected:
 	std::vector<int*> gpuIntMemoryPointers_m { nullptr };
 	std::vector<void*> gpuOtherMemoryPointers_m{ nullptr };
 
-	//Calculated Quantities, Flags
+	//Calculated Quantities, Flags, Parameters defined in Header
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
 	bool normalizedToRe_m{ (NORMFACTOR > 2.0) ? true : false };
 	bool replenish_e_i_m{ REPLENISH_E_I };
+	double simMin_m{ MIN_Z_SIM };
+	double simMax_m{ MAX_Z_SIM };
 	
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
 		numberOfParticleTypes_m{ numberOfParticleTypes }, numberOfParticlesPerType_m{ numberOfParticlesPerType },
 		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }, rootdir_m{ rootdir }
 	{
+		timeStructs_m.reserve(20);
+		timeStructs_m.push_back(createTimeStruct("Begin Simulation Constructor")); //index 0
+		
 		//Form the particle array, boolean "inSim" array, escaped particle count array, and set "inSim" to true for each particle
 		particles_m = new double**[numberOfParticleTypes_m];
 		particlesInSim_m = new bool*[numberOfParticleTypes_m];
 		particlesEscaped_m = new int*[numberOfParticleTypes_m];
+		
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
 			particles_m[iii] = new double*[numberOfAttributesTracked_m];
@@ -64,9 +76,9 @@ public:
 					particlesInSim_m[iii][kk] = true;
 					particlesEscaped_m[iii][kk] = 0;
 					particles_m[iii][jjj][kk] = 0.0;
-				}//end loop kkk
-			}//end loop jjj
-		}//end loop iii
+				}
+			}
+		}
 
 		//Allocate room in vectors for GPU Memory Pointers
 		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m); //holds pointers to GPU memory for particle attributes
@@ -76,6 +88,9 @@ public:
 
 	virtual ~Simulation()
 	{
+		for (int iii = 0; iii < timeStructs_m.size(); iii++)
+			delete timeStructs_m[iii];
+
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
 			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
@@ -87,9 +102,20 @@ public:
 			delete[] particlesEscaped_m[iii];
 		}
 		delete[] particles_m;
-		delete[] particlesSerialized_m;
 		delete[] particlesInSim_m;
 		delete[] particlesEscaped_m;
+
+		for (int iii = 0; iii < satelliteData_m.size(); iii++) //number of measurements
+		{
+			for (int jjj = 0; jjj < satelliteData_m[0].size(); jjj++) //number of satellites
+			{
+				for (int kk = 0; kk < satelliteData_m[0][0].size(); kk++) //number of attributes
+						delete[] satelliteData_m[iii][jjj][kk];
+			}
+		}
+
+		for (int iii = 0; iii < timeStructs_m.size(); iii++)
+			delete timeStructs_m[iii];
 	};
 	//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
@@ -112,8 +138,6 @@ public:
 	//Pointer one liners
 	double*** getPointerTo3DParticleArray() { return particles_m; }//tested
 	double**  getPointerToSingleParticleTypeArray(int index) { if (index >= numberOfParticleTypes_m) { return nullptr; } return particles_m[index]; } //eventually print a warning so the user knows
-	double*   getPointerToSerializedParticleArray() { if (particlesSerialized_m == nullptr) { //tested, except for case where particlesSerialized == nullptr
-		std::cout << "Array not serialized yet.  Run Simulation::serializeParticleArray.\n"; } return particlesSerialized_m; }
 	bool*     getPointerToParticlesInSimArray(int index) { if (index > numberOfParticleTypes_m) {std::cout << "Error: No particle exists for index requested.  ";
 		std::cout << "There are only " << numberOfParticleTypes_m << " particle types in the simulation.\n"; return nullptr;} return particlesInSim_m[index]; }
 	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex) { if ((partIndex > numberOfParticleTypes_m) || (attrIndex > numberOfAttributesTracked_m)) { 
@@ -127,7 +151,6 @@ public:
 
 	//Array tools
 	virtual void saveParticleAttributeToDisk(int particleIndex, int attributeIndex, const char* foldername, const char* name);//what is written to disk needs to be tested - make sure right attributes are in the right file
-	virtual void serializeParticleArray(bool excludeOutOfSim=true);//tested
 	virtual void loadFileIntoParticleAttribute(int particleIndex, int attributeIndex, const char* foldername, const char* name);
 	
 	//Field tools
@@ -142,8 +165,14 @@ public:
 	virtual void freeGPUMemory() = 0;
 	virtual void prepareResults() = 0;
 
-	virtual void createSatellite(double altitude, bool upwardFacing, std::string name);
+	//Access functions
+	virtual double getSimMin() { return simMin_m; }
+	virtual double getSimMax() { return simMax_m; }
+
+	void createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, std::string name);
 	virtual int getSatelliteCount() { return satellites_m.size(); }
-	
+	virtual timeStruct* createTimeStruct(std::string label);
+	virtual void printTimeNowFromTimeStruct(timeStruct* tS, std::string label);
+	virtual void printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* endTS);
 };//end class
 #endif //end header guard

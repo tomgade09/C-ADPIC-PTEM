@@ -59,6 +59,5 @@ void Simulation170925::convertMuToVPerp()
 void Simulation170925::prepareResults()
 {
 	convertMuToVPerp();
-	serializeParticleArray();
 	resultsPrepared_m = true;
 }

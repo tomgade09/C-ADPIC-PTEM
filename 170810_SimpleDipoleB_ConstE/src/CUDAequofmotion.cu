@@ -49,7 +49,7 @@ __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Four
 	F_lor = args[3] * EFieldatZ(ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
-	F_mir = -args[2] * (-3 / (ztmp * pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 3))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	F_mir = -args[2] * (-3 / (pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 4))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field

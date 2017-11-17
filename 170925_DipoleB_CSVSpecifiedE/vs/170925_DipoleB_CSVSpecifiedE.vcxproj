@@ -191,7 +191,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
-      <AdditionalOptions>--ptxas-options=-v %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,7 +1,6 @@
 #ifndef SIMULATIONAPI_H
 #define SIMULATIONAPI_H
 
-#include <chrono>
 #include <iostream>
 #include "include\Simulation.h"
 
@@ -13,45 +12,45 @@
 #endif
 
 ///One liner functions
-DLLEXPORT double getSimulationTimeWrapper(Simulation* simulation);
-DLLEXPORT double getDtWrapper(Simulation* simulation);
-DLLEXPORT void incrementSimulationTimeByDtWrapper(Simulation* simulation);
-DLLEXPORT int getNumberOfParticleTypesWrapper(Simulation* simulation);
-DLLEXPORT int getNumberOfParticlesPerTypeWrapper(Simulation* simulation);
-DLLEXPORT int getNumberOfAttributesTrackedWrapper(Simulation* simulation);
-DLLEXPORT bool areResultsPreparedWrapper(Simulation* simulation);
-DLLEXPORT bool getNormalizedWrapper(Simulation* simulation);
-DLLEXPORT bool getReplenishWrapper(Simulation* simulation);
+DLLEXPORT double getSimulationTimeAPI(Simulation* simulation);
+DLLEXPORT double getDtAPI(Simulation* simulation);
+DLLEXPORT void incrementSimulationTimeByDtAPI(Simulation* simulation);
+DLLEXPORT int getNumberOfParticleTypesAPI(Simulation* simulation);
+DLLEXPORT int getNumberOfParticlesPerTypeAPI(Simulation* simulation);
+DLLEXPORT int getNumberOfAttributesTrackedAPI(Simulation* simulation);
+DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation);
+DLLEXPORT bool getNormalizedAPI(Simulation* simulation);
+DLLEXPORT bool getReplenishAPI(Simulation* simulation);
+DLLEXPORT double getSimMinAPI(Simulation* simulation);
+DLLEXPORT double getSimMaxAPI(Simulation* simulation);
 
 //Pointer one liners
-DLLEXPORT double*** getPointerTo3DParticleArrayWrapper(Simulation* simulation);
-DLLEXPORT double** getPointerToSingleParticleTypeArrayWrapper(Simulation* simulation, int index);
-DLLEXPORT double* getPointerToSerializedParticleArrayWrapper(Simulation* simulation);
-DLLEXPORT bool* getPointerToParticlesInSimArrayWrapper(Simulation* simulation, int index);
-DLLEXPORT double* getPointerToSingleParticleAttributeArrayWrapper(Simulation* simulation, int partIndex, int attrIndex);
+DLLEXPORT double*** getPointerTo3DParticleArrayAPI(Simulation* simulation);
+DLLEXPORT double** getPointerToSingleParticleTypeArrayAPI(Simulation* simulation, int index);
+DLLEXPORT bool* getPointerToParticlesInSimArrayAPI(Simulation* simulation, int index);
+DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex);
 
 //Numerical tools
-DLLEXPORT void generateNormallyDistributedValuesWrapper(Simulation* simulation, int numberOfNormalAttributes, double* means, double* sigmas);
-DLLEXPORT double calculateMeanOfParticleAttributeWrapper(Simulation* simulation, int particleIndex, int attributeIndex, bool absValue);
-DLLEXPORT double calculateStdDevOfParticleAttributeWrapper(Simulation* simulation, int particleIndex, int attributeIndex);
-DLLEXPORT double* getPointerToSingleParticleAttributeArrayWrapper(Simulation* simulation, int partIndex, int attrIndex);
+DLLEXPORT void generateNormallyDistributedValuesAPI(Simulation* simulation, int numberOfNormalAttributes, double* means, double* sigmas);
+DLLEXPORT double calculateMeanOfParticleAttributeAPI(Simulation* simulation, int particleIndex, int attributeIndex, bool absValue);
+DLLEXPORT double calculateStdDevOfParticleAttributeAPI(Simulation* simulation, int particleIndex, int attributeIndex);
+DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex);
 
-//Array tools
-DLLEXPORT void serializeParticleArrayWrapper(Simulation* simulation);
-DLLEXPORT double calculateBFieldAtZandTimeWrapper(Simulation* simulation, double z, double time);
-DLLEXPORT double calculateEFieldAtZandTimeWrapper(Simulation* simulation, double z, double time);
+//Field tools
+DLLEXPORT double calculateBFieldAtZandTimeAPI(Simulation* simulation, double z, double time);
+DLLEXPORT double calculateEFieldAtZandTimeAPI(Simulation* simulation, double z, double time);
 
 //Simulation Management Function Wrappers
-DLLEXPORT void initializeSimulationWrapper(Simulation* simulation);
-DLLEXPORT void copyDataToGPUWrapper(Simulation* simulation);
-DLLEXPORT void iterateSimulationWrapper(Simulation* simulation, int numberOfIterations);
-DLLEXPORT void copyDataToHostWrapper(Simulation* simulation);
-DLLEXPORT void freeGPUMemoryWrapper(Simulation* simulation);
-DLLEXPORT void prepareResultsWrapper(Simulation* simulation);
+DLLEXPORT void initializeSimulationAPI(Simulation* simulation);
+DLLEXPORT void copyDataToGPUAPI(Simulation* simulation);
+DLLEXPORT void iterateSimulationAPI(Simulation* simulation, int numberOfIterations);
+DLLEXPORT void copyDataToHostAPI(Simulation* simulation);
+DLLEXPORT void freeGPUMemoryAPI(Simulation* simulation);
+DLLEXPORT void prepareResultsAPI(Simulation* simulation);
 
-DLLEXPORT void createSatelliteWrapper(Simulation* simulation, double altitude, bool upwardFacing, int particleIndex, const char* name);
-DLLEXPORT int  getNumberOfSatellitesWrapper(Simulation* simulation);
-DLLEXPORT int  getNumberOfSatelliteMsmtsWrapper(Simulation* simulation);
-DLLEXPORT double* getSatelliteDataPointersWrapper(Simulation* simulation, int measurementInd, int satelliteInd, int attributeInd);
+//DLLEXPORT void createSatelliteAPI(Simulation* simulation, double altitude, bool upwardFacing, int particleIndex, const char* name);
+DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation);
+DLLEXPORT int  getNumberOfSatelliteMsmtsAPI(Simulation* simulation);
+DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int measurementInd, int satelliteInd, int attributeInd);
 
 #endif//end if for header guard

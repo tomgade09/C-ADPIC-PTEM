@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import os, sys
+import csv
 
 def plotXY(xdata, ydata, title, xlabel, ylabel, filename, showplot=False):
     plt.plot(xdata, ydata, '.')
@@ -63,3 +64,20 @@ def plotSatelliteData(dataArray4D, numberMsmts, numberSats, dt, satNamesTuple, s
             plt.close(fignum + 2)
 
             os.chdir('./../../../')
+
+def save4DDataToCSV(dataArray, folder):
+    if (not(os.path.isdir(folder))):
+        os.makedirs(folder)
+
+    print(dataArray[0][0][0][0], dataArray[0][0][1][0], dataArray[0][0][2][0]) #sat 1: para, perp, z
+    print(dataArray[0][1][0][0], dataArray[0][1][1][0], dataArray[0][1][2][0]) #sat 2
+    print(dataArray[0][2][0][0], dataArray[0][2][1][0], dataArray[0][2][2][0]) #sat 3
+    print(dataArray[0][3][0][0], dataArray[0][3][1][0], dataArray[0][3][2][0]) #sat 4
+
+    for iii in range(len(dataArray)): #measurements
+        if (not(os.path.isdir(folder + "/" + "msmt" + str(iii)))):
+                os.makedirs(folder + "/" + "msmt" + str(iii))
+        for jjj in range(len(dataArray[0])): #satellites
+                with open(folder + "/" + "msmt" + str(iii) + "/sat" + str(jjj) + ".csv", "w", newline='\n') as f:
+                    csvwriter = csv.writer(f)
+                    csvwriter.writerows(dataArray[iii][jjj])

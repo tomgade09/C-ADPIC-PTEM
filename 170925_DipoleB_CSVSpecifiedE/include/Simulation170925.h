@@ -64,7 +64,28 @@ public:
 		mass_m[0] = MASS_ELECTRON;
 		mass_m[1] = MASS_PROTON;
 
-		convertVPerpToMu();
+		///Test code:
+		/*for (int iii = 0; iii < NUMPARTICLES; iii++)
+		{
+			if (iii % 2 == 0)
+			{
+				particles_m[0][0][iii] = 2 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][2][iii] = 1.9 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][0][iii] = 2 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][2][iii] = 1.9 * (RADIUS_EARTH / NORMFACTOR);
+			}
+			else
+			{
+				particles_m[0][0][iii] = -2 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][2][iii] = 2.1 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][0][iii] = -2 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][2][iii] = 2.1 * (RADIUS_EARTH / NORMFACTOR);
+			}
+		}*/
 
 		//Populate E Field LUT
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
@@ -79,24 +100,13 @@ public:
 				saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
 		}
 
-		//Create Satellites for observation
-		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), true, "downwardElectrons"); //Later code will take advantage of the interleaved particle order of the satellites
-		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), true, "downwardIons");		 //Look for [SOMEINDEX % 2]
-		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), false, "upwardElectrons");
-		createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), false, "upwardIons");
+		convertVPerpToMu();
 
-		//Print some simulation data
-#ifdef NO_NORMALIZE_M
-		std::string unitstring{ " m" };
-#else
-		std::string unitstring{ " Re" };
-#endif
+		timeStructs_m.push_back(createTimeStruct("End Simulation170925 Constructor")); //index 1
 
-		//Print things related to simulation characteristics
-		std::cout << "Sim between:      " << MIN_Z_SIM << " - " << MAX_Z_SIM << unitstring << "\n";
-		std::cout << "Particle Number:  " << numberOfParticlesPerType_m << "\n";
-		std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
-		std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
+		//test test test
+		std::cout << "Mu: " << particles_m[0][1][0] << " " << particles_m[0][1][1] << "\n";
+		std::cout << "Mu: " << particles_m[1][1][0] << " " << particles_m[1][1][1] << "\n";
 	}//end constructor
 
 	~Simulation170925() //Destructor
@@ -122,7 +132,7 @@ public:
 
 	//One liners
 	double*  getPointerToElectricFieldData(int column) { if (elcFieldLUT_m == nullptr)
-		{ std::cout << "Array not initialized yet.  Run Simulation::setElecMagLUT.\n"; } return elcFieldLUT_m[column]; }
+		{ std::cout << "Array not initialized yet.  Run Simulation::setElecMagLUT.\n"; return nullptr; } return elcFieldLUT_m[column]; }
 	virtual void resetParticlesEscapedCount() { totalElecEscaped_m = 0; totalIonsEscaped_m = 0; return; }
 
 	//Array tools

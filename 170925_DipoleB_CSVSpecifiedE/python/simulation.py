@@ -22,27 +22,27 @@ dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
 
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
+    results = sim.runSim(10000)
+    satDat = sim.getSatelliteData()
+    save4DDataToCSV(satDat, './Satellites/CSV')
 
     if sim.normalized_m:
         invNormFactor = 1.0
     else:
         invNormFactor = 6.371e6
 
-    results = sim.runSim(10000)
-
     #sim.initializeSimulation() #if granular control over execution order is desired...
     #sim.copyDataToGPU()
-    #sim.iterateSimulation(1)
     #sim.iterateSimulation(10000)
     #sim.copyDataToHost()
     #sim.freeGPUMemory()
     #sim.prepareResults()
     #results = sim.getResultsfrom3D()
 
-    electrons = len(results[0][0])
-    ions = len(results[1][0])
-    length = (electrons + ions) * sim.attr_m + 3
-    print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
+    #electrons = len(results[0][0])
+    #ions = len(results[1][0])
+    #length = (electrons + ions) * sim.attr_m + 3
+    #print("Py : "+str(electrons)+" "+str(ions)+" "+str(length))
 
     fields = sim.fieldsAtAllZ(0.0, 10000, invNormFactor * (10 - 8.371/6.371) / 10000, invNormFactor * 8.371/6.371)
 
@@ -50,7 +50,7 @@ def simulationRunMain():
         results[1][2], fields[0], fields[1], fields[2], False)
 
     #Eventually, read names from satellites and construct into array
-    plotSatelliteData(sim.getSatelliteData(), sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
+    plotSatelliteData(satDat, sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
 
     sim.terminateSimulation170925()
 

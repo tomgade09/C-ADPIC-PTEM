@@ -77,79 +77,28 @@ void Simulation::loadFileIntoParticleAttribute(int particleIndex, int attributeI
 	particles_m[particleIndex][attributeIndex] = fileIO::readDblBin(fn.c_str(), numberOfParticlesPerType_m);
 }
 
-void Simulation::serializeParticleArray(bool excludeOutOfSim)
-{//Array is structured as: [numberOfParticleTypes_m, numberOfAttributesTracked_m, number of particles[type=0] in sim,
- //part[type=0][attr=0][num=0] data, part[type=0][attr=0][num=1] data...part[type=0][attr=1][num=0] data, part[type=0][attr=1][num=1] data...
- //number of particles[type=1] in sim,
- //part[type=1][attr=0][num=0] data, part[type=1][attr=0][num=1] data...part[type=1][attr=1][num=0] data, part[type=1][attr=1][num=1] data...]
- //So basically, the first element is the number of particle types in the simulation, the second is the number of attributes being tracked per particle,
- //Then the data of each particle is appended starting with the total number of particles of that type in the simulation (so a script can know the total size of the array)
- //Followed by the first attribute's data (particle by particle), followed by the second attribute (of that particle)'s data (particle by particle) and so on
- //Once the all of the particle's data is appended, the next particle's data is added in the same manner
- //Note: this is just one way of doing it.  The function is virtual so it can be overwritten in derived classes if desired.
-	if (particlesSerialized_m != nullptr)
-	{
-		std::cout << "Warning (serializeParticleArray): Array in class in NOT nullptr.  This means something has been assigned to it previously.  ";
-		std::cout << "Assigning pointer to vector<void*> otherMemoryPointers.  It's your responsibility to go delete it (or use again).\n";
-		otherMemoryPointers_m.push_back(particlesSerialized_m);
-		std::cout << "Vector index at: " << otherMemoryPointers_m.size() - 1;
-	}
-
-	std::vector<int> partInSimCnt;
-	partInSimCnt.reserve(numberOfParticleTypes_m);
-	long arraySize{ 2 + numberOfParticleTypes_m };
-	
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		partInSimCnt[iii] = 0;
-		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
-		{
-			if (excludeOutOfSim)
-			{
-				if (particlesInSim_m[iii][jjj])
-					partInSimCnt[iii]++;
-			}
-			else
-				partInSimCnt[iii]++;
-		}
-		arraySize += partInSimCnt[iii] * numberOfAttributesTracked_m;
-	}
-	particlesSerialized_m = new double[arraySize];
-
-	particlesSerialized_m[0] = static_cast<double>(numberOfParticleTypes_m);
-	particlesSerialized_m[1] = static_cast<double>(numberOfAttributesTracked_m);
-
-	long prevPartInSim{ 0 };
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		particlesSerialized_m[2 + iii + iii * numberOfAttributesTracked_m * prevPartInSim] = static_cast<double>(partInSimCnt[iii]);
-		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-		{
-			long particleIndex{ 0 };
-			for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)
-			{
-				if (excludeOutOfSim)
-				{
-					if (particlesInSim_m[iii][kk])
-					{
-						long eidx{ 3 + iii + iii * numberOfAttributesTracked_m * prevPartInSim + jjj * partInSimCnt[iii] + particleIndex };
-						particleIndex++;
-						particlesSerialized_m[eidx] = particles_m[iii][jjj][kk];
-					}
-				}
-				else
-				{
-					long eidx{ 3 + iii * numberOfAttributesTracked_m * numberOfParticlesPerType_m + jjj * numberOfParticlesPerType_m + kk };
-					particlesSerialized_m[eidx] = particles_m[iii][jjj][kk];
-				}
-			}//end kk
-		}//end jjj
-		prevPartInSim = partInSimCnt[iii];
-	}//end iii
-}//end function
-
-void Simulation::createSatellite(double altitude, bool upwardFacing, std::string name)
+void Simulation::createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, std::string name)
 {
-	Satellite* newSat = new Satellite(altitude, upwardFacing, numberOfAttributesTracked_m, numberOfParticlesPerType_m, name);
+	Satellite* newSat = new Satellite(altitude, upwardFacing, numberOfAttributesTracked_m, numberOfParticlesPerType_m, GPUdataPointers, name);
 	satellites_m.push_back(newSat);
+}
+
+timeStruct* Simulation::createTimeStruct(std::string label)
+{
+	timeStruct* tS = new timeStruct;
+	tS->label = label;
+	tS->tp = std::chrono::steady_clock::now();
+	return tS;
+}
+
+void Simulation::printTimeNowFromTimeStruct(timeStruct* tS, std::string label)
+{
+	std::cout << "Time measurement " << tS->label << " to " << label << ": ";
+	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - tS->tp).count() << " ms\n";
+}
+
+void Simulation::printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* endTS)
+{
+	std::cout << "Time measurement " << startTS->label << " to " << endTS->label << ": ";
+	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(endTS->tp - startTS->tp).count() << " ms\n";
 }
