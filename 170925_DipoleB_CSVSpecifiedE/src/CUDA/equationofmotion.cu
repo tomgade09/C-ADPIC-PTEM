@@ -17,13 +17,16 @@
 #include "include\Simulation170925.h"
 
 //Array Size Variables
-const int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) }; //Global vars - not my favorite solution, but I suppose it works for now
+const int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) };
 const int BOOLARRAY_BYTES{ NUMPARTICLES * sizeof(bool) };
 const int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
-//Angular Freq of Efield
-constexpr double OMEGA{ 2 * PI / 10 };
+//Commonly used values
+constexpr double EOMEGA{ 2 * PI / 10 };
+constexpr double B_AT_MIN_Z{ B0ATTHETA / (MIN_Z_NORM * MIN_Z_NORM * MIN_Z_NORM) };
+constexpr double B_AT_MAX_Z{ B0ATTHETA / (MAX_Z_NORM * MAX_Z_NORM * MAX_Z_NORM) };
 
+//merge these two below...
 __host__ double EFieldatZ(double** LUT, double z, double simtime)
 {//E Field in the direction of B (radially outward)
 	//E-par = (column 2)*cos(omega*t) + (column 3)*sin(omega*t), omega = 2 PI / 10
@@ -41,7 +44,7 @@ __host__ double EFieldatZ(double** LUT, double z, double simtime)
 	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
 		(z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
 	
-	return linearInterpReal * cos(OMEGA * simtime) + linearInterpImag * sin(OMEGA * simtime);
+	return linearInterpReal * cos(EOMEGA * simtime) + linearInterpImag * sin(EOMEGA * simtime);
 }
 
 __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest concern here
@@ -60,28 +63,12 @@ __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest conc
 	double linearInterpImag{ ((LUT[2 * 2951 + stepsFromZeroInd + 1] - LUT[2 * 2951 + stepsFromZeroInd]) / (LUT[stepsFromZeroInd + 1] - LUT[stepsFromZeroInd])) * 
 		(z - LUT[stepsFromZeroInd]) + LUT[2 * 2951 + stepsFromZeroInd] };
 
-	return linearInterpReal * cos(OMEGA * simtime) + linearInterpImag * sin(OMEGA * simtime);
+	return linearInterpReal * cos(EOMEGA * simtime) + linearInterpImag * sin(EOMEGA * simtime);
 }
 
-__host__ __device__ double BFieldatZ(double z, double simtime) //this will change in future iterations
+__host__ __device__ double BFieldatZ(double z, double simtime)
 {//for now, a simple dipole field
 	return B0ATTHETA / pow(z / INVNORMFACTOR, 3); //Bz = B0 at theta * (1/rz(in Re))^3
-}
-
-__global__ void initCurand(curandStateMRG32k3a* state, long long seed)
-{
-	long long id = blockIdx.x * blockDim.x + threadIdx.x;
-	curand_init(seed, id, 0, &state[id]);
-}
-
-__device__ double normalGeneratorCUDA(curandStateMRG32k3a* state, long long id, double mean, double sigma)
-{
-	curandStateMRG32k3a localState = state[id];
-	
-	double res = sigma * curand_normal_double(&localState) + mean;
-	state[id] = localState;
-
-	return res;
 }
 
 __device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass into 1D Fourth Order Runge Kutta code
@@ -106,7 +93,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double* LUT)
 	y_0 = funcArg[1];
 
 	k1 = accel1dCUDA(funcArg, arrayLen, LUT); //k1 = f(t_n, y_n), units of dy / dt
-
+	
 	funcArg[0] = DT / 2;
 	funcArg[1] = y_0 + k1 * funcArg[0];
 	k2 = accel1dCUDA(funcArg, arrayLen, LUT); //k2 = f(t_n + h/2, y_n + h/2 k1)
@@ -117,69 +104,103 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double* LUT)
 	funcArg[0] = DT;
 	funcArg[1] = y_0 + k3 * funcArg[0];
 	k4 = accel1dCUDA(funcArg, arrayLen, LUT); //k4 = f(t_n + h, y_n + h k3)
-	
+
 	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns delta y, not dy / dt, not total y
 }
 
-__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
+__global__ void initCurand(curandStateMRG32k3a* state, long long seed)
 {
-	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
-	int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);//256 threads per block, 2 random generators per block, 128 threads per RG
-	double mass;
-	double q;
-	double v_sigma;
+	long long id = blockIdx.x * blockDim.x + threadIdx.x;
+	curand_init(seed, id, 0, &state[id]);
+}
 
-	if (elecTF)//would have to be changed in the event of multiple ion species
+/*__device__ double normalGeneratorCUDA(curandStateMRG32k3a* rndState, double mean, double sigma)
+{
+	curandStateMRG32k3a localState = *rndState;
+	
+	double res = sigma * curand_normal_double(&localState) + mean;
+	*rndState = localState;
+
+	return res;
+}*/
+
+__device__ void ionosphereGenerator(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
+{//takes pointers to single particle location in attribute arrays (ex: particle 100: ptr to v[100], ptr to mu[100], ptr to z[100], elecTF, ptr to crndStateA[rnd index of thread]
+	curandStateMRG32k3a localState = *rndState;
+
+	double2 v_norm; //v_norm.x = v_para; v_norm.y = v_perp
+	v_norm = curand_normal2_double(&localState);
+	v_norm.x = v_norm.x * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) + V_DIST_MEAN; //normal dist -> maxwellian
+	v_norm.y = v_norm.y * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) + V_DIST_MEAN; //normal dist -> maxwellian
+	
+	*z_part = MIN_Z_SIM;
+	*v_part = abs(v_norm.x);
+	*mu_part = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * v_norm.y * v_norm.y / B_AT_MIN_Z;
+
+	*rndState = localState;
+}
+
+__device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
+{
+	curandStateMRG32k3a localState = *rndState; //code I want to check
+
+	double2 v_norm; //two normal dist values returned to v_norm.x and v_norm.y; v_norm.x = v_para; v_norm.y = v_perp
+	v_norm = curand_normal2_double(&localState);
+	v_norm.x = (v_norm.x * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) * sqrt(T_RATIO)) + V_DIST_MEAN; //normal dist -> maxwellian
+	v_norm.y = (v_norm.x * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) * sqrt(T_RATIO)) + V_DIST_MEAN; //normal dist -> maxwellian
+
+	*z_part = MAX_Z_SIM;
+	*v_part = -abs(v_norm.x);
+	*mu_part = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * v_norm.y * v_norm.y / B_AT_MAX_Z;
+
+	*rndState = localState; //code I want to check
+}
+
+__device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
+{	
+	//scattering distribution of some sort here - right now, reflects half of the time, generates a new particle the other half
+	if (curand_normal_double(rndState) > 0)
 	{
-		mass = MASS_ELECTRON;
-		q = -1.0;
-		v_sigma = sqrt(V_SIGMA_SQ_ELEC);
+		*v_part *= -1; //sufficient to reflect?
+		*z_part = MIN_Z_SIM; //necessary?
 	}
 	else
+		ionosphereGenerator(v_part, mu_part, z_part, elecTF, rndState);
+}
+
+//__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
+__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
+{
+	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
+	//int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);//256 threads per block, 2 random generators per block, 128 threads per RG
+
+	if (thdInd > 10000 * simtime / DT) //add 10000 particles per timestep - need something other than "magic" 10000, plus need to account for extra 192
+		return; //could change "magic" number to 20000, would saturate simulation about half way through
+	
+	if (z_d[thdInd] < 0.01) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{
-		mass = MASS_PROTON;
-		q = 1.0;
-		v_sigma = sqrt(V_SIGMA_SQ_IONS);
+		if (thdInd % 2 == 0) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
+			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+		else
+			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 	}
+	else if (z_d[thdInd] < MIN_Z_SIM * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
+		ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+	else if (z_d[thdInd] > MAX_Z_SIM * 1.001) //out of sim to the top, particle is lost, new one generated in its place
+		magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 
-	if (REPLENISH_E_I)//need to change how particles are sourced
-	{
-		if (!inSimBool[thdInd])
-		{
-			inSimBool[thdInd] = true;
-			v_d[thdInd] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, v_sigma * VPARACONST);
-			numEscaped[thdInd] += 1;
-			if (z_d[thdInd] < MIN_Z_SIM)
-			{
-				z_d[thdInd] = MIN_Z_SIM + 0.01 * (RADIUS_EARTH / NORMFACTOR);
-				v_d[thdInd] = abs(v_d[thdInd]);
-			}
-			else
-			{
-				z_d[thdInd] = MAX_Z_SIM - 0.01 * (RADIUS_EARTH / NORMFACTOR);
-				mu_d[thdInd] *= T_RATIO;
-				v_d[thdInd] = -abs(v_d[thdInd]) * sqrt(T_RATIO);
-			}
-			mu_d[thdInd] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, v_sigma), 2) * 0.5 * mass / BFieldatZ(z_d[thdInd], simtime);
-		}
-		
-		inSimBool[thdInd] = ((z_d[thdInd] < MAX_Z_SIM) && (z_d[thdInd] > MIN_Z_SIM)); //Makes sure particles are within bounds - assumes the first iteration particles are
-	}
+	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime]
+	double args[7];
+	args[0] = 0.0;
+	args[1] = v_d[thdInd];
+	args[2] = mu_d[thdInd];
+	args[3] = CHARGE_ELEM * ((elecTF) ? (-1.0) : (1.0));
+	args[4] = (elecTF) ? (MASS_ELECTRON) : (MASS_PROTON);
+	args[5] = z_d[thdInd];
+	args[6] = simtime;
 
-	if (inSimBool[thdInd])
-	{//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime]
-		double args[7];
-		args[0] = 0.0;
-		args[1] = v_d[thdInd];
-		args[2] = mu_d[thdInd];
-		args[3] = CHARGE_ELEM * q;
-		args[4] = mass;
-		args[5] = z_d[thdInd];
-		args[6] = simtime;
-
-		v_d[thdInd] += foRungeKuttaCUDA(args, 7, LUT);
-		z_d[thdInd] += v_d[thdInd] * DT;
-	}
+	v_d[thdInd] += foRungeKuttaCUDA(args, 7, LUT);
+	z_d[thdInd] += v_d[thdInd] * DT;
 }
 
 void Simulation170925::initializeSimulation()
@@ -201,7 +222,7 @@ void Simulation170925::initializeSimulation()
 
 	//Code to prepare random number generator to produce pseudo-random numbers (for normal dist)
 	gpuOtherMemoryPointers_m.reserve(1);
-	if (REPLENISH_E_I)
+	if (REPLENISH_E_I) //need to remove this conditional
 	{
 		curandStateMRG32k3a* mrgStates_dev;
 		long long seed = time(NULL);
@@ -294,7 +315,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 			gpuBoolMemoryPointers_m[1], gpuIntMemoryPointers_m[1], 0, reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		for (int iii = 0; iii < satellites_m.size(); iii++)
 			satellites_m[iii]->iterateDetector(NUMBLOCKS, BLOCKSIZE);
-		
+		cudaDeviceSynchronize();
 		cudaloopind++;
 		incTime();
 
@@ -365,7 +386,7 @@ void Simulation170925::copyDataToHost()
 	std::cout << "Ions escaped:      " << totalIonsEscaped_m << "\n";
 
 	///test test test
-	std::cout << satelliteData_m[0][0][0][0] << " " << satelliteData_m[0][0][1][0] << " " << satelliteData_m[0][0][2][0] << "\n";
+	//std::cout << satelliteData_m[0][0][0][0] << " " << satelliteData_m[0][0][1][0] << " " << satelliteData_m[0][0][2][0] << "\n";
 }
 
 void Simulation170925::freeGPUMemory()

@@ -25,9 +25,6 @@ DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation) {
 DLLEXPORT bool getNormalizedAPI(Simulation* simulation) {
 	return simulation->getNormalized(); }
 
-DLLEXPORT bool getReplenishAPI(Simulation* simulation) {
-	return simulation->getReplenish(); }
-
 DLLEXPORT double getSimMinAPI(Simulation* simulation) {
 	return simulation->getSimMin(); }
 
@@ -84,9 +81,6 @@ DLLEXPORT void prepareResultsAPI(Simulation* simulation) {
 	simulation->prepareResults(); }
 
 //Satellite functions
-//DLLEXPORT void createSatelliteAPI(Simulation* simulation, double altitude, bool upwardFacing, int particleIndex, const char* name) {
-	//simulation->createSatellite(altitude, upwardFacing, name); }
-
 DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
 	return simulation->getNumberOfSatellites(); }
 

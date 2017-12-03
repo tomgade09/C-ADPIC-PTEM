@@ -34,6 +34,7 @@ protected:
 	std::vector<Satellite*> satellites_m;
 	std::vector<std::vector<std::vector<double*>>> satelliteData_m; //4D satelliteData[recorded measurement number][satellite number][attribute number][particle number]
 	std::vector<timeStruct*> timeStructs_m;
+	//std::ofstream logFile_m; //more to come
 	
 	//GPU Memory Pointers
 	std::vector<double*> gpuDblMemoryPointers_m { nullptr };
@@ -46,7 +47,6 @@ protected:
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
 	bool normalizedToRe_m{ (NORMFACTOR > 2.0) ? true : false };
-	bool replenish_e_i_m{ REPLENISH_E_I };
 	double simMin_m{ MIN_Z_SIM };
 	double simMax_m{ MAX_Z_SIM };
 	
@@ -114,8 +114,8 @@ public:
 			}
 		}
 
-		for (int iii = 0; iii < timeStructs_m.size(); iii++)
-			delete timeStructs_m[iii];
+		//for (int iii = 0; iii < timeStructs_m.size(); iii++)
+			//delete timeStructs_m[iii];
 	};
 	//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
@@ -129,7 +129,6 @@ public:
 	bool areResultsPrepared() { return resultsPrepared_m; }
 
 	bool getNormalized(){ return normalizedToRe_m; }
-	bool getReplenish() { return replenish_e_i_m; }
 
 	int getNumberOfSatellites() { return satellites_m.size(); }
 	int getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }

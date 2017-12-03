@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import os, sys
 import csv
+import struct
 
 def plotXY(xdata, ydata, title, xlabel, ylabel, filename, showplot=False):
     plt.plot(xdata, ydata, '.')
@@ -13,8 +14,11 @@ def plotXY(xdata, ydata, title, xlabel, ylabel, filename, showplot=False):
     if showplot:
         plt.show()
 
-
 def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z, B_E_z_dim, showplot=False):
+    if (not(os.path.isdir('./allparticles'))):
+                os.makedirs('./allparticles')
+    os.chdir('./allparticles')
+    
     plt.figure(1)
     plotXY(v_e_para, v_e_perp, 'Electrons', 'Vpara (Re / s)', 'Vperp (Re / s)', 'electrons.png')
 
@@ -32,6 +36,8 @@ def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z,
     
     plt.figure(6)
     plotXY(v_i_para, z_i, 'Ions', 'Vpara (Re / s)', 'Z (Re)', 'z_vpra_ions.png')
+
+    os.chdir('./../')
 
     plt.figure(7)
     plotXY(B_E_z_dim, B_z, 'B Field', 'Z (Re)', 'B (T)', 'B(z).png')
@@ -65,6 +71,7 @@ def plotSatelliteData(dataArray4D, numberMsmts, numberSats, dt, satNamesTuple, s
 
             os.chdir('./../../../')
 
+
 def save4DDataToCSV(dataArray, folder):
     if (not(os.path.isdir(folder))):
         os.makedirs(folder)
@@ -81,3 +88,36 @@ def save4DDataToCSV(dataArray, folder):
                 with open(folder + "/" + "msmt" + str(iii) + "/sat" + str(jjj) + ".csv", "w", newline='\n') as f:
                     csvwriter = csv.writer(f)
                     csvwriter.writerows(dataArray[iii][jjj])
+
+#Tools
+def readDoubleBinary(filename):
+    ret = []
+    f = open(filename, "rb")
+    
+    bytes = f.read(8)
+    while bytes:
+        tmp = struct.unpack('d', bytes)
+        ret.append(tmp)
+        bytes = f.read(8)
+
+    f.close()
+
+    return ret
+
+def readBinsAndOutputGraphs(saveFolder, binFolder): #great to call from the command line - from __plotParticles import *; readBinsAndOutputGraphs(args)
+    e_vpara = readDoubleBinary(binFolder + '/e_vpara.bin')
+    e_vperp = readDoubleBinary(binFolder + '/e_vperp.bin')
+    e_z = readDoubleBinary(binFolder + '/e_z.bin')
+    i_vpara = readDoubleBinary(binFolder + '/i_vpara.bin')
+    i_vperp = readDoubleBinary(binFolder + '/i_vperp.bin')
+    i_z = readDoubleBinary(binFolder + '/i_z.bin')
+    
+    B_z = []
+    E_z = []
+    B_E_z_dim = []
+
+    if (not(os.path.isdir(saveFolder))):
+        os.makedirs(saveFolder)
+    os.chdir(saveFolder)
+
+    plotAllParticles(e_vpara, e_vperp, e_z, i_vpara, i_vperp, i_z, B_z, E_z, B_E_z_dim, False)

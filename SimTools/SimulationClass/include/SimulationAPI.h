@@ -20,7 +20,6 @@ DLLEXPORT int getNumberOfParticlesPerTypeAPI(Simulation* simulation);
 DLLEXPORT int getNumberOfAttributesTrackedAPI(Simulation* simulation);
 DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation);
 DLLEXPORT bool getNormalizedAPI(Simulation* simulation);
-DLLEXPORT bool getReplenishAPI(Simulation* simulation);
 DLLEXPORT double getSimMinAPI(Simulation* simulation);
 DLLEXPORT double getSimMaxAPI(Simulation* simulation);
 
@@ -48,7 +47,6 @@ DLLEXPORT void copyDataToHostAPI(Simulation* simulation);
 DLLEXPORT void freeGPUMemoryAPI(Simulation* simulation);
 DLLEXPORT void prepareResultsAPI(Simulation* simulation);
 
-//DLLEXPORT void createSatelliteAPI(Simulation* simulation, double altitude, bool upwardFacing, int particleIndex, const char* name);
 DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation);
 DLLEXPORT int  getNumberOfSatelliteMsmtsAPI(Simulation* simulation);
 DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int measurementInd, int satelliteInd, int attributeInd);

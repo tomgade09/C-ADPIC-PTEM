@@ -65,27 +65,27 @@ public:
 		mass_m[1] = MASS_PROTON;
 
 		///Test code:
-		/*for (int iii = 0; iii < NUMPARTICLES; iii++)
+		for (int iii = 0; iii < NUMPARTICLES; iii++)
 		{
 			if (iii % 2 == 0)
 			{
-				particles_m[0][0][iii] = 2 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[0][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[0][2][iii] = 1.9 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[1][0][iii] = 2 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[1][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[1][2][iii] = 1.9 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][0][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR);   //para
+				particles_m[0][1][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR); //perp
+				particles_m[0][2][iii] = 1.9 * (RADIUS_EARTH / NORMFACTOR); //z
+				particles_m[1][0][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR);   //para
+				particles_m[1][1][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR); //perp
+				particles_m[1][2][iii] = 1.9 * (RADIUS_EARTH / NORMFACTOR); //z
 			}
 			else
 			{
-				particles_m[0][0][iii] = -2 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[0][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][0][iii] = -0.15 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[0][1][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR);
 				particles_m[0][2][iii] = 2.1 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[1][0][iii] = -2 * (RADIUS_EARTH / NORMFACTOR);
-				particles_m[1][1][iii] = 0.5 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][0][iii] = -0.15 * (RADIUS_EARTH / NORMFACTOR);
+				particles_m[1][1][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR);
 				particles_m[1][2][iii] = 2.1 * (RADIUS_EARTH / NORMFACTOR);
 			}
-		}*/
+		}
 
 		//Populate E Field LUT
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
@@ -105,8 +105,9 @@ public:
 		timeStructs_m.push_back(createTimeStruct("End Simulation170925 Constructor")); //index 1
 
 		//test test test
-		std::cout << "Mu: " << particles_m[0][1][0] << " " << particles_m[0][1][1] << "\n";
-		std::cout << "Mu: " << particles_m[1][1][0] << " " << particles_m[1][1][1] << "\n";
+		std::cout << "Mu:     " << particles_m[0][1][0] << " " << particles_m[0][1][1] << "\n";
+		std::cout << "Mu:     " << particles_m[1][1][0] << " " << particles_m[1][1][1] << "\n";
+		std::cout << "B at Z: " << BFieldatZ(1.9 * (RADIUS_EARTH / NORMFACTOR), 0.0) << " " << BFieldatZ(2.1 * (RADIUS_EARTH / NORMFACTOR), 0.0) << "\n";
 	}//end constructor
 
 	~Simulation170925() //Destructor

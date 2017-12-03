@@ -26,8 +26,6 @@ class Simulation:
         self.simDLL_m.resetParticlesEscapedCountAPI.restype = None
         self.simDLL_m.getNormalizedAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getNormalizedAPI.restype = ctypes.c_bool
-        self.simDLL_m.getReplenishAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getReplenishAPI.restype = ctypes.c_bool
         self.simDLL_m.getSimMinAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getSimMinAPI.restype = ctypes.c_double
         self.simDLL_m.getSimMaxAPI.argtypes = (ctypes.c_void_p,)
@@ -70,8 +68,6 @@ class Simulation:
         self.simDLL_m.prepareResultsAPI.restype = ctypes.POINTER(ctypes.c_double)
 
         #Satellite functions
-        #self.simDLL_m.createSatelliteAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_bool, ctypes.c_char_p)
-        #self.simDLL_m.createSatelliteAPI.restype = None
         self.simDLL_m.getNumberOfSatellitesAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getNumberOfSatellitesAPI.restype = ctypes.c_int
         self.simDLL_m.getNumberOfSatelliteMsmtsAPI.argtypes = (ctypes.c_void_p,)
@@ -90,7 +86,6 @@ class Simulation:
         self.numPart_m = self.simDLL_m.getNumberOfParticlesPerTypeAPI(self.simulationptr)
         self.dt_m = self.simDLL_m.getDtAPI(self.simulationptr)
         self.normalized_m = self.simDLL_m.getNormalizedAPI(self.simulationptr)
-        self.replenish_m = self.simDLL_m.getReplenishAPI(self.simulationptr)
         self.simMin_m = self.simDLL_m.getSimMinAPI(self.simulationptr)
         self.simMax_m = self.simDLL_m.getSimMaxAPI(self.simulationptr)
 
@@ -214,11 +209,6 @@ class Simulation:
         return self.simDLL_m.prepareResultsAPI(self.simulationptr)
 
     #Satellite functions
-    def createSatellite(self, altitude, upwardFacing, name):
-        print("Don't create satellites right now.  As of sim 170925, they are created in c++")
-        return
-        #self.simDLL_m.createSatelliteAPI(self.simulationptr, altitude, upwardFacing, name)
-
     def getNumberOfSatellites(self):
         return self.simDLL_m.getNumberOfSatellitesAPI(self.simulationptr)
 
