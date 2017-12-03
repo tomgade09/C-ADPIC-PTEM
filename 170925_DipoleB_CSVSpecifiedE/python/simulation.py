@@ -50,7 +50,7 @@ print("SIMULATION ", dtg)
 
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
-    results = sim.runSim(1)
+    results = sim.runSim(10000)
     satDat = sim.getSatelliteData()
     save4DDataToCSV(satDat, './Satellites/CSV')
 
