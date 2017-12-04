@@ -25,12 +25,14 @@ print("SIMULATION ", dtg)
 
 #TO-DO
 # DONE - Top at 4 Re
+# DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution
+# DONE, BUT FACTOR IN DENSITY - Make distribution maxwellian
+# DONE, CONSIDER OTHER INJECTION SCHEMES- More particles, e, p injected over simulation (bump up to a million?, 10000 particles injected every iteration/so many hundredths of second?)
+# DONE - Stop generating a distribution on CPU at beginning - take out a whole bunch of copy code, maybe even normal distribution code, still 0 the arrays
+# DONE - Fix satellite code
+# - Consolidate satellite data into one array, then pass to python
 # - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
 # - Either verify normalization or just normalize all the values at the end - Fix botched up normalization system
-# - Particles out top are lost completely (done), out bottom - scattering probability, distribution
-# - More particles, e, p injected over simulation (bump up to a million?, 10000 particles injected every iteration/so many hundredths of second?)
-# - Stop generating a distribution on CPU at beginning - take out a whole bunch of copy code, maybe even normal distribution code, still 0 the arrays
-# - MDMA - Make Distribution Maxwellian Again
 
 # - Validation with known values (possibly magnetic bottle) - Calculations checked against excel and are good
 # - Log file with success, error messages

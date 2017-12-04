@@ -16,7 +16,7 @@ protected:
 	
 	long totalElecEscaped_m{ 0 };
 	long totalIonsEscaped_m{ 0 };
-	bool mu_m{ 0 };
+	bool mu_m{ 1 };
 
 	std::vector<double> mass_m;
 
@@ -26,20 +26,20 @@ public:
 	{
 		//Generate particles first
 		//2 particle types (electrons and ions) with v_para, mu, and z tracked, generate v_para and v_perp (eventually becomming mu) normally
-		double means[4];
-		double sigmas[4];
-		means[0] = V_DIST_MEAN;
-		means[1] = V_DIST_MEAN;
-		means[2] = V_DIST_MEAN;
-		means[3] = V_DIST_MEAN;
-		sigmas[0] = V_SIGMA_ELEC;
-		sigmas[1] = V_SIGMA_ELEC;
-		sigmas[2] = V_SIGMA_IONS;
-		sigmas[3] = V_SIGMA_IONS;
-		generateNormallyDistributedValues(2, means, sigmas);
+		//double means[4];
+		//double sigmas[4];
+		//means[0] = V_DIST_MEAN;
+		//means[1] = V_DIST_MEAN;
+		//means[2] = V_DIST_MEAN;
+		//means[3] = V_DIST_MEAN;
+		//sigmas[0] = V_SIGMA_ELEC;
+		//sigmas[1] = V_SIGMA_ELEC;
+		//sigmas[2] = V_SIGMA_IONS;
+		//sigmas[3] = V_SIGMA_IONS;
+		//generateNormallyDistributedValues(2, means, sigmas);
 		
 		//Generate z values and convert v_perp to mu here
-		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
+		/*for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
 			for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
 			{
@@ -55,7 +55,7 @@ public:
 					particles_m[iii][0][jjj] = -abs(particles_m[iii][0][jjj]) * sqrt(T_RATIO);
 				}
 			}//end for jjj
-		}//end for iii
+		}//end for iii*/
 		
 		//loadDataFilesIntoParticleArray(); //To load other data (previously saved) into particle arrays
 
@@ -65,7 +65,7 @@ public:
 		mass_m[1] = MASS_PROTON;
 
 		///Test code:
-		for (int iii = 0; iii < NUMPARTICLES; iii++)
+		/*for (int iii = 0; iii < NUMPARTICLES; iii++)
 		{
 			if (iii % 2 == 0)
 			{
@@ -85,29 +85,29 @@ public:
 				particles_m[1][1][iii] = 0.15 * (RADIUS_EARTH / NORMFACTOR);
 				particles_m[1][2][iii] = 2.1 * (RADIUS_EARTH / NORMFACTOR);
 			}
-		}
+		}*/
 
 		//Populate E Field LUT
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
 		setElecMagLUT(LUT.c_str(), 2951, 3);
 
 		//Save particle distributions to disk
-		std::string fold{ "./particles_init/" };
+		/*std::string fold{ "./particles_init/" };
 		std::vector<std::string> names{ "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
 			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
 				saveParticleAttributeToDisk(iii, jjj, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
-		}
+		}*/
 
-		convertVPerpToMu();
+		//convertVPerpToMu();
 
-		timeStructs_m.push_back(createTimeStruct("End Simulation170925 Constructor")); //index 1
+		logFile_m.writeLogTimeDiffFromNow(0, "End Simulation170925 Constructor");
 
 		//test test test
-		std::cout << "Mu:     " << particles_m[0][1][0] << " " << particles_m[0][1][1] << "\n";
-		std::cout << "Mu:     " << particles_m[1][1][0] << " " << particles_m[1][1][1] << "\n";
-		std::cout << "B at Z: " << BFieldatZ(1.9 * (RADIUS_EARTH / NORMFACTOR), 0.0) << " " << BFieldatZ(2.1 * (RADIUS_EARTH / NORMFACTOR), 0.0) << "\n";
+		//std::cout << "Mu:     " << particles_m[0][1][0] << " " << particles_m[0][1][1] << "\n";
+		//std::cout << "Mu:     " << particles_m[1][1][0] << " " << particles_m[1][1][1] << "\n";
+		//std::cout << "B at Z: " << BFieldatZ(1.9 * (RADIUS_EARTH / NORMFACTOR), 0.0) << " " << BFieldatZ(2.1 * (RADIUS_EARTH / NORMFACTOR), 0.0) << "\n";
 	}//end constructor
 
 	~Simulation170925() //Destructor

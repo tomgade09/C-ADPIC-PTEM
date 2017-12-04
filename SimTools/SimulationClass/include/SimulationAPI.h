@@ -26,7 +26,6 @@ DLLEXPORT double getSimMaxAPI(Simulation* simulation);
 //Pointer one liners
 DLLEXPORT double*** getPointerTo3DParticleArrayAPI(Simulation* simulation);
 DLLEXPORT double** getPointerToSingleParticleTypeArrayAPI(Simulation* simulation, int index);
-DLLEXPORT bool* getPointerToParticlesInSimArrayAPI(Simulation* simulation, int index);
 DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex);
 
 //Numerical tools

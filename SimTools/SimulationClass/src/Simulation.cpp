@@ -82,23 +82,3 @@ void Simulation::createSatellite(double altitude, bool upwardFacing, double** GP
 	Satellite* newSat = new Satellite(altitude, upwardFacing, numberOfAttributesTracked_m, numberOfParticlesPerType_m, GPUdataPointers, name);
 	satellites_m.push_back(newSat);
 }
-
-timeStruct* Simulation::createTimeStruct(std::string label)
-{
-	timeStruct* tS = new timeStruct;
-	tS->label = label;
-	tS->tp = std::chrono::steady_clock::now();
-	return tS;
-}
-
-void Simulation::printTimeNowFromTimeStruct(timeStruct* tS, std::string label)
-{
-	std::cout << "Time measurement " << tS->label << " to " << label << ": ";
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - tS->tp).count() << " ms\n";
-}
-
-void Simulation::printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* endTS)
-{
-	std::cout << "Time measurement " << startTS->label << " to " << endTS->label << ": ";
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(endTS->tp - startTS->tp).count() << " ms\n";
-}

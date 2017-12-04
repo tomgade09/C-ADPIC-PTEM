@@ -32,8 +32,6 @@ class Simulation:
         self.simDLL_m.getSimMaxAPI.restype = ctypes.c_double
 
         #Pointer one liners
-        self.simDLL_m.getPointerToParticlesInSimArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.getPointerToParticlesInSimArrayAPI.restype = ctypes.POINTER(ctypes.c_bool)
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
 
@@ -117,20 +115,9 @@ class Simulation:
         self.simDLL_m.resetParticlesEscapedCountAPI(self.simulationptr)
     
     #Pointer one liners (one liners in CPP obv, not Python)
-    def getPartInSimBoolArray(self):
-        ret = []
-        partbool = []
-        for iii in range(self.types_m):
-            partbool_c = self.simDLL_m.getPointerToParticlesInSimArrayAPI(self.simulationptr, iii)
-            for jjj in range(self.numPart_m):
-                partbool.append(partbool_c[jjj])
-            ret.append(partbool)
-            partbool = []
-        return ret
-
     def getResultsfrom3D(self, inSimOnly=True):
-        if (inSimOnly):
-            inSimBoolArray = self.getPartInSimBoolArray()
+        #if (inSimOnly):
+            #inSimBoolArray = self.getPartInSimBoolArray()
         
         ret = []
         partattr = []
@@ -139,11 +126,11 @@ class Simulation:
             for jjj in range(self.attr_m):
                 partdbl_c = self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI(self.simulationptr, iii, jjj)
                 for kk in range(self.numPart_m):
-                   if(inSimOnly):
-                       if(inSimBoolArray[iii][kk]):
-                           partdbl.append(partdbl_c[kk])
-                   else:
-                       partdbl.append(partdbl_c[kk])
+                   #if(inSimOnly):
+                       #if(inSimBoolArray[iii][kk]):
+                           #partdbl.append(partdbl_c[kk])
+                   #else:
+                   partdbl.append(partdbl_c[kk])
                 partattr.append(partdbl)
                 partdbl = []
             ret.append(partattr)
@@ -249,7 +236,6 @@ class Simulation:
     def printSimCharacteristics(self):
         print("Sim between:          ", self.simMin_m, " - ", self.simMax_m, " Re" if self.normalized_m else " m")
         print("Number of Particles:  ", self.numPart_m)
-        print("Replenish lost part:  ", "True" if self.replenish_m else "False")
         print("Sim dt:               ", self.dt_m, " s")
 
 

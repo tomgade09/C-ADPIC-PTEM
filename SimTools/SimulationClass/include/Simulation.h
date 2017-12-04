@@ -7,13 +7,8 @@
 #include <vector>
 #include <chrono>
 #include "include\Satellite.h"
+#include "include\LogFile.h"
 #include "include\_simulationvariables.h" //remove this later, replace with passed in variables
-
-struct timeStruct
-{
-	std::string label;
-	std::chrono::steady_clock::time_point tp;
-};
 
 class Simulation
 {
@@ -28,18 +23,13 @@ protected:
 
 	//Data Array Pointers
 	double*** particles_m{ nullptr };
-	bool**    particlesInSim_m{ nullptr };
-	int**     particlesEscaped_m{ nullptr };
 	std::vector<void*> otherMemoryPointers_m;
 	std::vector<Satellite*> satellites_m;
 	std::vector<std::vector<std::vector<double*>>> satelliteData_m; //4D satelliteData[recorded measurement number][satellite number][attribute number][particle number]
-	std::vector<timeStruct*> timeStructs_m;
-	//std::ofstream logFile_m; //more to come
+	LogFile logFile_m{ "simulation.log", 20 };
 	
 	//GPU Memory Pointers
 	std::vector<double*> gpuDblMemoryPointers_m { nullptr };
-	std::vector<bool*> gpuBoolMemoryPointers_m{ nullptr };
-	std::vector<int*> gpuIntMemoryPointers_m { nullptr };
 	std::vector<void*> gpuOtherMemoryPointers_m{ nullptr };
 
 	//Calculated Quantities, Flags, Parameters defined in Header
@@ -55,55 +45,34 @@ public:
 		numberOfParticleTypes_m{ numberOfParticleTypes }, numberOfParticlesPerType_m{ numberOfParticlesPerType },
 		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }, rootdir_m{ rootdir }
 	{
-		timeStructs_m.reserve(20);
-		timeStructs_m.push_back(createTimeStruct("Begin Simulation Constructor")); //index 0
-		
-		//Form the particle array, boolean "inSim" array, escaped particle count array, and set "inSim" to true for each particle
+		logFile_m.writeLogTimeDiffFromNow(0, "Initialize Simulation Instance");
+		//Form the particle array
 		particles_m = new double**[numberOfParticleTypes_m];
-		particlesInSim_m = new bool*[numberOfParticleTypes_m];
-		particlesEscaped_m = new int*[numberOfParticleTypes_m];
-		
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
 			particles_m[iii] = new double*[numberOfAttributesTracked_m];
-			particlesInSim_m[iii] = new bool[numberOfParticlesPerType_m];
-			particlesEscaped_m[iii] = new int[numberOfParticlesPerType_m];
 			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
 			{
 				particles_m[iii][jjj] = new double[numberOfParticlesPerType_m];
-				for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)
-				{//values to initialize array
-					particlesInSim_m[iii][kk] = true;
-					particlesEscaped_m[iii][kk] = 0;
+				for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)//values to initialize array
 					particles_m[iii][jjj][kk] = 0.0;
-				}
 			}
 		}
 
 		//Allocate room in vectors for GPU Memory Pointers
 		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m); //holds pointers to GPU memory for particle attributes
-		gpuBoolMemoryPointers_m.reserve(numberOfParticleTypes_m); //holds pointers to GPU memory for bool flag of whether particle is in sim or not
-		gpuIntMemoryPointers_m.reserve(numberOfParticleTypes_m); //holds pointers to GPU memory for count of escaped particles
 	}
 
 	virtual ~Simulation()
 	{
-		for (int iii = 0; iii < timeStructs_m.size(); iii++)
-			delete timeStructs_m[iii];
-
 		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
 		{
 			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-			{
 				delete[] particles_m[iii][jjj];
-			}
+
 			delete[] particles_m[iii];
-			delete[] particlesInSim_m[iii];
-			delete[] particlesEscaped_m[iii];
 		}
 		delete[] particles_m;
-		delete[] particlesInSim_m;
-		delete[] particlesEscaped_m;
 
 		for (int iii = 0; iii < satelliteData_m.size(); iii++) //number of measurements
 		{
@@ -113,9 +82,6 @@ public:
 						delete[] satelliteData_m[iii][jjj][kk];
 			}
 		}
-
-		//for (int iii = 0; iii < timeStructs_m.size(); iii++)
-			//delete timeStructs_m[iii];
 	};
 	//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
@@ -137,8 +103,6 @@ public:
 	//Pointer one liners
 	double*** getPointerTo3DParticleArray() { return particles_m; }//tested
 	double**  getPointerToSingleParticleTypeArray(int index) { if (index >= numberOfParticleTypes_m) { return nullptr; } return particles_m[index]; } //eventually print a warning so the user knows
-	bool*     getPointerToParticlesInSimArray(int index) { if (index > numberOfParticleTypes_m) {std::cout << "Error: No particle exists for index requested.  ";
-		std::cout << "There are only " << numberOfParticleTypes_m << " particle types in the simulation.\n"; return nullptr;} return particlesInSim_m[index]; }
 	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex) { if ((partIndex > numberOfParticleTypes_m) || (attrIndex > numberOfAttributesTracked_m)) { 
 		std::cout << numberOfParticleTypes_m << " particle types and " << numberOfAttributesTracked_m << " attributes per particle.  One index is out of bounds.\n"; return nullptr; } return particles_m[partIndex][attrIndex]; }
 
@@ -170,8 +134,5 @@ public:
 
 	void createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, std::string name);
 	virtual int getSatelliteCount() { return satellites_m.size(); }
-	virtual timeStruct* createTimeStruct(std::string label);
-	virtual void printTimeNowFromTimeStruct(timeStruct* tS, std::string label);
-	virtual void printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* endTS);
 };//end class
 #endif //end header guard
