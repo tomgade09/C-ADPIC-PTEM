@@ -44,15 +44,16 @@ public:
 	void writeLogTimeDiffFromNow(timeStruct startTS, std::string nowLabel);
 	void writeLogTimeDiffFromNow(int startTSind, std::string nowLabel);
 	
+	//int getLastTimeStructInd() { return timeStructs_m.size(); }
+	void printTimeNowFromLastTS();
 	
 	
 	
+	/*void printTimeNowFromTimeStruct(timeStruct* tS, std::string label);
+	void printTimeNowFromTSJustMS(int startTSind);
 	
-	
-	void printTimeNowFromTimeStruct(timeStruct* tS, std::string label);
-	void printTimeNowFromTSJustMS(timeStruct* tS);
 	void printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* endTS);
-	void printTimeDiffJustTimeMS(timeStruct* startTS, timeStruct* endTS);
+	void printTimeDiffJustTimeMS(timeStruct* startTS, timeStruct* endTS);*/
 };
 
 #endif

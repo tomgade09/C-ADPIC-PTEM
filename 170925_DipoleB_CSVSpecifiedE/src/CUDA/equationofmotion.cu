@@ -158,12 +158,9 @@ __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_
 		ionosphereGenerator(v_part, mu_part, z_part, elecTF, rndState);
 }
 
-//__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSimBool, int* numEscaped, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
 __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
-	//int nrmGenIdx = (blockIdx.x * 2) + (threadIdx.x % 2);//256 threads per block, 2 random generators per block, 128 threads per RG
-
 	if (thdInd > 10000 * simtime / DT) //add 10000 particles per timestep - need something other than "magic" 10000, plus need to account for extra 192
 		return; //could change "magic" number to 20000, would saturate simulation about half way through
 	
@@ -241,13 +238,6 @@ void Simulation170925::copyDataToGPU()
 		return;
 	}
 
-	//copies double arrays associated with particle distribution
-	/*for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-			cudaMemcpy(gpuDblMemoryPointers_m[iii * numberOfAttributesTracked_m + jjj], particles_m[iii][jjj], DBLARRAY_BYTES, cudaMemcpyHostToDevice);
-	}*/
-
 	//copies E field LUT to the GPU
 	double LUTtmp[3 * 2951];
 	for (int iii = 0; iii < 3; iii++)
@@ -303,7 +293,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		if (cudaloopind % 100 == 0)
 		{
 			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time (s): " << simTime_m << "  Real Time Elapsed (ms): ";
-			printTimeNowFromTSJustMS(timeStructs_m[6]);
+			logFile_m.printTimeNowFromLastTS;
 			std::cout << "\n";
 		}
 
@@ -357,13 +347,6 @@ void Simulation170925::copyDataToHost()
 	}
 
 	logFile_m.writeLogFileEntry("copyDataToHost", "Done with copying.");
-	
-	//couts take a while - not including them in time msmt
-	//std::cout << "Electrons escaped: " << totalElecEscaped_m << "\n";
-	//std::cout << "Ions escaped:      " << totalIonsEscaped_m << "\n";
-
-	///test test test
-	//std::cout << satelliteData_m[0][0][0][0] << " " << satelliteData_m[0][0][1][0] << " " << satelliteData_m[0][0][2][0] << "\n";
 }
 
 void Simulation170925::freeGPUMemory()
@@ -382,18 +365,7 @@ void Simulation170925::freeGPUMemory()
 	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++)
 		cudaFree(gpuDblMemoryPointers_m[iii]);
 
-	//int e_in_sim{ 0 };
-	//int i_in_sim{ 0 };
-	//for (int iii = 0; iii < NUMPARTICLES; iii++)
-	//{
-		//if (particlesInSim_m[0][iii])
-			//e_in_sim++;
-		//if (particlesInSim_m[1][iii])
-			//i_in_sim++;
-	//}
-
 	logFile_m.writeLogFileEntry("freeGPUMemory", "End free GPU Memory.");
 
-	//std::cout << "C++: " << e_in_sim << " " << i_in_sim << " " << ((e_in_sim + i_in_sim) * 3) + 4 << "\n";
 	cudaProfilerStop(); //For profiling the profiler in the CUDA bundle
 }

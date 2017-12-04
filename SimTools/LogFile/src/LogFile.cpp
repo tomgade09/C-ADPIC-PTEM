@@ -69,22 +69,25 @@ void LogFile::writeLogTimeDiffFromNow(int startTSind, std::string nowLabel)
 	writeLogTimeDiffFromNow(timeStructs_m[startTSind], nowLabel);
 }
 
+void LogFile::printTimeNowFromLastTS()
+{
+	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - timeStructs_m[timeStructs_m.size()].tp).count();
+}
 
 
 
 
 
 
-
-void LogFile::printTimeNowFromTimeStruct(timeStruct* tS, std::string label)
+/*void LogFile::printTimeNowFromTimeStruct(timeStruct* tS, std::string label)
 {
 	std::cout << "Time measurement " << tS->label << " to " << label << ": ";
 	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - tS->tp).count() << " ms\n";
 }
 
-void LogFile::printTimeNowFromTSJustMS(timeStruct* tS)
+void LogFile::printTimeNowFromTSJustMS(int startTSind)
 {
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - tS->tp).count();
+	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - timeStructs_m[startTSind].tp).count();
 }
 
 void LogFile::printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* endTS)
@@ -96,4 +99,4 @@ void LogFile::printTimeDiffBtwTwoTimeStructs(timeStruct* startTS, timeStruct* en
 void LogFile::printTimeDiffJustTimeMS(timeStruct* startTS, timeStruct* endTS)
 {
 	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(endTS->tp - startTS->tp).count();
-}
+}*/
