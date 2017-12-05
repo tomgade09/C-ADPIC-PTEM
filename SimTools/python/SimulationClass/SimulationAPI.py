@@ -22,8 +22,6 @@ class Simulation:
         self.simDLL_m.getNumberOfAttributesTrackedAPI.restype = ctypes.c_int
         self.simDLL_m.areResultsPreparedAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.areResultsPreparedAPI.restype = ctypes.c_bool
-        self.simDLL_m.resetParticlesEscapedCountAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.resetParticlesEscapedCountAPI.restype = None
         self.simDLL_m.getNormalizedAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getNormalizedAPI.restype = ctypes.c_bool
         self.simDLL_m.getSimMinAPI.argtypes = (ctypes.c_void_p,)
@@ -110,9 +108,6 @@ class Simulation:
 
     def incTime(self):
         self.simDLL_m.incrementSimulationTimeByDtAPI(self.simulationptr)
-
-    def resetEscapedCount(self):
-        self.simDLL_m.resetParticlesEscapedCountAPI(self.simulationptr)
     
     #Pointer one liners (one liners in CPP obv, not Python)
     def getResultsfrom3D(self, inSimOnly=True):

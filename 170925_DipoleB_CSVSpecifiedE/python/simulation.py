@@ -31,12 +31,15 @@ print("SIMULATION ", dtg)
 # DONE - Stop generating a distribution on CPU at beginning - take out a whole bunch of copy code, maybe even normal distribution code, still 0 the arrays
 # DONE - Fix satellite code
 # DONE - Log file with success messages
-# - Consolidate satellite data into one array, then pass to python
+# DONE - Spit run times to Log File, maybe print some on screen
+# MAYBE NOT, ALLOWS TIME - Consolidate satellite data into one array, then pass to python
+# - Satellite fix - remove zero values
 # - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
 # - Either verify normalization or just normalize all the values at the end - Fix botched up normalization system
 
+# - Some sort of error handling system instead of cout messages
+# - Change over current error messages to log file
 # - Validation with known values (possibly magnetic bottle) - Calculations checked against excel and are good
-# - Spit run times to Log File, maybe print some on screen
 # - Restructure - Combine most of two simulation classes - make the two particle, two source, 1D code the generic one
 #     Or perhaps:
 #       - Simulation container with common elements
@@ -49,15 +52,12 @@ print("SIMULATION ", dtg)
 # - Pass in variables instead of having to recompile every time (CSV or possibly XML if you want to be fancy)
 # - Photoelectrons
 # - Fix sideways CSV Writing
-# - Perhaps log file write error messages??
-# - Some sort of error handling system instead of cout messages
-# - Change over current error messages to log file
 
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
     results = sim.runSim(10000)
     satDat = sim.getSatelliteData()
-    save4DDataToCSV(satDat, './Satellites/CSV')
+    #save4DDataToCSV(satDat, './Satellites/CSV')
 
     if sim.normalized_m:
         invNormFactor = 1.0

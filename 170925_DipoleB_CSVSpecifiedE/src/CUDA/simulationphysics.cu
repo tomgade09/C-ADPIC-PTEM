@@ -193,7 +193,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool elecT
 void Simulation170925::initializeSimulation()
 {	
 	logFile_m.createTimeStruct("Start Sim Init"); //index 1
-	logFile_m.writeLogTimeDiff(0, 1);
+	logFile_m.writeTimeDiff(0, 1);
 	
 	//Allocate memory on GPU for elec/ions variables
 	gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
@@ -225,7 +225,7 @@ void Simulation170925::initializeSimulation()
 
 	initialized_m = true;
 	logFile_m.createTimeStruct("End Sim Init"); //index 2
-	logFile_m.writeLogTimeDiff(1, 2);
+	logFile_m.writeTimeDiff(1, 2);
 }
 
 void Simulation170925::copyDataToGPU()
@@ -256,7 +256,7 @@ void Simulation170925::copyDataToGPU()
 void Simulation170925::iterateSimulation(int numberOfIterations)
 {//conducts iterative calculations of data previously copied to GPU - runs the data through the computeKernel
 	logFile_m.createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 3
-	logFile_m.writeLogFileEntry("iterateSimulati", "Start Iteration of Sim:  " + std::to_string(numberOfIterations));
+	logFile_m.writeLogFileEntry("iterateSimulation", "Start Iteration of Sim:  " + std::to_string(numberOfIterations));
 	
 	if (!initialized_m)
 	{
@@ -290,10 +290,10 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		cudaloopind++;
 		incTime();
 
-		if (cudaloopind % 100 == 0)
+		if (cudaloopind % LOOPS_BTW_PROGRESS_COUT == 0)
 		{
-			std::cout << cudaloopind << " / " << numberOfIterations << "  Sim Time (s): " << simTime_m << "  Real Time Elapsed (ms): ";
-			logFile_m.printTimeNowFromLastTS;
+			std::cout << cudaloopind << " / " << numberOfIterations << "  |  Sim Time (s): " << simTime_m << "  |  Real Time Elapsed (s): ";
+			logFile_m.printTimeNowFromLastTS();
 			std::cout << "\n";
 		}
 
@@ -326,7 +326,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 
 	}//end while (cudaloop...
 	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
-	logFile_m.writeLogTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
+	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
 	logFile_m.writeLogFileEntry("iterateSimulati", "End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }
 

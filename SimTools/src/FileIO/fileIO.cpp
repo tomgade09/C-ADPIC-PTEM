@@ -1,4 +1,4 @@
-#include "include\fileIO.h"
+#include "FileIO\fileIO.h"
 
 namespace fileIO
 {
@@ -54,9 +54,9 @@ namespace fileIO
 		return ret;
 	}
 
-	DLLEXPORT void writeDblBin(const char* filename, double* dataarray, long numelements, bool overwrite=true)
+	DLLEXPORT void writeDblBin(const char* filename, double* dataarray, long numelements, bool overwrite)//overwrite defaults to true
 	{
-		std::ofstream binfile{ filename, std::ios::binary | overwrite ? (std::ios::trunc) : (std::ios::app) };
+		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 		if (!binfile.is_open())
 		{
 			std::cout << "Warning: Could not open (or create) file " << filename << " for writing!\n";
@@ -67,7 +67,7 @@ namespace fileIO
 		binfile.close();
 	}
 
-	DLLEXPORT void write2DCSV(const char* filename, double** dataarray, int numofentries, int numofcols, const char delim, bool overwrite=true)
+	DLLEXPORT void write2DCSV(const char* filename, double** dataarray, int numofentries, int numofcols, const char delim, bool overwrite)//overwrite defaults to true
 	{
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())
@@ -87,7 +87,7 @@ namespace fileIO
 		return;
 	}
 
-	DLLEXPORT void writeTxtFile(const char* filename, const char* textToWrite, bool overwrite=false)
+	DLLEXPORT void writeTxtFile(const char* filename, const char* textToWrite, bool overwrite)//overwrite defaults to false
 	{//could return ofstream, leave file open, or provide a boolean option, but I don't know how to return a null ofstream
 		std::ofstream txt(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!txt.is_open())
@@ -96,7 +96,7 @@ namespace fileIO
 			return;
 		}
 
-		txt << textToWrite << "\n";
+		txt << textToWrite;
 		txt.close();
 	}
 }

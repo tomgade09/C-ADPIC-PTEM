@@ -2,7 +2,7 @@
 #define SIMULATIONAPI_H
 
 #include <iostream>
-#include "include\Simulation.h"
+#include "SimulationClass\Simulation.h"
 
 #define DLLFILE
 #ifdef DLLFILE

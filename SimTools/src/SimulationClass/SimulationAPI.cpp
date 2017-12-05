@@ -1,4 +1,4 @@
-#include "include\SimulationAPI.h"
+#include "SimulationClass\SimulationAPI.h"
 
 ///One liner functions
 DLLEXPORT double getSimulationTimeAPI(Simulation* simulation) {
