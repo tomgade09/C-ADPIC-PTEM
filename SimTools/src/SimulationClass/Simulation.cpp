@@ -9,7 +9,7 @@ void Simulation::createSatellite(double altitude, bool upwardFacing, double** GP
 	satellites_m.push_back(newSat);
 }
 
-void Simulation::convertVPerpToMu(int vind = 1, int zind = 2)
+void Simulation::convertVPerpToMu(int vind, int zind)
 {
 	if (mu_m)
 	{
@@ -17,16 +17,12 @@ void Simulation::convertVPerpToMu(int vind = 1, int zind = 2)
 		return;
 	}
 
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
-			particles_m[iii][vind][jjj] = 0.5 * mass_m[iii] * particles_m[iii][vind][jjj] * particles_m[iii][vind][jjj] / BFieldatZ(particles_m[iii][zind][jjj], simTime_m);
-	}
+	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfParticlesPerType_m, particles_m[iii][vind][jjj] = 0.5 * mass_m[iii] * particles_m[iii][vind][jjj] * particles_m[iii][vind][jjj] / BFieldatZ(particles_m[iii][zind][jjj], simTime_m);)
 
 	mu_m = true;
 }
 
-void Simulation::convertMuToVPerp(int vind = 1, int zind = 2)
+void Simulation::convertMuToVPerp(int vind, int zind)
 {
 	if (!mu_m)
 	{
@@ -34,11 +30,7 @@ void Simulation::convertMuToVPerp(int vind = 1, int zind = 2)
 		return;
 	}
 
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		for (int jjj = 0; jjj < numberOfParticlesPerType_m; jjj++)
-			particles_m[iii][vind][jjj] = sqrt(2 * particles_m[iii][vind][jjj] * BFieldatZ(particles_m[iii][zind][jjj], simTime_m) / mass_m[iii]);
-	}
+	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfParticlesPerType_m, particles_m[iii][vind][jjj] = sqrt(2 * particles_m[iii][vind][jjj] * BFieldatZ(particles_m[iii][zind][jjj], simTime_m) / mass_m[iii]);)
 
 	mu_m = false;
 }

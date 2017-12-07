@@ -28,17 +28,19 @@ class Simulation:
         self.simDLL_m.getSimMinAPI.restype = ctypes.c_double
         self.simDLL_m.getSimMaxAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getSimMaxAPI.restype = ctypes.c_double
-
+        
         #Pointer one liners
+        self.simDLL_m.getPointerTo3DParticleArrayAPI.argtypes = (ctypes.c_void_p, )
+        self.simDLL_m.getPointerTo3DParticleArrayAPI.restype = ctypes.c_void_p                          #Pointer to 3D C++ array
+        self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
+        self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.restype = ctypes.c_void_p                  #Pointer to 2D C++ array
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
 
         #Numerical tools
-        self.simDLL_m.generateNormallyDistributedValuesAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double))
-        self.simDLL_m.generateNormallyDistributedValuesAPI.restype = None
-        self.simDLL_m.calculateMeanOfParticleAttributeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
+        self.simDLL_m.calculateMeanOfParticleAttributeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_bool)
         self.simDLL_m.calculateMeanOfParticleAttributeAPI.restype = ctypes.c_double
-        self.simDLL_m.calculateStdDevOfParticleAttributeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.calculateStdDevOfParticleAttributeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.calculateStdDevOfParticleAttributeAPI.restype = ctypes.c_double
 
         #Field tools
@@ -71,12 +73,22 @@ class Simulation:
         self.simDLL_m.getSatelliteDataPointersAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.getSatelliteDataPointersAPI.restype = ctypes.POINTER(ctypes.c_double)
 
+        #Log File
+        self.simDLL_m.getLogFilePointerAPI.argtypes = (ctypes.c_void_p, )
+        self.simDLL_m.getLogFilePointerAPI.restype = ctypes.c_void_p
+        self.simDLL_m.writeLogFileEntryAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
+        self.simDLL_m.writeLogFileEntryAPI.restype = None
+        self.simDLL_m.writeTimeDiffFromNowAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
+        self.simDLL_m.writeTimeDiffFromNowAPI.restype = None
+        self.simDLL_m.writeTimeDiffAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.writeTimeDiffAPI.restype = None
 
         #Now code for init
         crootdir = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
         self.simulationptr = ctypes.c_void_p
         self.simulationptr = self.simDLL_m.createSimulation170925(crootdir)
 
+        self.logFileObj_m = self.simDLL_m.getLogFilePointerAPI(self.simulationptr)
         self.types_m = self.simDLL_m.getNumberOfParticleTypesAPI(self.simulationptr)
         self.attr_m = self.simDLL_m.getNumberOfAttributesTrackedAPI(self.simulationptr)
         self.numPart_m = self.simDLL_m.getNumberOfParticlesPerTypeAPI(self.simulationptr)
@@ -132,24 +144,18 @@ class Simulation:
             partattr = []
         return ret
 
+    def getPointerTo3DParticleArray(self):
+        return self.simDLL_m.getPointerTo3DParticleArrayAPI(self.simulationptr)
+        
+    def getPointerToSingleParticleTypeArray(self, typeIndex):
+        return self.simDLL_m.getPointerToSingleParticleTypeArrayAPI(self.simulationptr, typeIndex)
+
     #Numerical tools
-    def __generateNormallyDistributedCPP(self, numberOfNormalAttributes, means, sigmas):
-        #generally, a constructor in the derived c++ class will take care of this - that's why __
-        C_DOUBLEA = ctypes.c_double * numberOfNormalAttributes
-        meanscpp = C_DOUBLEA()
-        sigmascpp = C_DOUBLEA()
+    def meanOfPartAttr(self, cppDoubleArray, length, absValueBool=False):
+        return self.simDLL_m.calculateMeanOfParticleAttributeAPI(cppDoubleArray, length, absValueBool)
 
-        for iii in range(numberOfNormalAttributes):
-            meanscpp[iii] = means[iii]
-            sigmascpp[iii] = sigmas[iii]
-
-        self.simDLL_m.generateNormallyDistributedValuesAPI(self.simulationptr, numberOfNormalAttributes, meanscpp, sigmascpp)
-
-    def meanOfPartAttr(self, particleIndex, attributeIndex, absValueBool=False):
-        return self.simDLL_m.calculateMeanOfParticleAttributeAPI(self.simulationptr, particleIndex, attributeIndex, absValueBool)
-
-    def stddevOfPartAttr(self, particleIndex, attributeIndex):
-        return self.simDLL_m.calculateStdDevOfParticleAttributeAPI(self.simulationptr, particleIndex, attributeIndex)
+    def stddevOfPartAttr(self, cppDoubleArray, length):
+        return self.simDLL_m.calculateStdDevOfParticleAttributeAPI(cppDoubleArray, length)
 
     #Field tools
     def BFieldatZandT(self, z, time):
@@ -228,8 +234,21 @@ class Simulation:
         
         return data
 
+    def logWriteEntry(self, logData, logMessage):
+        logDataCbuf = ctypes.create_string_buffer(bytes(logData, encoding='utf-8'))
+        logMessCbuf = ctypes.create_string_buffer(bytes(logMessage, encoding='utf-8'))
+        self.simDLL_m.writeLogFileEntryAPI(self.logFileObj_m, logDataCbuf, logMessCbuf)
+
+    def logWriteTimeDiffFromNow(self, startTSind, nowLabel):
+        nowLabCbuf = ctypes.create_string_buffer(bytes(nowLabel, encoding='utf-8'))
+        self.simDLL_m.writeTimeDiffFromNowAPI(self.logFileObj_m, startTSind, nowLabCbuf)
+
+    def logWriteTimeDiff(self, startTSind, endTSind):
+        self.simDLL_m.writeTimeDiffAPI(self.logFileObj_m, startTSind, endTSind)
+
     def printSimCharacteristics(self):
-        print("Sim between:          ", self.simMin_m, " - ", self.simMax_m, " Re" if self.normalized_m else " m")
+        print("Sim between:          ", self.simMin_m / 6.371e6, " - ", self.simMax_m / 6.371e6, " Re") if self.normalized_m else \
+            print("Sim between:          ", self.simMin_m, " - ", self.simMax_m, " m")
         print("Number of Particles:  ", self.numPart_m)
         print("Sim dt:               ", self.dt_m, " s")
 

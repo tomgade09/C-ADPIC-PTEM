@@ -1,11 +1,13 @@
-import time
-from __plotParticles import *
+import time, csv
+import os, sys, inspect, shutil
+
+pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
+sys.path.append(os.path.normpath(pyfiledir + '/../../SimTools/python/SimulationClass/'))
+
 from __SimulationAPI170925 import *
-import csv
+from __plotParticles import *
 
 #Setting up folders, changing directory
-import os, sys, inspect, shutil
-pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 os.chdir(pyfiledir)
 rootdir = os.path.dirname(os.path.abspath('./'))
 dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M")
@@ -21,7 +23,7 @@ shutil.copy(srcfile, './')
 
 dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
 
-print("SIMULATION ", dtg)
+print("================  SIMULATION ", dtg, " ================")
 
 #TO-DO
 # DONE - Top at 4 Re
@@ -32,10 +34,10 @@ print("SIMULATION ", dtg)
 # DONE - Fix satellite code
 # DONE - Log file with success messages
 # DONE - Spit run times to Log File, maybe print some on screen
-# MAYBE NOT, ALLOWS TIME - Consolidate satellite data into one array, then pass to python
+# DONE - Either verify normalization or just normalize all the values at the end - Fix botched up normalization system
+# MAYBE NOT, ALLOWS TIME BASED CAPTURE, COULD ALSO CAPTURE SIM TIME - Consolidate satellite data into one array, then pass to python
 # - Satellite fix - remove zero values
 # - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
-# - Either verify normalization or just normalize all the values at the end - Fix botched up normalization system
 
 # - Some sort of error handling system instead of cout messages
 # - Change over current error messages to log file
@@ -57,24 +59,24 @@ def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
     results = sim.runSim(10000)
     satDat = sim.getSatelliteData()
-    #save4DDataToCSV(satDat, './Satellites/CSV')
-
-    if sim.normalized_m:
-        invNormFactor = 1.0
-    else:
-        invNormFactor = 6.371e6
-
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / 4000, sim.simMin_m)
 
-    with open("./BEfields.csv", "w", newline='\n') as f:
-        csvwriter = csv.writer(f)
-        csvwriter.writerows(fields)
+    sim.logWriteEntry('Python', 'Done getting data')
+
+    #save4DDataToCSV(satDat, './Satellites/CSV')
+    #with open("./BEfields.csv", "w", newline='\n') as f:
+        #csvwriter = csv.writer(f)
+        #csvwriter.writerows(fields)
+
+    #sim.logWriteEntry('Python', 'Done writing CSVs')
 
     plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         results[1][2], fields[0], fields[1], fields[2], False)
 
     #Eventually, read names from satellites and construct into array
     plotSatelliteData(satDat, sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
+
+    sim.logWriteEntry('Python', 'Done plotting data.  Terminating simulation.')
 
     sim.terminateSimulation170925()
 

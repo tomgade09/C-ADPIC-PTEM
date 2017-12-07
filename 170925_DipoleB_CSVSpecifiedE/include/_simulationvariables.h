@@ -3,32 +3,32 @@
 #include <cmath>
 #include "physicalconstants.h"
 
-#define NO_NORMALIZE_M
-#ifdef NO_NORMALIZE_M
+//#define NO_NORMALIZE_M
+//#ifdef NO_NORMALIZE_M
 //not normalized
-constexpr double NORMFACTOR{ 1.0 };
-constexpr double INVNORMFACTOR{ RADIUS_EARTH }; //for times when normalization is necessary (example: calculating B field)
-#else
+//constexpr double NORMFACTOR{ 1.0 };
+//constexpr double INVNORMFACTOR{ RADIUS_EARTH }; //for times when normalization is necessary (example: calculating B field)
+//#else
 //meters normalized to Re - i.e. instead of heights being measured in meters, they are measured in Re (from earth's center)
 //also other values, such as velocity - in Re / s, not m / s
-constexpr double NORMFACTOR{ RADIUS_EARTH };
-constexpr double INVNORMFACTOR{ 1.0 };
-#endif
+//constexpr double NORMFACTOR{ RADIUS_EARTH };
+//constexpr double INVNORMFACTOR{ 1.0 };
+//#endif
 
 //Simulation Variables - Measured from center of earth in meters [/second] unless otherwise stated
 constexpr double DT{ 0.01 }; //in s, at v para of 0.15 (T = 2.5) and dt of 0.1, ~415 iterations is a bounce period
-constexpr double MIN_Z_SIM{ (2.0e6 + RADIUS_EARTH) / NORMFACTOR }; //Min Z value of the simulation
-constexpr double MAX_Z_SIM{ 4 * RADIUS_EARTH / NORMFACTOR }; //Max Z value of the simulation
-constexpr double MIN_Z_NORM{ MIN_Z_SIM / INVNORMFACTOR };
-constexpr double MAX_Z_NORM{ MAX_Z_SIM / INVNORMFACTOR };
+constexpr double MIN_Z_SIM{ (2.0e6 + RADIUS_EARTH) }; //Min Z value of the simulation
+constexpr double MAX_Z_SIM{ 4 * RADIUS_EARTH }; //Max Z value of the simulation
+constexpr double MIN_Z_NORM{ MIN_Z_SIM / RADIUS_EARTH };
+constexpr double MAX_Z_NORM{ MAX_Z_SIM / RADIUS_EARTH };
 constexpr int	 NUMPARTICLES{ 1000192 }; //number of particles in simulation - best when it's a multiple of 64 (has to be a multiple of BLOCKSIZE)
 constexpr double INITIAL_T_EV{ 2.5 }; //"2.5" is from Chiu/Schultz temperature (in eV) for the studied plasma, then convert to velocity - kT = 1/2 m v^2
-constexpr double INITIAL_T_EV_MAG{ 500 }; //Higher energy magnetospheric particles (Upper limit of Z)
+constexpr double INITIAL_T_EV_MAG{ 100 }; //Higher energy magnetospheric particles (Upper limit of Z)
 
 //Distribution Variables - for now I use the same values for ions as electrons
-constexpr double V_DIST_MEAN{ 0.0 }; //mean of the velocity distribution (Maxwellian)
-constexpr double V_SIGMA_SQ_ELEC{ INITIAL_T_EV * 1.60218e-19 / (MASS_ELECTRON * NORMFACTOR * NORMFACTOR) }; //sigma^2 of the velocity distribution (Maxwellian)
-constexpr double V_SIGMA_SQ_IONS{ INITIAL_T_EV * 1.60218e-19 / (MASS_PROTON * NORMFACTOR * NORMFACTOR) };   //sigma^2 of the velocity distribution (Maxwellian)
+constexpr double V_DIST_MEAN{ 0.0 }; //mean of the velocity distribution
+constexpr double V_SIGMA_SQ_ELEC{ INITIAL_T_EV * 1.60218e-19 / (MASS_ELECTRON) }; //sigma^2 of the velocity distribution
+constexpr double V_SIGMA_SQ_IONS{ INITIAL_T_EV * 1.60218e-19 / (MASS_PROTON) };   //sigma^2 of the velocity distribution
 constexpr double T_RATIO{ INITIAL_T_EV_MAG / INITIAL_T_EV }; //velocity proportional to sqrt(T(in eV))
 //divide sigma_sq by 2 - vpara^2 + vperp^2 = vtot^2, avg vpara^2 = avg vperp^2, avg vtot^2 = 2vpara^2 = 2vperp^2
 

@@ -34,7 +34,7 @@ public:
 		}
 		
 		origDataGPU_m.reserve(numberOfAttributes_m);
-		captureDataGPU_m.reserve(numberOfAttributes_m);
+		captureDataGPU_m.reserve(numberOfAttributes_m + 1);
 
 		for (int iii = 0; iii < numberOfAttributes_m; iii++)
 			origDataGPU_m.push_back(dataPtrsGPU[iii]);
@@ -51,7 +51,7 @@ public:
 		freeGPUMemory();
 	}
 	
-	virtual void iterateDetector(int numberOfBlocks, int blockSize); //increment time, track overall sim time, or take an argument??
+	virtual void iterateDetector(int numberOfBlocks, int blockSize, double simtime); //increment time, track overall sim time, or take an argument??
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 
 	//Access functions

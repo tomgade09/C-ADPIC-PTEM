@@ -1,7 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import os, sys, inspect
-pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
-sys.path.append(os.path.normpath(pyfiledir + '/../../SimTools/SimulationClass/python/'))
 from SimulationAPI import *
 
 def getElectricFieldLUT(self, cols, entries):

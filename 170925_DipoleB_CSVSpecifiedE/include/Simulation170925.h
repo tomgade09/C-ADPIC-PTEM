@@ -10,8 +10,6 @@ class Simulation170925 : public Simulation
 protected:
 	std::string LUTfilename_m;
 	double**  elcFieldLUT_m{ nullptr };
-	
-	bool mu_m{ 1 };
 
 public:
 	Simulation170925(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir, std::string LUTfilename) :
@@ -30,6 +28,7 @@ public:
 		for (int iii = 0; iii < 3; iii++)
 			delete[] elcFieldLUT_m[iii];
 		delete[] elcFieldLUT_m;
+		logFile_m.writeTimeDiffFromNow(0, "End Simulation170925 Destructor");
 	}
 
 	//One liners

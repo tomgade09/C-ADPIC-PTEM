@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\SimTools\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\..\SimTools\src\LogFile\LogFile.cpp" />
+    <ClCompile Include="..\..\SimTools\src\LogFile\LogFileAPI.cpp" />
     <ClCompile Include="..\..\SimTools\src\SimulationClass\Simulation.cpp" />
     <ClCompile Include="..\..\SimTools\src\SimulationClass\SimulationAPI.cpp" />
     <ClCompile Include="..\..\SimTools\src\StandaloneTools\binaryfiletools.cpp" />
@@ -31,6 +32,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\SimTools\include\FileIO\fileIO.h" />
     <ClInclude Include="..\..\SimTools\include\LogFile\LogFile.h" />
+    <ClInclude Include="..\..\SimTools\include\LogFile\LogFileAPI.h" />
     <ClInclude Include="..\..\SimTools\include\SatelliteClass\Satellite.h" />
     <ClInclude Include="..\..\SimTools\include\SimulationClass\Simulation.h" />
     <ClInclude Include="..\..\SimTools\include\SimulationClass\SimulationAPI.h" />
@@ -43,6 +45,13 @@
   <ItemGroup>
     <CudaCompile Include="..\..\SimTools\src\SatelliteClass\Satellite.cu" />
     <CudaCompile Include="..\src\CUDA\simulationphysics.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\SimTools\python\FileIO\fileIO.py" />
+    <None Include="..\..\SimTools\python\SimulationClass\SimulationAPI.py" />
+    <None Include="..\..\SimTools\python\SimulationClass\__plotParticles.py" />
+    <None Include="..\python\simulation.py" />
+    <None Include="..\python\__SimulationAPI170925.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}</ProjectGuid>

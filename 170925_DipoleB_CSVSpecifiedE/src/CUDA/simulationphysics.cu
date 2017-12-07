@@ -1,7 +1,6 @@
 //Standard Library includes
 #include <string>
 #include <iostream>
-#include <stdio.h>
 #include <cmath>
 #include <time.h>
 #include <vector>
@@ -68,7 +67,7 @@ __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest conc
 
 __host__ __device__ double BFieldatZ(double z, double simtime)
 {//for now, a simple dipole field
-	return B0ATTHETA / pow(z / INVNORMFACTOR, 3); //Bz = B0 at theta * (1/rz(in Re))^3
+	return B0ATTHETA / pow(z / RADIUS_EARTH, 3); //Bz = B0 at theta * (1/rz(in Re))^3
 }
 
 __device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass into 1D Fourth Order Runge Kutta code
@@ -77,10 +76,10 @@ __device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0]); //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
-	F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / INVNORMFACTOR, 4))); //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / RADIUS_EARTH, 4))); //mu in [kg.m^2 / s^2.T] = [N.m / T]
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
@@ -119,7 +118,7 @@ __device__ void ionosphereGenerator(double* v_part, double* mu_part, double* z_p
 	curandStateMRG32k3a localState = *rndState;
 
 	double2 v_norm; //v_norm.x = v_para; v_norm.y = v_perp
-	v_norm = curand_normal2_double(&localState);
+	v_norm = curand_normal2_double(&localState); //more efficient to generate two doubles in the one function than run curand_normal_double twice according to CUDA docs
 	v_norm.x = v_norm.x * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) + V_DIST_MEAN; //normal dist -> maxwellian
 	v_norm.y = v_norm.y * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) + V_DIST_MEAN; //normal dist -> maxwellian
 	
@@ -161,10 +160,10 @@ __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_
 __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
-	if (thdInd > 10000 * simtime / DT) //add 10000 particles per timestep - need something other than "magic" 10000, plus need to account for extra 192
-		return; //could change "magic" number to 20000, would saturate simulation about half way through
+	if (thdInd > 20000 * simtime / DT) //add 20000 particles per timestep - need something other than "magic" 20000
+		return;
 	
-	if (z_d[thdInd] < 0.01) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
+	if (z_d[thdInd] < 0.001) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{
 		if (thdInd % 2 == 0) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
 			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
@@ -218,10 +217,10 @@ void Simulation170925::initializeSimulation()
 	}
 
 	//Create Satellites for observation
-	createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), true, elec, "downwardElectrons"); //Later code will take advantage of the interleaved particle order of the satellites
-	createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), true, ions, "downwardIons");	   //Look for [SOMEINDEX % 2]
-	createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), false, elec, "upwardElectrons");
-	createSatellite(2 * (RADIUS_EARTH / NORMFACTOR), false, ions, "upwardIons");
+	createSatellite(2 * RADIUS_EARTH, true, elec, "downwardElectrons"); //Later code will take advantage of the interleaved particle order of the satellites
+	createSatellite(2 * RADIUS_EARTH, true, ions, "downwardIons");	    //Look for [SOMEINDEX % 2]
+	createSatellite(2 * RADIUS_EARTH, false, elec, "upwardElectrons");
+	createSatellite(2 * RADIUS_EARTH, false, ions, "upwardIons");
 
 	initialized_m = true;
 	logFile_m.createTimeStruct("End Sim Init"); //index 2
@@ -240,11 +239,7 @@ void Simulation170925::copyDataToGPU()
 
 	//copies E field LUT to the GPU
 	double LUTtmp[3 * 2951];
-	for (int iii = 0; iii < 3; iii++)
-	{
-		for (int jjj = 0; jjj < 2951; jjj++)
-			LUTtmp[iii * 2951 + jjj] = elcFieldLUT_m[iii][jjj];
-	}
+	LOOP_OVER_2D_ARRAY(3, 2951, LUTtmp[iii * 2951 + jjj] = elcFieldLUT_m[iii][jjj];)
 
 	cudaMemcpy(gpuDblMemoryPointers_m[6], LUTtmp, 3 * 2951 * sizeof(double), cudaMemcpyHostToDevice);
 	
@@ -284,16 +279,15 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 			reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
 		
 		for (int iii = 0; iii < satellites_m.size(); iii++)
-			satellites_m[iii]->iterateDetector(NUMBLOCKS, BLOCKSIZE);
+			satellites_m[iii]->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);
 		
-		cudaDeviceSynchronize();
 		cudaloopind++;
 		incTime();
 
 		if (cudaloopind % LOOPS_BTW_PROGRESS_COUT == 0)
 		{
 			std::cout << cudaloopind << " / " << numberOfIterations << "  |  Sim Time (s): " << simTime_m << "  |  Real Time Elapsed (s): ";
-			logFile_m.printTimeNowFromLastTS();
+			logFile_m.printTimeNowFromLastTS(); //need to add to log file as well?
 			std::cout << "\n";
 		}
 
@@ -327,7 +321,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	}//end while (cudaloop...
 	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
 	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
-	logFile_m.writeLogFileEntry("iterateSimulati", "End Iteration of Sim:  " + std::to_string(numberOfIterations));
+	logFile_m.writeLogFileEntry("iterateSimulation", "End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }
 
 void Simulation170925::copyDataToHost()
@@ -340,11 +334,7 @@ void Simulation170925::copyDataToHost()
 		return;
 	}
 
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-	{
-		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-			cudaMemcpy(particles_m[iii][jjj], gpuDblMemoryPointers_m[iii * numberOfAttributesTracked_m + jjj], DBLARRAY_BYTES, cudaMemcpyDeviceToHost);
-	}
+	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, cudaMemcpy(particles_m[iii][jjj], gpuDblMemoryPointers_m[iii * numberOfAttributesTracked_m + jjj], DBLARRAY_BYTES, cudaMemcpyDeviceToHost);)
 
 	logFile_m.writeLogFileEntry("copyDataToHost", "Done with copying.");
 }

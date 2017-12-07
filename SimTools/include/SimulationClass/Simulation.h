@@ -9,6 +9,16 @@
 #include "StandaloneTools\binaryfiletools.h"
 #include "include\_simulationvariables.h" //remove this later, replace with passed in variables
 
+//Cannot nest these - outer loops all use iii as a variable name
+#define LOOP_OVER_3D_ARRAY(d1, d2, d3, x) for (int iii = 0; iii < d1; iii++)\
+	{ for (int jjj = 0; jjj < d2; jjj++) \
+		{ for (int kk = 0; kk < d3; kk++) {x} } }
+
+#define LOOP_OVER_2D_ARRAY(d1, d2, x) for (int iii = 0; iii < d1; iii++)\
+	{ for (int jjj = 0; jjj < d2; jjj++) {x} }
+
+#define LOOP_OVER_1D_ARRAY(d1, x) for (int iii = 0; iii < d1; iii++) {x}
+
 class Simulation
 {
 protected:
@@ -21,7 +31,7 @@ protected:
 	const int	 numberOfAttributesTracked_m;
 	const double simMin_m{ MIN_Z_SIM };
 	const double simMax_m{ MAX_Z_SIM };
-	const bool	 normalizedToRe_m{ (NORMFACTOR > 2.0) ? true : false };
+	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
 
 	//Particle data arrays and log file
 	double*** particles_m{ nullptr };
@@ -39,6 +49,7 @@ protected:
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
+	bool mu_m{ 1 }; //comes off the gpu as mu, need to change if a dist of vperp is generated
 	
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
@@ -80,27 +91,16 @@ public:
 		}
 		
 		//Delete arrays
-		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-		{
-			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-				delete[] particles_m[iii][jjj];
-
-			delete[] particles_m[iii];
-		}
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, delete[] particles_m[iii][jjj];)
+		LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, delete[] particles_m[iii];)
 		delete[] particles_m;
 
-		for (int iii = 0; iii < satelliteData_m.size(); iii++) //number of measurements
-		{
-			for (int jjj = 0; jjj < satelliteData_m[0].size(); jjj++) //number of satellites
-			{
-				for (int kk = 0; kk < satelliteData_m[0][0].size(); kk++) //number of attributes
-						delete[] satelliteData_m[iii][jjj][kk];
-			}
-		}
+		LOOP_OVER_3D_ARRAY(satelliteData_m.size(), satelliteData_m[0].size(), satelliteData_m[0][0].size(), delete[] satelliteData_m[iii][jjj][kk];)
 		
 		//Delete satellites
-		for (int iii = 0; iii < satellites_m.size(); iii++)
-			delete satellites_m[iii];
+		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m[iii];)
+
+		logFile_m.writeTimeDiffFromNow(0, "End Simulation Destructor");
 	};
 	//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
@@ -114,11 +114,13 @@ public:
 	int		  getNumberOfAttributesTracked() { return numberOfAttributesTracked_m; }
 
 	bool	  areResultsPrepared() { return resultsPrepared_m; }
-	bool	  getNormalized(){ return normalizedToRe_m; }
+	bool	  getNormalized() { return normalizedToRe_m; }
 	double*** getPointerTo3DParticleArray() { return particles_m; }
 	double**  getPointerToSingleParticleTypeArray(int index) { if (index >= numberOfParticleTypes_m) { return nullptr; } return particles_m[index]; } //eventually print a warning so the user knows
 	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex) { if ((partIndex > numberOfParticleTypes_m) || (attrIndex > numberOfAttributesTracked_m)) { 
 		std::cout << numberOfParticleTypes_m << " particle types and " << numberOfAttributesTracked_m << " attributes per particle.  One index is out of bounds.\n"; return nullptr; } return particles_m[partIndex][attrIndex]; }
+
+	LogFile*  getLogFilePointer() { return &logFile_m; }
 
 	virtual double getSimMin() { return simMin_m; }
 	virtual double getSimMax() { return simMax_m; }

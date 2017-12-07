@@ -25,6 +25,9 @@ DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation) {
 DLLEXPORT bool getNormalizedAPI(Simulation* simulation) {
 	return simulation->getNormalized(); }
 
+DLLEXPORT LogFile* getLogFilePointerAPI(Simulation* simulation) {
+	return simulation->getLogFilePointer(); }
+
 DLLEXPORT double getSimMinAPI(Simulation* simulation) {
 	return simulation->getSimMin(); }
 
@@ -42,14 +45,11 @@ DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simula
 	return simulation->getPointerToSingleParticleAttributeArray(partIndex, attrIndex); }
 
 //Numerical tools
-DLLEXPORT void generateNormallyDistributedValuesAPI(Simulation* simulation, int numberOfNormalAttributes, double* means, double* sigmas) {
-	simulation->generateNormallyDistributedValues(numberOfNormalAttributes, means, sigmas); }
+DLLEXPORT double  calculateMeanOfParticleAttributeAPI(double* data, int length, bool absValue) {
+	return calculateMeanOfParticleAttribute(data, length, absValue); }
 
-DLLEXPORT double calculateMeanOfParticleAttributeAPI(Simulation* simulation, int particleIndex, int attributeIndex, bool absValue) {
-	return simulation->calculateMeanOfParticleAttribute(particleIndex, attributeIndex, absValue); }
-
-DLLEXPORT double calculateStdDevOfParticleAttributeAPI(Simulation* simulation, int particleIndex, int attributeIndex) {
-	return simulation->calculateStdDevOfParticleAttribute(particleIndex, attributeIndex); }
+DLLEXPORT double  calculateStdDevOfParticleAttributeAPI(double* data, int length) {
+	return calculateStdDevOfParticleAttribute(data, length); }
 
 //Field tools
 DLLEXPORT double calculateBFieldAtZandTimeAPI(Simulation* simulation, double z, double time) {

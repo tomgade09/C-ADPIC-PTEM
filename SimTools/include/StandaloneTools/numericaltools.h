@@ -6,7 +6,7 @@
 
 //Numerical tools
 void generateNormallyDistributedValues(double* arrayToPopulate, int length, double mean, double sigma);
-double calculateMeanOfParticleAttribute(int particleIndex, int attributeIndex, bool absValue=false);
+double calculateMeanOfParticleAttribute(double* arrayToRead, int length, bool absValue=false);
 double calculateStdDevOfParticleAttribute(double* arrayToRead, int length);
 
 #endif
