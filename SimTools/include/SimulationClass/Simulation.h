@@ -31,7 +31,7 @@ protected:
 	const int	 numberOfAttributesTracked_m;
 	const double simMin_m{ MIN_Z_SIM };
 	const double simMax_m{ MAX_Z_SIM };
-	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
+	const bool	 normalizedToRe_m{ false }; //change later if you want, make it an option
 
 	//Particle data arrays and log file
 	double*** particles_m{ nullptr };
@@ -77,6 +77,7 @@ public:
 
 		//Allocate room in vectors for GPU Memory Pointers
 		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m); //holds pointers to GPU memory for particle attributes
+		gpuOtherMemoryPointers_m.reserve(2); //LUT data[0], random number generator[1]
 	}
 
 	virtual ~Simulation()

@@ -37,7 +37,8 @@ print("================  SIMULATION ", dtg, " ================")
 # DONE - Either verify normalization or just normalize all the values at the end - Fix botched up normalization system
 # MAYBE NOT, ALLOWS TIME BASED CAPTURE, COULD ALSO CAPTURE SIM TIME - Consolidate satellite data into one array, then pass to python
 # - Satellite fix - remove zero values
-# - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
+# DONE, NEEDS A GOOD TEST - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
+# - Write Satellite values to disk along with times
 
 # - Some sort of error handling system instead of cout messages
 # - Change over current error messages to log file
@@ -61,7 +62,7 @@ def simulationRunMain():
     satDat = sim.getSatelliteData()
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / 4000, sim.simMin_m)
 
-    sim.logWriteEntry('Python', 'Done getting data')
+    sim.logWriteEntry('Python', 'Done getting data.  Plotting.')
 
     #save4DDataToCSV(satDat, './Satellites/CSV')
     #with open("./BEfields.csv", "w", newline='\n') as f:
@@ -72,6 +73,8 @@ def simulationRunMain():
 
     plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         results[1][2], fields[0], fields[1], fields[2], False)
+
+    sim.logWriteEntry('Python', 'Plotting satellite data.')
 
     #Eventually, read names from satellites and construct into array
     plotSatelliteData(satDat, sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])

@@ -21,14 +21,22 @@ constexpr int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) };
 //constexpr int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
 //Commonly used values
-constexpr double EOMEGA{ 2 * PI / 10 };
+constexpr double EOMEGA{ 20 * PI };
 constexpr double B_AT_MIN_Z{ B0ATTHETA / (MIN_Z_NORM * MIN_Z_NORM * MIN_Z_NORM) };
 constexpr double B_AT_MAX_Z{ B0ATTHETA / (MAX_Z_NORM * MAX_Z_NORM * MAX_Z_NORM) };
 
+__host__ __device__ double qspsEatZ(double z, double simtime)
+{
+	//if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
+		//return 0.0;
+	return CONSTEFIELD;
+}
+
 //merge these two below...
-__host__ double EFieldatZ(double** LUT, double z, double simtime)
+__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime)
+//__host__ double EFieldatZ(double** LUT, double z, double simtime)
 {//E Field in the direction of B (radially outward)
-	//E-par = (column 2)*cos(omega*t) + (column 3)*sin(omega*t), omega = 2 PI / 10
+	//E-par = (column 2)*cos(omega*t) + (column 3)*sin(omega*t), omega = 20 PI
 	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re
 		z = z / RADIUS_EARTH; //convert to Re
 	
@@ -43,10 +51,15 @@ __host__ double EFieldatZ(double** LUT, double z, double simtime)
 	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
 		(z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
 	
-	return linearInterpReal * cos(EOMEGA * simtime) + linearInterpImag * sin(EOMEGA * simtime);
+	return (linearInterpReal * cos(EOMEGA * simtime) + linearInterpImag * sin(EOMEGA * simtime)) / 1000; //LUT E is in mV / m
 }
 
-__device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest concern here
+__host__ __device__ double EFieldatZ(double** LUT, double z, double simtime) //void pointer for portability??
+{
+	return ((true) ? (qspsEatZ(z, simtime)) : (0.0)) + ((true) ? (alfvenWaveEbyLUT(LUT, z, simtime)) : (0.0));
+}
+
+/*__device__ double EFieldatZ(double* LUT, double z, double simtime)
 {//E Field in the direction of B (radially outward)
 	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re
 		z = z / RADIUS_EARTH; //convert to Re
@@ -63,14 +76,14 @@ __device__ double EFieldatZ(double* LUT, double z, double simtime)//biggest conc
 		(z - LUT[stepsFromZeroInd]) + LUT[2 * 2951 + stepsFromZeroInd] };
 
 	return linearInterpReal * cos(EOMEGA * simtime) + linearInterpImag * sin(EOMEGA * simtime);
-}
+}*/
 
 __host__ __device__ double BFieldatZ(double z, double simtime)
 {//for now, a simple dipole field
 	return B0ATTHETA / pow(z / RADIUS_EARTH, 3); //Bz = B0 at theta * (1/rz(in Re))^3
 }
 
-__device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass into 1D Fourth Order Runge Kutta code
+__device__ double accel1dCUDA(double* args, int len, double** LUT) //made to pass into 1D Fourth Order Runge Kutta code
 {//args array: [t_RK, vz, mu, q, m, pz_0, simtime]
 	double F_lor, F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
@@ -84,7 +97,7 @@ __device__ double accel1dCUDA(double* args, int len, double* LUT) //made to pass
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
 
-__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double* LUT)
+__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double** LUT)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
@@ -111,6 +124,15 @@ __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
 {
 	long long id = blockIdx.x * blockDim.x + threadIdx.x;
 	curand_init(seed, id, 0, &state[id]);
+}
+
+__global__ void setupLUT(double* LUTdata, double** LUTptrs, int numofcols, int numofentries)
+{//run once on only one thread
+	if (blockIdx.x * blockDim.x + threadIdx.x != 0)
+		return;
+	
+	for (int iii = 0; iii < numofcols; iii++)
+		LUTptrs[iii] = &LUTdata[iii * numofentries];
 }
 
 __device__ void ionosphereGenerator(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
@@ -147,6 +169,8 @@ __device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* 
 
 __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
 {	
+	//some array + 1
+	
 	//scattering distribution of some sort here - right now, reflects half of the time, generates a new particle the other half
 	if (curand_normal_double(rndState) > 0)
 	{
@@ -157,11 +181,11 @@ __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_
 		ionosphereGenerator(v_part, mu_part, z_part, elecTF, rndState);
 }
 
-__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double* LUT)
+__global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool elecTF, curandStateMRG32k3a* crndStateA, double simtime, double** LUT)
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
-	if (thdInd > 20000 * simtime / DT) //add 20000 particles per timestep - need something other than "magic" 20000
-		return;
+	//if (thdInd > 20000 * simtime / DT) //add 20000 particles per timestep - need something other than "magic" 20000
+		//return;
 	
 	if (z_d[thdInd] < 0.001) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{
@@ -196,8 +220,12 @@ void Simulation170925::initializeSimulation()
 	
 	//Allocate memory on GPU for elec/ions variables
 	gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
-	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++) //[0] = v_e_para, [1] = mu_e_para, [2] = z_e, [3-5] = same attributes for ions, [6] = E Field LUT
+	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m; iii++) //[0] = v_e_para, [1] = mu_e_para, [2] = z_e, [3-5] = same attributes for ions
 		cudaMalloc((void **)&gpuDblMemoryPointers_m[iii], DBLARRAY_BYTES);
+
+	//Location of LUTarray
+	cudaMalloc((void **)&gpuDblMemoryPointers_m[6], LUTNUMOFENTRS * LUTNUMOFCOLS * sizeof(double));
+	cudaMalloc((void **)&gpuOtherMemoryPointers_m[0], LUTNUMOFCOLS * sizeof(double**));
 
 	//Code to prepare random number generator to produce pseudo-random numbers (for normal dist)
 	gpuOtherMemoryPointers_m.reserve(1);
@@ -205,7 +233,7 @@ void Simulation170925::initializeSimulation()
 	long long seed = time(NULL);
 	cudaMalloc((void **)&mrgStates_dev, 392 * 2 * sizeof(curandStateMRG32k3a));
 	initCurand <<< 49, 16 >>> (mrgStates_dev, seed); //2 per block, 128 threads per random generator
-	gpuOtherMemoryPointers_m[0] = mrgStates_dev;
+	gpuOtherMemoryPointers_m[1] = mrgStates_dev;
 
 	double* elec[3];
 	double* ions[3];
@@ -238,10 +266,7 @@ void Simulation170925::copyDataToGPU()
 	}
 
 	//copies E field LUT to the GPU
-	double LUTtmp[3 * 2951];
-	LOOP_OVER_2D_ARRAY(3, 2951, LUTtmp[iii * 2951 + jjj] = elcFieldLUT_m[iii][jjj];)
-
-	cudaMemcpy(gpuDblMemoryPointers_m[6], LUTtmp, 3 * 2951 * sizeof(double), cudaMemcpyHostToDevice);
+	cudaMemcpy(gpuDblMemoryPointers_m[6], elcFieldLUT_m[0], 3 * 2951 * sizeof(double), cudaMemcpyHostToDevice);
 	
 	copied_m = true;
 	
@@ -265,6 +290,8 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		return;
 	}
 	
+	setupLUT <<< 1, 1 >>> (gpuDblMemoryPointers_m[6], reinterpret_cast<double**>(gpuOtherMemoryPointers_m[0]), LUTNUMOFCOLS, LUTNUMOFENTRS);
+
 	//Make room for 100 measurements
 	satelliteData_m.reserve(100);
 
@@ -273,10 +300,10 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	while (cudaloopind < numberOfIterations)
 	{
 		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (gpuDblMemoryPointers_m[0], gpuDblMemoryPointers_m[1], gpuDblMemoryPointers_m[2], 1,
-			reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
+			reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[1]), simTime_m, reinterpret_cast<double**>(gpuOtherMemoryPointers_m[0]));
 		
 		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (gpuDblMemoryPointers_m[3], gpuDblMemoryPointers_m[4], gpuDblMemoryPointers_m[5], 0,
-			reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[0]), simTime_m, gpuDblMemoryPointers_m[6]);
+			reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[1]), simTime_m, reinterpret_cast<double**>(gpuOtherMemoryPointers_m[0]));
 		
 		for (int iii = 0; iii < satellites_m.size(); iii++)
 			satellites_m[iii]->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);

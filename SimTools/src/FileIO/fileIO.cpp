@@ -29,11 +29,16 @@ namespace fileIO
 		}
 
 		double** ret = new double*[numofcols];
+		double* inner = new double[numofentries * numofcols];
 
+		//1D array converted to 2D by using pointers to location of the start of the next column:
+		// idx:  0				1			2		 "numofentries"  "numofe + 1"	"2*numofe"
+		//[col 0 elem 0, col 0 elem 1, col 0 elem 2...col 1 elem 0, col 1 elem 1...col 2 elem 0...]
+		//ptrs: [0]										[1]							[2]
+		//So - 2nd dimension of array looks like this:
+		//[pointer to 0, pointer to numofentries, pointer to 2 * numofentries...]
 		for (int iii = 0; iii < numofcols; iii++)
-		{
-			ret[iii] = new double[numofentries];
-		}
+			ret[iii] = &inner[iii * numofentries];
 
 		for (int iii = 0; iii < numofentries; iii++)
 		{

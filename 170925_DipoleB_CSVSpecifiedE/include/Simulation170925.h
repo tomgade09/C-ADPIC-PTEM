@@ -17,7 +17,7 @@ public:
 	{
 		//Populate E Field LUT
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
-		setElecMagLUT(LUT.c_str(), 2951, 3);
+		setElecMagLUT(LUT.c_str(), LUTNUMOFENTRS, LUTNUMOFCOLS);
 
 		logFile_m.writeTimeDiffFromNow(0, "End Simulation170925 Constructor");
 	}//end constructor
