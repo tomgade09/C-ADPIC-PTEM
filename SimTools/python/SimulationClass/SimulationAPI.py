@@ -34,7 +34,7 @@ class Simulation:
         self.simDLL_m.getPointerTo3DParticleArrayAPI.restype = ctypes.c_void_p                          #Pointer to 3D C++ array
         self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.restype = ctypes.c_void_p                  #Pointer to 2D C++ array
-        self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
 
         #Numerical tools
@@ -104,14 +104,14 @@ class Simulation:
     
 
     #Run Simulation
-    def runSim(self, iterations, inSimOnly=True):
+    def runSim(self, iterations, origData=False, inSimOnly=True):
         self.initializeSimulation()
         self.copyDataToGPU()
         self.iterateSimulation(iterations)
         self.copyDataToHost()
         self.freeGPUMemory()
         self.prepareResults()
-        return self.getResultsfrom3D(inSimOnly)
+        return self.getResultsfrom3D(origData, inSimOnly)
 
     ###Member functions for Simulation class
     #One liner functions
@@ -122,7 +122,7 @@ class Simulation:
         self.simDLL_m.incrementSimulationTimeByDtAPI(self.simulationptr)
     
     #Pointer one liners (one liners in CPP obv, not Python)
-    def getResultsfrom3D(self, inSimOnly=True):
+    def getResultsfrom3D(self, origData=False, inSimOnly=True):
         #if (inSimOnly):
             #inSimBoolArray = self.getPartInSimBoolArray()
         
@@ -131,7 +131,7 @@ class Simulation:
         partdbl = []
         for iii in range(self.types_m):
             for jjj in range(self.attr_m):
-                partdbl_c = self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI(self.simulationptr, iii, jjj)
+                partdbl_c = self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI(self.simulationptr, iii, jjj, origData)
                 for kk in range(self.numPart_m):
                    #if(inSimOnly):
                        #if(inSimBoolArray[iii][kk]):
@@ -143,6 +143,9 @@ class Simulation:
             ret.append(partattr)
             partattr = []
         return ret
+
+    def getOriginalsfrom3D(self):
+        return self.getResultsfrom3D(True, False)
 
     def getPointerTo3DParticleArray(self):
         return self.simDLL_m.getPointerTo3DParticleArrayAPI(self.simulationptr)
@@ -214,7 +217,7 @@ class Simulation:
             satptr = []
             for jjj in range(self.satNum_m):
                 attrptr = []
-                for kk in range(self.attr_m):
+                for kk in range(self.attr_m + 1):
                     attrptr.append(self.simDLL_m.getSatelliteDataPointersAPI(self.simulationptr, iii, jjj, kk))
                 satptr.append(attrptr)
             msmtptr.append(satptr)
@@ -223,11 +226,11 @@ class Simulation:
             sat = []
             for jjj in range(self.satNum_m):
                 attr = []
-                for kk in range(self.attr_m):
+                for kk in range(self.attr_m + 1):
                     parts=[]
-                    for lll in range(self.numPart_m):
-                        #if (msmtptr[iii][jjj][2][lll] > self.simMin_m):
-                        parts.append(msmtptr[iii][jjj][kk][lll])
+                    for lll in range(self.numPart_m): #this is what needs to be changed if zeros are removed
+                        #if (lll % 1000 == 0): {print(iii, jjj, kk, lll)}
+                        parts.append(msmtptr[iii][jjj][kk][lll]) #Read the first value to see the length of the array, then read that many - does a python array really need to be constructed?
                     attr.append(parts)
                 sat.append(attr)
             data.append(sat)

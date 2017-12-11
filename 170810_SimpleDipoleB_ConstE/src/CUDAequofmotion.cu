@@ -10,18 +10,19 @@
 #include "curand_kernel.h"
 
 //Project specific includes
-#include "include\_simulationvariables.h"
+#include "_simulationvariables.h"
 
 __host__ __device__ double EFieldatZ(double z, double simtime)
 {//E Field in the direction of B (radially outward)
-	if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
-		return 0.0;
+	//if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
+		//return 0.0;
 	return CONSTEFIELD;
 }
 
 __host__ __device__ double BFieldatZ(double z, double simtime) //this will change in future iterations
 {//for now, a simple dipole field
-	return DIPOLECONST / pow(z / (RADIUS_EARTH / NORMFACTOR), 3);
+	//return DIPOLECONST / pow(z / (RADIUS_EARTH / NORMFACTOR), 3);
+	return DIPOLECONST / pow(z / RADIUS_EARTH, 3);
 }
 
 __global__ void initKernel(curandStateMRG32k3a* state, long long seed)
@@ -46,10 +47,12 @@ __device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Four
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	//F_lor = args[3] * EFieldatZ(ztmp, args[6]) / NORMFACTOR; //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(ztmp, args[6]);
 
 	//Mirror force
-	F_mir = -args[2] * (-3 / (pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 4))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	//F_mir = -args[2] * (-3 / (pow(ztmp / (RADIUS_EARTH / NORMFACTOR), 4))) * DIPOLECONST; //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	F_mir = -args[2] * (-3 / (pow(ztmp / RADIUS_EARTH, 4))) * DIPOLECONST;
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
@@ -113,7 +116,7 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 	return;
 #endif
 
-	inSimBool[iii] = ((z_d[iii] < MAGSPH_MAX_Z) && (z_d[iii] > IONSPH_MIN_Z)); //Makes sure particles are within bounds
+	inSimBool[iii] = ((z_d[iii] < MAGSPH_MAX_Z * 1.001) && (z_d[iii] > IONSPH_MIN_Z * 0.999)); //Makes sure particles are within bounds
 
 	double args[7];
 
@@ -124,14 +127,14 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, bool* inSi
 			inSimBool[iii] = true;
 			v_d[iii] = normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ) * VPARACONST);
 			numEscaped[iii] += 1;
-			if (z_d[iii] < IONSPH_MIN_Z)
+			if (z_d[iii] < IONSPH_MIN_Z * 0.999)
 			{
-				z_d[iii] = IONSPH_MIN_Z + 0.01;
+				z_d[iii] = IONSPH_MIN_Z;
 				v_d[iii] = abs(v_d[iii]);
 			}
 			else
 			{
-				z_d[iii] = MAGSPH_MAX_Z - 0.01;
+				z_d[iii] = MAGSPH_MAX_Z;
 				v_d[iii] = -abs(v_d[iii]);
 			}
 			mu_d[iii] = pow(normalGeneratorCUDA(crndStateA, nrmGenIdx, V_DIST_MEAN, sqrt(V_SIGMA_SQ)), 2) * 0.5 * mass / BFieldatZ(z_d[iii], simtime);

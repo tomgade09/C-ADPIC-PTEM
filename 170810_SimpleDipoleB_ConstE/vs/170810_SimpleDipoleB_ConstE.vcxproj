@@ -19,14 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\SimTools\FileIO\include\fileIO.h" />
+    <ClInclude Include="..\..\SimTools\include\FileIO\fileIO.h" />
     <ClInclude Include="..\include\iowrapper.h" />
     <ClInclude Include="..\include\numericaltools.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\_simulationvariables.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\SimTools\FileIO\src\fileIO.cpp" />
+    <ClCompile Include="..\..\SimTools\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\src\170810_SimpleDipoleB_ConstE.cpp" />
     <ClCompile Include="..\src\forcesandfields.cpp" />
     <ClCompile Include="..\src\iowrapper.cpp" />
@@ -87,9 +87,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\170810_SimpleDipoleB_ConstE\include;C:\Users\Tom\src\geoplasmasim\SimTools\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\170810_SimpleDipoleB_ConstE\include;C:\Users\Tom\src\geoplasmasim\SimTools\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\170810_SimpleDipoleB_ConstE\include;C:\Users\Tom\src\geoplasmasim\SimTools\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>C:\Users\Tom\src\geoplasmasim\170810_SimpleDipoleB_ConstE\include;C:\Users\Tom\src\geoplasmasim\SimTools\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -106,6 +114,9 @@
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -126,6 +137,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <MaxRegCount>0</MaxRegCount>
+      <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,6 +159,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -173,7 +188,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FastMath>false</FastMath>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <MaxRegCount>0</MaxRegCount>
-      <AdditionalOptions>--ptxas-options=-v %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

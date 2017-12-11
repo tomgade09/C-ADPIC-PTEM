@@ -1,4 +1,4 @@
-#include "include\iowrapper.h"
+#include "iowrapper.h"
 
 void writeParticlesToBin(double*** particles, std::string directory)
 {

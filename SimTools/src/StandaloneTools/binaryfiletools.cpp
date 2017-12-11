@@ -14,3 +14,19 @@ void loadFileIntoParticleAttribute(double* arrayToLoadInto, int length, const ch
 	fn = fn + name;
 	arrayToLoadInto = fileIO::readDblBin(fn.c_str(), length);
 }
+
+void stringPadder(std::string& in, int totalStrLen, int indEraseFrom)
+{
+	if (totalStrLen <= 0 || indEraseFrom <= 0)
+		return;
+
+	int txtlen = in.length();
+
+	if ((totalStrLen - txtlen) > 0)
+	{
+		for (int iii = 0; iii < (totalStrLen - txtlen); iii++)
+			in += ' ';
+	}
+	else
+		in.erase(indEraseFrom, txtlen - totalStrLen);
+}

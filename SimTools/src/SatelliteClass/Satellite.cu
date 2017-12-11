@@ -11,7 +11,7 @@
 __global__ void satelliteDetector(double* v_d, double* mu_d, double* z_d, double* detected_v_d, double* detected_mu_d, double* detected_z_d, double* simtime_d, double simtime, double altitude, bool upward)
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
-	double z_minus_vdt{ z_d[thdInd] - v_d[thdInd] * DT };//dz };
+	double z_minus_vdt{ z_d[thdInd] - v_d[thdInd] * DT };
 	
 	bool detected{
 		detected_z_d[thdInd] < 1 && ( //no detected particle is in the data array at the thread's index already AND
@@ -33,7 +33,7 @@ __global__ void satelliteDetector(double* v_d, double* mu_d, double* z_d, double
 void Satellite::initializeSatelliteOnGPU()
 {
 	for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
-	{
+	{//[0] = v_para, [1] = v_perp, [2] = z, [3] = simtime
 		cudaMalloc((void **)&captureDataGPU_m[iii], sizeof(double) * numberOfParticles_m); //makes room for data of detected particles
 		cudaMemset(captureDataGPU_m[iii], 0, sizeof(double) * numberOfParticles_m); //sets values to 0
 	}
@@ -41,16 +41,49 @@ void Satellite::initializeSatelliteOnGPU()
 
 void Satellite::iterateDetector(int numberOfBlocks, int blockSize, double simtime) {
 	satelliteDetector <<< numberOfBlocks, blockSize >>>
-		(origDataGPU_m[0], origDataGPU_m[1], origDataGPU_m[2], captureDataGPU_m[0],	captureDataGPU_m[1], captureDataGPU_m[2], captureDataGPU_m[3], simtime, altitude_m, upwardFacing_m); }
+		(simDataPtrsGPU_m[0], simDataPtrsGPU_m[1], simDataPtrsGPU_m[2], //Pointers to simulation data on GPU
+			captureDataGPU_m[0], captureDataGPU_m[1], captureDataGPU_m[2], captureDataGPU_m[3], //Pointers on GPU to arrays that capture data if the criteria is met
+				simtime, altitude_m, upwardFacing_m); } //other variables
 
-void Satellite::copyDataToHost()
-{
-	for (int iii = 0; iii < numberOfAttributes_m; iii++)
+void Satellite::copyDataToHost(bool removeZeros)
+{// data_m array: [v_para, mu, z, time][particle number]
+	if (removeZeros)
+	{
+		if (data_m != nullptr)
+			deleteData();
+		allocateData();
+	}
+	
+	for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
 	{
 		cudaMemcpy(data_m[iii], captureDataGPU_m[iii], sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost);
 		cudaMemset(captureDataGPU_m[iii], 0, sizeof(double) * numberOfParticles_m); //sets values to 0
-		dataReady_m = true;
 	}
+
+	if (removeZeros)
+	{
+		//record indicies of particles captured - throw out the rest
+		std::vector<int> ind;
+		ind.reserve(numberOfParticles_m);
+
+		for (int iii = 0; iii < numberOfParticles_m; iii++)
+			if (data_m[2][iii] > 1)
+				ind.push_back(iii);
+
+		//remove zeroes from array
+		double** tmp2D = new double*[numberOfAttributes_m + 1];
+		for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
+		{
+			tmp2D[iii] = new double[ind.size() + 1];
+			tmp2D[iii][0] = static_cast<double>(ind.size());
+			for (int jjj = 0; jjj < ind.size(); jjj++)
+				tmp2D[iii][jjj + 1] = data_m[iii][ind[jjj]]; //index is jjj + 1 because element 0 is the length of the array
+		}
+
+		deleteData();
+		data_m = tmp2D;
+	}
+	dataReady_m = true;
 }
 
 void Satellite::freeGPUMemory()

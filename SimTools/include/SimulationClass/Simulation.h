@@ -31,10 +31,11 @@ protected:
 	const int	 numberOfAttributesTracked_m;
 	const double simMin_m{ MIN_Z_SIM };
 	const double simMax_m{ MAX_Z_SIM };
-	const bool	 normalizedToRe_m{ false }; //change later if you want, make it an option
+	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
 
 	//Particle data arrays and log file
-	double*** particles_m{ nullptr };
+	double*** particles_m{ form3Darray() };
+	double*** particlesorig_m{ form3Darray() }; //initial data
 	std::vector<double> mass_m;
 	std::vector<void*> otherMemoryPointers_m;
 	std::vector<Satellite*> satellites_m;
@@ -50,6 +51,9 @@ protected:
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
 	bool mu_m{ 1 }; //comes off the gpu as mu, need to change if a dist of vperp is generated
+
+	virtual void receiveSatelliteData();
+	virtual double*** form3Darray();
 	
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
@@ -57,18 +61,6 @@ public:
 		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }, rootdir_m{ rootdir }
 	{
 		logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor");
-		//Form the particle array
-		particles_m = new double**[numberOfParticleTypes_m];
-		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-		{
-			particles_m[iii] = new double*[numberOfAttributesTracked_m];
-			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-			{
-				particles_m[iii][jjj] = new double[numberOfParticlesPerType_m];
-				for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)//values to initialize array
-					particles_m[iii][jjj][kk] = 0.0;
-			}
-		}
 
 		//Populate mass array
 		mass_m.reserve(2);
@@ -82,19 +74,23 @@ public:
 
 	virtual ~Simulation()
 	{
-		//Save final particle distributions to disk
-		std::string fold{ "./particles_final/" };
+		//Save init particle distributions to disk
+		std::string fold{ "./bins/particles_init/" };
 		std::vector<std::string> names{ "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
-		for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
-		{
-			for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
-				saveParticleAttributeToDisk(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());
-		}
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particlesorig_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
+
+		//Save final particle distributions to disk
+		fold = "./bins/particles_final/";
+		names = { "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
 		
 		//Delete arrays
 		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, delete[] particles_m[iii][jjj];)
 		LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, delete[] particles_m[iii];)
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, delete[] particlesorig_m[iii][jjj];)
+		LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, delete[] particlesorig_m[iii];)
 		delete[] particles_m;
+		delete[] particlesorig_m;
 
 		LOOP_OVER_3D_ARRAY(satelliteData_m.size(), satelliteData_m[0].size(), satelliteData_m[0][0].size(), delete[] satelliteData_m[iii][jjj][kk];)
 		
@@ -118,8 +114,9 @@ public:
 	bool	  getNormalized() { return normalizedToRe_m; }
 	double*** getPointerTo3DParticleArray() { return particles_m; }
 	double**  getPointerToSingleParticleTypeArray(int index) { if (index >= numberOfParticleTypes_m) { return nullptr; } return particles_m[index]; } //eventually print a warning so the user knows
-	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex) { if ((partIndex > numberOfParticleTypes_m) || (attrIndex > numberOfAttributesTracked_m)) { 
-		std::cout << numberOfParticleTypes_m << " particle types and " << numberOfAttributesTracked_m << " attributes per particle.  One index is out of bounds.\n"; return nullptr; } return particles_m[partIndex][attrIndex]; }
+	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData) { if ((partIndex > numberOfParticleTypes_m) || (attrIndex > numberOfAttributesTracked_m)) { 
+		std::cout << numberOfParticleTypes_m << " particle types and " << numberOfAttributesTracked_m << " attributes per particle.  One index is out of bounds.\n"; return nullptr; } 
+		if (originalData) { return particlesorig_m[partIndex][attrIndex]; } else { return particles_m[partIndex][attrIndex]; } }
 
 	LogFile*  getLogFilePointer() { return &logFile_m; }
 
@@ -144,7 +141,7 @@ public:
 	virtual void prepareResults() = 0;
 
 	//Satellite management functions
-	virtual void	createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, std::string name);
+	virtual void	createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name);
 	virtual int		getNumberOfSatellites() { return satellites_m.size(); }
 	virtual int		getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
 	virtual double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m[measurementInd][satelliteInd][attributeInd]; }

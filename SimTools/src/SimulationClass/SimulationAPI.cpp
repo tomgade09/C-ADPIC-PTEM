@@ -41,8 +41,8 @@ DLLEXPORT double*** getPointerTo3DParticleArrayAPI(Simulation* simulation) {
 DLLEXPORT double** getPointerToSingleParticleTypeArrayAPI(Simulation* simulation, int index) {
 	return simulation->getPointerToSingleParticleTypeArray(index); }
 
-DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex) {
-	return simulation->getPointerToSingleParticleAttributeArray(partIndex, attrIndex); }
+DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
+	return simulation->getPointerToSingleParticleAttributeArray(partIndex, attrIndex, originalData); }
 
 //Numerical tools
 DLLEXPORT double  calculateMeanOfParticleAttributeAPI(double* data, int length, bool absValue) {

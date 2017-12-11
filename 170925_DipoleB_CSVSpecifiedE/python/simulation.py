@@ -10,12 +10,16 @@ from __plotParticles import *
 #Setting up folders, changing directory
 os.chdir(pyfiledir)
 rootdir = os.path.dirname(os.path.abspath('./'))
-dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M")
+dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M.%S")
 savedir = './../distgraphs' + dtg
 if (not(os.path.isdir(savedir))):
     os.makedirs(savedir)
-    os.makedirs(savedir + '/particles_init')
-    os.makedirs(savedir + '/particles_final')
+    os.makedirs(savedir + '/bins/particles_init')
+    os.makedirs(savedir + '/bins/particles_final')
+    os.makedirs(savedir + '/bins/satellites')
+    os.makedirs(savedir + '/graphs/allparticles')
+    os.makedirs(savedir + '/graphs/EBfields')
+    os.makedirs(savedir + '/graphs/satellites')
 os.chdir(savedir)
 
 srcfile = '../../include/_simulationvariables.h'
@@ -59,12 +63,13 @@ print("================  SIMULATION ", dtg, " ================")
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
     results = sim.runSim(10000)
+    orig = sim.getOriginalsfrom3D()
     satDat = sim.getSatelliteData()
-    fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / 4000, sim.simMin_m)
+    fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (6.371e6 * 4000), sim.simMin_m)
 
     sim.logWriteEntry('Python', 'Done getting data.  Plotting.')
 
-    #save4DDataToCSV(satDat, './Satellites/CSV')
+    #save4DDataToCSV(satDat, './CSV')
     #with open("./BEfields.csv", "w", newline='\n') as f:
         #csvwriter = csv.writer(f)
         #csvwriter.writerows(fields)
@@ -80,6 +85,8 @@ def simulationRunMain():
     plotSatelliteData(satDat, sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
 
     sim.logWriteEntry('Python', 'Done plotting data.  Terminating simulation.')
+
+    saveEscapedParticlesAndTimeToCSV(orig, satDat)
 
     sim.terminateSimulation170925()
 

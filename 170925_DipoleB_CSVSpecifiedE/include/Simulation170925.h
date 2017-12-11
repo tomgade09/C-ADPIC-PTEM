@@ -25,8 +25,7 @@ public:
 	~Simulation170925() //Destructor
 	{
 		//Delete double arrays
-		for (int iii = 0; iii < 3; iii++)
-			delete[] elcFieldLUT_m[iii];
+		delete[] elcFieldLUT_m[0];
 		delete[] elcFieldLUT_m;
 		logFile_m.writeTimeDiffFromNow(0, "End Simulation170925 Destructor");
 	}

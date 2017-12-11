@@ -5,5 +5,6 @@
 
 void saveParticleAttributeToDisk(double* arrayToSave, int length, const char* foldername, const char* name);
 void loadFileIntoParticleAttribute(double* arrayToLoadInto, int length, const char* foldername, const char* name);
+void stringPadder(std::string& in, int totalStrLen, int indEraseFrom = 1);
 
 #endif

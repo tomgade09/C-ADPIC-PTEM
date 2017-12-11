@@ -1,8 +1,8 @@
 #include <random>
 #include <cmath>
 
-#include "include\numericaltools.h"
-#include "include\_simulationvariables.h"
+#include "numericaltools.h"
+#include "_simulationvariables.h"
 
 double fourthOrderRungeKutta1D(FncPnt1d_t funcPointer, double* funcArg, int arrayLen)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
@@ -46,12 +46,12 @@ double** normalDistribution_v_z(int numOfParticles, double vmean, double vsigma,
 		vperp[iii] = vperp_nd(mtgen);
 		if (iii % 2 == 0)
 		{ //alternates placing the electron, ion at the Ionosphere / Magnetosphere and setting vpara in the direction away from the boundary
-			z[iii] = IONSPH_MIN_Z + 0.01;
+			z[iii] = IONSPH_MIN_Z;
 			vpara[iii] = abs(vpara[iii]);
 		}
 		else
 		{
-			z[iii] = MAGSPH_MAX_Z - 0.01;
+			z[iii] = MAGSPH_MAX_Z;
 			vpara[iii] = -abs(vpara[iii]);
 		}
 	}

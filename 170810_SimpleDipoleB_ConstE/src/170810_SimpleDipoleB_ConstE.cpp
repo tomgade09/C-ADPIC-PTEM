@@ -15,9 +15,10 @@
 //Other dependencies
 
 //Project specific includes (mine)
-#include "include\_simulationvariables.h" //as a bonus, also includes physicalconstants.h !
-#include "include\numericaltools.h"
-#include "include\iowrapper.h"
+#include "_simulationvariables.h" //as a bonus, also includes physicalconstants.h !
+#include "numericaltools.h"
+#include "iowrapper.h"
+#include "FileIO\fileIO.h"
 
 //Defines for making into a DLL File
 #define DLLFILE
@@ -96,15 +97,15 @@ retStruct dllmain()
 #endif
 
 	std::cout << "Sim between:      " << IONSPH_MIN_Z << " - " << MAGSPH_MAX_Z << unitstring << "\n";
-	std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << unitstring << "\n";
+	//std::cout << "E Field between:  " << (E_RNG_CENTER - E_RNG_DELTA) << " - " << (E_RNG_CENTER + E_RNG_DELTA) << unitstring << "\n";
 	std::cout << "Const E:          " << CONSTEFIELD << " V/m\n\n";
 	std::cout << "Particle Number:  " << NUMPARTICLES << "\n";
 	std::cout << "Iteration Number: " << NUMITERATIONS << "\n";
 	std::cout << "Replenish lost p: "; (REPLENISH_E_I) ? (std::cout << "True\n\n") : (std::cout << "False\n\n");
 
 	//don't forget to deallocate memory later... returns array of pointers to arrays of [vpara, vperp, z, null] for particles
-	electrons = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
-	ions = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, Z_DIST_MEAN, Z_SIGMA);
+	electrons = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, 0, 0);
+	ions = normalDistribution_v_z(NUMPARTICLES, V_DIST_MEAN, V_SIGMA, 0, 0);
 
 	double*** dbls = new double**[2];
 	dbls[0] = electrons;

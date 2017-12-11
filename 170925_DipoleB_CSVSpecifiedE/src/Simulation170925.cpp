@@ -1,6 +1,6 @@
 #include "include\Simulation170925.h"
 
-void Simulation170925::loadDataFilesIntoParticleArray()
+void Simulation170925::loadDataFilesIntoParticleArray()//legacy - not used and may not work under new structure - namely particles_m isn't copied to the GPU first anymore
 {//not super generic, but ok - the function is virtual
 	std::string importdir{ rootdir_m };
 	importdir = importdir + "\\in\\data\\";
@@ -22,6 +22,7 @@ void Simulation170925::prepareResults()
 	if (normalizedToRe_m)
 	{
 		LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particles_m[iii][jjj][kk] /= RADIUS_EARTH;)
+		LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particlesorig_m[iii][jjj][kk] /= RADIUS_EARTH;)
 	}
 	
 	resultsPrepared_m = true;
