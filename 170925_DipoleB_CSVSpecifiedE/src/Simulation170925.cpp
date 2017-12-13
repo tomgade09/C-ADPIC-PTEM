@@ -23,6 +23,10 @@ void Simulation170925::prepareResults()
 	{
 		LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particles_m[iii][jjj][kk] /= RADIUS_EARTH;)
 		LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particlesorig_m[iii][jjj][kk] /= RADIUS_EARTH;)
+		for (int lll = 0; lll < satelliteData_m.size(); lll++)
+		{//loop over number of measurements
+			LOOP_OVER_3D_ARRAY(satellites_m.size(), numberOfAttributesTracked_m, numberOfParticlesPerType_m, satelliteData_m[lll][iii][jjj][kk] /= RADIUS_EARTH;)
+		}
 	}
 	
 	resultsPrepared_m = true;

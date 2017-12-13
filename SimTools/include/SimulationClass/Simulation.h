@@ -56,7 +56,7 @@ protected:
 	virtual double*** form3Darray();
 	
 public:
-	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir):
+	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir, bool loadDist=false):
 		numberOfParticleTypes_m{ numberOfParticleTypes }, numberOfParticlesPerType_m{ numberOfParticlesPerType },
 		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }, rootdir_m{ rootdir }
 	{
@@ -70,18 +70,26 @@ public:
 		//Allocate room in vectors for GPU Memory Pointers
 		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m); //holds pointers to GPU memory for particle attributes
 		gpuOtherMemoryPointers_m.reserve(2); //LUT data[0], random number generator[1]
+
+		if (false)//need to replace this condition with the passed in variable above
+		{
+			std::cout << "Loading a distribution.  Don't forget to remove later / tie in to specified option above. (in Simulation Constructor) :).\n";
+			std::string fold{ "./../../in/data/" };
+			std::vector<std::string> names{ "e_vpara.bin", "e_vperp.bin", "e_z.bin", "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
+			LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, loadFileIntoParticleAttribute(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfParticleTypes_m + jjj].c_str());)
+			LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particles_m[iii][jjj][kk] *= RADIUS_EARTH;)
+		}
 	}
 
 	virtual ~Simulation()
 	{
 		//Save init particle distributions to disk
 		std::string fold{ "./bins/particles_init/" };
-		std::vector<std::string> names{ "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
-		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particlesorig_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
+		std::vector<std::string> names{ "e_vpara.bin", "e_vperp.bin", "e_z.bin", "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
+		//LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particlesorig_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
 
 		//Save final particle distributions to disk
 		fold = "./bins/particles_final/";
-		names = { "e_vpara", "e_vperp", "e_z", "i_vpara", "i_vperp", "i_z" };
 		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
 		
 		//Delete arrays

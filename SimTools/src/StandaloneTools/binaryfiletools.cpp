@@ -3,7 +3,7 @@
 void saveParticleAttributeToDisk(double* arrayToSave, int length, const char* foldername, const char* name)
 {
 	std::string fn{ foldername };
-	fn = fn + name + ".bin";
+	fn = fn + name;
 	fileIO::writeDblBin(fn.c_str(), arrayToSave, length);
 }
 

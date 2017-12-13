@@ -25,9 +25,17 @@ void Simulation::receiveSatelliteData()
 
 		//convert mu to vperp
 		//for (int jjj = 1; jjj < static_cast<int>(tmp[0][0]) + 1; jjj++)
+		bool flagbaby{ 0 };
 		for (int jjj = 1; jjj < numberOfParticlesPerType_m; jjj++)
+		{
 			tmp[1][jjj] = sqrt(2 * tmp[1][jjj] * BFieldatZ(tmp[2][jjj], simTime_m) / ((satellites_m[iii]->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)));
-
+			if ((!flagbaby) && (isnan(tmp[1][jjj])))
+			{
+				flagbaby = true;
+				std::cout << "IsNaN!!  First NaN index: " << jjj << "\nSatellite: " << satellites_m[iii]->getName() << "\nz, BField: " << tmp[2][jjj] << ", " << BFieldatZ(tmp[2][jjj], simTime_m);
+				std::cout << "\nElecTF: " << satellites_m[iii]->getElecTF() << ", Mass: " << ((satellites_m[iii]->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)) << "\n";
+			}
+		}
 		tmpcont.push_back(tmp);
 	}
 	std::cout << "Don't forget to change receiveSatelliteData to reflect if whole array is used or just non-zero.\n";

@@ -71,6 +71,7 @@ public:
 	void	clearDataReady() { dataReady_m = false; }
 	bool	getDataReady() { return dataReady_m; }
 	bool	getElecTF() { return elecTF_m; }
+	std::string getName() { return name_m; }
 
 	void    vectorTest(std::vector<double*>& in);
 };

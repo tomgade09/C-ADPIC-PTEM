@@ -56,11 +56,13 @@ __host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simti
 
 __host__ __device__ double EFieldatZ(double** LUT, double z, double simtime)
 {
-	return ((true) ? (qspsEatZ(z, simtime)) : (0.0)) + ((false) ? (alfvenWaveEbyLUT(LUT, z, simtime)) : (0.0));
+	return ((false) ? (qspsEatZ(z, simtime)) : (0.0)) + ((false) ? (alfvenWaveEbyLUT(LUT, z, simtime)) : (0.0));
 }
 
 __host__ __device__ double BFieldatZ(double z, double simtime)
 {//for now, a simple dipole field
+	if (z == 0)
+		return 0.0;
 	return B0ATTHETA / pow(z / RADIUS_EARTH, 3); //Bz = B0 at theta * (1/rz(in Re))^3
 }
 
@@ -162,21 +164,28 @@ __global__ void computeKernel(double* v_d, double* mu_d, double* z_d, double* v_
 		//return;
 
 	if (z_d[thdInd] < 0.001) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
-	{
+	{//previous way to index curandStates: (blockIdx.x * 2) + (threadIdx.x % 2) - this leads to each block accessing two curand states - 128 threads call the same state simultaneously and end up with the same values
 		if (thdInd % 2 == 0) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
-			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		else
-			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+		v_orig[thdInd] = v_d[thdInd];
+		mu_orig[thdInd] = mu_d[thdInd];
+		z_orig[thdInd] = z_d[thdInd];
+	}
+	else if (simtime == 0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
+	{
+		mu_d[thdInd] = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * mu_d[thdInd] * mu_d[thdInd] / ((thdInd % 2 == 0) ? (B_AT_MIN_Z) : (B_AT_MAX_Z));
 		v_orig[thdInd] = v_d[thdInd];
 		mu_orig[thdInd] = mu_d[thdInd];
 		z_orig[thdInd] = z_d[thdInd];
 	}
 	else if (z_d[thdInd] < MIN_Z_SIM * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
-		ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
-		//return;
+		//ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+		return;
 	else if (z_d[thdInd] > MAX_Z_SIM * 1.001) //out of sim to the top, particle is lost, new one generated in its place
-		magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
-		//return;
+		//magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+		return;
 	
 	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime]
 	double args[7];
@@ -213,8 +222,8 @@ void Simulation170925::initializeSimulation()
 	gpuOtherMemoryPointers_m.reserve(1);
 	curandStateMRG32k3a* mrgStates_dev;
 	long long seed = time(NULL);
-	cudaMalloc((void **)&mrgStates_dev, 392 * 2 * sizeof(curandStateMRG32k3a));
-	initCurand <<< 49, 16 >>> (mrgStates_dev, seed); //2 per block, 128 threads per random generator
+	cudaMalloc((void **)&mrgStates_dev, NUMRNGSTATES * sizeof(curandStateMRG32k3a)); //sizeof(curandStateMRG32k3a) is 72 bytes
+	initCurand <<< NUMRNGSTATES / 256, 256 >>> (mrgStates_dev, seed);
 	gpuOtherMemoryPointers_m[1] = mrgStates_dev;
 
 	double* elec[3];
@@ -249,6 +258,11 @@ void Simulation170925::copyDataToGPU()
 	{
 		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
 		return;
+	}
+
+	if (particles_m[0][2][0] != 0) //replace this with a flag specified in Simulation - although this works, not completely error proof
+	{
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, cudaMemcpy(gpuDblMemoryPointers_m[iii * numberOfAttributesTracked_m + jjj], particles_m[iii][jjj], DBLARRAY_BYTES, cudaMemcpyHostToDevice);)
 	}
 
 	//copies E field LUT to the GPU
@@ -296,6 +310,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		for (int iii = 0; iii < satellites_m.size(); iii++)
 			satellites_m[iii]->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);
 		
+		cudaDeviceSynchronize();
 		cudaloopind++;
 		incTime();
 

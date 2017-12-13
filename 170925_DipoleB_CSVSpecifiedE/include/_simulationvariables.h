@@ -28,8 +28,8 @@ constexpr double CONSTEFIELD{ 2e3 / (MAX_Z_SIM - MIN_Z_SIM) }; //strength of con
 
 //Distribution Variables - for now I use the same values for ions as electrons
 constexpr double V_DIST_MEAN{ 0.0 }; //mean of the velocity distribution
-constexpr double V_SIGMA_SQ_ELEC{ INITIAL_T_EV * 1.60218e-19 / (MASS_ELECTRON) }; //sigma^2 of the velocity distribution
-constexpr double V_SIGMA_SQ_IONS{ INITIAL_T_EV * 1.60218e-19 / (MASS_PROTON) };   //sigma^2 of the velocity distribution
+constexpr double V_SIGMA_SQ_ELEC{ INITIAL_T_EV * 1.60218e-19 / (4 * MASS_ELECTRON) }; //sigma^2 of the velocity distribution - due to two maxwellians (para, perp), energy is 2 * what it should be, hence / 4
+constexpr double V_SIGMA_SQ_IONS{ INITIAL_T_EV * 1.60218e-19 / (4 * MASS_PROTON) };   //sigma^2 of the velocity distribution
 constexpr double T_RATIO{ INITIAL_T_EV_MAG / INITIAL_T_EV }; //velocity proportional to sqrt(T(in eV))
 //divide sigma_sq by 2 - vpara^2 + vperp^2 = vtot^2, avg vpara^2 = avg vperp^2, avg vtot^2 = 2vpara^2 = 2vperp^2
 
@@ -38,9 +38,11 @@ constexpr double T_RATIO{ INITIAL_T_EV_MAG / INITIAL_T_EV }; //velocity proporti
 //constexpr double DIPOLETHETA{ 20.0 }; // theta (in deg) - to calculate dipole electric field
 constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };//sqrt(1 + 3 * pow(cos(20.0 * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))
 
-//CUDA Variables
+//CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
+// For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime
 constexpr int    BLOCKSIZE{ 256 }; //Number of threads per block - this is most efficient at a multiple of 128 (256 seems to work well), although 250 has been used with slightly less performance
 constexpr int	 NUMBLOCKS{ NUMPARTICLES / BLOCKSIZE }; //Number of blocks
+constexpr int	 NUMRNGSTATES{ 64 * BLOCKSIZE };
 
 constexpr int	 LUTNUMOFCOLS{ 3 };
 constexpr int	 LUTNUMOFENTRS{ 2951 };
