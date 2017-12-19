@@ -40,11 +40,19 @@ print("================  SIMULATION ", dtg, " ================")
 # DONE - Spit run times to Log File, maybe print some on screen
 # DONE - Either verify normalization or just normalize all the values at the end - Fix botched up normalization system
 # MAYBE NOT, ALLOWS TIME BASED CAPTURE, COULD ALSO CAPTURE SIM TIME - Consolidate satellite data into one array, then pass to python
-# - Satellite fix - remove zero values
+# DONE - Satellite fix - remove zero values
 # DONE, NEEDS A GOOD TEST - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
 # - Write Satellite values to disk along with times
+# - Enable qsps, alfven via switch
+# - Enable load particle distribution via switch
+# - Remove frivolous messages
+# - Maybe, change the convertMuToVperp and vice versa to pass in array pointers and execute on whatever is passed in
+# - Replace double* arrays with std::vectors, pass with std::vectors::data (I think)
 
 # - Some sort of error handling system instead of cout messages
+#       - Class of some sort, some common error codes (indexing errors, values out of range, etc)
+#       - Encapsulate everything in try, except blocks?
+#       - 
 # - Change over current error messages to log file
 # - Validation with known values (possibly magnetic bottle) - Calculations checked against excel and are good
 # - Restructure - Combine most of two simulation classes - make the two particle, two source, 1D code the generic one
@@ -62,7 +70,7 @@ print("================  SIMULATION ", dtg, " ================")
 
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
-    results = sim.runSim(10000)
+    results = sim.runSim(250000)
     orig = sim.getOriginalsfrom3D()
     satDat = sim.getSatelliteData()
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (6.371e6 * 4000), sim.simMin_m)
