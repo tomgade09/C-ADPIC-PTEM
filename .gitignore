@@ -49,6 +49,7 @@
 
 # Project-specific folders
 build/
+Debug/
 x64/
 .vs/
 bin/
