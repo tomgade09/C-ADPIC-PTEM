@@ -45,6 +45,7 @@
 *.gitattributes
 *.snip
 *.bin
+*.log
 
 # Project-specific folders
 build/
