@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include "StandaloneTools\StandaloneTools.h"
 
 class Satellite
 {
@@ -14,8 +15,8 @@ protected:
 	int numberOfAttributes_m;
 	int numberOfParticles_m;
 	double** data_m{ nullptr };
-	std::vector<double*> simDataPtrsGPU_m; //put GPU pointers to particle data here
-	std::vector<double*> captureDataGPU_m; //double pointers to GPU arrays containing captured particle attributes - should be numberOfAttributes_m in size
+	std::vector<double**> dblppGPU_m; //double pointers to GPU arrays containing particle data from sim and captured particle data from satellite
+	double* satCaptureGPU_m;
 	std::string name_m;
 
 	virtual void initializeSatelliteOnGPU();
@@ -23,19 +24,14 @@ protected:
 	
 	virtual void allocateData()
 	{
-		data_m = new double*[numberOfAttributes_m + 1];
-		for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
-		{
-			data_m[iii] = new double[numberOfParticles_m];
-			for (int jjj = 0; jjj < numberOfParticles_m; jjj++)
-				data_m[iii][jjj] = 0.0;
-		}
+		double*** tmp{ form3Darray(1, numberOfAttributes_m + 1, numberOfParticles_m) };
+		data_m = tmp[0]; //only need two dimensions - capture pointer to first (only) 2D array within 3D
+		delete[] tmp; //discard 3rd dimension
 	}
 
 	virtual void deleteData()
 	{
-		for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
-			delete[] data_m[iii];
+		delete[] data_m[0];
 		delete[] data_m;
 	}
 
@@ -46,12 +42,9 @@ public:
 	{
 		allocateData();
 
-		simDataPtrsGPU_m.reserve(numberOfAttributes_m);
-		captureDataGPU_m.reserve(numberOfAttributes_m + 1);
+		dblppGPU_m.reserve(2);
+		dblppGPU_m[0] = dataPtrsGPU;
 
-		for (int iii = 0; iii < numberOfAttributes_m; iii++)
-			simDataPtrsGPU_m.push_back(dataPtrsGPU[iii]);
-		
 		initializeSatelliteOnGPU();
 	}
 	
@@ -62,10 +55,21 @@ public:
 	}
 	
 	virtual void iterateDetector(int numberOfBlocks, int blockSize, double simtime); //increment time, track overall sim time, or take an argument??
-	virtual void copyDataToHost(bool removeZeros=true); //some sort of sim time check to verify I have iterated for the current sim time??
+	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 
 	//Access functions
-	double* getDataArrayPointer(int index) { dataReady_m = false; return data_m[index]; }
+	double** getDataArrayPointer(bool releaseArray)
+	{
+		dataReady_m = false;
+		if (releaseArray)
+		{
+			double** ptr{ data_m };
+			allocateData();
+			return ptr;
+		}
+		return data_m;
+	}
+
 	double  getAltitude() { return altitude_m; }
 	bool	getUpward() { return upwardFacing_m; }
 	void	clearDataReady() { dataReady_m = false; }

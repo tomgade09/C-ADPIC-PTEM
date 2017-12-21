@@ -6,57 +6,64 @@
 //protected functions
 void Simulation::receiveSatelliteData()
 {
-	std::cout << "Not removing zeros.\n";
 	std::vector<std::vector<double*>> tmpcont; //vector of satellites[attributes]
 	tmpcont.reserve(satellites_m.size());
 	for (int iii = 0; iii < satellites_m.size(); iii++)
 	{
-		satellites_m[iii]->copyDataToHost(false);
+		satellites_m[iii]->copyDataToHost();
 		std::vector<double*> tmp; //vector of attributes[individual particles (through double*)]
+
+		double** satDat{ satellites_m[iii]->getDataArrayPointer(true) };
 		for (int jjj = 0; jjj < numberOfAttributesTracked_m + 1; jjj++)
-		{
-			double* satDat{ satellites_m[iii]->getDataArrayPointer(jjj) };
-			//double* dbltmp = new double[static_cast<int>(satDat[0]) + 1];
-			//std::copy(&satDat[0], &satDat[static_cast<int>(satDat[0])], &dbltmp[0]);
-			double* dbltmp = new double[numberOfParticlesPerType_m];
-			std::copy(&satDat[0], &satDat[numberOfParticlesPerType_m], &dbltmp[0]);
-			tmp.push_back(dbltmp);
-		}
+			tmp.push_back(satDat[jjj]);
 
 		//convert mu to vperp
-		//for (int jjj = 1; jjj < static_cast<int>(tmp[0][0]) + 1; jjj++)
-		bool flagbaby{ 0 };
+		bool flag{ 0 };
 		for (int jjj = 1; jjj < numberOfParticlesPerType_m; jjj++)
 		{
 			tmp[1][jjj] = sqrt(2 * tmp[1][jjj] * BFieldatZ(tmp[2][jjj], simTime_m) / ((satellites_m[iii]->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)));
-			if ((!flagbaby) && (isnan(tmp[1][jjj])))
+			if ((!flag) && (isnan(tmp[1][jjj])))
 			{
-				flagbaby = true;
+				flag = true;
 				std::cout << "IsNaN!!  First NaN index: " << jjj << "\nSatellite: " << satellites_m[iii]->getName() << "\nz, BField: " << tmp[2][jjj] << ", " << BFieldatZ(tmp[2][jjj], simTime_m);
 				std::cout << "\nElecTF: " << satellites_m[iii]->getElecTF() << ", Mass: " << ((satellites_m[iii]->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)) << "\n";
 			}
 		}
 		tmpcont.push_back(tmp);
 	}
-	std::cout << "Don't forget to change receiveSatelliteData to reflect if whole array is used or just non-zero.\n";
 	satelliteData_m.push_back(tmpcont);
-}
 
-double*** Simulation::form3Darray()
-{
-	double*** array3D;
-	array3D = new double**[numberOfParticleTypes_m];
-	for (int iii = 0; iii < numberOfParticleTypes_m; iii++)
+	//legacy (read: less efficient) way of doing this
+	/*std::vector<std::vector<double*>> tmpcont; //vector of satellites[attributes]
+	tmpcont.reserve(satellites_m.size());
+	for (int iii = 0; iii < satellites_m.size(); iii++)
 	{
-		array3D[iii] = new double*[numberOfAttributesTracked_m];
-		for (int jjj = 0; jjj < numberOfAttributesTracked_m; jjj++)
+		satellites_m[iii]->copyDataToHost();
+		std::vector<double*> tmp; //vector of attributes[individual particles (through double*)]
+		
+		double* satDat{ satellites_m[iii]->getDataArrayPointer() };
+		double* dbltmp = new double[LENGTHSATDATA];
+		
+		std::copy(&satDat[0], &satDat[LENGTHSATDATA - 1], &dbltmp[0]);
+		
+		for (int jjj = 0; jjj < numberOfAttributesTracked_m + 1; jjj++)
+			tmp.push_back(&dbltmp[jjj * numberOfParticlesPerType_m]);
+
+		//convert mu to vperp
+		bool flag{ 0 };
+		for (int jjj = 1; jjj < numberOfParticlesPerType_m; jjj++)
 		{
-			array3D[iii][jjj] = new double[numberOfParticlesPerType_m];
-			for (int kk = 0; kk < numberOfParticlesPerType_m; kk++)//values to initialize array
-				array3D[iii][jjj][kk] = 0.0;
+			tmp[1][jjj] = sqrt(2 * tmp[1][jjj] * BFieldatZ(tmp[2][jjj], simTime_m) / ((satellites_m[iii]->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)));
+			if ((!flag) && (isnan(tmp[1][jjj])))
+			{
+				flag = true;
+				std::cout << "IsNaN!!  First NaN index: " << jjj << "\nSatellite: " << satellites_m[iii]->getName() << "\nz, BField: " << tmp[2][jjj] << ", " << BFieldatZ(tmp[2][jjj], simTime_m);
+				std::cout << "\nElecTF: " << satellites_m[iii]->getElecTF() << ", Mass: " << ((satellites_m[iii]->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)) << "\n";
+			}
 		}
+		tmpcont.push_back(tmp);
 	}
-	return array3D;
+	satelliteData_m.push_back(tmpcont);*/
 }
 
 //public functions
@@ -89,7 +96,6 @@ void Simulation::convertMuToVPerp(int vind, int zind)
 	}
 
 	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfParticlesPerType_m, particles_m[iii][vind][jjj] = sqrt(2 * particles_m[iii][vind][jjj] * BFieldatZ(particles_m[iii][zind][jjj], simTime_m) / mass_m[iii]);)
-	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfParticlesPerType_m, particlesorig_m[iii][vind][jjj] = sqrt(2 * particlesorig_m[iii][vind][jjj] * BFieldatZ(particlesorig_m[iii][zind][jjj], simTime_m) / mass_m[iii]);)
-	
+
 	mu_m = false;
 }

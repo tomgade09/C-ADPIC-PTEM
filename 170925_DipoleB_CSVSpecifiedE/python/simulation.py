@@ -70,7 +70,7 @@ print("================  SIMULATION ", dtg, " ================")
 
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
-    results = sim.runSim(250000)
+    results = sim.runSim(50000)
     orig = sim.getOriginalsfrom3D()
     satDat = sim.getSatelliteData()
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (6.371e6 * 4000), sim.simMin_m)

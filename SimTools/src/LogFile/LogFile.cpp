@@ -5,7 +5,7 @@ void LogFile::writeLogFileEntry(std::string logData, std::string logMessage)
 	std::string writeTxt;
 	writeTxt = "[ " + std::to_string(static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[0]->tp).count())/1000) + " ]"; //time
 
-	int txtlen = writeTxt.length();
+	size_t txtlen = writeTxt.length();
 
 	if ((19 - txtlen) > 0)
 	{

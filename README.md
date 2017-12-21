@@ -1,0 +1,3 @@
+# geoplasmasim
+
+Developer: Tom Gade

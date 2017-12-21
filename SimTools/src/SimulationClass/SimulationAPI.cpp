@@ -79,10 +79,10 @@ DLLEXPORT void prepareResultsAPI(Simulation* simulation) {
 
 //Satellite functions
 DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
-	return simulation->getNumberOfSatellites(); }
+	return static_cast<int>(simulation->getNumberOfSatellites()); }
 
 DLLEXPORT int  getNumberOfSatelliteMsmtsAPI(Simulation* simulation) {
-	return simulation->getNumberOfSatelliteMsmts(); }
+	return static_cast<int>(simulation->getNumberOfSatelliteMsmts()); }
 
 DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int measurementInd, int satelliteInd, int attributeInd) {
 	return simulation->getSatelliteDataPointers(measurementInd, satelliteInd, attributeInd); }

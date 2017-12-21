@@ -2,21 +2,22 @@
 
 namespace fileIO
 {
-	DLLEXPORT double* readDblBin(const char* filename, long numOfDblsToRead)
+	DLLEXPORT void readDblBin(double* arrayToReadInto, const char* filename, long numOfDblsToRead)
 	{
 		std::ifstream binFile{ filename, std::ios::binary };
 		if (!binFile.is_open())
 		{
 			std::cout << "Warning: Could not open file " << filename << " for reading!\n";
-			return nullptr;
+			return;
+		}
+		if (arrayToReadInto == nullptr)
+		{
+			std::cout << "Warning: Passed in a null pointer to fileIO::readDblBin.  You need to allocate the array before passing in.\n";
+			return;
 		}
 
-		double* dataArray = new double[numOfDblsToRead];
-		binFile.read(reinterpret_cast<char*>(dataArray), std::streamsize(numOfDblsToRead * sizeof(double)));
-
+		binFile.read(reinterpret_cast<char*>(arrayToReadInto), std::streamsize(numOfDblsToRead * sizeof(double)));
 		binFile.close();
-
-		return dataArray;
 	}
 
 	DLLEXPORT double** read2DCSV(const char* filename, int numofentries, int numofcols, const char delim)
@@ -72,7 +73,7 @@ namespace fileIO
 		binfile.close();
 	}
 
-	DLLEXPORT void write2DCSV(const char* filename, double** dataarray, int numofentries, int numofcols, const char delim, bool overwrite)//overwrite defaults to true
+	DLLEXPORT void write2DCSV(const char* filename, double** dataarray, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true
 	{
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())
@@ -84,7 +85,7 @@ namespace fileIO
 		for (int iii = 0; iii < numofentries; iii++)
 		{
 			for (int jjj = 0; jjj < numofcols; jjj++)
-				csv << dataarray[jjj][iii] << delim;
+				csv << std::setprecision(precision) << dataarray[jjj][iii] << delim;
 			
 			csv << "\n";
 		}

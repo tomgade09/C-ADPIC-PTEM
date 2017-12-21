@@ -27,7 +27,7 @@ public:
 		std::string logHeader{ "   [ Time  (ms) ]   |       Log Data       | Log Message\n\n" }; //do I want to add the time, other attributes to file???
 		logHeader += "[ 0 ]               | LogFile class        | Log file class created, file created on disk, first entry written, first time point recorded.\n";
 		fileIO::writeTxtFile(logFileName_m.c_str(), logHeader.c_str(), overwrite_m);
-		createTimeStruct("LogFile class constructor"); //index 0 of timeStructs_m
+		createTimeStruct("Start of Simulation!  First time point.  In LogFile class constructor"); //index 0 of timeStructs_m
 	}
 
 	~LogFile()

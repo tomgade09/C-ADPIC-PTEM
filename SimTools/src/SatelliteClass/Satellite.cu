@@ -8,20 +8,37 @@
 #include "include\_simulationvariables.h" //didn't add to this vs project - each project this class is attached to will have its own variables header
 #include "SatelliteClass\Satellite.h"
 
-__global__ void satelliteDetector(double* v_d, double* mu_d, double* z_d, double* detected_v_d, double* detected_mu_d, double* detected_z_d, double* simtime_d, double simtime, double altitude, bool upward)
+__global__ void setupKernel(double* array1D, double** array2D, int cols, int entrs)
+{
+	if (blockIdx.x * blockDim.x + threadIdx.x != 0)
+		return;
+
+	for (int iii = 0; iii < cols; iii++)
+		array2D[iii] = &array1D[iii * entrs];
+}
+
+__global__ void satelliteDetector(double** data_d, double** capture_d, double simtime, double altitude, bool upward)
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
+
+	double* v_d; double* mu_d; double* z_d; double* simtime_d;
+	double* detected_v_d; double* detected_mu_d; double* detected_z_d;
+	v_d = data_d[0]; mu_d = data_d[1]; z_d = data_d[2]; simtime_d = capture_d[3];
+	detected_v_d = capture_d[0]; detected_mu_d = capture_d[1]; detected_z_d = capture_d[2];
+
 	double z_minus_vdt{ z_d[thdInd] - v_d[thdInd] * DT };
 	
-	bool detected{
-		detected_z_d[thdInd] < 1 && ( //no detected particle is in the data array at the thread's index already AND
+	if (simtime == 0) //not sure I fully like this, but it works
+		simtime_d[thdInd] = -1.0;
+
+	if (
+		(detected_z_d[thdInd] < 1) && ( //no detected particle is in the data array at the thread's index already AND
 		//detector is facing down and particle crosses altitude in dt
-		(!upward && z_d[thdInd] > altitude && z_minus_vdt < altitude)
+		((!upward) && (z_d[thdInd] > altitude) && (z_minus_vdt < altitude))
 		|| //OR
 		//detector is facing up and particle crosses altitude in dt
-		(upward && z_d[thdInd] < altitude && z_minus_vdt > altitude) ) };
-	
-	if (detected)
+		((upward) && (z_d[thdInd] < altitude) && (z_minus_vdt > altitude)) ) 
+		)
 	{
 		detected_v_d[thdInd] = v_d[thdInd];
 		detected_mu_d[thdInd] = mu_d[thdInd];
@@ -32,64 +49,28 @@ __global__ void satelliteDetector(double* v_d, double* mu_d, double* z_d, double
 
 void Satellite::initializeSatelliteOnGPU()
 {
-	for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
-	{//[0] = v_para, [1] = v_perp, [2] = z, [3] = simtime
-		cudaMalloc((void **)&captureDataGPU_m[iii], sizeof(double) * numberOfParticles_m); //makes room for data of detected particles
-		cudaMemset(captureDataGPU_m[iii], 0, sizeof(double) * numberOfParticles_m); //sets values to 0
-	}
+	cudaMalloc((void **)&satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m); //makes room for data of detected particles
+	cudaMemset((void **)&satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m); //sets values to 0
+	cudaMalloc((void **)&dblppGPU_m[1], sizeof(double*) * numberOfAttributes_m);
+
+	setupKernel <<< 1, 1 >>> (satCaptureGPU_m, dblppGPU_m[1], numberOfAttributes_m + 1, numberOfParticles_m);
 }
 
 void Satellite::iterateDetector(int numberOfBlocks, int blockSize, double simtime) {
-	satelliteDetector <<< numberOfBlocks, blockSize >>>
-		(simDataPtrsGPU_m[0], simDataPtrsGPU_m[1], simDataPtrsGPU_m[2], //Pointers to simulation data on GPU
-			captureDataGPU_m[0], captureDataGPU_m[1], captureDataGPU_m[2], captureDataGPU_m[3], //Pointers on GPU to arrays that capture data if the criteria is met
-				simtime, altitude_m, upwardFacing_m); } //other variables
+	satelliteDetector <<< numberOfBlocks, blockSize >>>	(dblppGPU_m[0], dblppGPU_m[1], simtime, altitude_m, upwardFacing_m); }
 
-void Satellite::copyDataToHost(bool removeZeros)
+void Satellite::copyDataToHost()
 {// data_m array: [v_para, mu, z, time][particle number]
-	if (removeZeros)
-	{
-		if (data_m != nullptr)
-			deleteData();
-		allocateData();
-	}
-	
-	for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
-	{
-		cudaMemcpy(data_m[iii], captureDataGPU_m[iii], sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost);
-		cudaMemset(captureDataGPU_m[iii], 0, sizeof(double) * numberOfParticles_m); //sets values to 0
-	}
+	cudaMemcpy(data_m[0], satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m, cudaMemcpyDeviceToHost);
+	cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m); //sets values to 0
 
-	if (removeZeros)
-	{
-		//record indicies of particles captured - throw out the rest
-		std::vector<int> ind;
-		ind.reserve(numberOfParticles_m);
-
-		for (int iii = 0; iii < numberOfParticles_m; iii++)
-			if (data_m[2][iii] > 1)
-				ind.push_back(iii);
-
-		//remove zeroes from array
-		double** tmp2D = new double*[numberOfAttributes_m + 1];
-		for (int iii = 0; iii < numberOfAttributes_m + 1; iii++)
-		{
-			tmp2D[iii] = new double[ind.size() + 1];
-			tmp2D[iii][0] = static_cast<double>(ind.size());
-			for (int jjj = 0; jjj < ind.size(); jjj++)
-				tmp2D[iii][jjj + 1] = data_m[iii][ind[jjj]]; //index is jjj + 1 because element 0 is the length of the array
-		}
-
-		deleteData();
-		data_m = tmp2D;
-	}
 	dataReady_m = true;
 }
 
 void Satellite::freeGPUMemory()
 {
-	for (int iii = 0; iii < numberOfAttributes_m; iii++)
-		cudaFree(captureDataGPU_m[iii]);
+	cudaFree(satCaptureGPU_m);
+	cudaFree(dblppGPU_m[1]); //DO NOT FREE dblppGPU_m[0] - this is the 2D data array that the sim uses (not the satellite)
 }
 
 void Satellite::vectorTest(std::vector<double*>& in)

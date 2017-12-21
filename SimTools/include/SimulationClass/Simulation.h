@@ -6,18 +6,8 @@
 #include <chrono>
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
-#include "StandaloneTools\binaryfiletools.h"
+#include "StandaloneTools\StandaloneTools.h"
 #include "include\_simulationvariables.h" //remove this later, replace with passed in variables
-
-//Cannot nest these - outer loops all use iii as a variable name
-#define LOOP_OVER_3D_ARRAY(d1, d2, d3, x) for (int iii = 0; iii < d1; iii++)\
-	{ for (int jjj = 0; jjj < d2; jjj++) \
-		{ for (int kk = 0; kk < d3; kk++) {x} } }
-
-#define LOOP_OVER_2D_ARRAY(d1, d2, x) for (int iii = 0; iii < d1; iii++)\
-	{ for (int jjj = 0; jjj < d2; jjj++) {x} }
-
-#define LOOP_OVER_1D_ARRAY(d1, x) for (int iii = 0; iii < d1; iii++) {x}
 
 class Simulation
 {
@@ -33,28 +23,37 @@ protected:
 	const double simMax_m{ MAX_Z_SIM };
 	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
 
+	//Const variables
+	const int LENGTHSATDATA{ (numberOfAttributesTracked_m + 1) * numberOfParticlesPerType_m };
+
 	//Particle data arrays and log file
-	double*** particles_m{ form3Darray() };
-	double*** particlesorig_m{ form3Darray() }; //initial data
+	double*** particles_m{ form3Darray(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m) };
+	double*** particlesorig_m{ form3Darray(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m) }; //initial data
 	std::vector<double> mass_m;
-	std::vector<void*> otherMemoryPointers_m;
+	//std::vector<void*> otherMemoryPointers_m;
+	
+	//Satellites and data
 	std::vector<Satellite*> satellites_m;
 	std::vector<std::vector<std::vector<double*>>> satelliteData_m; //4D satelliteData[recorded measurement number][satellite number][attribute number][particle number]
-	LogFile logFile_m{ "simulation.log", 20 };
-	
+	double*** preppedSatData_m{ nullptr };
+
 	//GPU Memory Pointers
 	std::vector<double*> gpuDblMemoryPointers_m { nullptr };
-	std::vector<void*> gpuOtherMemoryPointers_m{ nullptr };
+	std::vector<void*>	 gpuOtherMemoryPointers_m{ nullptr };
 
 	//Flags
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
-	bool mu_m{ 1 }; //comes off the gpu as mu, need to change if a dist of vperp is generated
+	bool mu_m{ 0 };
 
+	//LogFile and Error Handling
+	LogFile logFile_m{ "simulation.log", 20 };
+	//ErrorHandler errors{};
+
+	//Protected functions
 	virtual void receiveSatelliteData();
-	virtual double*** form3Darray();
-	
+
 public:
 	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir, bool loadDist=false):
 		numberOfParticleTypes_m{ numberOfParticleTypes }, numberOfParticlesPerType_m{ numberOfParticlesPerType },
@@ -68,15 +67,16 @@ public:
 		mass_m[1] = MASS_PROTON;
 
 		//Allocate room in vectors for GPU Memory Pointers
-		gpuDblMemoryPointers_m.reserve(numberOfParticleTypes_m * numberOfAttributesTracked_m); //holds pointers to GPU memory for particle attributes
-		gpuOtherMemoryPointers_m.reserve(2); //LUT data[0], random number generator[1]
+		gpuDblMemoryPointers_m.reserve(2 * numberOfParticleTypes_m + 1); //holds pointers to GPU memory for particle attributes
+		gpuOtherMemoryPointers_m.reserve(6); //particle data-e,i[0,1], orig particle data-e,i[2,3], LUT data[4], random number generator[5]
 
-		if (false)//need to replace this condition with the passed in variable above
+		std::cout << "Need to change flag in Simulation constructor.\n\n\n";
+		if (true)//need to replace this condition with the passed in variable above
 		{
-			std::cout << "Loading a distribution.  Don't forget to remove later / tie in to specified option above. (in Simulation Constructor) :).\n";
-			std::string fold{ "./../../in/data/" };
+			std::cout << "Loading initial particle data.\n";
+			std::string fold{ "./../../in/epitchbin/" };
 			std::vector<std::string> names{ "e_vpara.bin", "e_vperp.bin", "e_z.bin", "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
-			LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, loadFileIntoParticleAttribute(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfParticleTypes_m + jjj].c_str());)
+			LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, loadFileIntoParticleAttribute(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
 			LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particles_m[iii][jjj][kk] *= RADIUS_EARTH;)
 		}
 	}
@@ -86,21 +86,16 @@ public:
 		//Save init particle distributions to disk
 		std::string fold{ "./bins/particles_init/" };
 		std::vector<std::string> names{ "e_vpara.bin", "e_vperp.bin", "e_z.bin", "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
-		//LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particlesorig_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particlesorig_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
 
 		//Save final particle distributions to disk
 		fold = "./bins/particles_final/";
 		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, saveParticleAttributeToDisk(particles_m[iii][jjj], numberOfParticlesPerType_m, fold.c_str(), names[iii * numberOfAttributesTracked_m + jjj].c_str());)
 		
 		//Delete arrays
-		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, delete[] particles_m[iii][jjj];)
-		LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, delete[] particles_m[iii];)
-		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, delete[] particlesorig_m[iii][jjj];)
-		LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, delete[] particlesorig_m[iii];)
-		delete[] particles_m;
-		delete[] particlesorig_m;
-
-		LOOP_OVER_3D_ARRAY(satelliteData_m.size(), satelliteData_m[0].size(), satelliteData_m[0][0].size(), delete[] satelliteData_m[iii][jjj][kk];)
+		delete3Darray(particles_m, numberOfParticleTypes_m);
+		delete3Darray(particlesorig_m, numberOfParticleTypes_m);
+		LOOP_OVER_2D_ARRAY(satelliteData_m.size(), satelliteData_m[0].size(), delete[] satelliteData_m[iii][jjj][0];)
 		
 		//Delete satellites
 		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m[iii];)
@@ -150,8 +145,8 @@ public:
 
 	//Satellite management functions
 	virtual void	createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name);
-	virtual int		getNumberOfSatellites() { return satellites_m.size(); }
-	virtual int		getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
+	virtual size_t	getNumberOfSatellites() { return satellites_m.size(); }
+	virtual size_t	getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
 	virtual double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m[measurementInd][satelliteInd][attributeInd]; }
 
 };//end class

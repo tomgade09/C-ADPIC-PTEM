@@ -38,6 +38,7 @@
     <ClInclude Include="..\..\SimTools\include\SimulationClass\SimulationAPI.h" />
     <ClInclude Include="..\..\SimTools\include\StandaloneTools\binaryfiletools.h" />
     <ClInclude Include="..\..\SimTools\include\StandaloneTools\numericaltools.h" />
+    <ClInclude Include="..\..\SimTools\include\StandaloneTools\StandaloneTools.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\Simulation170925.h" />
     <ClInclude Include="..\include\_simulationvariables.h" />
