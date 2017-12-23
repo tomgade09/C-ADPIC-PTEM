@@ -4,12 +4,12 @@
 #include "physicalconstants.h"
 
 //Simulation Variables - Measured from center of earth in meters [/second] unless otherwise stated
-constexpr double DT{ 0.0001 }; //in s, at v para of 0.15 (T = 2.5) and dt of 0.1, ~415 iterations is a bounce period
+constexpr double DT{ 0.01 }; //in s, at v para of 0.15 (T = 2.5) and dt of 0.1, ~415 iterations is a bounce period
 constexpr double MIN_Z_SIM{ (2.0e6 + RADIUS_EARTH) }; //Min Z value of the simulation
 constexpr double MAX_Z_SIM{ 4 * RADIUS_EARTH }; //Max Z value of the simulation
 constexpr double MIN_Z_NORM{ MIN_Z_SIM / RADIUS_EARTH };
 constexpr double MAX_Z_NORM{ MAX_Z_SIM / RADIUS_EARTH };
-constexpr int	 NUMPARTICLES{ 1024 * 1024 };//100352 }; //number of particles in simulation - best when it's a multiple of 64 (has to be a multiple of BLOCKSIZE)
+constexpr int	 NUMPARTICLES{ 100352 }; //number of particles in simulation - best when it's a multiple of 64 (has to be a multiple of BLOCKSIZE)
 constexpr double INITIAL_T_EV{ 2.5 }; //"2.5" is from Chiu/Schultz temperature (in eV) for the studied plasma, then convert to velocity - kT = 1/2 m v^2
 constexpr double INITIAL_T_EV_MAG{ 1000 }; //Higher energy magnetospheric particles (Upper limit of Z)
 constexpr double CONSTEFIELD{ 2e3 / (MAX_Z_SIM - MIN_Z_SIM) }; //strength of constant E Field (V / m)

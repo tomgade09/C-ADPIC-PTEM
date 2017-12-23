@@ -32,7 +32,7 @@ print("================  SIMULATION ", dtg, " ================")
 #TO-DO
 # DONE - Top at 4 Re
 # DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution
-# DONE, BUT FACTOR IN DENSITY - Make distribution maxwellian
+# DONE, BUT FACTOR IN DENSITY? - Make distribution maxwellian
 # DONE, CONSIDER OTHER INJECTION SCHEMES- More particles, e, p injected over simulation (bump up to a million?, 10000 particles injected every iteration/so many hundredths of second?)
 # DONE - Stop generating a distribution on CPU at beginning - take out a whole bunch of copy code, maybe even normal distribution code, still 0 the arrays
 # DONE - Fix satellite code
@@ -44,11 +44,12 @@ print("================  SIMULATION ", dtg, " ================")
 # DONE, NEEDS A GOOD TEST - Fix LUT code to be one function - make LUT 2D on proc - like 1D with pointers to start of next dimension
 # - Write Satellite values to disk along with times
 # - Enable qsps, alfven via switch
-# - Enable load particle distribution via switch
+# ALMOST DONE - Enable load particle distribution via switch
 # - Remove frivolous messages
 # - Maybe, change the convertMuToVperp and vice versa to pass in array pointers and execute on whatever is passed in
 # - Replace double* arrays with std::vectors, pass with std::vectors::data (I think)
 
+# - XLSX writing with xlnt library?
 # - Some sort of error handling system instead of cout messages
 #       - Class of some sort, some common error codes (indexing errors, values out of range, etc)
 #       - Encapsulate everything in try, except blocks?
@@ -70,7 +71,7 @@ print("================  SIMULATION ", dtg, " ================")
 
 def simulationRunMain():
     sim = Simulation(rootdir, dllLocation)
-    results = sim.runSim(50000)
+    results = sim.runSim(25000)
     orig = sim.getOriginalsfrom3D()
     satDat = sim.getSatelliteData()
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (6.371e6 * 4000), sim.simMin_m)
@@ -94,7 +95,7 @@ def simulationRunMain():
 
     sim.logWriteEntry('Python', 'Done plotting data.  Terminating simulation.')
 
-    saveEscapedParticlesAndTimeToCSV(orig, satDat)
+    #saveEscapedParticlesAndTimeToCSV(orig, satDat)
 
     sim.terminateSimulation170925()
 

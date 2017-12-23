@@ -9,7 +9,8 @@ class Simulation170925 : public Simulation
 {
 protected:
 	std::string LUTfilename_m;
-	double**  elcFieldLUT_m{ nullptr };
+	double**  elcFieldLUT_m{ nullptr }; //use instead of a 2D vector so I don't have to rewrite EFieldAtZ and have two copies (GPU and host)
+	//std::vector<std::vector<double>> elcFieldLUT_m;
 
 public:
 	Simulation170925(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir, std::string LUTfilename) :

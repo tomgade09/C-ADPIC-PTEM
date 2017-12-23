@@ -97,40 +97,42 @@ def save4DDataToCSV(dataArray, folder):
 def saveEscapedParticlesAndTimeToCSV(origParticles, escapedData):
     with open("./elecoutput.csv", "w", newline='\n') as f:
         csvwriter = csv.writer(f)
-        csvwriter.writerow(["v_para orig", "v_perp orig", "z orig", "", "time escaped bottom", "time escaped top", "para bottom", "para top", "perp bottom", "perp top", "z bottom", "z top"])
+        csvwriter.writerow(["v_para orig", "v_perp orig", "z orig", "", "time escaped top", "para top", "perp top", "z top", "", "time escaped bottom", "para bottom", "perp bottom", "z bottom"])
         for iii in range(100352):
             data = []
             data.append(origParticles[0][0][iii]) #para
             data.append(origParticles[0][1][iii]) #perp
             data.append(origParticles[0][2][iii]) #z
-            data.append(0)
-            data.append(escapedData[0][0][3][iii]) #time escaped bottom
+            data.append("")
             data.append(escapedData[0][2][3][iii]) #time escaped top
-            data.append(escapedData[0][0][0][iii]) #para bottom
             data.append(escapedData[0][2][0][iii]) #para top
-            data.append(escapedData[0][0][1][iii]) #perp bottom
             data.append(escapedData[0][2][1][iii]) #perp top
-            data.append(escapedData[0][0][2][iii]) #z bottom
             data.append(escapedData[0][2][2][iii]) #z top
+            data.append("")
+            data.append(escapedData[0][0][3][iii]) #time escaped bottom
+            data.append(escapedData[0][0][0][iii]) #para bottom
+            data.append(escapedData[0][0][1][iii]) #perp bottom
+            data.append(escapedData[0][0][2][iii]) #z bottom
             csvwriter.writerow(data)
 
     with open("./ionsoutput.csv", "w", newline='\n') as f:
         csvwriter = csv.writer(f)
-        csvwriter.writerow(["v_para orig", "v_perp orig", "z orig", "", "time escaped bottom", "time escaped top", "para bottom", "para top", "perp bottom", "perp top", "z bottom", "z top"])
+        csvwriter.writerow(["v_para orig", "v_perp orig", "z orig", "", "time escaped top", "para top", "perp top", "z top", "", "time escaped bottom", "para bottom", "perp bottom", "z bottom"])
         for iii in range(100352):
             data = []
             data.append(origParticles[1][0][iii]) #para
             data.append(origParticles[1][1][iii]) #perp
             data.append(origParticles[1][2][iii]) #z
-            data.append(0)
-            data.append(escapedData[0][1][3][iii]) #time escaped bottom
+            data.append("")
             data.append(escapedData[0][3][3][iii]) #time escaped top
-            data.append(escapedData[0][1][0][iii]) #para bottom
             data.append(escapedData[0][3][0][iii]) #para top
-            data.append(escapedData[0][1][1][iii]) #perp bottom
             data.append(escapedData[0][3][1][iii]) #perp top
-            data.append(escapedData[0][1][2][iii]) #z bottom
             data.append(escapedData[0][3][2][iii]) #z top
+            data.append("")
+            data.append(escapedData[0][1][3][iii]) #time escaped bottom
+            data.append(escapedData[0][1][0][iii]) #para bottom
+            data.append(escapedData[0][1][1][iii]) #perp bottom
+            data.append(escapedData[0][1][2][iii]) #z bottom
             csvwriter.writerow(data)
 
 

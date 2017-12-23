@@ -10,9 +10,9 @@ int main()
 	double* vperpinbin = new double[1024 * 1024];
 	double* zinbin = new double[1024 * 1024];
 	std::cout << "Reading Doubles\n";
-	fileIO::readDblBin(vparainbin, "./in/e_vpara.bin", 1024 * 1024);
-	fileIO::readDblBin(vperpinbin, "./in/e_vperp.bin", 1024 * 1024);
-	fileIO::readDblBin(zinbin, "./in/e_z.bin", 1024 * 1024);
+	fileIO::readDblBin(vparainbin, "./../../../in/e_vpara.bin", 1024 * 1024);
+	fileIO::readDblBin(vperpinbin, "./../../../in/e_vperp.bin", 1024 * 1024);
+	fileIO::readDblBin(zinbin, "./../../../in/e_z.bin", 1024 * 1024);
 	std::cout << "done\n";
 	attrs[0] = vparainbin;
 	attrs[1] = vperpinbin;

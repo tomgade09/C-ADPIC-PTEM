@@ -14,7 +14,7 @@ protected:
 	bool dataReady_m{ false };
 	int numberOfAttributes_m;
 	int numberOfParticles_m;
-	double** data_m{ nullptr };
+	std::vector<std::vector<double>> data_m;
 	std::vector<double**> dblppGPU_m; //double pointers to GPU arrays containing particle data from sim and captured particle data from satellite
 	double* satCaptureGPU_m;
 	std::string name_m;
@@ -22,18 +22,7 @@ protected:
 	virtual void initializeSatelliteOnGPU();
 	virtual void freeGPUMemory();
 	
-	virtual void allocateData()
-	{
-		double*** tmp{ form3Darray(1, numberOfAttributes_m + 1, numberOfParticles_m) };
-		data_m = tmp[0]; //only need two dimensions - capture pointer to first (only) 2D array within 3D
-		delete[] tmp; //discard 3rd dimension
-	}
-
-	virtual void deleteData()
-	{
-		delete[] data_m[0];
-		delete[] data_m;
-	}
+	virtual void allocateData()	{ data_m = form2DvectorArray(numberOfAttributes_m + 1, numberOfParticles_m); }
 
 public:
 	Satellite(double altitude, bool upwardFacing, int numberOfAttributes, int numberOfParticles, double** dataPtrsGPU, bool elecTF, std::string name = "Satellite"):
@@ -42,31 +31,29 @@ public:
 	{
 		allocateData();
 
-		dblppGPU_m.reserve(2);
-		dblppGPU_m[0] = dataPtrsGPU;
+		dblppGPU_m.resize(2);
+		dblppGPU_m.at(0) = dataPtrsGPU;
 
 		initializeSatelliteOnGPU();
 	}
 	
-	virtual ~Satellite()
-	{
-		deleteData();
-		freeGPUMemory();
-	}
+	virtual ~Satellite() { freeGPUMemory();	}
 	
 	virtual void iterateDetector(int numberOfBlocks, int blockSize, double simtime); //increment time, track overall sim time, or take an argument??
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 
 	//Access functions
-	double** getDataArrayPointer(bool releaseArray)
+	std::vector<std::vector<double>> getDataArray(bool releaseData)
 	{
 		dataReady_m = false;
-		if (releaseArray)
-		{
-			double** ptr{ data_m };
+		
+		if (releaseData)
+		{//not sure if this is going to work right
+			std::vector<std::vector<double>> ret = data_m;
 			allocateData();
-			return ptr;
+			return ret;
 		}
+
 		return data_m;
 	}
 

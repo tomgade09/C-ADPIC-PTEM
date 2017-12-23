@@ -1,17 +1,15 @@
 #include "StandaloneTools\binaryfiletools.h"
 
-void saveParticleAttributeToDisk(double* arrayToSave, int length, const char* foldername, const char* name)
+void saveParticleAttributeToDisk(std::vector<double>& arrayToSave, int length, std::string foldername, std::string name)
 {
-	std::string fn{ foldername };
-	fn = fn + name;
-	fileIO::writeDblBin(fn.c_str(), arrayToSave, length);
+	foldername = foldername + name;
+	fileIO::writeDblBin(foldername, arrayToSave, length);
 }
 
-void loadFileIntoParticleAttribute(double* arrayToLoadInto, int length, const char* foldername, const char* name)
+void loadFileIntoParticleAttribute(std::vector<double>& arrayToLoadInto, int length, std::string foldername, std::string name)
 {
-	std::string fn{ foldername };
-	fn = fn + name;
-	fileIO::readDblBin(arrayToLoadInto, fn.c_str(), length);
+	foldername = foldername + name;
+	fileIO::readDblBin(arrayToLoadInto, foldername, length);
 }
 
 void stringPadder(std::string& in, int totalStrLen, int indEraseFrom)
@@ -56,4 +54,35 @@ void delete3Darray(double*** array3D, int d1)
 		delete[] array3D[iii];
 	}
 	delete[] array3D;
+}
+
+std::vector<std::vector<std::vector<double>>> form3DvectorArray(int numPartTypes, int numAttr, int numParts)
+{
+	std::vector<std::vector<std::vector<double>>> ret;
+
+	std::vector<double> partVec;
+	partVec.resize(numParts);
+
+	for (int type = 0; type < numPartTypes; type++)
+	{
+		std::vector<std::vector<double>> attrVec;
+		for (int attrs = 0; attrs < numAttr; attrs++)
+			attrVec.push_back(partVec);
+		ret.push_back(attrVec);
+	}
+
+	return ret;
+}
+
+std::vector<std::vector<double>> form2DvectorArray(int numAttr, int numParts)
+{
+	std::vector<std::vector<double>> ret;
+
+	std::vector<double> partVec;
+	partVec.resize(numParts);
+
+	for (int attrs = 0; attrs < numAttr; attrs++)
+		ret.push_back(partVec);
+
+	return ret;
 }

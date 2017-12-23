@@ -8,6 +8,8 @@
 #include "include\_simulationvariables.h" //didn't add to this vs project - each project this class is attached to will have its own variables header
 #include "SatelliteClass\Satellite.h"
 
+#define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
+
 __global__ void setupKernel(double* array1D, double** array2D, int cols, int entrs)
 {
 	if (blockIdx.x * blockDim.x + threadIdx.x != 0)
@@ -49,28 +51,29 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 
 void Satellite::initializeSatelliteOnGPU()
 {
-	cudaMalloc((void **)&satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m); //makes room for data of detected particles
-	cudaMemset((void **)&satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m); //sets values to 0
-	cudaMalloc((void **)&dblppGPU_m[1], sizeof(double*) * numberOfAttributes_m);
+	CUDA_CALL(cudaMalloc((void **)&satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m)); //makes room for data of detected particles
+	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m)); //sets values to 0
+	CUDA_CALL(cudaMalloc((void **)&dblppGPU_m[1], sizeof(double*) * numberOfAttributes_m));
 
 	setupKernel <<< 1, 1 >>> (satCaptureGPU_m, dblppGPU_m[1], numberOfAttributes_m + 1, numberOfParticles_m);
 }
 
 void Satellite::iterateDetector(int numberOfBlocks, int blockSize, double simtime) {
-	satelliteDetector <<< numberOfBlocks, blockSize >>>	(dblppGPU_m[0], dblppGPU_m[1], simtime, altitude_m, upwardFacing_m); }
+	satelliteDetector <<< numberOfBlocks, blockSize >>>	(dblppGPU_m.at(0), dblppGPU_m.at(1), simtime, altitude_m, upwardFacing_m); }
 
 void Satellite::copyDataToHost()
 {// data_m array: [v_para, mu, z, time][particle number]
-	cudaMemcpy(data_m[0], satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m, cudaMemcpyDeviceToHost);
-	cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m); //sets values to 0
+	for (int satattr = 0; satattr < numberOfAttributes_m + 1; satattr++)
+		CUDA_CALL(cudaMemcpy(data_m.at(satattr).data(), satCaptureGPU_m + satattr * numberOfParticles_m, sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost));
+	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m)); //sets values to 0
 
 	dataReady_m = true;
 }
 
 void Satellite::freeGPUMemory()
 {
-	cudaFree(satCaptureGPU_m);
-	cudaFree(dblppGPU_m[1]); //DO NOT FREE dblppGPU_m[0] - this is the 2D data array that the sim uses (not the satellite)
+	CUDA_CALL(cudaFree(satCaptureGPU_m));
+	CUDA_CALL(cudaFree(dblppGPU_m.at(1))); //DO NOT FREE dblppGPU_m[0] - this is the 2D data array that the sim uses (not the satellite)
 }
 
 void Satellite::vectorTest(std::vector<double*>& in)
@@ -78,7 +81,7 @@ void Satellite::vectorTest(std::vector<double*>& in)
 	int wrong{ 0 };
 	for (int iii = 0; iii < numberOfAttributes_m; iii++)
 		for (int jjj = 0; jjj < numberOfParticles_m; jjj++)
-			if (in[iii][jjj] != data_m[iii][jjj]) { wrong++; }
+			if (in.at(iii)[jjj] != data_m.at(iii)[jjj]) { wrong++; }
 
 	std::cout << "Wrong: " << wrong << "\n";
 }

@@ -25,6 +25,8 @@ constexpr double EOMEGA{ 20 * PI }; //10 Hz wave
 constexpr double B_AT_MIN_Z{ B0ATTHETA / (MIN_Z_NORM * MIN_Z_NORM * MIN_Z_NORM) };
 constexpr double B_AT_MAX_Z{ B0ATTHETA / (MAX_Z_NORM * MAX_Z_NORM * MAX_Z_NORM) };
 
+#define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
+
 __host__ __device__ double qspsEatZ(double z, double simtime)
 {
 	//if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
@@ -220,35 +222,27 @@ void Simulation170925::initializeSimulation()
 	logFile_m.writeTimeDiff(0, 1);
 	
 	//Allocate memory on GPU for elec/ions variables
-	gpuDblMemoryPointers_m.reserve(2 * numberOfParticleTypes_m * numberOfAttributesTracked_m + 1);
 	for (int iii = 0; iii < 2 * numberOfParticleTypes_m; iii++) //[0] = e data, [1] = i data, [2] = e orig data, [3] = i orig data
 	{
-		cudaMalloc((void **)&gpuDblMemoryPointers_m[iii], numberOfAttributesTracked_m * DBLARRAY_BYTES);
-		cudaMemset((void **)&gpuDblMemoryPointers_m[iii], 0, numberOfAttributesTracked_m * DBLARRAY_BYTES);
-		cudaMalloc((void **)&gpuOtherMemoryPointers_m[iii], numberOfAttributesTracked_m * sizeof(double*)); //2D array
+		CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(iii), numberOfAttributesTracked_m * DBLARRAY_BYTES));
+		CUDA_CALL(cudaMemset(gpuDblMemoryPointers_m.at(iii), 0, numberOfAttributesTracked_m * DBLARRAY_BYTES));
+		CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(iii), numberOfAttributesTracked_m * sizeof(double*))); //2D array
 	}
 
 	//Location of LUTarray
-	cudaMalloc((void **)&gpuDblMemoryPointers_m[4], LUTNUMOFENTRS * LUTNUMOFCOLS * sizeof(double));
-	cudaMalloc((void **)&gpuOtherMemoryPointers_m[4], LUTNUMOFCOLS * sizeof(double**));
+	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(4), LUTNUMOFENTRS * LUTNUMOFCOLS * sizeof(double)));
+	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(4), LUTNUMOFCOLS * sizeof(double**)));
 
 	//Code to prepare random number generator to produce pseudo-random numbers (for normal dist)
-	gpuOtherMemoryPointers_m.reserve(1);
-	curandStateMRG32k3a* mrgStates_dev;
 	long long seed = time(NULL);
-	cudaMalloc((void **)&mrgStates_dev, NUMRNGSTATES * sizeof(curandStateMRG32k3a)); //sizeof(curandStateMRG32k3a) is 72 bytes
-	initCurand <<< NUMRNGSTATES / 256, 256 >>> (mrgStates_dev, seed);
-	gpuOtherMemoryPointers_m[5] = mrgStates_dev;
+	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(5), NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
+	initCurand <<< NUMRNGSTATES / 256, 256 >>> (reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), seed);
 
 	//Create Satellites for observation
-	//createSatellite(2 * RADIUS_EARTH, true, elec, true, "downwardElectrons");
-	//createSatellite(2 * RADIUS_EARTH, true, ions, false, "downwardIons");
-	//createSatellite(2 * RADIUS_EARTH, false, elec, true, "upwardElectrons");
-	//createSatellite(2 * RADIUS_EARTH, false, ions, false, "upwardIons");
-	createSatellite(MIN_Z_SIM * 0.99999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m[0]), true, "bottomElectrons");
-	createSatellite(MIN_Z_SIM * 0.99999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m[1]), false, "bottomIons");
-	createSatellite(MAX_Z_SIM * 1.00001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m[0]), true, "topElectrons");
-	createSatellite(MAX_Z_SIM * 1.00001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m[1]), false, "topIons");
+	createSatellite(MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "bottomElectrons");
+	createSatellite(MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "bottomIons");
+	createSatellite(MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "topElectrons");
+	createSatellite(MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "topIons");
 
 	initialized_m = true;
 	logFile_m.createTimeStruct("End Sim Init"); //index 2
@@ -265,17 +259,17 @@ void Simulation170925::copyDataToGPU()
 		return;
 	}
 
-	if (particles_m[0][2][0] != 0) //replace this with a flag specified in Simulation - although this works, not completely error proof
+	if (particles_m.at(0).at(2).at(0) != 0) //replace this with a flag specified in Simulation - although this works, not completely error proof
 	{
-		LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, cudaMemcpy(gpuDblMemoryPointers_m[iii], particles_m[iii][0], numberOfAttributesTracked_m * DBLARRAY_BYTES, cudaMemcpyHostToDevice);)
+		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(iii) + numberOfParticlesPerType_m * jjj, particles_m.at(iii).at(jjj).data(), DBLARRAY_BYTES, cudaMemcpyHostToDevice));)
 	}
 
 	//copies E field LUT to the GPU
-	cudaMemcpy(gpuDblMemoryPointers_m[4], elcFieldLUT_m[0], LUTNUMOFCOLS * LUTNUMOFENTRS * sizeof(double), cudaMemcpyHostToDevice);
+	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(4), elcFieldLUT_m[0], LUTNUMOFCOLS * LUTNUMOFENTRS * sizeof(double), cudaMemcpyHostToDevice));
 	
 	for (int iii = 0; iii < 2 * numberOfParticleTypes_m; iii++)
-		setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m[iii], reinterpret_cast<double**>(gpuOtherMemoryPointers_m[iii]), numberOfAttributesTracked_m, numberOfParticlesPerType_m);
-	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m[4], reinterpret_cast<double**>(gpuOtherMemoryPointers_m[4]), LUTNUMOFCOLS, LUTNUMOFENTRS);
+		setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(iii), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(iii)), numberOfAttributesTracked_m, numberOfParticlesPerType_m);
+	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(4), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), LUTNUMOFCOLS, LUTNUMOFENTRS);
 
 	copied_m = true;
 	
@@ -299,23 +293,19 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		return;
 	}
 
-	//Make room for 100 measurements
-	satelliteData_m.reserve(100);
-
 	//Loop code
 	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
 	{
-		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m[0]), reinterpret_cast<double**>(gpuOtherMemoryPointers_m[2]),
-			reinterpret_cast<double**>(gpuOtherMemoryPointers_m[4]), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[5]), simTime_m, true);
+		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2)),
+			reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), simTime_m, true);
 		
-		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m[1]), reinterpret_cast<double**>(gpuOtherMemoryPointers_m[3]),
-			reinterpret_cast<double**>(gpuOtherMemoryPointers_m[4]), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m[5]), simTime_m, false);
+		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(3)),
+			reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), simTime_m, false);
 		
 		for (int iii = 0; iii < satellites_m.size(); iii++)
-			satellites_m[iii]->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);
+			satellites_m.at(iii)->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);
 		
-		//cudaDeviceSynchronize();
 		cudaloopind++;
 		incTime();
 
@@ -335,7 +325,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	}
 	receiveSatelliteData();
 	std::cout << "Receive sat data outside main loop.  Remove after.\n";
-	
+
 	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
 	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
 	logFile_m.writeLogFileEntry("iterateSimulation", "End Iteration of Sim:  " + std::to_string(numberOfIterations));
@@ -353,17 +343,15 @@ void Simulation170925::copyDataToHost()
 	
 	mu_m = true;
 
-	LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, cudaMemcpy(particles_m[iii][0], gpuDblMemoryPointers_m[iii], DBLARRAY_BYTES * numberOfAttributesTracked_m, cudaMemcpyDeviceToHost);)
-	LOOP_OVER_1D_ARRAY(numberOfParticleTypes_m, cudaMemcpy(particlesorig_m[iii][0], gpuDblMemoryPointers_m[iii + 2], DBLARRAY_BYTES * numberOfAttributesTracked_m, cudaMemcpyDeviceToHost);)
-	//LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, cudaMemcpy(particles_m[iii][jjj], &gpuDblMemoryPointers_m[iii][jjj * numberOfParticlesPerType_m], DBLARRAY_BYTES, cudaMemcpyDeviceToHost);)
-	//LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, cudaMemcpy(particlesorig_m[iii][jjj], &gpuDblMemoryPointers_m[iii+2][jjj * numberOfParticlesPerType_m], DBLARRAY_BYTES, cudaMemcpyDeviceToHost);)
+	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, CUDA_CALL(cudaMemcpy(particles_m.at(iii).at(jjj).data(), gpuDblMemoryPointers_m.at(iii) + numberOfParticlesPerType_m * jjj, DBLARRAY_BYTES, cudaMemcpyDeviceToHost));)
+	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, CUDA_CALL(cudaMemcpy(partInitData_m.at(iii).at(jjj).data(), gpuDblMemoryPointers_m.at(iii + 2) + numberOfParticlesPerType_m * jjj, DBLARRAY_BYTES, cudaMemcpyDeviceToHost));)
 	logFile_m.writeLogFileEntry("copyDataToHost", "Done with copying.");
 }
 
 void Simulation170925::freeGPUMemory()
 {//used to free the memory on the GPU that's no longer needed
 	logFile_m.writeLogFileEntry("freeGPUMemory", "Start free GPU Memory.");
-	
+
 	if (!initialized_m)
 	{
 		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
@@ -371,12 +359,12 @@ void Simulation170925::freeGPUMemory()
 	}
 
 	//Destroy previously created rn generator
-	cudaFree(gpuOtherMemoryPointers_m[0]);
+	CUDA_CALL(cudaFree(gpuOtherMemoryPointers_m.at(0)));
 
-	for (int iii = 0; iii < numberOfParticleTypes_m * numberOfAttributesTracked_m + 1; iii++)
-		cudaFree(gpuDblMemoryPointers_m[iii]);
+	for (int iii = 0; iii < 2 * numberOfParticleTypes_m + 1; iii++)
+		CUDA_CALL(cudaFree(gpuDblMemoryPointers_m.at(iii)));
 
 	logFile_m.writeLogFileEntry("freeGPUMemory", "End free GPU Memory.");
 
-	cudaProfilerStop(); //For profiling the profiler in the CUDA bundle
+	CUDA_CALL(cudaProfilerStop()); //For profiling the profiler in the CUDA bundle
 }

@@ -54,7 +54,7 @@ int main()
 		//pitches[iii] = (iii < 256) ? (iii * 0.01 / 256) : (
 			//(iii < 768) ? ((iii - 256) * 179.98 / 512 + 0.01) : ((iii - 768) * 0.01 / 256 + 179.98) );
 
-	std::cout << energies[0] << "  " << energies[1] << "  " << energies[2] << "  " << energies[3] << "\n";
+	/*std::cout << energies[0] << "  " << energies[1] << "  " << energies[2] << "  " << energies[3] << "\n";
 	std::cout << pitches[0] << "  " << pitches[1] << "  " << pitches[2] << "  " << pitches[3] << "\n\n\n";
 	std::cout << sqrt(energies[0] * 1.60218e-19 / MASS_ELECTRON) * cos(pitches[0] * PI_C / 180) << "  ";
 	std::cout << sqrt(energies[0] * 1.60218e-19 / MASS_ELECTRON) * cos(pitches[1] * PI_C / 180) << "  ";
@@ -64,7 +64,7 @@ int main()
 	std::cout << sqrt(energies[0] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[1] * PI_C / 180) << "  ";
 	std::cout << sqrt(energies[0] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[2] * PI_C / 180) << "  ";
 	std::cout << sqrt(energies[0] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[3] * PI_C / 180) << "\n\n";
-	std::cout << cos(pitches[1] * PI_C / 180) << "  " << sin(pitches[1] * PI_C / 180) << "  " << pitches[1] * PI_C / 180 << "\n";
+	std::cout << cos(pitches[1] * PI_C / 180) << "  " << sin(pitches[1] * PI_C / 180) << "  " << pitches[1] * PI_C / 180 << "\n";*/
 	
 	//Populate Electron Data
 	std::cout << "Populating and writing Electrons...\n";

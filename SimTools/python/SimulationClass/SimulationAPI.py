@@ -30,10 +30,10 @@ class Simulation:
         self.simDLL_m.getSimMaxAPI.restype = ctypes.c_double
         
         #Pointer one liners
-        self.simDLL_m.getPointerTo3DParticleArrayAPI.argtypes = (ctypes.c_void_p, )
-        self.simDLL_m.getPointerTo3DParticleArrayAPI.restype = ctypes.c_void_p                          #Pointer to 3D C++ array
-        self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.restype = ctypes.c_void_p                  #Pointer to 2D C++ array
+        #self.simDLL_m.getPointerTo3DParticleArrayAPI.argtypes = (ctypes.c_void_p, )
+        #self.simDLL_m.getPointerTo3DParticleArrayAPI.restype = ctypes.c_void_p                          #Pointer to 3D C++ array
+        #self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
+        #self.simDLL_m.getPointerToSingleParticleTypeArrayAPI.restype = ctypes.c_void_p                  #Pointer to 2D C++ array
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
         self.simDLL_m.getPointerToSingleParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
 
@@ -147,11 +147,11 @@ class Simulation:
     def getOriginalsfrom3D(self):
         return self.getResultsfrom3D(True, False)
 
-    def getPointerTo3DParticleArray(self):
-        return self.simDLL_m.getPointerTo3DParticleArrayAPI(self.simulationptr)
+    #def getPointerTo3DParticleArray(self):
+        #return self.simDLL_m.getPointerTo3DParticleArrayAPI(self.simulationptr)
         
-    def getPointerToSingleParticleTypeArray(self, typeIndex):
-        return self.simDLL_m.getPointerToSingleParticleTypeArrayAPI(self.simulationptr, typeIndex)
+    #def getPointerToSingleParticleTypeArray(self, typeIndex):
+        #return self.simDLL_m.getPointerToSingleParticleTypeArrayAPI(self.simulationptr, typeIndex)
 
     #Numerical tools
     def meanOfPartAttr(self, cppDoubleArray, length, absValueBool=False):

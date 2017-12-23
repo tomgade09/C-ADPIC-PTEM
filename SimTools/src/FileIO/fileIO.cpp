@@ -2,25 +2,25 @@
 
 namespace fileIO
 {
-	DLLEXPORT void readDblBin(double* arrayToReadInto, const char* filename, long numOfDblsToRead)
+	DLLEXPORT void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, long numOfDblsToRead)
 	{
 		std::ifstream binFile{ filename, std::ios::binary };
 		if (!binFile.is_open())
 		{
-			std::cout << "Warning: Could not open file " << filename << " for reading!\n";
+			std::cout << "Error: Could not open file " << filename << " for reading!\n";
 			return;
 		}
-		if (arrayToReadInto == nullptr)
+		if (arrayToReadInto.size() < numOfDblsToRead)
 		{
-			std::cout << "Warning: Passed in a null pointer to fileIO::readDblBin.  You need to allocate the array before passing in.\n";
+			std::cout << "Error: std::vector is not big enough to contain the data being read.  Resize the vector to at least as big as numOfDblsToRead.\n";
 			return;
 		}
 
-		binFile.read(reinterpret_cast<char*>(arrayToReadInto), std::streamsize(numOfDblsToRead * sizeof(double)));
+		binFile.read(reinterpret_cast<char*>(arrayToReadInto.data()), std::streamsize(numOfDblsToRead * sizeof(double)));
 		binFile.close();
 	}
 
-	DLLEXPORT double** read2DCSV(const char* filename, int numofentries, int numofcols, const char delim)
+	DLLEXPORT double** read2DCSV(std::string filename, int numofentries, int numofcols, const char delim)
 	{
 		std::ifstream csv{ filename };
 		if (!csv.is_open())
@@ -56,39 +56,52 @@ namespace fileIO
 				convert >> ret[jjj][iii];
 			}
 		}
-
+		csv.close();
+		
 		return ret;
 	}
 
-	DLLEXPORT void writeDblBin(const char* filename, double* dataarray, long numelements, bool overwrite)//overwrite defaults to true
+	DLLEXPORT void writeDblBin(std::string filename, std::vector<double> dataarray, long numelements, bool overwrite)//overwrite defaults to true
 	{
 		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 		if (!binfile.is_open())
 		{
-			std::cout << "Warning: Could not open (or create) file " << filename << " for writing!\n";
+			std::cout << "Error: Could not open (or create) file " << filename << " for writing!\n";
+			return;
+		}
+		if (dataarray.size() < numelements)
+		{
+			std::cout << "Error: Size of passed in vector is less than the number of doubles requested from it.  Returning without saving file.\n";
 			return;
 		}
 
-		binfile.write(reinterpret_cast<const char*>(dataarray), std::streamsize(numelements * sizeof(double)));
+		binfile.write(reinterpret_cast<char*>(dataarray.data()), std::streamsize(numelements * sizeof(double)));
 		binfile.close();
 	}
 
-	DLLEXPORT void write2DCSV(const char* filename, double** dataarray, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true
+	DLLEXPORT void write2DCSV(std::string filename, std::vector<std::vector<double>> dataarray, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
 	{
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())
 		{
-			std::cout << "Could not open file: " << filename << "\n";
+			std::cout << "Error: Could not open file: " << filename << "\n";
+			return;
+		}
+		if (dataarray.size() < numofcols)
+		{
+			std::cout << "Error: Size of passed in vector has less cols than numofcols.  Returning without saving file.\n";
 			return;
 		}
 
 		for (int iii = 0; iii < numofentries; iii++)
 		{
 			for (int jjj = 0; jjj < numofcols; jjj++)
-				csv << std::setprecision(precision) << dataarray[jjj][iii] << delim;
+				csv << std::setprecision(precision) << dataarray.at(jjj).at(iii) << delim;
 			
 			csv << "\n";
 		}
+
+		csv.close();
 		
 		return;
 	}

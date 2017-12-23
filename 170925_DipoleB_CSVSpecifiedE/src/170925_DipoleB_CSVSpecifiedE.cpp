@@ -11,3 +11,22 @@ DLLEXPORT Simulation* createSimulation170925(const char* rootdir) {
 
 DLLEXPORT void terminateSimulation170925(Simulation170925* simulation) {
 	delete simulation; }
+
+#ifndef DLLFILE
+int main()//defined in SimulationAPI.h and fileIO.h
+{
+	Simulation* sim;
+	sim = createSimulation170925("./../../../");
+
+	sim->initializeSimulation();
+	sim->copyDataToGPU();
+	sim->iterateSimulation(25000);
+	sim->copyDataToHost();
+	sim->freeGPUMemory();
+	sim->prepareResults();
+
+	delete sim;
+
+	return 0;
+}
+#endif

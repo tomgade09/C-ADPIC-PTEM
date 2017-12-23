@@ -5,13 +5,6 @@
 #include "SimulationClass\Simulation.h"
 #include "StandaloneTools\numericaltools.h"
 
-#define DLLFILE
-#ifdef DLLFILE
-#define DLLEXPORT extern "C" __declspec(dllexport)
-#else
-#define DLLEXPORT
-#endif
-
 ///One liner functions
 DLLEXPORT double   getSimulationTimeAPI(Simulation* simulation);
 DLLEXPORT double   getDtAPI(Simulation* simulation);
@@ -26,8 +19,8 @@ DLLEXPORT double   getSimMinAPI(Simulation* simulation);
 DLLEXPORT double   getSimMaxAPI(Simulation* simulation);
 
 //Pointer one liners
-DLLEXPORT double*** getPointerTo3DParticleArrayAPI(Simulation* simulation);
-DLLEXPORT double**  getPointerToSingleParticleTypeArrayAPI(Simulation* simulation, int index);
+//DLLEXPORT double*** getPointerTo3DParticleArrayAPI(Simulation* simulation);
+//DLLEXPORT double**  getPointerToSingleParticleTypeArrayAPI(Simulation* simulation, int index);
 DLLEXPORT double*   getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData);
 
 //Numerical tools
