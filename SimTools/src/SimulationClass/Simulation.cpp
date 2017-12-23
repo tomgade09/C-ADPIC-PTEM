@@ -78,7 +78,7 @@ void Simulation::writeSatelliteDataToCSV()
 	{
 
 		std::ofstream csv(filename.at(hhh), std::ios::trunc);
-		csv << "v_para orig,v_perp orig,z orig,,time escaped top,para top,perp top,z top,,time escaped bottom,para bottom,perp bottom,z bottom\n";
+		csv << "v_para orig,v_perp orig,z orig,,time escaped top,para top,perp top,z top,,time escaped bottom,para bottom,perp bottom,z bottom,,Energy (eV), Pitch Angle\n";
 		csv.close();
 
 		std::vector<std::vector<double>> data;
@@ -99,7 +99,7 @@ void Simulation::writeSatelliteDataToCSV()
 		data.push_back(tmp); //Energies in eV
 		tmp.clear();
 
-		LOOP_OVER_1D_ARRAY(numberOfParticlesPerType_m, tmp.push_back(atan2(-particles_m.at(hhh).at(0).at(iii), abs(particles_m.at(hhh).at(1).at(iii))) * 180 / PI);)
+		LOOP_OVER_1D_ARRAY(numberOfParticlesPerType_m, tmp.push_back(atan2(abs(partInitData_m.at(hhh).at(1).at(iii)), -partInitData_m.at(hhh).at(0).at(iii)) * 180 / PI);)
 		data.push_back(tmp);
 
 		fileIO::write2DCSV(filename.at(hhh), data, NUMPARTICLES, 16, ',', false);
