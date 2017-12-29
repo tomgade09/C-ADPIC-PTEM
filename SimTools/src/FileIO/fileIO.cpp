@@ -61,7 +61,7 @@ namespace fileIO
 		return ret;
 	}
 
-	DLLEXPORT void writeDblBin(std::string filename, std::vector<double> dataarray, long numelements, bool overwrite)//overwrite defaults to true
+	DLLEXPORT void writeDblBin(std::vector<double> dataarray, std::string filename, long numelements, bool overwrite)//overwrite defaults to true
 	{
 		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 		if (!binfile.is_open())
@@ -79,7 +79,7 @@ namespace fileIO
 		binfile.close();
 	}
 
-	DLLEXPORT void write2DCSV(std::string filename, std::vector<std::vector<double>> dataarray, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
+	DLLEXPORT void write2DCSV(std::vector<std::vector<double>> dataarray, std::string filename, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
 	{
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())

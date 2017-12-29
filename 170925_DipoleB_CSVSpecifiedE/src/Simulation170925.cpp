@@ -11,7 +11,7 @@ void Simulation170925::loadDataFilesIntoParticleArray()//legacy - not used and m
 	files.at(0) = { "e_vpara.bin", "e_vperp.bin", "e_z.bin" };
 	files.at(1) = { "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
 
-	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, loadFileIntoParticleAttribute(particles_m.at(iii).at(jjj), numberOfParticlesPerType_m, importdir.c_str(), files.at(iii).at(jjj).c_str());)
+	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, fileIO::readDblBin(particles_m.at(iii).at(jjj), importdir + files.at(iii).at(jjj), numberOfParticlesPerType_m);)
 }
 
 void Simulation170925::prepareResults()

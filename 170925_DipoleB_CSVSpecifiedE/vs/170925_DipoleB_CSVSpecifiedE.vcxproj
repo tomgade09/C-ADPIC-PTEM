@@ -54,6 +54,9 @@
     <None Include="..\python\simulation.py" />
     <None Include="..\python\__SimulationAPI170925.py" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\To-Do.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}</ProjectGuid>
     <RootNamespace>_170925_DipoleB_CSVSpecifiedE</RootNamespace>

@@ -16,8 +16,8 @@ constexpr double CONSTEFIELD{ 2e3 / (MAX_Z_SIM - MIN_Z_SIM) }; //strength of con
 
 //Distribution Variables - for now I use the same values for ions as electrons
 constexpr double V_DIST_MEAN{ 0.0 }; //mean of the velocity distribution
-constexpr double V_SIGMA_SQ_ELEC{ INITIAL_T_EV * 1.60218e-19 / (MASS_ELECTRON) }; //sigma^2 of the velocity distribution - due to two maxwellians (para, perp), energy is 2 * what it should be, hence / 2
-constexpr double V_SIGMA_SQ_IONS{ INITIAL_T_EV * 1.60218e-19 / (MASS_PROTON) };   //sigma^2 of the velocity distribution
+constexpr double V_SIGMA_SQ_ELEC{ INITIAL_T_EV * JOULE_PER_EV / (MASS_ELECTRON) }; //sigma^2 of the velocity distribution - due to two maxwellians (para, perp), energy is 2 * what it should be, hence / 2
+constexpr double V_SIGMA_SQ_IONS{ INITIAL_T_EV * JOULE_PER_EV / (MASS_PROTON) };   //sigma^2 of the velocity distribution
 constexpr double T_RATIO{ INITIAL_T_EV_MAG / INITIAL_T_EV }; //velocity proportional to sqrt(T(in eV))
 //divide sigma_sq by 2 - vpara^2 + vperp^2 = vtot^2, avg vpara^2 = avg vperp^2, avg vtot^2 = 2vpara^2 = 2vperp^2
 

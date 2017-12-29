@@ -102,6 +102,6 @@ void Simulation::writeSatelliteDataToCSV()
 		LOOP_OVER_1D_ARRAY(numberOfParticlesPerType_m, tmp.push_back(atan2(abs(partInitData_m.at(hhh).at(1).at(iii)), -partInitData_m.at(hhh).at(0).at(iii)) * 180 / PI);)
 		data.push_back(tmp);
 
-		fileIO::write2DCSV(filename.at(hhh), data, NUMPARTICLES, 16, ',', false);
+		fileIO::write2DCSV(data, filename.at(hhh), NUMPARTICLES, 16, ',', false);
 	}
 }

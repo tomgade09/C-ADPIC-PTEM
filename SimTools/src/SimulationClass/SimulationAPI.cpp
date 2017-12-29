@@ -35,12 +35,6 @@ DLLEXPORT double getSimMaxAPI(Simulation* simulation) {
 	return simulation->getSimMax(); }
 
 //Pointer one liners
-//DLLEXPORT double*** getPointerTo3DParticleArrayAPI(Simulation* simulation) {
-	//return simulation->getPointerTo3DParticleArray(); }
-
-//DLLEXPORT double** getPointerToSingleParticleTypeArrayAPI(Simulation* simulation, int index) {
-	//return simulation->getPointerToSingleParticleTypeArray(index); }
-
 DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
 	return simulation->getPointerToSingleParticleAttributeArray(partIndex, attrIndex, originalData); }
 

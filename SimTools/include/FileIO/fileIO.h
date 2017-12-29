@@ -19,8 +19,8 @@ namespace fileIO
 {
 	DLLEXPORT void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, long numOfDblsToRead);
 	DLLEXPORT double** read2DCSV(std::string filename, int numofentries, int numofcols, const char delim);
-	DLLEXPORT void writeDblBin(std::string filename, std::vector<double> dataarray, long numelements, bool overwrite=true);
-	DLLEXPORT void write2DCSV(std::string filename, std::vector<std::vector<double>> dataarray, int numofentries, int numofcols, const char delim, bool overwrite=true, int precision=20);
+	DLLEXPORT void writeDblBin(std::vector<double> dataarray, std::string filename, long numelements, bool overwrite=true);
+	DLLEXPORT void write2DCSV(std::vector<std::vector<double>> dataarray, std::string filename, int numofentries, int numofcols, const char delim, bool overwrite=true, int precision=20);
 	DLLEXPORT void writeTxtFile(const char* filename, const char* textToWrite, bool overwrite=false);
 }
 

@@ -1,6 +1,6 @@
 #include "StandaloneTools\binaryfiletools.h"
 
-void saveParticleAttributeToDisk(std::vector<double>& arrayToSave, int length, std::string foldername, std::string name)
+/*void saveParticleAttributeToDisk(std::vector<double>& arrayToSave, int length, std::string foldername, std::string name)
 {
 	foldername = foldername + name;
 	fileIO::writeDblBin(foldername, arrayToSave, length);
@@ -10,7 +10,7 @@ void loadFileIntoParticleAttribute(std::vector<double>& arrayToLoadInto, int len
 {
 	foldername = foldername + name;
 	fileIO::readDblBin(arrayToLoadInto, foldername, length);
-}
+}*/
 
 void stringPadder(std::string& in, int totalStrLen, int indEraseFrom)
 {
