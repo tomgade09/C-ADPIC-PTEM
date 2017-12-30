@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\SimTools\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\..\SimTools\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\..\SimTools\src\LogFile\LogFileAPI.cpp" />
+    <ClCompile Include="..\..\SimTools\src\ParticleClass\Particle.cpp" />
     <ClCompile Include="..\..\SimTools\src\SimulationClass\Simulation.cpp" />
     <ClCompile Include="..\..\SimTools\src\SimulationClass\SimulationAPI.cpp" />
     <ClCompile Include="..\..\SimTools\src\StandaloneTools\binaryfiletools.cpp" />
@@ -33,6 +34,7 @@
     <ClInclude Include="..\..\SimTools\include\FileIO\fileIO.h" />
     <ClInclude Include="..\..\SimTools\include\LogFile\LogFile.h" />
     <ClInclude Include="..\..\SimTools\include\LogFile\LogFileAPI.h" />
+    <ClInclude Include="..\..\SimTools\include\ParticleClass\Particle.h" />
     <ClInclude Include="..\..\SimTools\include\SatelliteClass\Satellite.h" />
     <ClInclude Include="..\..\SimTools\include\SimulationClass\Simulation.h" />
     <ClInclude Include="..\..\SimTools\include\SimulationClass\SimulationAPI.h" />
