@@ -4,10 +4,17 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include "ParticleClass\Particle.h"
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
 #include "StandaloneTools\StandaloneTools.h"
 #include "include\_simulationvariables.h" //remove this later, replace with passed in variables
+
+struct SatAndPart
+{
+	Satellite* satellite;
+	Particle*  particle;
+};
 
 class Simulation
 {
@@ -16,23 +23,24 @@ protected:
 	std::string  rootdir_m;
 	double       simTime_m{ 0 };
 	const double dt_m;
-	const int	 numberOfParticleTypes_m;
-	const int	 numberOfParticlesPerType_m;
-	const int	 numberOfAttributesTracked_m;
 	const double simMin_m{ MIN_Z_SIM };
 	const double simMax_m{ MAX_Z_SIM };
+	const double tIon_m{ INITIAL_T_EV };
+	const double tMag_m{ INITIAL_T_EV_MAG };
+	const double vmean_m{ V_DIST_MEAN };
 	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
-
-	//Const variables
-	const int LENGTHSATDATA{ (numberOfAttributesTracked_m + 1) * numberOfParticlesPerType_m };
-
-	//Particle data arrays and log file
-	std::vector<std::vector<std::vector<double>>> particles_m;
-	std::vector<std::vector<std::vector<double>>> partInitData_m;
-	std::vector<double> mass_m;
+	
+	std::vector<Particle*> particleTypes_m;
+	//const int	 numberOfParticleTypes_m;
+	//const int	 numberOfParticlesPerType_m;
+	//const int	 numberOfAttributesTracked_m;
+	//const int LENGTHSATDATA{ (numberOfAttributesTracked_m + 1) * numberOfParticlesPerType_m };
+	//std::vector<std::vector<std::vector<double>>> particles_m;
+	//std::vector<std::vector<std::vector<double>>> partInitData_m;
+	//std::vector<double> mass_m;
 
 	//Satellites and data
-	std::vector<Satellite*> satellites_m;
+	std::vector<Satellite*> satellites_m; //perhaps struct a satellite pointer and a particle pointer together??
 	std::vector<std::vector<std::vector<std::vector<double>>>> satelliteData_m; //4D satelliteData[recorded measurement number][satellite number][attribute number][particle number]
 	std::vector<std::vector<std::vector<double>>> preppedSatData_m;
 
@@ -44,61 +52,48 @@ protected:
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
-	bool mu_m{ 0 };
+	//bool mu_m{ 0 };
 
 	//LogFile and Error Handling
 	LogFile logFile_m{ "simulation.log", 20 };
-	//ErrorHandler errors{}; //future feature to be added
 
 	//Protected functions
 	virtual void receiveSatelliteData();
 
+	virtual void initializeFollowOn() { return; }
+	virtual void copyDataToGPUFollowOn() { return; }
+	virtual void iterateSimulationFollowOnPreLoop() { return; }
+	virtual void iterateSimulationFollowOnInsideLoop() { return; }
+	virtual void iterateSimulationFollowOnPostLoop() { return; }
+	virtual void copyDataToHostFollowOn() { return; }
+	virtual void freeGPUMemoryFollowOn() { return; }
+
 public:
-	Simulation(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir, bool loadDist=false):
-		numberOfParticleTypes_m{ numberOfParticleTypes }, numberOfParticlesPerType_m{ numberOfParticlesPerType },
-		numberOfAttributesTracked_m{ numberOfAttributesTracked }, dt_m{ dt }, rootdir_m{ rootdir }
+	Simulation(double dt, std::string rootdir):
+		dt_m{ dt }, rootdir_m{ rootdir }
 	{
 		logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor");
-
-		particles_m = form3DvectorArray(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m);
-		partInitData_m = form3DvectorArray(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m);
-
-		//Populate mass array
-		mass_m.resize(2);
-		mass_m.at(0) = MASS_ELECTRON;
-		mass_m.at(1) = MASS_PROTON;
-
-		//Allocate room in vectors for GPU Memory Pointers
-		gpuDblMemoryPointers_m.resize(2 * numberOfParticleTypes_m + 2);
-		gpuOtherMemoryPointers_m.resize(2 * numberOfParticleTypes_m + 2);
-		satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
-
-		std::cout << "Need to change flag in Simulation constructor.\n\n\n";
-		if (false)//need to replace this condition with the passed in variable above
-		{
-			std::cout << "Loading initial particle data.\n";
-			std::string fold{ "./../../in/epitchbin/" };
-			std::vector<std::string> names{ "e_vpara.bin", "e_vperp.bin", "e_z.bin", "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
-			LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, fileIO::readDblBin(particles_m.at(iii).at(jjj), fold + names.at(iii * numberOfAttributesTracked_m + jjj), numberOfParticlesPerType_m);)
-			LOOP_OVER_3D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, numberOfParticlesPerType_m, particles_m.at(iii).at(jjj).at(kk) *= RADIUS_EARTH;)
-		}
+		
+		//
+		//
+		//LOAD INIT DISTRIBUTION
+		//
+		//
 	}
 
 	virtual ~Simulation()
 	{
 		writeSatelliteDataToCSV();
-
-		//Save init particle distributions to disk
-		std::string fold{ "./bins/particles_init/" };
-		std::vector<std::string> names{ "e_vpara.bin", "e_vperp.bin", "e_z.bin", "i_vpara.bin", "i_vperp.bin", "i_z.bin" };
-		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, fileIO::writeDblBin(partInitData_m.at(iii).at(jjj), fold + names.at(iii * numberOfAttributesTracked_m + jjj), numberOfParticlesPerType_m);)
-
-		//Save final particle distributions to disk
-		fold = "./bins/particles_final/";
-		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, fileIO::writeDblBin(particles_m.at(iii).at(jjj), fold + names.at(iii * numberOfAttributesTracked_m + jjj), numberOfParticlesPerType_m);)
 		
-		//Delete satellites
+		//
+		//
+		//SAVE INIT DISTRIBUTION, FINAL DISTRIBUTION
+		//
+		//
+
+		//Delete satellites and particles
 		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii);)
+		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii);)
 		
 		logFile_m.writeTimeDiffFromNow(0, "End Simulation Destructor");
 	};
@@ -109,29 +104,28 @@ public:
 	double	  getdt() { return dt_m; };
 	void	  incTime() { simTime_m += dt_m; }
 
-	int		  getNumberOfParticleTypes() { return numberOfParticleTypes_m; }
-	int		  getNumberOfParticlesPerType() { return numberOfParticlesPerType_m; }
-	int		  getNumberOfAttributesTracked() { return numberOfAttributesTracked_m; }
+	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); }
+	size_t    getNumberOfParticlesPerType(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); }
+	size_t    getNumberOfAttributesTracked(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); }
 
 	bool	  areResultsPrepared() { return resultsPrepared_m; }
 	bool	  getNormalized() { return normalizedToRe_m; }
-	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData) { if ((partIndex > numberOfParticleTypes_m) || (attrIndex > numberOfAttributesTracked_m)) { 
-		std::cout << numberOfParticleTypes_m << " particle types and " << numberOfAttributesTracked_m << " attributes per particle.  One index is out of bounds.\n"; return nullptr; } 
-		if (originalData) { return partInitData_m.at(partIndex).at(attrIndex).data(); } else { return particles_m.at(partIndex).at(attrIndex).data(); } }
 
 	LogFile*  getLogFilePointer() { return &logFile_m; }
 
 	virtual double getSimMin() { return simMin_m; }
 	virtual double getSimMax() { return simMax_m; }
-
+	//
+	//
+	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData);
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
 	virtual double calculateBFieldAtZandTime(double z, double time) = 0;
 	virtual double calculateEFieldAtZandTime(double z, double time) = 0;
 	
 	//Array tools
-	virtual void convertVPerpToMu(int vind = 1, int zind = 2);
-	virtual void convertMuToVPerp(int vind = 1, int zind = 2);
+	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& z, double mass);
+	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, double mass);
 
 	//Simulation management functions
 	virtual void initializeSimulation() = 0;
@@ -142,10 +136,13 @@ public:
 	virtual void prepareResults() = 0;
 
 	//Satellite management functions
-	virtual void	createSatellite(double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name);
+	virtual void	createSatellite(Particle* assignedPart, double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name);
 	virtual size_t	getNumberOfSatellites() { return satellites_m.size(); }
 	virtual size_t	getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
 	virtual double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m.at(measurementInd).at(satelliteInd).at(attributeInd).data(); }
 	virtual void	writeSatelliteDataToCSV();
+
+	virtual void    createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor);
+	virtual Particle* getParticlePointer(int ind) { return particleTypes_m.at(ind); }
 };//end class
 #endif //end header guard

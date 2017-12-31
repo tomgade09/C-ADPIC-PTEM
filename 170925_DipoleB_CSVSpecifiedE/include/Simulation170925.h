@@ -12,9 +12,17 @@ protected:
 	double**  elcFieldLUT_m{ nullptr }; //use instead of a 2D vector so I don't have to rewrite EFieldAtZ and have two copies (GPU and host)
 	//std::vector<std::vector<double>> elcFieldLUT_m;
 
+	virtual void initializeFollowOn() { return; }
+	virtual void copyDataToGPUFollowOn() { return; }
+	virtual void iterateSimulationFollowOnPreLoop() { return; }
+	virtual void iterateSimulationFollowOnInsideLoop() { return; }
+	virtual void iterateSimulationFollowOnPostLoop() { return; }
+	virtual void copyDataToHostFollowOn() { return; }
+	virtual void freeGPUMemoryFollowOn() { return; }
+
 public:
-	Simulation170925(int numberOfParticleTypes, int numberOfParticlesPerType, int numberOfAttributesTracked, double dt, std::string rootdir, std::string LUTfilename) :
-		Simulation(numberOfParticleTypes, numberOfParticlesPerType, numberOfAttributesTracked, dt, rootdir), LUTfilename_m{ LUTfilename }
+	Simulation170925(double dt, std::string rootdir, std::string LUTfilename) :
+		Simulation(dt, rootdir), LUTfilename_m{ LUTfilename }
 	{
 		//Populate E Field LUT
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
@@ -39,7 +47,7 @@ public:
 	virtual void   setElecMagLUT(const char* filename, int rows, int cols) { elcFieldLUT_m = fileIO::read2DCSV(filename, rows, cols, ' '); }
 	virtual double calculateBFieldAtZandTime(double z, double time) { return BFieldatZ(z, time); }
 	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(elcFieldLUT_m, z, time); }
-	virtual void   loadDataFilesIntoParticleArray();
+	//virtual void   loadDataFilesIntoParticleArray();
 
 	//Simulation management functions
 	virtual void initializeSimulation();

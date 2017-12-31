@@ -1,9 +1,9 @@
 #include "ParticleClass\Particle.h"
 
-void Particle::loadFileToArray(std::vector<std::string> filenames, long numOfElements)
+void Particle::loadFilesToArray(std::string folder, long numOfElements)
 {
 	//filenames check - make sure that length is equal to velDims + posDims
-	if (filenames.size() > origData_m.size())
+	/*if (filenames.size() > origData_m.size())
 	{
 		std::cout << "Warning: More filenames passed in than attributes of array.  Some files will not be loaded.";
 		std::cout << "  Count of filenames: " << filenames.size() << " origData.size(): " << origData_m.size() << "\n";
@@ -12,16 +12,18 @@ void Particle::loadFileToArray(std::vector<std::string> filenames, long numOfEle
 	{
 		std::cout << "Warning: Less filenames passed in than attributes of array.  Some dimensions will not have loaded data.";
 		std::cout << "  Count of filenames: " << filenames.size() << " origData.size(): " << origData_m.size() << "\n";
-	}
+	}*/
 
 	//read particles into array
 	for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
-		fileIO::readDblBin(origData_m.at(attrs), filenames.at(attrs), particleCount_m);
+		fileIO::readDblBin(origData_m.at(attrs), folder + name_m + "_" + attributeNames_m.at(attrs) + ".bin", particleCount_m);
+
+	initDataLoaded_m = true;
 }
 
-void Particle::saveArrayToFile(std::vector<std::string> filenames, long numOfElements)
+void Particle::saveArrayToFiles(std::string folder, long numOfElements)
 {//Should I ask for "labels" for the attributes: velocity and position, and base the savenames off of those??
-	if (filenames.size() > origData_m.size())
+	/*if (filenames.size() > origData_m.size())
 	{
 		std::cout << "Warning: More filenames passed in than attributes of array.  Some filenames will not be used.";
 		std::cout << "  Count of filenames: " << filenames.size() << " origData.size(): " << origData_m.size() << "\n";
@@ -32,11 +34,11 @@ void Particle::saveArrayToFile(std::vector<std::string> filenames, long numOfEle
 		std::cout << "  Count of filenames: " << filenames.size() << " origData.size(): " << origData_m.size() << "\n";
 		for (int iii = 1; iii < origData_m.size() - filenames.size() + 1; iii++)
 			filenames.push_back(std::to_string(iii) + ".bin");
-	}
+	}*/
 
 	//write double binary files of the data
 	for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
-		fileIO::writeDblBin(origData_m.at(attrs), filenames.at(attrs), particleCount_m);
+		fileIO::writeDblBin(origData_m.at(attrs), folder + name_m + "_" + attributeNames_m.at(attrs) + ".bin", particleCount_m);
 }
 
 void Particle::normalizeParticles(bool orig, bool curr, bool divide)
@@ -49,6 +51,8 @@ void Particle::normalizeParticles(bool orig, bool curr, bool divide)
 		std::cout << "Warning: Norm factor is 1.  Normalizing will have no effect.  Returning.\n";
 		return;
 	}
+
+	std::cout << "Normalizing in Particle::normalizeParticles\n";
 
 	for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
 	{

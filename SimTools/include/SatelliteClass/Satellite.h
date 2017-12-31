@@ -10,10 +10,10 @@ class Satellite
 protected:
 	double altitude_m;
 	bool upwardFacing_m;
-	bool elecTF_m;
+	bool elecTF_m; //remove this
 	bool dataReady_m{ false };
 	int numberOfAttributes_m;
-	int numberOfParticles_m;
+	long numberOfParticles_m;
 	std::vector<std::vector<double>> data_m;
 	std::vector<double**> dblppGPU_m; //double pointers to GPU arrays containing particle data from sim and captured particle data from satellite
 	double* satCaptureGPU_m;
@@ -25,7 +25,7 @@ protected:
 	virtual void allocateData()	{ data_m = form2DvectorArray(numberOfAttributes_m + 1, numberOfParticles_m); }
 
 public:
-	Satellite(double altitude, bool upwardFacing, int numberOfAttributes, int numberOfParticles, double** dataPtrsGPU, bool elecTF, std::string name = "Satellite"):
+	Satellite(double altitude, bool upwardFacing, int numberOfAttributes, long numberOfParticles, double** dataPtrsGPU, bool elecTF, std::string name = "Satellite"):
 		altitude_m{ altitude }, upwardFacing_m{ upwardFacing }, numberOfAttributes_m{ numberOfAttributes },
 		numberOfParticles_m{ numberOfParticles }, elecTF_m{elecTF}, name_m { name }
 	{
@@ -48,7 +48,7 @@ public:
 		dataReady_m = false;
 		
 		if (releaseData)
-		{//not sure if this is going to work right
+		{
 			std::vector<std::vector<double>> ret = data_m;
 			allocateData();
 			return ret;
@@ -57,6 +57,8 @@ public:
 		return data_m;
 	}
 
+	int     getNumOfAttr() { return numberOfAttributes_m; }
+	long    getNumOfParts() { return numberOfParticles_m; }
 	double  getAltitude() { return altitude_m; }
 	bool	getUpward() { return upwardFacing_m; }
 	void	clearDataReady() { dataReady_m = false; }

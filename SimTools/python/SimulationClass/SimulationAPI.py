@@ -16,9 +16,9 @@ class Simulation:
         self.simDLL_m.incrementSimulationTimeByDtAPI.restype = None
         self.simDLL_m.getNumberOfParticleTypesAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getNumberOfParticleTypesAPI.restype = ctypes.c_int
-        self.simDLL_m.getNumberOfParticlesPerTypeAPI.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfParticlesPerTypeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getNumberOfParticlesPerTypeAPI.restype = ctypes.c_int
-        self.simDLL_m.getNumberOfAttributesTrackedAPI.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.getNumberOfAttributesTrackedAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getNumberOfAttributesTrackedAPI.restype = ctypes.c_int
         self.simDLL_m.areResultsPreparedAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.areResultsPreparedAPI.restype = ctypes.c_bool
@@ -90,8 +90,8 @@ class Simulation:
 
         self.logFileObj_m = self.simDLL_m.getLogFilePointerAPI(self.simulationptr)
         self.types_m = self.simDLL_m.getNumberOfParticleTypesAPI(self.simulationptr)
-        self.attr_m = self.simDLL_m.getNumberOfAttributesTrackedAPI(self.simulationptr)
-        self.numPart_m = self.simDLL_m.getNumberOfParticlesPerTypeAPI(self.simulationptr)
+        self.attr_m = self.simDLL_m.getNumberOfAttributesTrackedAPI(self.simulationptr, 0) #Should change later
+        self.numPart_m = self.simDLL_m.getNumberOfParticlesPerTypeAPI(self.simulationptr, 0) #Should change later
         self.dt_m = self.simDLL_m.getDtAPI(self.simulationptr)
         self.normalized_m = self.simDLL_m.getNormalizedAPI(self.simulationptr)
         self.simMin_m = self.simDLL_m.getSimMinAPI(self.simulationptr)

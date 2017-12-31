@@ -16,12 +16,12 @@
 #include "include\Simulation170925.h"
 
 //Array Size Variables
-constexpr int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) };
+//constexpr int DBLARRAY_BYTES { NUMPARTICLES * sizeof(double) };
 //constexpr int BOOLARRAY_BYTES{ NUMPARTICLES * sizeof(bool) };
 //constexpr int INTARRAY_BYTES { NUMPARTICLES * sizeof(int) };
 
 //Commonly used values
-constexpr double EOMEGA{ 20 * PI }; //10 Hz wave
+constexpr double EOMEGA{ 20 * PI }; //10 Hz wave, matches ez.out
 constexpr double B_AT_MIN_Z{ B0ATTHETA / (MIN_Z_NORM * MIN_Z_NORM * MIN_Z_NORM) };
 constexpr double B_AT_MAX_Z{ B0ATTHETA / (MAX_Z_NORM * MAX_Z_NORM * MAX_Z_NORM) };
 
@@ -126,35 +126,35 @@ __global__ void setup2DArray(double* array1D, double** array2D, int cols, int en
 		array2D[iii] = &array1D[iii * entries];
 }
 
-__device__ void ionosphereGenerator(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
+__device__ void ionosphereGenerator(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {//takes pointers to single particle location in attribute arrays (ex: particle 100: ptr to v[100], ptr to mu[100], ptr to z[100], elecTF, ptr to crndStateA[rnd index of thread]
 	double2 v_norm; //v_norm.x = v_para; v_norm.y = v_perp
 	v_norm = curand_normal2_double(rndState); //more efficient to generate two doubles in the one function than run curand_normal_double twice according to CUDA docs
-	v_norm.x = v_norm.x * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) + V_DIST_MEAN; //normal dist -> maxwellian
-	v_norm.y = v_norm.y * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) + V_DIST_MEAN; //normal dist -> maxwellian
+	v_norm.x = v_norm.x * sqrt(simConsts[3] * JOULE_PER_EV / mass) + V_DIST_MEAN; //normal dist -> maxwellian
+	v_norm.y = v_norm.y * sqrt(simConsts[3] * JOULE_PER_EV / mass) + V_DIST_MEAN; //normal dist -> maxwellian
 	
 	*z_part = MIN_Z_SIM;
 	*v_part = abs(v_norm.x);
 	*mu_part = v_norm.y;
 }
 
-__device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
+__device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {
 	double2 v_norm; //two normal dist values returned to v_norm.x and v_norm.y; v_norm.x = v_para; v_norm.y = v_perp
 	v_norm = curand_normal2_double(rndState);
-	v_norm.x = (v_norm.x * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) * sqrt(T_RATIO)) + V_DIST_MEAN; //normal dist -> maxwellian
-	v_norm.y = (v_norm.y * (elecTF ? sqrt(V_SIGMA_SQ_ELEC) : sqrt(V_SIGMA_SQ_IONS)) * sqrt(T_RATIO)) + V_DIST_MEAN; //normal dist -> maxwellian
+	v_norm.x = v_norm.x * sqrt(simConsts[4] * JOULE_PER_EV / mass) + V_DIST_MEAN; //normal dist -> maxwellian
+	v_norm.y = v_norm.y * sqrt(simConsts[4] * JOULE_PER_EV / mass) + V_DIST_MEAN; //normal dist -> maxwellian
 
 	*z_part = MAX_Z_SIM;
 	*v_part = -abs(v_norm.x);
 	*mu_part = v_norm.y;
 }
 
-__device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_part, bool elecTF, curandStateMRG32k3a* rndState)
+__device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {	
 	//some array + 1
 	
-	ionosphereGenerator(v_part, mu_part, z_part, elecTF, rndState);
+	ionosphereGenerator(v_part, mu_part, z_part, simConsts, mass, rndState);
 	//scattering distribution of some sort here - right now, reflects half of the time, generates a new particle the other half
 	/*if (curand_normal_double(rndState) > 0)
 	{
@@ -165,7 +165,7 @@ __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_
 		ionosphereGenerator(v_part, mu_part, z_part, elecTF, rndState);*/
 }
 
-__global__ void computeKernel(double** partData_d, double** origData_d, double** LUT, curandStateMRG32k3a* crndStateA, double simtime, bool elecTF)
+__global__ void computeKernel(double** partData_d, double** origData_d, double** LUT, double* simConsts, curandStateMRG32k3a* crndStateA, double simtime, double mass, double charge, long numParts)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 	//if (thdInd > 20000 * simtime / DT) //add 20000 particles per timestep - need something other than "magic" 20000
@@ -178,27 +178,27 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 
 	if (z_d[thdInd] < 0.001) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{//previous way to index curandStates: (blockIdx.x * 2) + (threadIdx.x % 2) - this leads to each block accessing two curand states - 128 threads call the same state simultaneously and end up with the same values
-		if (thdInd < NUMPARTICLES / 2) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
-			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+		if (thdInd < numParts / 2) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
+			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		else
-			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		
 		v_orig[thdInd] = v_d[thdInd];
 		mu_orig[thdInd] = mu_d[thdInd];
 		z_orig[thdInd] = z_d[thdInd];
-		mu_d[thdInd] = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * mu_d[thdInd] * mu_d[thdInd] / ((thdInd % 2 == 0) ? (B_AT_MIN_Z) : (B_AT_MAX_Z));
+		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / ((thdInd < numParts / 2) ? (B_AT_MIN_Z) : (B_AT_MAX_Z));
 	}
 	else if (simtime == 0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
 	{
 		v_orig[thdInd] = v_d[thdInd];
 		mu_orig[thdInd] = mu_d[thdInd];
 		z_orig[thdInd] = z_d[thdInd];
-		mu_d[thdInd] = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * mu_d[thdInd] * mu_d[thdInd] / ((thdInd % 2 == 0) ? (B_AT_MIN_Z) : (B_AT_MAX_Z));
+		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / ((thdInd < numParts / 2) ? (B_AT_MIN_Z) : (B_AT_MAX_Z));
 	}
-	else if (z_d[thdInd] < MIN_Z_SIM * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
+	else if (z_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
 		//ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
-	else if (z_d[thdInd] > MAX_Z_SIM * 1.001) //out of sim to the top, particle is lost, new one generated in its place
+	else if (z_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top, particle is lost, new one generated in its place
 		//magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
 	
@@ -207,8 +207,8 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 	args[0] = 0.0;
 	args[1] = v_d[thdInd];
 	args[2] = mu_d[thdInd];
-	args[3] = CHARGE_ELEM * ((elecTF) ? (-1.0) : (1.0));
-	args[4] = (elecTF) ? (MASS_ELECTRON) : (MASS_PROTON);
+	args[3] = charge;
+	args[4] = mass;
 	args[5] = z_d[thdInd];
 	args[6] = simtime;
 
@@ -220,29 +220,49 @@ void Simulation170925::initializeSimulation()
 {	
 	logFile_m.createTimeStruct("Start Sim Init"); //index 1
 	logFile_m.writeTimeDiff(0, 1);
-	
-	//Allocate memory on GPU for elec/ions variables
-	for (int iii = 0; iii < 2 * numberOfParticleTypes_m; iii++) //[0] = e data, [1] = i data, [2] = e orig data, [3] = i orig data
+
+	if (particleTypes_m.size() == 0)
 	{
-		CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(iii), numberOfAttributesTracked_m * DBLARRAY_BYTES));
-		CUDA_CALL(cudaMemset(gpuDblMemoryPointers_m.at(iii), 0, numberOfAttributesTracked_m * DBLARRAY_BYTES));
-		CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(iii), numberOfAttributesTracked_m * sizeof(double*))); //2D array
+		std::cout << "Error: No particles in sim.  You need to add particles before calling this function.  Returning.\n";
+		return;
 	}
 
-	//Location of LUTarray
-	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(4), LUTNUMOFENTRS * LUTNUMOFCOLS * sizeof(double)));
-	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(4), LUTNUMOFCOLS * sizeof(double**)));
+	//Allocate room in vectors for GPU Memory Pointers
+	gpuDblMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr data, part 1 curr data... part 0 orig data, part 1 orig data... simconsts, LUT
+	gpuOtherMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr 2D, part 1 curr 2D... part 0 orig 2D, part 1 orig 2D... curand, LUT 2D
+	satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
+
+	//Allocate memory on GPU for elec/ions variables
+	for (int parts = 0; parts < 2 * particleTypes_m.size(); parts++) //[0] = e data, [1] = i data, [2] = e orig data, [3] = i orig data
+	{
+		Particle* partTmp{ particleTypes_m.at(parts % particleTypes_m.size()) };
+		size_t memSize{ partTmp->getNumberOfParticles() * partTmp->getNumberOfAttributes() * sizeof(double) };
+		
+		CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(parts), memSize));
+		CUDA_CALL(cudaMemset(gpuDblMemoryPointers_m.at(parts), 0, memSize));
+		CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(parts), partTmp->getNumberOfAttributes() * sizeof(double*))); //2D array
+	}
+
+	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean
+	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), 6 * sizeof(double)));
 
 	//Code to prepare random number generator to produce pseudo-random numbers (for normal dist)
 	long long seed = time(NULL);
-	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(5), NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
-	initCurand <<< NUMRNGSTATES / 256, 256 >>> (reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), seed);
+	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size()), NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
+	initCurand <<< NUMRNGSTATES / 256, 256 >>> (reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size())), seed);
 
-	//Create Satellites for observation
-	createSatellite(MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "bottomElectrons");
-	createSatellite(MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "bottomIons");
-	createSatellite(MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "topElectrons");
-	createSatellite(MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "topIons");
+	//Location of LUTarray
+	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), LUTNUMOFENTRS * LUTNUMOFCOLS * sizeof(double)));
+	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1), LUTNUMOFCOLS * sizeof(double*))); ///changed from double** to double* - if you have weird errors check here first
+
+	//Create Satellites for observation - export to python
+	createSatellite(particleTypes_m.at(0), MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "bottomElectrons");
+	createSatellite(particleTypes_m.at(1), MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "bottomIons");
+	createSatellite(particleTypes_m.at(0), MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "topElectrons");
+	createSatellite(particleTypes_m.at(1), MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "topIons");
+
+	//For derived classes to add code
+	initializeFollowOn();
 
 	initialized_m = true;
 	logFile_m.createTimeStruct("End Sim Init"); //index 2
@@ -259,17 +279,30 @@ void Simulation170925::copyDataToGPU()
 		return;
 	}
 
-	if (particles_m.at(0).at(2).at(0) != 0) //replace this with a flag specified in Simulation - although this works, not completely error proof
+	//Copies initial data of particles to GPU, if loaded
+	for (int parts = 0; parts < particleTypes_m.size(); parts++)
 	{
-		LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(iii) + numberOfParticlesPerType_m * jjj, particles_m.at(iii).at(jjj).data(), DBLARRAY_BYTES, cudaMemcpyHostToDevice));)
+		if (particleTypes_m.at(parts)->getInitDataLoaded())
+		{
+			Particle* tmpPart{ particleTypes_m.at(parts) };
+			size_t memSize{ tmpPart->getNumberOfParticles() * sizeof(double) };
+			LOOP_OVER_1D_ARRAY(tmpPart->getNumberOfAttributes(), CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(parts) + tmpPart->getNumberOfParticles() * iii, tmpPart->getOrigData().at(iii).data(), memSize, cudaMemcpyHostToDevice));)
+		}//look over one more time later
 	}
 
-	//copies E field LUT to the GPU
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(4), elcFieldLUT_m[0], LUTNUMOFCOLS * LUTNUMOFENTRS * sizeof(double), cudaMemcpyHostToDevice));
+	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean
+	double data[]{ dt_m, simMin_m, simMax_m, tIon_m, tMag_m, vmean_m };
+	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), data, 6 * sizeof(double), cudaMemcpyHostToDevice));
 	
-	for (int iii = 0; iii < 2 * numberOfParticleTypes_m; iii++)
-		setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(iii), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(iii)), numberOfAttributesTracked_m, numberOfParticlesPerType_m);
-	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(4), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), LUTNUMOFCOLS, LUTNUMOFENTRS);
+	for (int iii = 0; iii < 2 * particleTypes_m.size(); iii++)
+		setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(iii), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(iii)), particleTypes_m.at(iii % particleTypes_m.size())->getNumberOfAttributes(), particleTypes_m.at(iii % particleTypes_m.size())->getNumberOfParticles());
+	
+	//copies E field LUT to the GPU
+	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), elcFieldLUT_m[0], LUTNUMOFCOLS * LUTNUMOFENTRS * sizeof(double), cudaMemcpyHostToDevice));
+	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), LUTNUMOFCOLS, LUTNUMOFENTRS);
+
+	//For derived classes to add code
+	copyDataToGPUFollowOn();
 
 	copied_m = true;
 	
@@ -293,18 +326,27 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 		return;
 	}
 
+	//For derived classes to add code
+	iterateSimulationFollowOnPreLoop();
+
 	//Loop code
 	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
 	{
-		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2)),
-			reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), simTime_m, true);
+		//computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2)),
+			//reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size())), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), simTime_m, true);
+		//replace with for loop over particleTypes_m.size()//
+		//computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(3)),
+			//reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), simTime_m, false);
 		
-		computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(3)),
-			reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), simTime_m, false);
-		
-		for (int iii = 0; iii < satellites_m.size(); iii++)
-			satellites_m.at(iii)->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);
+		for (int parts = 0; parts < particleTypes_m.size(); parts++)
+			computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts + particleTypes_m.size())),
+				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()),
+				reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size())), simTime_m,	particleTypes_m.at(parts)->getMass(),
+				particleTypes_m.at(parts)->getCharge(), particleTypes_m.at(parts)->getNumberOfParticles());
+
+		for (int sats = 0; sats < satellites_m.size(); sats++)
+			satellites_m.at(sats)->iterateDetector(NUMBLOCKS, BLOCKSIZE, simTime_m);
 		
 		cudaloopind++;
 		incTime();
@@ -322,9 +364,15 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 
 		//if (cudaloopind % 2500 == 0)//need better conditional
 			//receiveSatelliteData();
+
+		//For derived classes to add code
+		iterateSimulationFollowOnInsideLoop();
 	}
-	receiveSatelliteData();
+	receiveSatelliteData(); //not super generic - fix later
 	std::cout << "Receive sat data outside main loop.  Remove after.\n";
+
+	//For derived classes to add code
+	iterateSimulationFollowOnPostLoop();
 
 	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
 	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
@@ -340,11 +388,19 @@ void Simulation170925::copyDataToHost()
 		std::cout << "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.\n";
 		return;
 	}
-	
-	mu_m = true;
 
-	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, CUDA_CALL(cudaMemcpy(particles_m.at(iii).at(jjj).data(), gpuDblMemoryPointers_m.at(iii) + numberOfParticlesPerType_m * jjj, DBLARRAY_BYTES, cudaMemcpyDeviceToHost));)
-	LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfAttributesTracked_m, CUDA_CALL(cudaMemcpy(partInitData_m.at(iii).at(jjj).data(), gpuDblMemoryPointers_m.at(iii + 2) + numberOfParticlesPerType_m * jjj, DBLARRAY_BYTES, cudaMemcpyDeviceToHost));)
+	for (int parts = 0; parts < particleTypes_m.size(); parts++)
+	{
+		Particle* tmpPart{ particleTypes_m.at(parts) };
+		size_t memSize{ tmpPart->getNumberOfParticles() * sizeof(double) };
+		long numParts{ tmpPart->getNumberOfParticles() };
+		LOOP_OVER_1D_ARRAY(tmpPart->getNumberOfAttributes(), CUDA_CALL(cudaMemcpy(tmpPart->getCurrData().at(iii).data(), gpuDblMemoryPointers_m.at(parts) + numParts * iii, memSize, cudaMemcpyDeviceToHost));)
+		LOOP_OVER_1D_ARRAY(tmpPart->getNumberOfAttributes(), CUDA_CALL(cudaMemcpy(tmpPart->getOrigData().at(iii).data(), gpuDblMemoryPointers_m.at(parts + particleTypes_m.size()) + numParts * iii, memSize, cudaMemcpyDeviceToHost));)
+	}
+
+	//For derived classes to add code
+	copyDataToHostFollowOn();
+
 	logFile_m.writeLogFileEntry("copyDataToHost", "Done with copying.");
 }
 
@@ -358,13 +414,13 @@ void Simulation170925::freeGPUMemory()
 		return;
 	}
 
-	//Destroy previously created rn generator
-	CUDA_CALL(cudaFree(gpuOtherMemoryPointers_m.at(0)));
+	LOOP_OVER_1D_ARRAY(gpuDblMemoryPointers_m.size(), CUDA_CALL(cudaFree(gpuDblMemoryPointers_m.at(iii)));)
+	LOOP_OVER_1D_ARRAY(gpuOtherMemoryPointers_m.size(), CUDA_CALL(cudaFree(gpuOtherMemoryPointers_m.at(iii)));)
 
-	for (int iii = 0; iii < 2 * numberOfParticleTypes_m + 1; iii++)
-		CUDA_CALL(cudaFree(gpuDblMemoryPointers_m.at(iii)));
+	//For derived classes to add code
+	freeGPUMemoryFollowOn();
 
 	logFile_m.writeLogFileEntry("freeGPUMemory", "End free GPU Memory.");
 
-	CUDA_CALL(cudaProfilerStop()); //For profiling the profiler in the CUDA bundle
+	CUDA_CALL(cudaProfilerStop()); //For profiling the profiler in the CUDA bundle}
 }
