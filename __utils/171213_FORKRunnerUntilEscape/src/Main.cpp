@@ -8,7 +8,7 @@ constexpr double RADIUS_EARTH{ 6.371e6 };		 //m
 constexpr double BFIELD_EARTH{ -32.5e-6 };		 //T (at surface - 1 Re, Wiki mentioned a range from 25-65 uT, B0 would be about this, negative so B points into the Earth at North Pole)
 constexpr double PI{ 3.1415927 };
 constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };
-constexpr double DT{ 0.000001 };
+constexpr double DT{ 0.01 };
 constexpr double MIN_Z_SIM{ (2.0e6 + RADIUS_EARTH) };
 constexpr double MAX_Z_SIM{ 4 * RADIUS_EARTH };
 constexpr double MIN_Z_NORM{ MIN_Z_SIM / RADIUS_EARTH };

@@ -46,7 +46,7 @@ def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z,
     plotXY(B_E_z_dim, E_z, 'E Field', 'Z (Re)', 'E (V/m)', 'E(z).png')
     
     os.chdir('./../..')
-    #print(os.getcwd())
+
     if showplot:
         plt.show()
 

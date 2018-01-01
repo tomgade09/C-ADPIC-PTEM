@@ -45,30 +45,22 @@ void Simulation::createSatellite(Particle* assignedPart, double altitude, bool u
 
 void Simulation::convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& z, double mass)
 {
-	/*if (mu_m)
-	{
-		std::cout << "v_perp has already been converted to mu.  Returning with no changes.\n";
-		return;
-	}*/
-
 	LOOP_OVER_1D_ARRAY(vperp.size(), vperp.at(iii) = 0.5 * mass * vperp.at(iii) * vperp.at(iii) / BFieldatZ(z.at(iii), simTime_m);)
+}
 
-	//mu_m = true;
+void Simulation::convertVPerpToMu(Particle* particle)
+{
+	convertVPerpToMu(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("z")), particle->getMass());
 }
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, double mass)
 {
-	/*if (!mu_m)
-	{
-		std::cout << "Quantity is v_perp (not mu).  Returning with no changes.\n";
-		return;
-	}*/
-
-	//LOOP_OVER_2D_ARRAY(numberOfParticleTypes_m, numberOfParticlesPerType_m, particles_m.at(iii).at(vind).at(jjj) = sqrt(2 * particles_m.at(iii).at(vind).at(jjj) * BFieldatZ(particles_m.at(iii).at(zind).at(jjj), simTime_m) / mass_m.at(iii));)
-
 	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldatZ(z.at(iii), simTime_m) / mass);)
+}
 
-	//mu_m = false;
+void Simulation::convertMuToVPerp(Particle* particle)
+{
+	convertMuToVPerp(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("z")), particle->getMass());
 }
 
 void Simulation::writeSatelliteDataToCSV()

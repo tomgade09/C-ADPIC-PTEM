@@ -25,6 +25,7 @@ protected:
 	std::string name_m;
 
 	bool initDataLoaded_m{ false };
+	bool normalized_m{ false };
 
 public:
 	Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor=1) :
@@ -56,9 +57,11 @@ public:
 	int    getNumberOfAttributes() { return numberOfPositionDims_m + numberOfVelocityDims_m; }
 	bool   getInitDataLoaded() { return initDataLoaded_m; }
 
-	virtual void loadFilesToArray(std::string folder, long numOfElements);
-	virtual void saveArrayToFiles(std::string folder, long numOfElements);
-	virtual void normalizeParticles(bool orig, bool curr, bool divide=true);
+	virtual int  getDimensionIndByName(std::string searchName);
+
+	virtual void loadFilesToArray(std::string folder);
+	virtual void saveArrayToFiles(std::string folder, bool orig);
+	virtual void normalizeParticles(bool orig, bool curr, bool inverse=false);
 };
 
 #endif

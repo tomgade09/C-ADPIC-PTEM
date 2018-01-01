@@ -31,13 +31,6 @@ protected:
 	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
 	
 	std::vector<Particle*> particleTypes_m;
-	//const int	 numberOfParticleTypes_m;
-	//const int	 numberOfParticlesPerType_m;
-	//const int	 numberOfAttributesTracked_m;
-	//const int LENGTHSATDATA{ (numberOfAttributesTracked_m + 1) * numberOfParticlesPerType_m };
-	//std::vector<std::vector<std::vector<double>>> particles_m;
-	//std::vector<std::vector<std::vector<double>>> partInitData_m;
-	//std::vector<double> mass_m;
 
 	//Satellites and data
 	std::vector<Satellite*> satellites_m; //perhaps struct a satellite pointer and a particle pointer together??
@@ -52,7 +45,6 @@ protected:
 	bool initialized_m{ 0 };
 	bool copied_m{ 0 };
 	bool resultsPrepared_m{ 0 };
-	//bool mu_m{ 0 };
 
 	//LogFile and Error Handling
 	LogFile logFile_m{ "simulation.log", 20 };
@@ -73,21 +65,15 @@ public:
 		dt_m{ dt }, rootdir_m{ rootdir }
 	{
 		logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor");
-		
-		//
-		//
-		//LOAD INIT DISTRIBUTION
-		//
-		//
 	}
 
 	virtual ~Simulation()
 	{
+		//
+		//
+		//Call from python
 		writeSatelliteDataToCSV();
-		
-		//
-		//
-		//SAVE INIT DISTRIBUTION, FINAL DISTRIBUTION
+		//Call from python
 		//
 		//
 
@@ -115,9 +101,9 @@ public:
 
 	virtual double getSimMin() { return simMin_m; }
 	virtual double getSimMax() { return simMax_m; }
-	//
-	//
+
 	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData);
+	
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
 	virtual double calculateBFieldAtZandTime(double z, double time) = 0;
@@ -125,7 +111,9 @@ public:
 	
 	//Array tools
 	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& z, double mass);
+	virtual void convertVPerpToMu(Particle* particle);
 	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, double mass);
+	virtual void convertMuToVPerp(Particle* particle);
 
 	//Simulation management functions
 	virtual void initializeSimulation() = 0;
