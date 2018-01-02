@@ -32,13 +32,13 @@ constexpr int    BLOCKSIZE{ 256 }; //Number of threads per block - this is most 
 constexpr int	 NUMBLOCKS{ NUMPARTICLES / BLOCKSIZE }; //Number of blocks
 constexpr int	 NUMRNGSTATES{ 64 * BLOCKSIZE };
 
-constexpr int	 LUTNUMOFCOLS{ 3 };
-constexpr int	 LUTNUMOFENTRS{ 2951 };
+//constexpr int	 LUTNUMOFCOLS{ 3 };
+//constexpr int	 LUTNUMOFENTRS{ 2951 };
 
 constexpr int    LOOPS_BTW_PROGRESS_COUT{ 500 };
 
 //Functions I can't bring myself to write a header for
 double BFieldatZ(double z, double simtime);
-double EFieldatZ(double** LUT, double z, double simtime);
+double EFieldatZ(double** LUT, double z, double simtime, double omegaE, bool qsps, bool alfven);
 
 #endif

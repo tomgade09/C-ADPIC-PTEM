@@ -1,12 +1,16 @@
 #include "include\_simulationvariables.h"
 #include "SimulationClass\SimulationAPI.h"
-#include "include\Simulation170925.h"
+#include "include\AlfvenLUT.h"
 
-DLLEXPORT double* getPointerToElectricFieldDataAPI(Simulation170925* simulation, int index) {
+DLLEXPORT double* getPointerToElectricFieldDataAPI(AlfvenLUT* simulation, int index) {
 	return simulation->getPointerToElectricFieldData(index); }
 
+//
+//
+//
+//need to restructure to create/delete depending on specified class/subclass type
 DLLEXPORT Simulation* createSimulation170925(const char* rootdir) {
-	Simulation* ret = new Simulation170925(DT, rootdir, "ez.out");
+	Simulation* ret = new AlfvenLUT(DT, rootdir, "ez.out");
 	ret->createParticleType("elec", { "vpara", "vperp", "z" }, MASS_ELECTRON, -1.0 * CHARGE_ELEM, 100352, 1, 2, RADIUS_EARTH);
 	ret->createParticleType("ions", { "vpara", "vperp", "z" }, MASS_PROTON, 1.0 * CHARGE_ELEM, 100352, 1, 2, RADIUS_EARTH);
 	
@@ -14,13 +18,21 @@ DLLEXPORT Simulation* createSimulation170925(const char* rootdir) {
 	Particle* ions{ ret->getParticlePointer(1) };
 	elec->loadFilesToArray("./../../in/data/");
 	ions->loadFilesToArray("./../../in/data/");
-	//ret->convertVPerpToMu(elec);
-	//ret->convertVPerpToMu(ions);
 
 	return ret; }
+//
+//
+//
 
-DLLEXPORT void terminateSimulation170925(Simulation170925* simulation) {
+//
+//
+//
+//need to restructure to create/delete depending on specified class/subclass type
+DLLEXPORT void terminateSimulation170925(AlfvenLUT* simulation) { //change
 	delete simulation; }
+//
+//
+//
 
 #ifndef DLLFILE
 int main()//defined in fileIO.h

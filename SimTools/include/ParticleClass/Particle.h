@@ -43,7 +43,7 @@ public:
 		if (attributeNames.size() < numberOfVelocityDims_m + numberOfPositionDims_m)
 		{
 			std::cout << "Warning: Particle: not enough attribute names specified.  Generic names being generated.  If you try to load bin files into the data array, it probably won't work.\n";
-			for (int diff = 0; diff = numberOfVelocityDims_m + numberOfPositionDims_m - attributeNames.size(); diff++)
+			for (int diff = 0; diff = numberOfVelocityDims_m + numberOfPositionDims_m - static_cast<int>(attributeNames.size()); diff++)
 				attributeNames_m.push_back(std::to_string(diff) + ".bin");
 		}
 	}

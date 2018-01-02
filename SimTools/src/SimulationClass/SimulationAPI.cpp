@@ -11,13 +11,13 @@ DLLEXPORT void incrementSimulationTimeByDtAPI(Simulation* simulation) {
 	simulation->incTime(); }
 
 DLLEXPORT int getNumberOfParticleTypesAPI(Simulation* simulation) {
-	return simulation->getNumberOfParticleTypes(); }
+	return static_cast<int>(simulation->getNumberOfParticleTypes()); }
 
-DLLEXPORT int getNumberOfParticlesPerTypeAPI(Simulation* simulation, int partInd) {
-	return simulation->getNumberOfParticlesPerType(partInd); }
+DLLEXPORT int getNumberOfParticlesAPI(Simulation* simulation, int partInd) {
+	return static_cast<int>(simulation->getNumberOfParticles(partInd)); }
 
-DLLEXPORT int getNumberOfAttributesTrackedAPI(Simulation* simulation, int partInd) {
-	return simulation->getNumberOfAttributesTracked(partInd); }
+DLLEXPORT int getNumberOfAttributesAPI(Simulation* simulation, int partInd) {
+	return static_cast<int>(simulation->getNumberOfAttributes(partInd)); }
 
 DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation) {
 	return simulation->areResultsPrepared(); }

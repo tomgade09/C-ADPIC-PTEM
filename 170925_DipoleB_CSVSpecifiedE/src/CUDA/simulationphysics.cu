@@ -13,14 +13,17 @@
 
 //Project specific includes
 #include "include\_simulationvariables.h"
-#include "include\Simulation170925.h"
-
-//Commonly used values
-constexpr double EOMEGA{ 20 * PI }; //10 Hz wave, matches ez.out
-constexpr double B_AT_MIN_Z{ B0ATTHETA / (MIN_Z_NORM * MIN_Z_NORM * MIN_Z_NORM) };
-constexpr double B_AT_MAX_Z{ B0ATTHETA / (MAX_Z_NORM * MAX_Z_NORM * MAX_Z_NORM) };
+#include "include\AlfvenLUT.h"
 
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
+
+//Commonly used values
+constexpr double B_AT_MIN_Z{ B0ATTHETA / (MIN_Z_NORM * MIN_Z_NORM * MIN_Z_NORM) };
+constexpr double B_AT_MAX_Z{ B0ATTHETA / (MAX_Z_NORM * MAX_Z_NORM * MAX_Z_NORM) };
+extern const int SIMCHARSIZE{ 7 * sizeof(double) };
+
+__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime, double omegaE);
+__host__ __device__ double alfvenWaveEbyCompute(double z, double simtime);
 
 __host__ __device__ double qspsEatZ(double z, double simtime)
 {
@@ -29,31 +32,17 @@ __host__ __device__ double qspsEatZ(double z, double simtime)
 	return CONSTEFIELD;
 }
 
-//merge these two below...
-__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime)
-//__host__ double EFieldatZ(double** LUT, double z, double simtime)
-{//E Field in the direction of B (radially outward)
-	//E-par = (column 2)*cos(omega*t) + (column 3)*sin(omega*t), omega = 20 PI
-	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re
-		z = z / RADIUS_EARTH; //convert to Re
-	
-	if (z < LUT[0][0] || z > LUT[0][2950])
-		return 0.0;
-	double offset{ LUT[0][0] };
-	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[0][1] - LUT[0][0]))) }; //only works for constant bin size - if the binsize changes throughout LUT, need to iterate which will take longer
-	
-	//y = mx + b
-	double linearInterpReal{ ((LUT[1][stepsFromZeroInd + 1] - LUT[1][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
-		(z - LUT[0][stepsFromZeroInd]) + LUT[1][stepsFromZeroInd] };
-	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
-		(z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
-	
-	return (linearInterpReal * cos(EOMEGA * simtime) + linearInterpImag * sin(EOMEGA * simtime)) / 1000; //LUT E is in mV / m
-}
-
-__host__ __device__ double EFieldatZ(double** LUT, double z, double simtime)
+__host__ __device__ double EFieldatZ(double** LUT, double z, double simtime, double omegaE, bool qsps, bool alfven)
 {
-	return ((false) ? (qspsEatZ(z, simtime)) : (0.0)) + ((false) ? (alfvenWaveEbyLUT(LUT, z, simtime)) : (0.0));
+	bool alfLUT { false };
+	bool alfCalc{ false };
+	
+	if (LUT == nullptr && alfven)
+		alfCalc = true;
+	else if (LUT != nullptr && alfven)
+		alfLUT = true;
+
+	return (qsps ? (qspsEatZ(z, simtime)) : (0.0)) + (alfLUT ? (alfvenWaveEbyLUT(LUT, z, simtime, omegaE)) : (0.0)) + (alfCalc ? (alfvenWaveEbyCompute(z, simtime)) : (0.0));
 }
 
 __host__ __device__ double BFieldatZ(double z, double simtime)
@@ -69,13 +58,13 @@ __host__ __device__ double BFieldatZ(double z, double simtime)
 	return B0ATTHETA / pow(z / norm, 3); //Bz = B0 at theta * (1/rz(in Re))^3
 }
 
-__device__ double accel1dCUDA(double* args, int len, double** LUT) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [t_RK, vz, mu, q, m, pz_0, simtime]
+__device__ double accel1dCUDA(double* args, int len, double** LUT, bool qsps, bool alfven) //made to pass into 1D Fourth Order Runge Kutta code
+{//args array: [t_RK, vz, mu, q, m, pz_0, simtime, omega E]
 	double F_lor, F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0]); //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0], args[7], qsps, alfven); //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
 	F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / RADIUS_EARTH, 4))) / RADIUS_EARTH; //mu in [kg.m^2 / s^2.T] = [N.m / T]
@@ -83,25 +72,25 @@ __device__ double accel1dCUDA(double* args, int len, double** LUT) //made to pas
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
 
-__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double** LUT)
+__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double** LUT, bool qsps, bool alfven)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
 	double k1, k2, k3, k4, y_0;
 	y_0 = funcArg[1];
 
-	k1 = accel1dCUDA(funcArg, arrayLen, LUT); //k1 = f(t_n, y_n), units of dy / dt
+	k1 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k1 = f(t_n, y_n), units of dy / dt
 	
 	funcArg[0] = DT / 2;
 	funcArg[1] = y_0 + k1 * funcArg[0];
-	k2 = accel1dCUDA(funcArg, arrayLen, LUT); //k2 = f(t_n + h/2, y_n + h/2 k1)
+	k2 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k2 = f(t_n + h/2, y_n + h/2 k1)
 
 	funcArg[1] = y_0 + k2 * funcArg[0];
-	k3 = accel1dCUDA(funcArg, arrayLen, LUT); //k3 = f(t_n + h/2, y_n + h/2 k2)
+	k3 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k3 = f(t_n + h/2, y_n + h/2 k2)
 
 	funcArg[0] = DT;
 	funcArg[1] = y_0 + k3 * funcArg[0];
-	k4 = accel1dCUDA(funcArg, arrayLen, LUT); //k4 = f(t_n + h, y_n + h k3)
+	k4 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k4 = f(t_n + h, y_n + h k3)
 
 	return (k1 + 2 * k2 + 2 * k3 + k4) * DT / 6; //returns delta y, not dy / dt, not total y
 }
@@ -146,25 +135,18 @@ __device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* 
 }
 
 __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
-{	
-	//some array + 1
-	
+{
+	//
+	//
+	//
+	//Physics needs to be improved
 	ionosphereGenerator(v_part, mu_part, z_part, simConsts, mass, rndState);
-	//scattering distribution of some sort here - right now, reflects half of the time, generates a new particle the other half
-	/*if (curand_normal_double(rndState) > 0)
-	{
-		*v_part *= -1; //sufficient to reflect?
-		*z_part = MIN_Z_SIM; //necessary?
-	}
-	else
-		ionosphereGenerator(v_part, mu_part, z_part, elecTF, rndState);*/
 }
 
-__global__ void computeKernel(double** partData_d, double** origData_d, double** LUT, double* simConsts, curandStateMRG32k3a* crndStateA, double simtime, double mass, double charge, long numParts)
+__global__ void computeKernel(double** partData_d, double** origData_d, double** LUT, double* simConsts, curandStateMRG32k3a* crndStateA,
+	double simtime, double mass, double charge, long numParts, bool qsps, bool alfven)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
-	//if (thdInd > 20000 * simtime / DT) //add 20000 particles per timestep - need something other than "magic" 20000
-		//return;
 
 	double* v_d; double* mu_d; double* z_d;
 	double* v_orig; double* mu_orig; double* z_orig;
@@ -197,8 +179,8 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 		//magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
 	
-	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime]
-	double args[7];
+	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, omega E]
+	double args[8];
 	args[0] = 0.0;
 	args[1] = v_d[thdInd];
 	args[2] = mu_d[thdInd];
@@ -206,12 +188,13 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 	args[4] = mass;
 	args[5] = z_d[thdInd];
 	args[6] = simtime;
+	args[7] = simConsts[6]; //omega E
 
-	v_d[thdInd] += foRungeKuttaCUDA(args, 7, LUT);
+	v_d[thdInd] += foRungeKuttaCUDA(args, 7, LUT, qsps, alfven);
 	z_d[thdInd] += v_d[thdInd] * DT;
 }
 
-void Simulation170925::initializeSimulation()
+void Simulation::initializeSimulation()
 {	
 	logFile_m.createTimeStruct("Start Sim Init"); //index 1
 	logFile_m.writeTimeDiff(0, 1);
@@ -238,23 +221,19 @@ void Simulation170925::initializeSimulation()
 		CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(ind), partTmp->getNumberOfAttributes() * sizeof(double*))); //2D array
 	}
 
-	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean
-	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), 6 * sizeof(double)));
+	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven
+	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), SIMCHARSIZE));
 
 	//Array of random number generator states
 	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size()), NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
 
-	//Location of LUTarray
-	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), LUTNUMOFENTRS * LUTNUMOFCOLS * sizeof(double)));
-	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1), LUTNUMOFCOLS * sizeof(double*))); ///changed from double** to double* - if you have weird errors check here first
-
 	//
 	//
 	//Create Satellites for observation - export to python
-	createSatellite(particleTypes_m.at(0), MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "bottomElectrons");
-	createSatellite(particleTypes_m.at(1), MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "bottomIons");
-	createSatellite(particleTypes_m.at(0), MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "topElectrons");
-	createSatellite(particleTypes_m.at(1), MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "topIons");
+	//createSatellite(particleTypes_m.at(0), MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "bottomElectrons");
+	//createSatellite(particleTypes_m.at(1), MIN_Z_SIM * 0.999, true, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "bottomIons");
+	//createSatellite(particleTypes_m.at(0), MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), true, "topElectrons");
+	//createSatellite(particleTypes_m.at(1), MAX_Z_SIM * 1.001, false, reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), false, "topIons");
 	//Export functionality to Python
 	//
 	//
@@ -267,7 +246,7 @@ void Simulation170925::initializeSimulation()
 	logFile_m.writeTimeDiff(1, 2);
 }
 
-void Simulation170925::copyDataToGPU()
+void Simulation::copyDataToGPU()
 {//copies particle distribution and associated data to GPU in preparation of iterative calculations over the data
 	logFile_m.writeLogFileEntry("copyDataToGPU", "Start copy to GPU");
 	
@@ -288,9 +267,9 @@ void Simulation170925::copyDataToGPU()
 		}
 	}
 
-	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean
-	double data[]{ dt_m, simMin_m, simMax_m, tIon_m, tMag_m, vmean_m };
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), data, 6 * sizeof(double), cudaMemcpyHostToDevice));
+	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven
+	double data[]{ dt_m, simMin_m, simMax_m, tIon_m, tMag_m, vmean_m, 0.0 };
+	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), data, SIMCHARSIZE, cudaMemcpyHostToDevice));
 	
 	for (int iii = 0; iii < 2 * particleTypes_m.size(); iii++)
 		setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(iii), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(iii)), particleTypes_m.at(iii % particleTypes_m.size())->getNumberOfAttributes(), particleTypes_m.at(iii % particleTypes_m.size())->getNumberOfParticles());
@@ -298,11 +277,7 @@ void Simulation170925::copyDataToGPU()
 	//Prepare curand states for random number generation
 	long long seed = time(NULL);
 	initCurand <<< NUMRNGSTATES / 256, 256 >>> (reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size())), seed);
-
-	//copies E field LUT to the GPU
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), elcFieldLUT_m[0], LUTNUMOFCOLS * LUTNUMOFENTRS * sizeof(double), cudaMemcpyHostToDevice));
-	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), LUTNUMOFCOLS, LUTNUMOFENTRS);
-
+	
 	//For derived classes to add code
 	copyDataToGPUFollowOn();
 
@@ -311,7 +286,7 @@ void Simulation170925::copyDataToGPU()
 	logFile_m.writeLogFileEntry("copyDataToGPU", "End copy to GPU");
 }
 
-void Simulation170925::iterateSimulation(int numberOfIterations)
+void Simulation::iterateSimulation(int numberOfIterations)
 {//conducts iterative calculations of data previously copied to GPU - runs the data through the computeKernel
 	logFile_m.createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 3
 	logFile_m.writeLogFileEntry("iterateSimulation", "Start Iteration of Sim:  " + std::to_string(numberOfIterations));
@@ -336,22 +311,17 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	//Loop code
 	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
-	{
-		//computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(0)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2)),
-			//reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size())), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), simTime_m, true);
-		//replace with for loop over particleTypes_m.size()//
-		//computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(1)), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(3)),
-			//reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(4)), reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(5)), simTime_m, false);
-		
+	{	
 		for (int parts = 0; parts < particleTypes_m.size(); parts++)
 		{
 			Particle* tmpPart{ particleTypes_m.at(parts) };
-			computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts)),
-				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts + numParts)),
-				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * numParts + 1)),
-				gpuDblMemoryPointers_m.at(2 * numParts),
-				reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * numParts)),
-				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles());
+
+			computeKernel <<< NUMBLOCKS, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts)), //2D array of particle data
+				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts + particleTypes_m.size())), //2D array for original particle data
+				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), //2D array of LUT data (nullptr if not used)
+				gpuDblMemoryPointers_m.at(2 * numParts), //1D array of sim characteristics
+				reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * numParts)), //1D array of curand states
+				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
 		}
 
 		for (int sats = 0; sats < satellites_m.size(); sats++)
@@ -388,7 +358,7 @@ void Simulation170925::iterateSimulation(int numberOfIterations)
 	logFile_m.writeLogFileEntry("iterateSimulation", "End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }
 
-void Simulation170925::copyDataToHost()
+void Simulation::copyDataToHost()
 {//copies data back to host from GPU
 	logFile_m.writeLogFileEntry("copyDataToHost", "Copy simulation data from GPU back to host");
 	
@@ -413,7 +383,7 @@ void Simulation170925::copyDataToHost()
 	logFile_m.writeLogFileEntry("copyDataToHost", "Done with copying.");
 }
 
-void Simulation170925::freeGPUMemory()
+void Simulation::freeGPUMemory()
 {//used to free the memory on the GPU that's no longer needed
 	logFile_m.writeLogFileEntry("freeGPUMemory", "Start free GPU Memory.");
 

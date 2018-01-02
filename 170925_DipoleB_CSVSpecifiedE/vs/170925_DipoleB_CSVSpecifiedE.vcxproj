@@ -28,7 +28,7 @@
     <ClCompile Include="..\..\SimTools\src\StandaloneTools\binaryfiletools.cpp" />
     <ClCompile Include="..\..\SimTools\src\StandaloneTools\numericaltools.cpp" />
     <ClCompile Include="..\src\170925_DipoleB_CSVSpecifiedE.cpp" />
-    <ClCompile Include="..\src\Simulation170925.cpp" />
+    <ClCompile Include="..\src\AlfvenLUT.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\SimTools\include\FileIO\fileIO.h" />
@@ -42,11 +42,13 @@
     <ClInclude Include="..\..\SimTools\include\StandaloneTools\numericaltools.h" />
     <ClInclude Include="..\..\SimTools\include\StandaloneTools\StandaloneTools.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
-    <ClInclude Include="..\include\Simulation170925.h" />
+    <ClInclude Include="..\include\AlfvenLUT.h" />
     <ClInclude Include="..\include\_simulationvariables.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\SimTools\src\SatelliteClass\Satellite.cu" />
+    <CudaCompile Include="..\src\CUDA\alfvencompute.cu" />
+    <CudaCompile Include="..\src\CUDA\alfvenlut.cu" />
     <CudaCompile Include="..\src\CUDA\simulationphysics.cu" />
   </ItemGroup>
   <ItemGroup>
@@ -145,6 +147,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -168,6 +171,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -194,6 +198,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -221,6 +226,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <AdditionalOptions>--ptxas-options=-v -gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

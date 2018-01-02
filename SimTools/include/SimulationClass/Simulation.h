@@ -10,7 +10,7 @@
 #include "StandaloneTools\StandaloneTools.h"
 #include "include\_simulationvariables.h" //remove this later, replace with passed in variables
 
-struct SatAndPart
+struct SatandPart
 {
 	Satellite* satellite;
 	Particle*  particle;
@@ -30,10 +30,14 @@ protected:
 	const double vmean_m{ V_DIST_MEAN };
 	const bool	 normalizedToRe_m{ true }; //change later if you want, make it an option
 	
+	bool useQSPS_m  { false };
+	bool useAlfLUT_m{ false };
+	bool useAlfCal_m{ false };
+
 	std::vector<Particle*> particleTypes_m;
 
 	//Satellites and data
-	std::vector<Satellite*> satellites_m; //perhaps struct a satellite pointer and a particle pointer together??
+	std::vector<Satellite*> satellites_m;
 	std::vector<std::vector<std::vector<std::vector<double>>>> satelliteData_m; //4D satelliteData[recorded measurement number][satellite number][attribute number][particle number]
 	std::vector<std::vector<std::vector<double>>> preppedSatData_m;
 
@@ -86,51 +90,52 @@ public:
 	//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
 	///One liner functions (usually access)
-	double	  getTime() { return simTime_m; }
-	double	  getdt() { return dt_m; };
-	void	  incTime() { simTime_m += dt_m; }
+	double	  getTime() { return simTime_m; } //API
+	double	  getdt() { return dt_m; }; //API
+	double    getSimMin() { return simMin_m; } //API
+	double    getSimMax() { return simMax_m; } //API
+	void	  incTime() { simTime_m += dt_m; } //API
+	void      setUseQSPS(bool qsps) { useQSPS_m = qsps; } //API
 
-	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); }
-	size_t    getNumberOfParticlesPerType(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); }
-	size_t    getNumberOfAttributesTracked(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); }
+	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); } //API
+	size_t    getNumberOfParticles(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); } //API
+	size_t    getNumberOfAttributes(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); } //API
 
-	bool	  areResultsPrepared() { return resultsPrepared_m; }
-	bool	  getNormalized() { return normalizedToRe_m; }
+	bool	  areResultsPrepared() { return resultsPrepared_m; } //API
+	bool	  getNormalized() { return normalizedToRe_m; } //API, use to track whether or not values are normalized
 
 	LogFile*  getLogFilePointer() { return &logFile_m; }
+	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData); //API
 
-	virtual double getSimMin() { return simMin_m; }
-	virtual double getSimMax() { return simMax_m; }
-
-	double*   getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData);
-	
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
-	virtual double calculateBFieldAtZandTime(double z, double time) = 0;
-	virtual double calculateEFieldAtZandTime(double z, double time) = 0;
+	virtual double calculateBFieldAtZandTime(double z, double time) { return BFieldatZ(z, time); } //API
+	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(nullptr, z, time, 0.0, useQSPS_m, false); } //API
 	
 	//Array tools
 	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& z, double mass);
 	virtual void convertVPerpToMu(Particle* particle);
+	virtual void convertVPerpToMu(int partInd); //API
 	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, double mass);
 	virtual void convertMuToVPerp(Particle* particle);
+	virtual void convertMuToVPerp(int partInd); //API
 
 	//Simulation management functions
-	virtual void initializeSimulation() = 0;
-	virtual void copyDataToGPU() = 0;
-	virtual void iterateSimulation(int numberOfIterations) = 0;
-	virtual void copyDataToHost() = 0;
-	virtual void freeGPUMemory() = 0;
-	virtual void prepareResults() = 0;
+	virtual void initializeSimulation(); //API
+	virtual void copyDataToGPU(); //API
+	virtual void iterateSimulation(int numberOfIterations); //API
+	virtual void copyDataToHost(); //API
+	virtual void freeGPUMemory(); //API
+	virtual void prepareResults(); //API
 
 	//Satellite management functions
-	virtual void	createSatellite(Particle* assignedPart, double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name);
-	virtual size_t	getNumberOfSatellites() { return satellites_m.size(); }
-	virtual size_t	getNumberOfSatelliteMsmts() { return satelliteData_m.size(); }
-	virtual double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m.at(measurementInd).at(satelliteInd).at(attributeInd).data(); }
-	virtual void	writeSatelliteDataToCSV();
+	virtual void	createSatellite(int particleInd, double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name); //API
+	virtual size_t	getNumberOfSatellites() { return satellites_m.size(); } //API
+	virtual size_t	getNumberOfSatelliteMsmts() { return satelliteData_m.size(); } //API
+	virtual double* getSatelliteDataPointers(int measurementInd, int satelliteInd, int attributeInd) { return satelliteData_m.at(measurementInd).at(satelliteInd).at(attributeInd).data(); } //API
+	virtual void	writeSatelliteDataToCSV(); //API
 
-	virtual void    createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor);
-	virtual Particle* getParticlePointer(int ind) { return particleTypes_m.at(ind); }
+	virtual void    createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor); //API
+	virtual Particle* getParticlePointer(int ind) { return particleTypes_m.at(ind); } //API - maybe??
 };//end class
 #endif //end header guard
