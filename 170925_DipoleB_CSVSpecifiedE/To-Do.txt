@@ -1,9 +1,6 @@
 TO-DO
 RIGHT NOW THROUGH CSV, WRITE BINS - Write Satellite values to disk along with times
-IN PROGRESS, THROUGH PYTHON, NEED CPP INTERFACE - Pass in variables instead of having to recompile every time (CSV or possibly XML if you want to be fancy)
 - RNG generates total energy and pitch angle
-- Consolidate satellite data into one array, then pass to python
-- Enable qsps, alfven via switch
 - Remove frivolous messages
 - Enforce calling certain functions after other required (saving csv/xlsx after the data is copied and formed)
 - Document things better
@@ -33,6 +30,9 @@ DONE - Maybe, change the convertMuToVperp and vice versa to pass in array pointe
 DONE - Split mag and ionosphere sources better - down the middle instead of interleaved
 DONE, JUST LOAD SIMULATION.PY - Make python script to load everything and set up within the interactive interpreter
 DONE, THROUGH PARTICLE CLASS - Enable load particle distribution via switch
+DONE - Pass in variables instead of having to recompile every time (CSV or possibly XML if you want to be fancy)
+DONE - Consolidate satellite data into one array, then pass to python
+DONE - Enable qsps, alfven via switch
 
 
 STUFF THAT IS DONE WITH CAVEATS:

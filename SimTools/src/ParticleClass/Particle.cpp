@@ -25,7 +25,7 @@ void Particle::saveArrayToFiles(std::string folder, bool orig)
 }
 
 void Particle::normalizeParticles(bool orig, bool curr, bool inverse)
-{
+{//eventually work in the duplicate function and remove the excess code
 	if (!orig && !curr)
 		return;
 	
@@ -44,7 +44,7 @@ void Particle::normalizeParticles(bool orig, bool curr, bool inverse)
 	{
 		for (int parts = 0; parts < particleCount_m; parts++)
 		{//normalize -> divide by normalization factor
-			if (orig) { origData_m.at(attrs).at(parts) /= (inverse ? (1 / normFactor_m) : (normFactor_m)); } //maybe a little less performant than separating /= and *=
+			if (orig) { origData_m.at(attrs).at(parts) /= (inverse ? (1 / normFactor_m) : (normFactor_m)); }
 			if (curr) { currData_m.at(attrs).at(parts) /= (inverse ? (1 / normFactor_m) : (normFactor_m)); }
 		}
 	}

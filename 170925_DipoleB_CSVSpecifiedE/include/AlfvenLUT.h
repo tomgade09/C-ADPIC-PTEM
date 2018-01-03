@@ -24,8 +24,8 @@ protected:
 	virtual void freeGPUMemoryFollowOn();
 
 public:
-	AlfvenLUT(double dt, std::string rootdir, std::string LUTfilename) :
-		Simulation(dt, rootdir), LUTfilename_m{ LUTfilename }
+	AlfvenLUT(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir, std::string LUTfilename) :
+		Simulation(dt, simMin, simMax, ionT, magT, rootdir), LUTfilename_m{ LUTfilename }
 	{
 		//Populate E Field LUT
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
@@ -50,7 +50,7 @@ public:
 	virtual void   setElecMagLUT(const char* filename, int rows, int cols) { elcFieldLUT_m = fileIO::read2DCSV(filename, rows, cols, ' '); }
 
 	virtual double calculateBFieldAtZandTime(double z, double time) { return BFieldatZ(z, time); }
-	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(elcFieldLUT_m, z, time, omegaE_m, useQSPS_m, useAlfLUT_m); }
+	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(elcFieldLUT_m, z, time, omegaE_m, constE_m, useQSPS_m, useAlfLUT_m); }
 };
 
 #endif //end header guard

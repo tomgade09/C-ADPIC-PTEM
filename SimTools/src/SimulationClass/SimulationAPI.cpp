@@ -7,8 +7,17 @@ DLLEXPORT double getSimulationTimeAPI(Simulation* simulation) {
 DLLEXPORT double getDtAPI(Simulation* simulation) {
 	return simulation->getdt(); }
 
+DLLEXPORT double getSimMinAPI(Simulation* simulation) {
+	return simulation->getSimMin(); }
+
+DLLEXPORT double getSimMaxAPI(Simulation* simulation) {
+	return simulation->getSimMax(); }
+
 DLLEXPORT void incrementSimulationTimeByDtAPI(Simulation* simulation) {
 	simulation->incTime(); }
+
+DLLEXPORT void setQSPSAPI(Simulation* simulation, double constE) {
+	simulation->setQSPS(constE); }
 
 DLLEXPORT int getNumberOfParticleTypesAPI(Simulation* simulation) {
 	return static_cast<int>(simulation->getNumberOfParticleTypes()); }
@@ -22,28 +31,14 @@ DLLEXPORT int getNumberOfAttributesAPI(Simulation* simulation, int partInd) {
 DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation) {
 	return simulation->areResultsPrepared(); }
 
-DLLEXPORT bool getNormalizedAPI(Simulation* simulation) {
-	return simulation->getNormalized(); }
-
 DLLEXPORT LogFile* getLogFilePointerAPI(Simulation* simulation) {
 	return simulation->getLogFilePointer(); }
 
-DLLEXPORT double getSimMinAPI(Simulation* simulation) {
-	return simulation->getSimMin(); }
-
-DLLEXPORT double getSimMaxAPI(Simulation* simulation) {
-	return simulation->getSimMax(); }
 
 //Pointer one liners
-DLLEXPORT double* getPointerToSingleParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
-	return simulation->getPointerToSingleParticleAttributeArray(partIndex, attrIndex, originalData); }
+DLLEXPORT double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
+	return simulation->getPointerToParticleAttributeArray(partIndex, attrIndex, originalData); }
 
-//Numerical tools
-DLLEXPORT double  calculateMeanOfParticleAttributeAPI(double* data, int length, bool absValue) {
-	return calculateMeanOfParticleAttribute(data, length, absValue); }
-
-DLLEXPORT double  calculateStdDevOfParticleAttributeAPI(double* data, int length) {
-	return calculateStdDevOfParticleAttribute(data, length); }
 
 //Field tools
 DLLEXPORT double calculateBFieldAtZandTimeAPI(Simulation* simulation, double z, double time) {
@@ -51,6 +46,15 @@ DLLEXPORT double calculateBFieldAtZandTimeAPI(Simulation* simulation, double z, 
 
 DLLEXPORT double calculateEFieldAtZandTimeAPI(Simulation* simulation, double z, double time) {
 	return simulation->calculateEFieldAtZandTime(z, time); }
+
+
+//Mu<->VPerp Functions
+DLLEXPORT void convertParticleVPerpToMuAPI(Simulation* simulation, int partInd) {
+	simulation->convertVPerpToMu(partInd); }
+
+DLLEXPORT void convertParticleMuToVPerpAPI(Simulation* simulation, int partInd) {
+	simulation->convertMuToVPerp(partInd); }
+
 
 //Simulation Management Function Wrappers
 DLLEXPORT void initializeSimulationAPI(Simulation* simulation) {
@@ -68,15 +72,42 @@ DLLEXPORT void copyDataToHostAPI(Simulation* simulation) {
 DLLEXPORT void freeGPUMemoryAPI(Simulation* simulation) {
 	simulation->freeGPUMemory(); }
 
-DLLEXPORT void prepareResultsAPI(Simulation* simulation) {
-	simulation->prepareResults(); }
+DLLEXPORT void prepareResultsAPI(Simulation* simulation, bool normalizeToRe) {
+	simulation->prepareResults(normalizeToRe); }
+
 
 //Satellite functions
+DLLEXPORT void createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name) {
+	simulation->createSatellite(particleInd, altitude, upwardFacing, name); }
+
 DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
 	return static_cast<int>(simulation->getNumberOfSatellites()); }
 
-DLLEXPORT int  getNumberOfSatelliteMsmtsAPI(Simulation* simulation) {
-	return static_cast<int>(simulation->getNumberOfSatelliteMsmts()); }
+//DLLEXPORT int  getNumberOfSatelliteMsmtsAPI(Simulation* simulation) {
+	//return static_cast<int>(simulation->getNumberOfSatelliteMsmts()); }
 
-DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int measurementInd, int satelliteInd, int attributeInd) {
-	return simulation->getSatelliteDataPointers(measurementInd, satelliteInd, attributeInd); }
+DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int attributeInd) {
+	return simulation->getSatelliteDataPointers(satelliteInd, attributeInd); }
+
+DLLEXPORT void writeSatelliteDataToCSVAPI(Simulation* simulation) {
+	simulation->writeSatelliteDataToCSV(); }
+
+
+//Particle functions
+DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir)
+{
+	std::string tmp{ attrNames };
+	std::vector<std::string> attrNamesStr;
+
+	size_t loc{ 0 };
+	while (loc != std::string::npos)
+	{
+		loc = tmp.find(',');
+		attrNamesStr.push_back(tmp.substr(0, loc));
+		tmp.erase(0, loc + 1);
+		while (tmp.at(0) == ' ')
+			tmp.erase(0, 1);
+	}
+
+	simulation->createParticleType(name, attrNamesStr, mass, charge, numParts, posDims, velDims, normFactor, loadFileDir);
+}

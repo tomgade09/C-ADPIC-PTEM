@@ -29,7 +29,7 @@ def simulationRunMain():
     dllLocation = './../../vs/x64/Release/170925_DipoleB_CSVSpecifiedE.dll'
     print("================  SIMULATION ", dtg, " ================")
 
-    sim = Simulation(rootdir, dllLocation)
+    sim = Simulation(dllLocation, rootdir, 0.01, 8.371e6, 4 * 6.371e6, 2.5, 1000, 0.0, "./ez.out")
     results = sim.runSim(25000)
     orig = sim.getOriginalsfrom3D()
     satDat = sim.getSatelliteData()

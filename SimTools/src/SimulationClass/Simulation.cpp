@@ -3,45 +3,38 @@
 
 #include "SimulationClass\Simulation.h"
 
-//protected functions
-void Simulation::receiveSatelliteData()
+void Simulation::receiveSatelliteData(bool removeZeros)
 {
-	std::vector<std::vector<std::vector<double>>> sats; //vector of satellites[attributes]
-
-	for (int satInd = 0; satInd < satellites_m.size(); satInd++)
-	{
-		satellites_m.at(satInd)->copyDataToHost();
-		sats.push_back(satellites_m.at(satInd)->getDataArray(true));
-
-		//convert mu to vperp
-		bool flag{ 0 };
-		for (int partInd = 0; partInd < particleTypes_m.size(); partInd++)
-		{
-			sats.at(satInd).at(1).at(partInd) = sqrt(2 * sats.at(satInd).at(1).at(partInd) * BFieldatZ(sats.at(satInd).at(2).at(partInd), simTime_m) / ((satellites_m.at(satInd)->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)));
-			if ((!flag) && (isnan(sats.at(satInd).at(1).at(partInd))))
-			{
-				flag = true;
-				std::cout << "IsNaN!!  First NaN index: " << partInd << "\nSatellite: " << satellites_m.at(satInd)->getName() << "\nz, BField: " << sats.at(satInd).at(2).at(partInd) << ", " << BFieldatZ(sats.at(satInd).at(2).at(partInd), simTime_m);
-				std::cout << "\nElecTF: " << satellites_m.at(satInd)->getElecTF() << ", Mass: " << ((satellites_m.at(satInd)->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)) << "\n";
-			}
-		}
-	}
-
-	satelliteData_m.push_back(sats);
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), satelliteData_m.push_back(satellites_m.at(iii)->satellite->getConsolidatedData(removeZeros));)
+	
+	//Check particle for index of vperp/mu, iterate over particles
+	//sats.at(satInd).at(1).at(partInd) = sqrt(2 * sats.at(satInd).at(1).at(partInd) * BFieldatZ(sats.at(satInd).at(2).at(partInd), simTime_m) / ((satellites_m.at(satInd)->getElecTF()) ? (MASS_ELECTRON) : (MASS_PROTON)));
+	LOOP_OVER_1D_ARRAY(satellites_m.size(),\
+		int vperpInd{ satellites_m.at(iii)->particle->getDimensionIndByName("vperp") };
+		int zInd    { satellites_m.at(iii)->particle->getDimensionIndByName("z") };
+		int tInd    { satellites_m.at(iii)->satellite->getNumberOfAttributes() };
+		convertMuToVPerp(satelliteData_m.at(iii).at(vperpInd), satelliteData_m.at(iii).at(zInd), satelliteData_m.at(iii).at(tInd), satellites_m.at(iii)->particle->getMass());
+	)
 }
 
 //public functions
-void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor)
+void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir)
 {
+	//add something to logfile here
 	Particle* newPart = new Particle(name, attrNames, mass, charge, numParts, posDims, velDims, normFactor);
 	particleTypes_m.push_back(newPart);
+
+	if (loadFilesDir != "")
+		newPart->loadFilesToArray(loadFilesDir);
 }
 
-void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing, double** GPUdataPointers, bool elecTF, std::string name)
+void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing, std::string name)
 {//remove elecTF, change to struct
-	Particle* tmp{ particleTypes_m.at(partInd) };
-	Satellite* newSat = new Satellite(altitude, upwardFacing, tmp->getNumberOfAttributes(), tmp->getNumberOfParticles(), GPUdataPointers, elecTF, name);
-	satellites_m.push_back(newSat);
+	//add something to logfile here
+	Particle* tmpPart{ particleTypes_m.at(partInd) };
+	Satellite* newSat = new Satellite(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(partInd)), name);
+	SatandPart* newStruct = new SatandPart{ newSat, tmpPart };
+	satellites_m.push_back(newStruct);
 }
 
 //Vperp <-> Mu conversion tools
@@ -71,6 +64,11 @@ void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& 
 	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldatZ(z.at(iii), simTime_m) / mass);)
 }
 
+void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, std::vector<double>& t, double mass)
+{
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldatZ(z.at(iii), t.at(iii)) / mass);)
+}
+
 void Simulation::convertMuToVPerp(Particle* particle)
 {
 	convertMuToVPerp(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("z")), particle->getMass());
@@ -93,13 +91,14 @@ void Simulation::writeSatelliteDataToCSV()
 
 	if (satelliteData_m.size() == 0)
 	{
-		std::cout << "Warning: satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.\n";
+		std::cout << "Error: satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.\n";
 		return;
 	}
-
+	//need to index the satellite data with the orig data by the saved index number
 	for (int hhh = 0; hhh < particleTypes_m.size(); hhh++)
 	{
 		Particle* tmpPart{ particleTypes_m.at(hhh) };
+		int numAttrs{ tmpPart->getNumberOfAttributes() };
 		long numParts{ tmpPart->getNumberOfParticles() };
 
 		std::ofstream csv(filename.at(hhh), std::ios::trunc);
@@ -110,28 +109,30 @@ void Simulation::writeSatelliteDataToCSV()
 		std::vector<double> zeros;
 		zeros.resize(numParts);
 
-		LOOP_OVER_1D_ARRAY(3, data.push_back(tmpPart->getOrigData().at(iii));) //orig para, perp, z
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(tmpPart->getOrigData().at(iii));) //orig para, perp, z
 		data.push_back(zeros); //spacer
-		data.push_back(satelliteData_m.at(0).at(hhh + 2).at(3)); //time escaped top
-		LOOP_OVER_1D_ARRAY(3, data.push_back(satelliteData_m.at(0).at(hhh + 2).at(iii));) //top para, perp, z
+		data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(numAttrs)); //time escaped top
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(iii));) //top para, perp, z
 		data.push_back(zeros);
-		data.push_back(satelliteData_m.at(0).at(hhh).at(3)); //time escaped bottom
-		LOOP_OVER_1D_ARRAY(3, data.push_back(satelliteData_m.at(0).at(hhh).at(iii));) //bottom para, perp, z
+		data.push_back(satelliteData_m.at(hhh).at(numAttrs)); //time escaped bottom
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh).at(iii));) //bottom para, perp, z
 		data.push_back(zeros);
 
+		int vparaInd{ tmpPart->getDimensionIndByName("vpara") };
+		int vperpInd{ tmpPart->getDimensionIndByName("vperp") };
 		std::vector<double> tmp;
-		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(0.5 * tmpPart->getMass() * ((pow(tmpPart->getOrigData().at(0).at(iii), 2) + pow(tmpPart->getOrigData().at(1).at(iii), 2)) * pow(RADIUS_EARTH, 2)) / 1.60218e-19);)
+		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(0.5 * tmpPart->getMass() * ((pow(tmpPart->getOrigData().at(vparaInd).at(iii), 2) + pow(tmpPart->getOrigData().at(vperpInd).at(iii), 2)) * pow(RADIUS_EARTH, 2)) / 1.60218e-19);)
 		data.push_back(tmp); //Energies in eV
 		tmp.clear();
 
-		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(atan2(abs(tmpPart->getOrigData().at(1).at(iii)), -tmpPart->getOrigData().at(0).at(iii)) * 180 / PI);)
+		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(atan2(abs(tmpPart->getOrigData().at(vperpInd).at(iii)), -tmpPart->getOrigData().at(vparaInd).at(iii)) * 180 / PI);)
 		data.push_back(tmp);
 
-		fileIO::write2DCSV(data, filename.at(hhh), numParts, 16, ',', false);
+		fileIO::write2DCSV(data, filename.at(hhh), numParts, numAttrs * 3 + 7, ',', false);
 	}
 }
 
-double* Simulation::getPointerToSingleParticleAttributeArray(int partIndex, int attrIndex, bool originalData)
+double* Simulation::getPointerToParticleAttributeArray(int partIndex, int attrIndex, bool originalData)
 {
 	if (partIndex > (particleTypes_m.size() - 1))
 	{
@@ -147,24 +148,21 @@ double* Simulation::getPointerToSingleParticleAttributeArray(int partIndex, int 
 	return ((originalData) ? (particleTypes_m.at(partIndex)->getOrigData().at(attrIndex).data()) : (particleTypes_m.at(partIndex)->getCurrData().at(attrIndex).data()));
 }
 
-void Simulation::prepareResults()
+void Simulation::prepareResults(bool normalizeToRe)
 {
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), convertMuToVPerp(particleTypes_m.at(iii));)
 
-		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true);)
-		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false);)
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true);)
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false);)
 
-		//normalizes m to Re
-		if (normalizedToRe_m)
-		{
-			LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->normalizeParticles(true, true);)
+	LOOP_OVER_1D_ARRAY(satelliteData_m.size(), )
 
-				for (int lll = 0; lll < satelliteData_m.size(); lll++)
-				{//loop over number of measurements
-					LOOP_OVER_1D_ARRAY(satellites_m.size(), convertMuToVPerp(satelliteData_m.at(lll).at(iii).at(1), satelliteData_m.at(lll).at(iii).at(2), particleTypes_m.at(iii % 2)->getMass());)
-						LOOP_OVER_3D_ARRAY(satellites_m.size(), satellites_m.at(iii)->getNumOfAttr(), satellites_m.at(iii)->getNumOfParts(), satelliteData_m.at(lll).at(iii).at(jjj).at(kk) /= RADIUS_EARTH;)
-				}
-		}
+	//normalizes m to Re
+	if (normalizeToRe)
+	{
+		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->normalizeParticles(true, true);)
+		LOOP_OVER_2D_ARRAY(particleTypes_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes(), normalizeArray(satelliteData_m.at(iii).at(jjj), RADIUS_EARTH);)
+	}
 
 	resultsPrepared_m = true;
 }
