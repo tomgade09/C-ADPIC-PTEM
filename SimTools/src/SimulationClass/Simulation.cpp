@@ -31,6 +31,9 @@ void Simulation::createParticleType(std::string name, std::vector<std::string> a
 void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing, std::string name)
 {//remove elecTF, change to struct
 	//add something to logfile here
+	if (particleTypes_m.size() <= partInd)
+		std::cout << "Error: particleTypes.at(" << partInd << ") does not exist!\n";
+
 	Particle* tmpPart{ particleTypes_m.at(partInd) };
 	Satellite* newSat = new Satellite(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(partInd)), name);
 	SatandPart* newStruct = new SatandPart{ newSat, tmpPart };

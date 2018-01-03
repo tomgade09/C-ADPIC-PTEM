@@ -106,13 +106,14 @@ class Simulation:
         self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6, "./../../in/data/")
         self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6, "./../../in/data/")
 
-        self.createSatellite(0, 8.371e6 * 0.999, True, "bottomElectrons")
+        self.initializeSimulation()
+        self.copyDataToGPU()
+
+        self.createSatellite(0, 8.371e6 * 0.999, True, "bottomElectrons") #This is weird - change order later, should not have to initialize the sim before creating satellites
         self.createSatellite(1, 8.371e6 * 0.999, True, "bottomIons")
         self.createSatellite(0, 4 * 6.371e6 * 1.001, False, "topElectrons")
         self.createSatellite(1, 4 * 6.371e6 * 1.001, False, "topIons")
 
-        self.initializeSimulation()
-        self.copyDataToGPU()
         self.iterateSimulation(iterations)
         self.copyDataToHost()
         self.freeGPUMemory()
