@@ -51,13 +51,15 @@ public:
 
 	std::vector<std::vector<double>>& getOrigData() { return origData_m; }
 	std::vector<std::vector<double>>& getCurrData() { return currData_m; }
+	std::string getName() { return name_m; }
 	double getMass() { return mass_m; }
 	double getCharge() { return charge_m; }
 	long   getNumberOfParticles() { return particleCount_m; }
 	int    getNumberOfAttributes() { return numberOfPositionDims_m + numberOfVelocityDims_m; }
 	bool   getInitDataLoaded() { return initDataLoaded_m; }
 
-	virtual int  getDimensionIndByName(std::string searchName);
+	virtual int getDimensionIndByName(std::string searchName);
+	virtual std::string getDimensionNameByInd(int searchIndx);
 
 	virtual void loadFilesToArray(std::string folder);
 	virtual void saveArrayToFiles(std::string folder, bool orig);

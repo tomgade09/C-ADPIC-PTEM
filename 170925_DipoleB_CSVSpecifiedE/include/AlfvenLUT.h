@@ -31,7 +31,7 @@ public:
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
 		setElecMagLUT(LUT.c_str(), numOfEntrLUT_m, numOfColsLUT_m);
 
-		logFile_m.writeTimeDiffFromNow(0, "End Simulation170925 Constructor");
+		logFile_m.writeTimeDiffFromNow(0, "End AlfvenLUT Constructor");
 	}//end constructor
 
 	~AlfvenLUT() //Destructor
@@ -39,7 +39,7 @@ public:
 		//Delete double arrays
 		delete[] elcFieldLUT_m[0];
 		delete[] elcFieldLUT_m;
-		logFile_m.writeTimeDiffFromNow(0, "End Simulation170925 Destructor");
+		logFile_m.writeTimeDiffFromNow(0, "End AlfvenLUT Destructor");
 	}
 
 	//One liners

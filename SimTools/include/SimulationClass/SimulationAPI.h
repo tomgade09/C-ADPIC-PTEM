@@ -40,7 +40,6 @@ DLLEXPORT void prepareResultsAPI(Simulation* simulation, bool normalizeToRe);
 //Satellite functions
 DLLEXPORT void    createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name);
 DLLEXPORT int     getNumberOfSatellitesAPI(Simulation* simulation);
-//DLLEXPORT int     getNumberOfSatelliteMsmtsAPI(Simulation* simulation);
 DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int attributeInd);
 DLLEXPORT void    writeSatelliteDataToCSVAPI(Simulation* simulation);
 

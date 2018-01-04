@@ -62,3 +62,11 @@ int Particle::getDimensionIndByName(std::string searchName)
 
 	return -1;
 }
+
+std::string Particle::getDimensionNameByInd(int searchIndx)
+{
+	if (!(searchIndx <= (attributeNames_m.size() - 1) && (searchIndx >= 0)))
+		return std::to_string(searchIndx);
+
+	return attributeNames_m.at(searchIndx);
+}

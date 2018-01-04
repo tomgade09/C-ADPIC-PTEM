@@ -68,23 +68,12 @@ protected:
 public:
 	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir):
 		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
-	{
-		logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor");
-	}
+	{ logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor"); }
 
 	virtual ~Simulation()
-	{
-		//
-		//
-		//Call from python
-		writeSatelliteDataToCSV();
-		//Call from python
-		//
-		//
-		
+	{	
 		//Delete satellites and particles
 		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii);)
-		//LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii);)
 		
 		logFile_m.writeTimeDiffFromNow(0, "End Simulation Destructor");
 	};

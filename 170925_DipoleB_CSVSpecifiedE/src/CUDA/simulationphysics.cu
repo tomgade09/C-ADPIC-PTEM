@@ -63,7 +63,7 @@ __host__ __device__ double BFieldatZ(double z, double simtime)
 }
 
 __device__ double accel1dCUDA(double* args, int len, double** LUT, bool qsps, bool alfven) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [t_RK, vz, mu, q, m, pz_0, simtime, dt, omega E]
+{//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]
 	double F_lor, F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
@@ -80,6 +80,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double** LUT, 
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
+	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]
 	double k1, k2, k3, k4, y_0;
 	y_0 = funcArg[1];
 
@@ -147,15 +148,15 @@ __device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_
 	ionosphereGenerator(v_part, mu_part, z_part, simConsts, mass, rndState);
 }
 
-__global__ void computeKernel(double** partData_d, double** origData_d, double** LUT, double* simConsts, curandStateMRG32k3a* crndStateA,
+__global__ void computeKernel(double** currData_d, double** origData_d, double** LUT, double* simConsts, curandStateMRG32k3a* crndStateA,
 	double simtime, double mass, double charge, long numParts, bool qsps, bool alfven)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
 	double* v_d; double* mu_d; double* z_d;
-	double* v_orig; double* mu_orig; double* z_orig;
-	v_d = partData_d[0]; mu_d = partData_d[1]; z_d = partData_d[2];
-	v_orig = origData_d[0]; mu_orig = origData_d[1]; z_orig = origData_d[2];
+	double* v_orig; double* vperp_orig; double* z_orig;
+	v_d = currData_d[0]; mu_d = currData_d[1]; z_d = currData_d[2];
+	v_orig = origData_d[0]; vperp_orig = origData_d[1]; z_orig = origData_d[2];
 
 	if (z_d[thdInd] < 0.001) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{//previous way to index curandStates: (blockIdx.x * 2) + (threadIdx.x % 2) - this leads to each block accessing two curand states - 128 threads call the same state simultaneously and end up with the same values
@@ -165,14 +166,14 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		
 		v_orig[thdInd] = v_d[thdInd];
-		mu_orig[thdInd] = mu_d[thdInd];
+		vperp_orig[thdInd] = mu_d[thdInd];
 		z_orig[thdInd] = z_d[thdInd];
 		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / BFieldatZ(z_d[thdInd], simtime);
 	}
 	else if (simtime == 0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
 	{
 		v_orig[thdInd] = v_d[thdInd];
-		mu_orig[thdInd] = mu_d[thdInd];
+		vperp_orig[thdInd] = mu_d[thdInd];
 		z_orig[thdInd] = z_d[thdInd];
 		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / BFieldatZ(z_d[thdInd], simtime);
 	}
@@ -184,6 +185,7 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 		return;
 	
 	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]
+	//simConsts: dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
 	double args[10];
 	args[0] = 0.0;
 	args[1] = v_d[thdInd];
@@ -194,9 +196,9 @@ __global__ void computeKernel(double** partData_d, double** origData_d, double**
 	args[6] = simtime;
 	args[7] = simConsts[0];
 	args[8] = simConsts[6]; //omega E
-	args[9] = simConsts[7];
+	args[9] = simConsts[7]; //QSPS
 
-	v_d[thdInd] += foRungeKuttaCUDA(args, 7, LUT, qsps, alfven);
+	v_d[thdInd] += foRungeKuttaCUDA(args, 10, LUT, qsps, alfven);
 	z_d[thdInd] += v_d[thdInd] * simConsts[0];
 }
 
@@ -215,6 +217,12 @@ void Simulation::initializeSimulation()
 	gpuDblMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr data, part 1 curr data... part 0 orig data, part 1 orig data... simconsts, LUT
 	gpuOtherMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr 2D, part 1 curr 2D... part 0 orig 2D, part 1 orig 2D... curand, LUT 2D
 	satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
+
+	//
+	//
+	//Create temporary structure to store satellite data whenever the user wants to create it, then call createSatellite here - also do check above and issue warning
+	//
+	//
 
 	//Allocate memory on GPU for elec/ions variables
 	for (int ind = 0; ind < 2 * particleTypes_m.size(); ind++) //[0] = e data, [1] = i data, [2] = e orig data, [3] = i orig data
@@ -316,7 +324,7 @@ void Simulation::iterateSimulation(int numberOfIterations)
 				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), //2D array of LUT data (nullptr if not used)
 				gpuDblMemoryPointers_m.at(2 * numParts), //1D array of sim characteristics
 				reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * numParts)), //1D array of curand states
-				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
+				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, 0);// (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
 		}
 
 		for (int sats = 0; sats < satellites_m.size(); sats++)

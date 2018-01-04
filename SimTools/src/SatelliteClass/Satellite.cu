@@ -48,13 +48,13 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 		detected_mu_d[thdInd] = mu_d[thdInd];
 		detected_z_d[thdInd] = z_d[thdInd];
 		simtime_d[thdInd] = simtime;
-		index_d[thdInd] = thdInd;
+		index_d[thdInd] = static_cast<double>(thdInd);
 	}//particle not removed from sim
 }
 
 void Satellite::initializeSatelliteOnGPU()
 {
-	dataAllocateNewMsmtVector(); //make room for the first measurement data set
+	//dataAllocateNewMsmtVector(); //make room for the first measurement data set
 
 	CUDA_CALL(cudaMalloc((void **)&satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //makes room for data of detected particles
 	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
@@ -72,21 +72,46 @@ void Satellite::iterateDetector(int blockSize, double simtime, double dt)
 }
 
 void Satellite::copyDataToHost()
-{// data_m array: [v_para, mu, z, time][particle number]
+{// data_m array: [v_para, mu, z, time, partindex][particle number]
+	dataAllocateNewMsmtVector();
 	std::vector<std::vector<double>>& mostRecent{ data_m.at(data_m.size() - 1) };
 
-	for (int satattr = 0; satattr < numberOfAttributes_m + 1; satattr++)
+	for (int satattr = 0; satattr < numberOfAttributes_m + 2; satattr++)
 		CUDA_CALL(cudaMemcpy(mostRecent.at(satattr).data(), satCaptureGPU_m + satattr * numberOfParticles_m, sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost));
 	
-	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 1) * numberOfParticles_m)); //sets values to 0
+	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
 
-	dataAllocateNewMsmtVector();
+	dataReady_m = true; //sets to true the first time called
 }
 
 void Satellite::freeGPUMemory()
 {
 	CUDA_CALL(cudaFree(satCaptureGPU_m));
 	CUDA_CALL(cudaFree(dblppGPU_m.at(1))); //DO NOT FREE dblppGPU_m[0] - this is the 2D data array that the sim uses (not the satellite)
+}
+
+std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros)
+{
+	if (!dataReady_m)
+		copyDataToHost();
+
+	std::vector<std::vector<double>> tmp2D;
+
+	for (int attrs = 0; attrs < numberOfAttributes_m + 2; attrs++)
+		tmp2D.push_back(std::vector<double>());
+
+	LOOP_OVER_3D_ARRAY(data_m.size(), data_m.at(iii).size(), numberOfParticles_m, \
+		if (removeZeros) //iii is msmt iterator, jjj is attribute iterator, kk is particle iterator
+		{
+			size_t tind{ data_m.at(iii).size() - 1 };
+			if (data_m.at(iii).at(tind).at(kk) >= 0.0)
+				tmp2D.at(jjj).push_back(data_m.at(iii).at(jjj).at(kk));
+		}
+		else
+			tmp2D.at(jjj).push_back(data_m.at(iii).at(jjj).at(kk));
+	)
+
+		return tmp2D;
 }
 
 /*void Satellite::vectorTest(std::vector<double*>& in)

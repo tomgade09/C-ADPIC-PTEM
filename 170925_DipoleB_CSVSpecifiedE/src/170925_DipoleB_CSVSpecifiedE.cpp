@@ -5,44 +5,28 @@
 DLLEXPORT double* getPointerToElectricFieldDataAPI(AlfvenLUT* simulation, int index) {
 	return simulation->getPointerToElectricFieldData(index); }
 
-//
-//
-//
-//need to restructure to create/delete depending on specified class/subclass type
-DLLEXPORT Simulation* createSimulation(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir, double constEQSPS=0.0, const char* fnLUT="") {
+DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir, double constEQSPS=0.0, const char* fnLUT="")
+{
+	std::string fnLUTstr{ fnLUT };
+
 	Simulation* ret{ nullptr };
 
-	if (fnLUT == "")
+	if (fnLUTstr == "")
 		ret = new Simulation(dt, simMin, simMax, ionT, magT, rootdir);
 	else
 		ret = new AlfvenLUT(dt, simMin, simMax, ionT, magT, rootdir, fnLUT);
 	
 	if (constEQSPS != 0.0)
+	{
+		std::cout << "createSimulation: QSPS\n";
 		ret->setQSPS(constEQSPS);
-	
-	//Simulation* ret = new AlfvenLUT(dt, rootdir, "ez.out");
-	//ret->createParticleType("elec", { "vpara", "vperp", "z" }, MASS_ELECTRON, -1.0 * CHARGE_ELEM, 100352, 1, 2, RADIUS_EARTH);
-	//ret->createParticleType("ions", { "vpara", "vperp", "z" }, MASS_PROTON, 1.0 * CHARGE_ELEM, 100352, 1, 2, RADIUS_EARTH);
-	
-	//Particle* elec{ ret->getParticlePointer(0) };
-	//Particle* ions{ ret->getParticlePointer(1) };
-	//elec->loadFilesToArray("./../../in/data/");
-	//ions->loadFilesToArray("./../../in/data/");
+	}
 
-	return ret; }
-//
-//
-//
+	return ret;
+}
 
-//
-//
-//
-//need to restructure to create/delete depending on specified class/subclass type
-DLLEXPORT void terminateSimulation(Simulation* simulation) { //change
+DLLEXPORT void terminateSimulationAPI(Simulation* simulation) { //change
 	delete simulation; }
-//
-//
-//
 
 #ifndef DLLFILE
 int main()//defined in fileIO.h

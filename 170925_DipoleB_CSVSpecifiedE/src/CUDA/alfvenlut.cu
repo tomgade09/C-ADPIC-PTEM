@@ -44,7 +44,7 @@ void AlfvenLUT::copyDataToGPUFollowOn()
 {
 	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), elcFieldLUT_m[0], numOfColsLUT_m * numOfEntrLUT_m * sizeof(double), cudaMemcpyHostToDevice));
 	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), numOfColsLUT_m, numOfEntrLUT_m);
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()) + (SIMCHARSIZE/sizeof(double) - 1), &omegaE_m, sizeof(double), cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()) + 6, &omegaE_m, sizeof(double), cudaMemcpyHostToDevice));
 }
 
 void AlfvenLUT::iterateSimulationFollowOnPreLoop()

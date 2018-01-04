@@ -37,19 +37,17 @@ def simulationRunMain():
 
     sim.logWriteEntry('Python', 'Done getting data.  Plotting.')
 
-    plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
-        results[1][2], fields[0], fields[1], fields[2], False)
+    #plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
+        #results[1][2], fields[0], fields[1], fields[2], False)
 
     sim.logWriteEntry('Python', 'Plotting satellite data.')
 
     #Eventually, read names from satellites and construct into array
-    plotSatelliteData(satDat, sim.satMsmts_m, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
+    #plotSatelliteData(satDat, 1, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
 
     sim.logWriteEntry('Python', 'Done plotting data.  Terminating simulation.')
 
-    #saveEscapedParticlesAndTimeToCSV(orig, satDat)
-
-    sim.terminateSimulation170925()
+    sim.terminateSimulation()
 
     return
 

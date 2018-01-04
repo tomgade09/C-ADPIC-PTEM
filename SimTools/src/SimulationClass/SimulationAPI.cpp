@@ -83,9 +83,6 @@ DLLEXPORT void createSatelliteAPI(Simulation* simulation, int particleInd, doubl
 DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
 	return static_cast<int>(simulation->getNumberOfSatellites()); }
 
-//DLLEXPORT int  getNumberOfSatelliteMsmtsAPI(Simulation* simulation) {
-	//return static_cast<int>(simulation->getNumberOfSatelliteMsmts()); }
-
 DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int attributeInd) {
 	return simulation->getSatelliteDataPointers(satelliteInd, attributeInd); }
 
@@ -96,18 +93,19 @@ DLLEXPORT void writeSatelliteDataToCSVAPI(Simulation* simulation) {
 //Particle functions
 DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir)
 {
+	std::string nameStr{ name };
 	std::string tmp{ attrNames };
-	std::vector<std::string> attrNamesStr;
+	std::vector<std::string> attrNamesVec;
 
 	size_t loc{ 0 };
 	while (loc != std::string::npos)
 	{
 		loc = tmp.find(',');
-		attrNamesStr.push_back(tmp.substr(0, loc));
+		attrNamesVec.push_back(tmp.substr(0, loc));
 		tmp.erase(0, loc + 1);
 		while (tmp.at(0) == ' ')
 			tmp.erase(0, 1);
 	}
 
-	simulation->createParticleType(name, attrNamesStr, mass, charge, numParts, posDims, velDims, normFactor, loadFileDir);
+	simulation->createParticleType(nameStr, attrNamesVec, mass, charge, numParts, posDims, velDims, normFactor, loadFileDir);
 }

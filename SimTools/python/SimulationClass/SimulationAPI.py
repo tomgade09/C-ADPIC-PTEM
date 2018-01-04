@@ -48,8 +48,8 @@ class Simulation:
         self.simDLL_m.calculateEFieldAtZandTimeAPI.restype = ctypes.c_double
 
         #Simulation management
-        self.simDLL_m.createSimulation.argtypes = (ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_char_p, ctypes.c_double, ctypes.c_char_p)
-        self.simDLL_m.createSimulation.restype = ctypes.c_void_p
+        self.simDLL_m.createSimulationAPI.argtypes = (ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_char_p, ctypes.c_double, ctypes.c_char_p)
+        self.simDLL_m.createSimulationAPI.restype = ctypes.c_void_p
         self.simDLL_m.initializeSimulationAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.initializeSimulationAPI.restype = None
         self.simDLL_m.copyDataToGPUAPI.argtypes = (ctypes.c_void_p,)
@@ -88,10 +88,10 @@ class Simulation:
         self.simDLL_m.writeTimeDiffAPI.restype = None
 
         #Now code for init
-        crootdir = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
-        lutFileName = ctypes.create_string_buffer(bytes(self.fnLUT_m, encoding='utf-8'))
+        rootdirBuf = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
+        lutFileNameBuf = ctypes.create_string_buffer(bytes(self.fnLUT_m, encoding='utf-8'))
         self.simulationptr = ctypes.c_void_p
-        self.simulationptr = self.simDLL_m.createSimulation(dt, simMin, simMax, ionT, magT, crootdir, constEQSPS, lutFileName)
+        self.simulationptr = self.simDLL_m.createSimulationAPI(dt, simMin, simMax, ionT, magT, rootdirBuf, constEQSPS, lutFileNameBuf)
         self.logFileObj_m = self.simDLL_m.getLogFilePointerAPI(self.simulationptr)
 
         self.particles_m = []
@@ -103,8 +103,8 @@ class Simulation:
 
     #Run Simulation
     def runSim(self, iterations, origData=False, inSimOnly=True):
-        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6, "./../../in/data/")
-        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6, "./../../in/data/")
+        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)
+        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)
 
         self.initializeSimulation()
         self.copyDataToGPU()

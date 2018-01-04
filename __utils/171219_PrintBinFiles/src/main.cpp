@@ -1,45 +1,49 @@
 #include "FileIO\fileIO.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 int main()
 {
 	bool cond{ true };
-	double* attrs[3];
-	double* vparainbin = new double[1024 * 1024];
-	double* vperpinbin = new double[1024 * 1024];
-	double* zinbin = new double[1024 * 1024];
-	std::cout << "Reading Doubles\n";
-	fileIO::readDblBin(vparainbin, "./../../../in/e_vpara.bin", 1024 * 1024);
-	fileIO::readDblBin(vperpinbin, "./../../../in/e_vperp.bin", 1024 * 1024);
-	fileIO::readDblBin(zinbin, "./../../../in/e_z.bin", 1024 * 1024);
+	long doublecnt;
+
+	std::cout << "Input num of doubles to read: ";
+	std::cin >> doublecnt;
+
+	std::vector<std::vector<double>> attrs;
+	attrs.resize(3);
+	std::vector<double> vparainbin;
+	std::vector<double> vperpinbin;
+	std::vector<double> zinbin;
+	vparainbin.resize(doublecnt);
+	vperpinbin.resize(doublecnt);
+	zinbin.resize(doublecnt);
+
+	std::cout << "Reading " << doublecnt << " Doubles\n";
+	fileIO::readDblBin(vparainbin, "./../../../in/elec_vpara.bin", doublecnt);
+	fileIO::readDblBin(vperpinbin, "./../../../in/elec_vperp.bin", doublecnt);
+	fileIO::readDblBin(zinbin, "./../../../in/elec_z.bin", doublecnt);
 	std::cout << "done\n";
-	attrs[0] = vparainbin;
-	attrs[1] = vperpinbin;
-	attrs[2] = zinbin;
+	attrs.at(0) = vparainbin;
+	attrs.at(1) = vperpinbin;
+	attrs.at(2) = zinbin;
 
 	while (cond)
 	{
 		int attrInd{ 0 };
 		int partInd{ 0 };
 		std::string instr;
-		std::cout << "Quit(q) or Continue (any other): ";
-		std::cin >> instr;
-		//if (instr.find('q') != -1)
-			//cond = false;
-		//else
-		instr.clear();
-		//std::cout << instr.find('q');
-		std::cout << "Input array to read from.  0-v_para, 1-v_perp, 2-z: ";
-		std::cin >> attrInd;
-		std::cout << "Input index of array to read: ";
+		std::cout << "Input index of array to read, -1 = quit: ";
 		std::cin >> partInd;
+		if (partInd == -1)
+			return 0;
 
-		std::cout << "Attributes[" << attrInd << "][" << partInd << "] : " << attrs[attrInd][partInd] << "\n\n";
+		std::cout << "\nParticle[" << partInd << "] : ";
+		for (int attribute = 0; attribute < 3; attribute++)
+			std::cout << attrs[attribute][partInd] << "  ";
+		std::cout << "\n\n";
 	}
-	delete[] vparainbin;
-	delete[] vperpinbin;
-	delete[] zinbin;
 
 	return 0;
 }
