@@ -30,7 +30,7 @@ void Particle::normalizeParticles(bool orig, bool curr, bool inverse)
 		return;
 	
 	if (normalized_m == true)
-	{
+	{//need a way to write to log file
 		std::cout << "Warning: At least one of the data sets is already normalized.  Make sure neither data set is being normalized twice!\n";
 	}
 

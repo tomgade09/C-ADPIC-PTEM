@@ -218,12 +218,6 @@ void Simulation::initializeSimulation()
 	gpuOtherMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr 2D, part 1 curr 2D... part 0 orig 2D, part 1 orig 2D... curand, LUT 2D
 	satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
 
-	//
-	//
-	//Create temporary structure to store satellite data whenever the user wants to create it, then call createSatellite here - also do check above and issue warning
-	//
-	//
-
 	//Allocate memory on GPU for elec/ions variables
 	for (int ind = 0; ind < 2 * particleTypes_m.size(); ind++) //[0] = e data, [1] = i data, [2] = e orig data, [3] = i orig data
 	{
@@ -233,6 +227,15 @@ void Simulation::initializeSimulation()
 		CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(ind), memSize));
 		CUDA_CALL(cudaMemset(gpuDblMemoryPointers_m.at(ind), 0, memSize));
 		CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(ind), partTmp->getNumberOfAttributes() * sizeof(double*))); //2D array
+	}
+
+	if (tempSats_m.size() > 0)
+	{
+		LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii)->particleInd, tempSats_m.at(iii)->altitude, tempSats_m.at(iii)->upwardFacing, tempSats_m.at(iii)->name););
+	}
+	else
+	{
+		std::cout << "Simulation::initializeSimulation: Warning: No satellites created.  That's odd.\n";
 	}
 
 	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
@@ -251,7 +254,7 @@ void Simulation::initializeSimulation()
 
 void Simulation::copyDataToGPU()
 {//copies particle distribution and associated data to GPU in preparation of iterative calculations over the data
-	logFile_m.writeLogFileEntry("copyDataToGPU", "Start copy to GPU");
+	logFile_m.writeLogFileEntry("Simulation::copyDataToGPU: Start copy to GPU");
 	
 	if (!initialized_m)
 	{
@@ -286,13 +289,13 @@ void Simulation::copyDataToGPU()
 
 	copied_m = true;
 	
-	logFile_m.writeLogFileEntry("copyDataToGPU", "End copy to GPU");
+	logFile_m.writeLogFileEntry("Simulation::copyDataToGPU: End copy to GPU");
 }
 
 void Simulation::iterateSimulation(int numberOfIterations)
 {//conducts iterative calculations of data previously copied to GPU - runs the data through the computeKernel
 	logFile_m.createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 3
-	logFile_m.writeLogFileEntry("iterateSimulation", "Start Iteration of Sim:  " + std::to_string(numberOfIterations));
+	logFile_m.writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
 	
 	if (!initialized_m)
 	{
@@ -358,12 +361,12 @@ void Simulation::iterateSimulation(int numberOfIterations)
 
 	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
 	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
-	logFile_m.writeLogFileEntry("iterateSimulation", "End Iteration of Sim:  " + std::to_string(numberOfIterations));
+	logFile_m.writeLogFileEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }
 
 void Simulation::copyDataToHost()
 {//copies data back to host from GPU
-	logFile_m.writeLogFileEntry("copyDataToHost", "Copy simulation data from GPU back to host");
+	logFile_m.writeLogFileEntry("Simulation::copyDataToHost: Copy simulation data from GPU back to host");
 	
 	if (!initialized_m)
 	{
@@ -383,12 +386,12 @@ void Simulation::copyDataToHost()
 	//For derived classes to add code
 	copyDataToHostFollowOn();
 
-	logFile_m.writeLogFileEntry("copyDataToHost", "Done with copying.");
+	logFile_m.writeLogFileEntry("Simulation::copyDataToHost: Done with copying.");
 }
 
 void Simulation::freeGPUMemory()
 {//used to free the memory on the GPU that's no longer needed
-	logFile_m.writeLogFileEntry("freeGPUMemory", "Start free GPU Memory.");
+	logFile_m.writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
 
 	if (!initialized_m)
 	{
@@ -402,7 +405,7 @@ void Simulation::freeGPUMemory()
 	//For derived classes to add code
 	freeGPUMemoryFollowOn();
 
-	logFile_m.writeLogFileEntry("freeGPUMemory", "End free GPU Memory.");
+	logFile_m.writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
 
 	CUDA_CALL(cudaProfilerStop()); //For profiling the profiler in the CUDA bundle}
 }

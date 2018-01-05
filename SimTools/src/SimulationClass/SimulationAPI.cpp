@@ -78,7 +78,7 @@ DLLEXPORT void prepareResultsAPI(Simulation* simulation, bool normalizeToRe) {
 
 //Satellite functions
 DLLEXPORT void createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name) {
-	simulation->createSatellite(particleInd, altitude, upwardFacing, name); }
+	simulation->createTempSat(particleInd, altitude, upwardFacing, name); }
 
 DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
 	return static_cast<int>(simulation->getNumberOfSatellites()); }

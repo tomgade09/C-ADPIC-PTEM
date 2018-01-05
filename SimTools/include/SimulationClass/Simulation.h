@@ -18,6 +18,14 @@ struct SatandPart
 	~SatandPart() { delete satellite; delete particle; }
 };
 
+struct TempSat
+{
+	int particleInd;
+	double altitude;
+	bool upwardFacing;
+	std::string name;
+};
+
 class Simulation
 {
 protected:
@@ -39,6 +47,7 @@ protected:
 	std::vector<Particle*> particleTypes_m;
 
 	//Satellites and data
+	std::vector<TempSat*> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
 	std::vector<SatandPart*> satellites_m;
 	std::vector<std::vector<std::vector<double>>> satelliteData_m; //3D satelliteData[satellite number][attribute number][particle number]
 	
@@ -68,7 +77,7 @@ protected:
 public:
 	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir):
 		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
-	{ logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor"); }
+	{ /*logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor");*/ }
 
 	virtual ~Simulation()
 	{	
@@ -126,6 +135,11 @@ public:
 	virtual double* getSatelliteDataPointers(int satelliteInd, int attributeInd) { //some sort of check here to make sure you've received data
 		return satelliteData_m.at(satelliteInd).at(attributeInd).data(); }
 	virtual void	writeSatelliteDataToCSV();
+	virtual void    createTempSat(int particleInd, double altitude, bool upwardFacing, std::string name)
+	{
+		if (initialized_m) { logFile_m.writeLogFileEntry("Simulation::createTempSat: ERROR: initializeSimulation has already been called.  Calling this now will have no effect.  Call this function before initializeSimulation.  Returning without creating a satellite."); return; }
+		tempSats_m.push_back(new TempSat{ particleInd, altitude, upwardFacing, name });
+	}
 
 	virtual void    createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir="");
 	virtual Particle* getParticlePointer(int ind) { return particleTypes_m.at(ind); }

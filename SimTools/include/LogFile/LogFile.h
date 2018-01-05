@@ -24,10 +24,10 @@ public:
 	LogFile(std::string logFileName, int timeStructToReserve, bool overwrite=false) : logFileName_m{ logFileName }, overwrite_m{ overwrite }
 	{ 
 		timeStructs_m.reserve(timeStructToReserve);
-		std::string logHeader{ "   [ Time  (ms) ]   |       Log Data       | Log Message\n\n" }; //do I want to add the time, other attributes to file???
-		logHeader += "[ 0 ]               | LogFile class        | Log file class created, file created on disk, first entry written, first time point recorded.\n";
+		std::string logHeader{ "[  Time (ms)  ] : Log Message\n" }; //do I want to add the time, other attributes to file???
+		logHeader += "[ 0.000000000 ] : LogFile class created, file created on disk, first entry written, first time point recorded.\n";
 		fileIO::writeTxtFile(logFileName_m.c_str(), logHeader.c_str(), overwrite_m);
-		createTimeStruct("Start of Simulation!  First time point.  In LogFile class constructor"); //index 0 of timeStructs_m
+		createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
 	}
 
 	~LogFile()
@@ -37,7 +37,7 @@ public:
 	}
 
 	void createTimeStruct(std::string label);
-	void writeLogFileEntry(std::string logData, std::string logMessage);
+	void writeLogFileEntry(std::string logMessage);
 	
 	void writeTimeDiff(timeStruct* startTS, timeStruct* endTS);
 	void writeTimeDiff(int startTSind, timeStruct* endTS);

@@ -1,32 +1,14 @@
 #include "LogFile\LogFile.h"
+#include <iomanip>
 
-void LogFile::writeLogFileEntry(std::string logData, std::string logMessage)
+void LogFile::writeLogFileEntry(std::string logMessage)
 {//[Time (ms from start) - 19 chars tot, 15 chars for numbers] | Log Data - 20 chars | Log Message - unlimited chars
 	std::string writeTxt;
-	writeTxt = "[ " + std::to_string(static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[0]->tp).count())/1000) + " ]"; //time
+	std::stringstream ss;
 
-	size_t txtlen = writeTxt.length();
-
-	if ((19 - txtlen) > 0)
-	{
-		for (int iii = 0; iii < (19 - txtlen); iii++)
-			writeTxt += ' ';
-	}
-	else
-		writeTxt.erase(17, txtlen - 19);
-
-	writeTxt += " | " + logData;
-	txtlen = writeTxt.length();
-
-	if ((42 - txtlen) > 0)
-	{
-		for (int iii = 0; iii < (42 - txtlen); iii++)
-			writeTxt += ' ';
-	}
-	else
-		writeTxt.erase(42, txtlen - 42);
-
-	writeTxt += " | " + logMessage + "\n";
+	ss << std::setprecision(10) << std::fixed << static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[0]->tp).count()) / 1000;
+	writeTxt = "[ " + ss.str() + " ] : " + logMessage + "\n"; //time
+	
 	fileIO::writeTxtFile(logFileName_m.c_str(), writeTxt.c_str());
 }
 
@@ -41,14 +23,11 @@ void LogFile::createTimeStruct(std::string label)
 //writeTimeDiff plus overloads
 void LogFile::writeTimeDiff(timeStruct* startTS, timeStruct* endTS)
 {
-	std::string logData;
 	std::string logMessage;
-
-	logData = "writeTimeDiff";
-	logMessage = "Timed:  " + startTS->label + "  TO  " + endTS->label + ": " \
+	logMessage = "writeTimeDiff:  " + startTS->label + "  TO  " + endTS->label + ": " \
 		+ std::to_string(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(endTS->tp - startTS->tp).count()) / 1000);
 
-	writeLogFileEntry(logData, logMessage);
+	writeLogFileEntry(logMessage);
 }
 
 void LogFile::writeTimeDiff(int startTSind, timeStruct* endTS)

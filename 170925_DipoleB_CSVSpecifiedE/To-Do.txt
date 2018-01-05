@@ -1,8 +1,8 @@
 TO-DO
-RIGHT NOW THROUGH CSV, WRITE BINS - Write Satellite values to disk along with times
+MOSTLY DONE - Change over current error messages to log file
+MOSTLY DONE - Remove frivolous messages
+IN PROGRESS - Enforce calling certain functions after other required (saving csv/xlsx after the data is copied and formed)
 - RNG generates total energy and pitch angle
-- Remove frivolous messages
-- Enforce calling certain functions after other required (saving csv/xlsx after the data is copied and formed)
 - Document things better
 - Ionosphere scattering
 
@@ -10,7 +10,6 @@ RIGHT NOW THROUGH CSV, WRITE BINS - Write Satellite values to disk along with ti
 - Some sort of error handling system instead of cout messages
       - Class of some sort, some common error codes (indexing errors, values out of range, etc)
       - Encapsulate everything in try, except blocks?
-- Change over current error messages to log file
 - Possibly more common code compiled to DLLs to make recompiling less complex - call already made DLLs from sims (ex: FileIO, Simulation)
 - Photoelectrons
 
@@ -33,6 +32,7 @@ DONE, THROUGH PARTICLE CLASS - Enable load particle distribution via switch
 DONE - Pass in variables instead of having to recompile every time (CSV or possibly XML if you want to be fancy)
 DONE - Consolidate satellite data into one array, then pass to python
 DONE - Enable qsps, alfven via switch
+DONE - Write Satellite values to disk along with times
 
 
 STUFF THAT IS DONE WITH CAVEATS:

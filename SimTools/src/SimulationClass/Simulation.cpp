@@ -33,7 +33,9 @@ void Simulation::receiveSatelliteData(bool removeZeros)
 //public functions
 void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir)
 {
-	//add something to logfile here
+	//some sort of debug message??  Necessary for daily use?
+	logFile_m.writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Pos Dimensions: " + std::to_string(posDims) + ", Vel Dimensions: " + std::to_string(velDims) + ", Files Loaded?: " + ((loadFilesDir == "") ? "False" : "True"));
+
 	Particle* newPart = new Particle(name, attrNames, mass, charge, numParts, posDims, velDims, normFactor);
 	particleTypes_m.push_back(newPart);
 
@@ -43,16 +45,12 @@ void Simulation::createParticleType(std::string name, std::vector<std::string> a
 
 void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing, std::string name)
 {//remove elecTF, change to struct
-	//
-	//
-	//
-	//add something to logfile here
-	//
-	//
-	//
-
 	if (particleTypes_m.size() <= partInd)
-		std::cout << "Error: particleTypes.at(" << partInd << ") does not exist!\n";
+		logFile_m.writeLogFileEntry("Simulation::createSatellite: ERROR: particleTypes.at(" + std::to_string(partInd) + ") does not exist!");
+	if (gpuOtherMemoryPointers_m.at(partInd) == nullptr)
+		logFile_m.writeLogFileEntry("Simulation::createSatellite: ERROR: Pointer to GPU data is a nullptr.  That's just asking for trouble.");
+
+	logFile_m.writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd)->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
 	Particle* tmpPart{ particleTypes_m.at(partInd) };
 	Satellite* newSat = new Satellite(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(partInd)), name);
@@ -75,7 +73,7 @@ void Simulation::convertVPerpToMu(int partInd)
 {
 	if (partInd > (particleTypes_m.size() - 1))
 	{
-		std::cout << "Error: convertVPerpToMu specified index out of range.  Returning without change.\n";
+		logFile_m.writeLogFileEntry("Simulation::convertVPerpToMu: ERROR: convertVPerpToMu specified index out of range.  Returning without change.");
 		return;
 	}
 
@@ -101,7 +99,7 @@ void Simulation::convertMuToVPerp(int partInd)
 {
 	if (partInd > (particleTypes_m.size() - 1))
 	{
-		std::cout << "Error: convertVPerpToMu specified index out of range.  Returning without change.\n";
+		logFile_m.writeLogFileEntry("Simulation::convertMuToVPerp: ERROR: convertVPerpToMu specified index out of range.  Returning without change.");
 		return;
 	}
 
@@ -114,7 +112,7 @@ void Simulation::writeSatelliteDataToCSV()
 
 	if (satelliteData_m.size() == 0)
 	{
-		std::cout << "Error: satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.\n";
+		logFile_m.writeLogFileEntry("Simulation::writeSatelliteDataToCSV: ERROR: satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.");
 		return;
 	}
 	//need to index the satellite data with the orig data by the saved index number
@@ -159,12 +157,12 @@ double* Simulation::getPointerToParticleAttributeArray(int partIndex, int attrIn
 {
 	if (partIndex > (particleTypes_m.size() - 1))
 	{
-		std::cout << "Particle Index out of bounds.  There aren't that many particle types.\n";
+		logFile_m.writeLogFileEntry("Simulation::getPointerToParticleAttributeArray: ERROR: Particle Index out of bounds.  There aren't that many particle types.  Returning nullptr.");
 		return nullptr;
 	}
 	else if (attrIndex > (particleTypes_m.at(partIndex)->getNumberOfAttributes() - 1))
 	{
-		std::cout << "Attribute Index out of bounds.  There aren't that many attributes for the particle type.\n";
+		logFile_m.writeLogFileEntry("Simulation::getPointerToParticleAttributeArray: ERROR: Attribute Index out of bounds.  There aren't that many attributes for the particle type.  Returning nullptr.");
 		return nullptr;
 	}
 

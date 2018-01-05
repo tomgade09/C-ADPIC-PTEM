@@ -31,7 +31,7 @@ public:
 		std::string LUT{ rootdir_m + "\\in\\" + LUTfilename_m };
 		setElecMagLUT(LUT.c_str(), numOfEntrLUT_m, numOfColsLUT_m);
 
-		logFile_m.writeTimeDiffFromNow(0, "End AlfvenLUT Constructor");
+		//logFile_m.writeTimeDiffFromNow(0, "End AlfvenLUT Constructor");
 	}//end constructor
 
 	~AlfvenLUT() //Destructor
@@ -44,7 +44,7 @@ public:
 
 	//One liners
 	double*  getPointerToElectricFieldData(int column) { if (elcFieldLUT_m == nullptr)
-		{ std::cout << "Array not initialized yet.  Run Simulation::setElecMagLUT.\n"; return nullptr; } return elcFieldLUT_m[column]; }
+		{ logFile_m.writeLogFileEntry("AlfvenLUT::getPointerToElectricFieldData: ERROR: Array not initialized yet.  Run Simulation::setElecMagLUT.  Returning nullptr."); return nullptr; } return elcFieldLUT_m[column]; }
 
 	//Array tools
 	virtual void   setElecMagLUT(const char* filename, int rows, int cols) { elcFieldLUT_m = fileIO::read2DCSV(filename, rows, cols, ' '); }

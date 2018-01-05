@@ -80,7 +80,7 @@ class Simulation:
         #Log File
         self.simDLL_m.getLogFilePointerAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getLogFilePointerAPI.restype = ctypes.c_void_p
-        self.simDLL_m.writeLogFileEntryAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
+        self.simDLL_m.writeLogFileEntryAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
         self.simDLL_m.writeLogFileEntryAPI.restype = None
         self.simDLL_m.writeTimeDiffFromNowAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
         self.simDLL_m.writeTimeDiffFromNowAPI.restype = None
@@ -106,14 +106,13 @@ class Simulation:
         self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)
         self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)
 
-        self.initializeSimulation()
-        self.copyDataToGPU()
-
-        self.createSatellite(0, 8.371e6 * 0.999, True, "bottomElectrons") #This is weird - change order later, should not have to initialize the sim before creating satellites
+        self.createSatellite(0, 8.371e6 * 0.999, True, "bottomElectrons")
         self.createSatellite(1, 8.371e6 * 0.999, True, "bottomIons")
         self.createSatellite(0, 4 * 6.371e6 * 1.001, False, "topElectrons")
         self.createSatellite(1, 4 * 6.371e6 * 1.001, False, "topIons")
 
+        self.initializeSimulation()
+        self.copyDataToGPU()
         self.iterateSimulation(iterations)
         self.copyDataToHost()
         self.freeGPUMemory()
@@ -250,10 +249,9 @@ class Simulation:
         
         return satsdata
 
-    def logWriteEntry(self, logData, logMessage):
-        logDataCbuf = ctypes.create_string_buffer(bytes(logData, encoding='utf-8'))
+    def logWriteEntry(self, logMessage):
         logMessCbuf = ctypes.create_string_buffer(bytes(logMessage, encoding='utf-8'))
-        self.simDLL_m.writeLogFileEntryAPI(self.logFileObj_m, logDataCbuf, logMessCbuf)
+        self.simDLL_m.writeLogFileEntryAPI(self.logFileObj_m, logMessCbuf)
 
     def logWriteTimeDiffFromNow(self, startTSind, nowLabel):
         nowLabCbuf = ctypes.create_string_buffer(bytes(nowLabel, encoding='utf-8'))
