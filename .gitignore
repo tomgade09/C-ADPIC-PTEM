@@ -53,7 +53,5 @@ Debug/
 x64/
 .vs/
 bin/
-distgraphs/
-in/
-__*/
-!__utils/
+lib/
+_*/
