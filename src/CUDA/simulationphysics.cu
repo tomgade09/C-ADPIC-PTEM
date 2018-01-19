@@ -48,7 +48,67 @@ __host__ __device__ double EFieldatZ(double** LUT, double z, double simtime, dou
 	return (qsps ? (qspsEatZ(z, simtime, constE)) : (0.0)) + (alfLUT ? (alfvenWaveEbyLUT(LUT, z, simtime, omegaE)) : (0.0)) + (alfCalc ? (alfvenWaveEbyCompute(z, simtime)) : (0.0));
 }
 
-__host__ __device__ double BFieldatZ(double z, double simtime)
+/* THIS IS THE NEW STUFF, ADDED CODE TO TRY DIPOLE B FIELD CONFIGURATION */
+constexpr double ILATDEGS{ 72.0 };
+//constexpr double ILATRADS{ ILATDEGS * PI / 180.0 };
+constexpr double ERRTOLERANCE{ 1e-10 };
+constexpr double B0{ 3.12e-5 };
+
+__host__ __device__ double getSAtLambda(double lambdaDegrees, double L)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
+{//returns s in units of L
+	double x{ asinh(sqrt(3.0) * sin(lambdaDegrees * PI / 180)) };
+
+	return (0.5 * L / sqrt(3.0)) * (x + sinh(x) * cosh(x));
+}
+
+__host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, double ILATdegrees)
+{//s, L, and dipoleEquatorialDist must be in same units
+	double s_max{ getSAtLambda(ILATdegrees, dipoleEquatorialDist) };
+	double lambda_tmp{ (-ILATdegrees / s_max) * s + ILATdegrees };
+	double s_tmp{ s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist) };
+	double dlambda{ 1 };
+	bool   over{ 0 };
+
+	while (abs((s_tmp - s) / s) > ERRTOLERANCE)
+	{
+		while (1)
+		{
+			over = (s_tmp >= s);
+			if (over)
+			{
+				lambda_tmp += dlambda;
+				s_tmp = s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist);
+				if (s_tmp < s)
+					break;
+			}
+			else
+			{
+				lambda_tmp -= dlambda;
+				s_tmp = s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist);
+				if (s_tmp >= s)
+					break;
+			}
+		}
+		dlambda /= 10;
+		if (dlambda < ERRTOLERANCE / 100)
+			break;
+	}
+
+	return lambda_tmp;
+}
+
+__host__ __device__ double BFieldatZ(double s, double simtime)
+{
+	double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) };
+	double lambda_deg{ getLambdaAtS(s, L, ILATDEGS) };
+	double lambda_rad{ lambda_deg * PI / 180.0 };
+	double rnorm{ L / RADIUS_EARTH * pow(cos(lambda_rad), 2) };
+
+	return B0 / pow(rnorm, 3) * sqrt(1 + 3 * pow(sin(lambda_rad),2));
+}
+/* END NEW STUFF */
+
+/*__host__ __device__ double BFieldatZ(double z, double simtime)
 {//for now, a simple dipole field
 	if (z == 0)
 		return 0.0; //add an error here if this case is true, at some point
@@ -59,7 +119,7 @@ __host__ __device__ double BFieldatZ(double z, double simtime)
 		norm = 1.0;
 
 	return B0ATTHETA / pow(z / norm, 3); //Bz = B0 at theta * (1/rz(in Re))^3
-}
+}*/
 
 __device__ double accel1dCUDA(double* args, int len, double** LUT, bool qsps, bool alfven) //made to pass into 1D Fourth Order Runge Kutta code
 {//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]

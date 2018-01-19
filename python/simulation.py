@@ -5,7 +5,7 @@ pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 sys.path.append(os.path.normpath(pyfiledir + '/SimulationClass/'))
 
 from AlfvenLUT import *
-#from __plotParticles import *
+from __plotParticles import *
 
 #Setting up folders, changing directory
 def setupFolders():
@@ -34,12 +34,13 @@ def simulationRunMain():
     dllLocation, savedir, rootdir, dtg = setupFolders()
     print("================  SIMULATION ", dtg, " ================")
 
-    sim = Simulation(dllLocation, rootdir, 0.01, 8.371e6, 4 * 6.371e6, 2.5, 1000, 0.0, "./ez.out")
+    sim = Simulation(dllLocation, rootdir, 0.01, 8.371e6, 4 * 6.371e6, 2.5, 1000, 0.0)#, "ez.out")
     finalDat, origDat, satDat = sim.runSim(25000)
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (6.371e6 * 4000), sim.simMin_m)
 
     sim.logWriteEntry('Python: Done getting data.  Plotting.')
 
+    plotFields(fields[0], fields[1], fields[2])
     #plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         #results[1][2], fields[0], fields[1], fields[2], False)
 

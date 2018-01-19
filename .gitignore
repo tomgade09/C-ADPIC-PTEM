@@ -50,6 +50,7 @@
 # Project-specific folders
 build/
 Debug/
+Release/
 x64/
 .vs/
 bin/

@@ -10,8 +10,9 @@ from simulation import *
 def printArrayNames():
 	print("Returned from simulation                    : finalDat, origDat, satDat")
 	print("Containing all calc quantities              : elecpitches, elecenergies, [ionspitches, ionsenergies]")
-	print("Calc quantities subsets [elec|ions]Ionsph...: ...Energies, ...Pitches, ...Vpara, ...Vperp, ...Z, ...Times, ...LogTimes")
-	print("Calc quantities subsets [elec|ions]Magsph...: ...Energies, ...Pitches, ...Vpara, ...Vperp, ...Z, ...Times, ...LogTimes")
+	print("Calc quantities subsets [elec|ions]Ionsph...: Energies, Pitches, Vpara, Vperp, Epara, Eperp, Z, Times, LogTimes, LogEnergies")
+	print("Calc quantities subsets [elec|ions]Magsph...: Energies, Pitches, Vpara, Vperp, Epara, Eperp, Z, Times, LogTimes, LogEnergies")
+	print("Example                                     : elecMagsphLogEnergies, elecIonsphZ, ,ionsMagsphLogTimes")
 
 
 dllLocation, savedir, rootdir, dtg = setupFolders()
@@ -101,16 +102,89 @@ for iii in range(50176):
 	else:
 		ionsMagsphTimes = np.append(ionsMagsphTimes, ionsMagsphTimesPre[0][iii])
 
+
 elecIonsphTimesPre = np.array([])
 elecMagsphTimesPre = np.array([])
 ionsIonsphTimesPre = np.array([])
 ionsMagsphTimesPre = np.array([])
 
-logVec = np.vectorize(math.log)
+def log10Excep(x):
+	if x == -1:
+		return 10
+	return math.log10(x)
 
-#elecIonsphLogTimes = logVec(elecIonsphTimes)
-#elecMagsphLogTimes = logVec(elecMagsphTimes)
-#ionsIonsphLogTimes = logVec(ionsIonsphTimes)
-#ionsMagsphLogTimes = logVec(ionsMagsphTimes)
+logVec = np.vectorize(log10Excep)
+
+elecIonsphLogEnergies = logVec(elecIonsphEnergies)
+elecMagsphLogEnergies = logVec(elecMagsphEnergies)
+ionsIonsphLogEnergies = logVec(ionsIonsphEnergies)
+ionsMagsphLogEnergies = logVec(ionsMagsphEnergies)
+
+elecIonsphLogTimes = logVec(elecIonsphTimes)
+elecMagsphLogTimes = logVec(elecMagsphTimes)
+ionsIonsphLogTimes = logVec(ionsIonsphTimes)
+ionsMagsphLogTimes = logVec(ionsMagsphTimes)
+
+def elecVtoE(x):
+	multfact = 1
+	#if x < 0:
+		#multfact = -1
+	return multfact * 0.5 * MASS_ELEC * x**2 / J_PER_EV
+
+def ionsVtoE(x):
+	multfact = 1
+	#if x < 0:
+		#multfact = -1
+	return multfact * 0.5 * MASS_PROT * x**2 / J_PER_EV
+	
+vToEelecVec = np.vectorize(elecVtoE)
+vToEionsVec = np.vectorize(ionsVtoE)
+
+elecIonsphEpara = vToEelecVec(elecIonsphVpara)
+elecIonsphEperp = vToEelecVec(elecIonsphVperp)
+elecMagsphEpara = vToEelecVec(elecMagsphVpara)
+elecMagsphEperp = vToEelecVec(elecMagsphVperp)
+
+elecIonsphLogEpara = logVec(elecIonsphEpara)
+elecIonsphLogEperp = logVec(elecIonsphEperp)
+elecMagsphLogEpara = logVec(elecMagsphEpara)
+elecMagsphLogEperp = logVec(elecMagsphEperp)
+
+ionsIonsphEpara = vToEionsVec(ionsIonsphVpara)
+ionsIonsphEperp = vToEionsVec(ionsIonsphVperp)
+ionsMagsphEpara = vToEionsVec(ionsMagsphVpara)
+ionsMagsphEperp = vToEionsVec(ionsMagsphVperp)
 
 printArrayNames()
+
+plt.scatter(elecMagsphPitches, elecMagsphLogEnergies, c=elecMagsphLogTimes, cmap=plt.cm.jet, s=5)
+plt.title("Magnetospheric-Source Electrons Pitch Angle vs Log Energy")
+plt.xlabel("Pitch Angles (degrees)")
+plt.ylabel("Log Energies (log eV)")
+plt.colorbar(label="Log Time in Simulation (log s)")
+plt.savefig("MagsphPitchVsLogEnergy.jpg", dpi=300)
+plt.clf()
+
+plt.scatter(elecIonsphPitches, elecIonsphLogEnergies, c=elecIonsphLogTimes, cmap=plt.cm.jet, s=5)
+plt.title("Ionospheric-Source Electrons Pitch Angle vs Log Energy")
+plt.xlabel("Pitch Angles (degrees)")
+plt.ylabel("Log Energies (log eV)")
+plt.colorbar(label="Log Time in Simulation (log s)")
+plt.savefig("IonsphPitchVsLogEnergy.jpg", dpi=300)
+plt.clf()
+
+plt.scatter(elecMagsphLogEpara, elecMagsphLogEperp, c=elecMagsphLogTimes, cmap=plt.cm.jet, s=5)
+plt.title("Magnetospheric-Source Electrons E parallel vs E perpendicular")
+plt.xlabel("Log E_parallel (log eV)")
+plt.ylabel("Log E_perpendicular (log eV)")
+plt.colorbar(label="Log Time in Simulation (log s)")
+plt.savefig("MagsphEparaVsEperp.jpg", dpi=300)
+plt.clf()
+
+plt.scatter(elecIonsphLogEpara, elecIonsphLogEperp, c=elecIonsphLogTimes, cmap=plt.cm.jet, s=5)
+plt.title("Ionospheric-Source Electrons E parallel vs E perpendicular")
+plt.xlabel("Log E_parallel (log eV)")
+plt.ylabel("Log E_perpendicular (log eV)")
+plt.colorbar(label="Log Time in Simulation (log s)")
+plt.savefig("IonsphEparavsEperp.jpg", dpi=300)
+

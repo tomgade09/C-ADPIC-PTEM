@@ -198,7 +198,7 @@ void Simulation::loadCompletedSimData(std::string fileDir, std::vector<std::stri
 {
 	for (size_t parts = 0; parts < partNames.size(); parts++)
 	{
-		createParticleType(partNames.at(parts), attrNames, 1, 1, numParts, attrNames.size() - 1, 1, 1, fileDir + "particles_final/");
+		createParticleType(partNames.at(parts), attrNames, 1, 1, numParts, static_cast<int>(attrNames.size() - 1), 1, 1, fileDir + "particles_final/");
 		particleTypes_m.at(parts)->loadFilesToArray(fileDir + "particles_init/", true);
 	}
 
