@@ -51,8 +51,13 @@ __host__ __device__ double EFieldatZ(double** LUT, double z, double simtime, dou
 /* THIS IS THE NEW STUFF, ADDED CODE TO TRY DIPOLE B FIELD CONFIGURATION */
 constexpr double ILATDEGS{ 72.0 };
 //constexpr double ILATRADS{ ILATDEGS * PI / 180.0 };
-constexpr double ERRTOLERANCE{ 1e-10 };
+constexpr double ERRTOLERANCE{ 1e-4 };
 constexpr double B0{ 3.12e-5 };
+constexpr double DS{ 6.371e3 }; //seems to me a reasonable value maybe??
+//double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) }; //calculate this in advance, pass it in
+constexpr double L{ 66717978.1693023 }; //valid for 72.0 ILAT ONLY!!!!
+constexpr double Lnorm{ L / RADIUS_EARTH }; //same as above
+//pass in s_max as well
 
 __host__ __device__ double getSAtLambda(double lambdaDegrees, double L)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
 {//returns s in units of L
@@ -66,7 +71,7 @@ __host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, d
 	double s_max{ getSAtLambda(ILATdegrees, dipoleEquatorialDist) };
 	double lambda_tmp{ (-ILATdegrees / s_max) * s + ILATdegrees };
 	double s_tmp{ s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist) };
-	double dlambda{ 1 };
+	double dlambda{ 1.0 };
 	bool   over{ 0 };
 
 	while (abs((s_tmp - s) / s) > ERRTOLERANCE)
@@ -89,8 +94,8 @@ __host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, d
 					break;
 			}
 		}
-		dlambda /= 10;
-		if (dlambda < ERRTOLERANCE / 100)
+		dlambda /= 10.0;
+		if (dlambda < ERRTOLERANCE / 100.0)
 			break;
 	}
 
@@ -99,12 +104,12 @@ __host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, d
 
 __host__ __device__ double BFieldatZ(double s, double simtime)
 {
-	double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) };
+	//double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) }; //calculate this in advance, pass it in
 	double lambda_deg{ getLambdaAtS(s, L, ILATDEGS) };
 	double lambda_rad{ lambda_deg * PI / 180.0 };
-	double rnorm{ L / RADIUS_EARTH * pow(cos(lambda_rad), 2) };
+	double rnorm{ Lnorm * pow(cos(lambda_rad), 2) };
 
-	return B0 / pow(rnorm, 3) * sqrt(1 + 3 * pow(sin(lambda_rad),2));
+	return -B0 / pow(rnorm, 3) * sqrt(1.0 + 3 * pow(sin(lambda_rad),2));
 }
 /* END NEW STUFF */
 
@@ -130,7 +135,8 @@ __device__ double accel1dCUDA(double* args, int len, double** LUT, bool qsps, bo
 	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0], args[8], args[9], qsps, alfven); //will need to replace E with a function to calculate in more complex models
 
 	//Mirror force
-	F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / RADIUS_EARTH, 4))) / RADIUS_EARTH; //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	//F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / RADIUS_EARTH, 4))) / RADIUS_EARTH; //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	F_mir = -args[2] * (BFieldatZ(ztmp + DS, args[6] + args[0]) - BFieldatZ(ztmp - DS, args[6] + args[0])) / (2 * DS); //-mu * gradB
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
@@ -410,6 +416,8 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 				gpuDblMemoryPointers_m.at(2 * numParts), //1D array of sim characteristics
 				reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * numParts)), //1D array of curand states
 				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, 0);// (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
+
+			cudaDeviceSynchronize();
 		}
 
 		for (int sats = 0; sats < satellites_m.size(); sats++)

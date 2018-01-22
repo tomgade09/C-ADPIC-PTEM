@@ -34,13 +34,16 @@ def simulationRunMain():
     dllLocation, savedir, rootdir, dtg = setupFolders()
     print("================  SIMULATION ", dtg, " ================")
 
-    sim = Simulation(dllLocation, rootdir, 0.01, 8.371e6, 4 * 6.371e6, 2.5, 1000, 0.0)#, "ez.out")
+    sim = Simulation(dllLocation, rootdir, 0.01, 2030837.49610366, 19881647.2473464, 2.5, 1000, 0.0)#, "ez.out") #need to pass in either height from Re/geocentric or s - right now it's s
     finalDat, origDat, satDat = sim.runSim(25000)
-    fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (6.371e6 * 4000), sim.simMin_m)
+    #                        time, bins,           binsize,                           z0
+    fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
+    for iii in range(len(fields[2])):
+        fields[2][iii] /= 6.371e6
 
     sim.logWriteEntry('Python: Done getting data.  Plotting.')
 
-    plotFields(fields[0], fields[1], fields[2])
+    plotFields(fields[0], fields[1], fields[2], True)
     #plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
         #results[1][2], fields[0], fields[1], fields[2], False)
 

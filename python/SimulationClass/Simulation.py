@@ -118,17 +118,17 @@ class Simulation:
 
     #Run Simulation
     def runSim(self, iterations):
-        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)
-        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)
+        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)#, './../../_in/data/')
+        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)#, './../../_in/data/')
 
-        self.createSatellite(0, 8.371e6 * 0.999, True, "bottomElectrons")
-        self.createSatellite(1, 8.371e6 * 0.999, True, "bottomIons")
-        self.createSatellite(0, 4 * 6.371e6 * 1.001, False, "topElectrons")
-        self.createSatellite(1, 4 * 6.371e6 * 1.001, False, "topIons")
+        self.createSatellite(0, 2030837.49610366 * 0.999, True, "bottomElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(1, 2030837.49610366 * 0.999, True, "bottomIons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(0, 19881647.2473464 * 1.001, False, "topElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(1, 19881647.2473464 * 1.001, False, "topIons")#need to pass in either height from Re/geocentric or s - right now it's s
 
         self.initializeSimulation()
         self.copyDataToGPU()
-        self.iterateSimulation(iterations, 5000)
+        self.iterateSimulation(iterations, 100)
         self.copyDataToHost()
         self.freeGPUMemory()
         self.prepareResults()
