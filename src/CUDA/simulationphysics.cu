@@ -50,13 +50,13 @@ __host__ __device__ double EFieldatZ(double** LUT, double z, double simtime, dou
 
 /* THIS IS THE NEW STUFF, ADDED CODE TO TRY DIPOLE B FIELD CONFIGURATION */
 constexpr double ILATDEGS{ 72.0 };
-//constexpr double ILATRADS{ ILATDEGS * PI / 180.0 };
 constexpr double ERRTOLERANCE{ 1e-4 };
 constexpr double B0{ 3.12e-5 };
 constexpr double DS{ 6.371e3 }; //seems to me a reasonable value maybe??
 //double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) }; //calculate this in advance, pass it in
 constexpr double L{ 66717978.1693023 }; //valid for 72.0 ILAT ONLY!!!!
 constexpr double Lnorm{ L / RADIUS_EARTH }; //same as above
+constexpr double s_max{ 85670894.104915 };
 //pass in s_max as well
 
 __host__ __device__ double getSAtLambda(double lambdaDegrees, double L)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
@@ -68,7 +68,7 @@ __host__ __device__ double getSAtLambda(double lambdaDegrees, double L)///FIX TO
 
 __host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, double ILATdegrees)
 {//s, L, and dipoleEquatorialDist must be in same units
-	double s_max{ getSAtLambda(ILATdegrees, dipoleEquatorialDist) };
+	//double s_max{ getSAtLambda(ILATdegrees, dipoleEquatorialDist) };
 	double lambda_tmp{ (-ILATdegrees / s_max) * s + ILATdegrees };
 	double s_tmp{ s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist) };
 	double dlambda{ 1.0 };
@@ -94,9 +94,9 @@ __host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, d
 					break;
 			}
 		}
-		dlambda /= 10.0;
 		if (dlambda < ERRTOLERANCE / 100.0)
 			break;
+		dlambda /= 5.0; //through trial and error, this reduces the number of calculations usually (compared with 2, 10, and other divisors)
 	}
 
 	return lambda_tmp;

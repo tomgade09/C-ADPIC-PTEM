@@ -118,8 +118,8 @@ class Simulation:
 
     #Run Simulation
     def runSim(self, iterations):
-        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)#, './../../_in/data/')
-        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 100352, 1, 2, 6.371e6)#, './../../_in/data/')
+        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 1800*64, 1, 2, 6.371e6, './../../_in/data/')
+        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 1800*64, 1, 2, 6.371e6, './../../_in/data/')
 
         self.createSatellite(0, 2030837.49610366 * 0.999, True, "bottomElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
         self.createSatellite(1, 2030837.49610366 * 0.999, True, "bottomIons")#need to pass in either height from Re/geocentric or s - right now it's s

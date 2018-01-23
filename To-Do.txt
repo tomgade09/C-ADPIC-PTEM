@@ -9,19 +9,24 @@ MOSTLY DONE - Remove frivolous messages
 - Photoelectrons
 - Weighted particles by maxwellian distribution
 - Alfven E generator (Dr. Lysak's code)
+- Restructure Physics (E (Alfven LUT, Alfven Calc, QSPS), B (dipole, IGRF) Classes with common function names, class to handle EOM, backscatter class, photoelectrons, maybe dist function stuff)
+- Put GPU particle array functions in Particle class
+- CDF file output
+- Python, maybe set num particles based on bin size
+- Maybe a common simulation run in C++
+- Maybe a LUT Grad B w/ linear interpolation
 
 - Better name
-- Quick folder restructure, also tools
 - Document things better
 - Ionosphere scattering
-- Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
 - Some sort of error handling system instead of cout messages
       - Class of some sort, some common error codes (indexing errors, values out of range, etc)
       - Encapsulate everything in try, except blocks?
-	  - Or flag set that ends simulation on certain errors
+	  DONE - Or flag set that ends simulation on certain errors
 - Cross platform compiling
 IN PROGRESS - XLSX writing with xlnt library?
+IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 
 
 STUFF THAT IS DONE:
@@ -44,7 +49,8 @@ DONE - Pass in variables instead of having to recompile every time (CSV or possi
 DONE - Consolidate satellite data into one array, then pass to python
 DONE - Enable qsps, alfven via switch
 DONE - Write Satellite values to disk along with times
-
+DONE - Quick folder restructure, also tools
+DONE - Loading files - check bin size, compare with input number read
 
 STUFF THAT IS DONE WITH CAVEATS:
 DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution

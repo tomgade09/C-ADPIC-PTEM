@@ -10,10 +10,11 @@
 #endif
 
 constexpr double PI{ 3.14159265359 };
-constexpr double ERRTOLERANCE{ 1e-10 };
+constexpr double ERRTOLERANCE{ 1e-4 };
 constexpr double B0{ 3.12e-5 }; //in T, the Earth's magnetic field at the equator and surface of the Earth, used for the dipole equations
 constexpr double Re{ 6.371e6 };
 bool firstrun{ true };
+int compcount{ 0 };
 
 DLLEXPORT double getSAtLambda(double lambdaDegrees, double L)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
 {//returns s in units of L
@@ -27,9 +28,9 @@ DLLEXPORT double getLambdaAtS(double s, double dipoleEquatorialDist, double ILAT
 	double s_max{ getSAtLambda(ILATdegrees, dipoleEquatorialDist) };
 	double lambda_tmp{ (-ILATdegrees / s_max) * s + ILATdegrees };
 	double s_tmp{ s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist) };
-	double dlambda{ 1 };
+	double dlambda{ 1.0 };
 	bool   over{ 0 };
-
+	std::cout << 10.0 << "  lambda_tmp est vs final:\nest: " << std::setprecision(10) << lambda_tmp << std::endl;
 	//std::cout << "s: " << s << ", L: " << dipoleEquatorialDist << std::endl;
 	//std::cout << "s_max: " << s_max / 6.371e6 << " lambda_tmp: " << lambda_tmp << " s_tmp: " << s_tmp / 6.371e6 << std::endl;
 
@@ -42,7 +43,8 @@ DLLEXPORT double getLambdaAtS(double s, double dipoleEquatorialDist, double ILAT
 			{
 				lambda_tmp += dlambda;
 				s_tmp = s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist);
-				//std::cout << std::setprecision(10) << "over: " << s_tmp << ", " << lambda_tmp << std::endl;
+				std::cout << std::setprecision(10) << "over: " << dlambda << ",    " << s_tmp << ", " << lambda_tmp << std::endl;
+				compcount++;
 				if (s_tmp < s)
 					break;
 			}
@@ -50,15 +52,16 @@ DLLEXPORT double getLambdaAtS(double s, double dipoleEquatorialDist, double ILAT
 			{
 				lambda_tmp -= dlambda;
 				s_tmp = s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist);
-				//std::cout << std::setprecision(10) << "under: " << s_tmp << ", " << lambda_tmp << std::endl;
+				std::cout << std::setprecision(10) << "undr: " << dlambda << ",    " << s_tmp << ", " << lambda_tmp << std::endl;
+				compcount++;
 				if (s_tmp >= s)
 					break;
 			}
 		}
-		dlambda /= 10;
+		dlambda /= 5.0;
 		//std::cout << std::setprecision(10) << "dlambda: " << dlambda << std::endl;
 	}
-
+	std::cout << "fin: " << std::setprecision(10) << lambda_tmp << std::endl;
 	return lambda_tmp;
 }
 
@@ -90,12 +93,12 @@ DLLEXPORT double getBy(double s, double dipoleEquatorialDist, double ILATdegrees
 
 DLLEXPORT double Bx()
 {
-
+	return 0;
 }
 
 DLLEXPORT double By()
 {
-
+	return 0;
 }
 
 double foRungeKuttaBx(double* funcArg, int arrayLen, double** LUT, bool qsps, bool alfven)
@@ -170,6 +173,7 @@ int main()
 	double Balt{ std::sqrt(Br * Br + Blambda * Blambda) };
 
 	std::cout << "lambda: " << lambda_final << ", r: " << r << ", Br: " << Br << ", Blambda: " << Blambda << ", B: " << B*1e9 << " nT, Balt: " << Balt << std::endl;
+	std::cout << "number of iterations to ERRTOLERANCE: " << ERRTOLERANCE << ": " << compcount << std::endl;
 
 	return 0;
 }

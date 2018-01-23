@@ -7,13 +7,29 @@ namespace fileIO
 		std::ifstream binFile{ filename, std::ios::binary };
 		if (!binFile.is_open())
 		{
-			std::cout << "Error: Could not open file " << filename << " for reading!\n";
+			std::cout << "Error: Could not open file " << filename << " for reading!" << std::endl;
 			return;
 		}
 		if (arrayToReadInto.size() < numOfDblsToRead)
 		{
-			std::cout << "Error: std::vector is not big enough to contain the data being read.  Resize the vector to at least as big as numOfDblsToRead.\n";
+			std::cout << "Error: std::vector is not big enough to contain the data being read.  Resize the vector to at least as big as numOfDblsToRead. Returning without reading file " << filename << std::endl;
+			binFile.close();
 			return;
+		}
+		
+		binFile.seekg(0, binFile.end);
+		int length{ binFile.tellg() };
+		binFile.seekg(0, binFile.beg);
+
+		if (length < numOfDblsToRead * 8)
+		{
+			std::cout << "Error: Filesize is smaller than the number of doubles specified to read.  This won't go well.  Returning without reading file " << filename << std::endl;
+			binFile.close();
+			return;
+		}
+		if (length > numOfDblsToRead * 8)
+		{
+			std::cout << "Warning: Number of doubles to read is less than the total number of doubles in the file.  You may be missing data.  Continuing to read file " << filename << std::endl;
 		}
 
 		binFile.read(reinterpret_cast<char*>(arrayToReadInto.data()), std::streamsize(numOfDblsToRead * sizeof(double)));
@@ -25,7 +41,7 @@ namespace fileIO
 		std::ifstream csv{ filename };
 		if (!csv.is_open())
 		{
-			std::cout << "Could not open file: " << filename << "\n";
+			std::cout << "Could not open file: " << filename << std::endl;
 			return nullptr;
 		}
 
@@ -66,12 +82,12 @@ namespace fileIO
 		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 		if (!binfile.is_open())
 		{
-			std::cout << "Error: Could not open (or create) file " << filename << " for writing!\n";
+			std::cout << "Error: Could not open (or create) file " << filename << " for writing!" << std::endl;
 			return;
 		}
 		if (dataarray.size() < numelements)
 		{
-			std::cout << "Error: Size of passed in vector is less than the number of doubles requested from it.  Returning without saving file.\n";
+			std::cout << "Error: Size of passed in vector is less than the number of doubles requested from it.  Returning without saving file " << filename << std::endl;
 			return;
 		}
 
@@ -84,12 +100,12 @@ namespace fileIO
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())
 		{
-			std::cout << "Error: Could not open file: " << filename << "\n";
+			std::cout << "Error: Could not open file: " << filename << std::endl;
 			return;
 		}
 		if (dataarray.size() < numofcols)
 		{
-			std::cout << "Error: Size of passed in vector has less cols than numofcols.  Returning without saving file.\n";
+			std::cout << "Error: Size of passed in vector has less cols than numofcols.  Returning without saving file " << filename << std::endl;
 			return;
 		}
 
@@ -111,7 +127,7 @@ namespace fileIO
 		std::ofstream txt(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!txt.is_open())
 		{
-			std::cout << "Could not open file: " << filename << "\n";
+			std::cout << "Could not open file: " << filename << std::endl;
 			return;
 		}
 

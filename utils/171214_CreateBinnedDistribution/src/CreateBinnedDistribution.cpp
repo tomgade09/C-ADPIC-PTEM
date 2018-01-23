@@ -45,7 +45,7 @@ int main()
 	for (int iii = 0; iii < ENERGYBINS; iii++)
 		energies.at(iii) = pow(10, iii * LOGEBINSIZE);
 	for (int iii = 0; iii < PITCHBINS; iii++)
-		pitches.at(iii) = iii * 180.0 / (PITCHBINS - 1);
+		pitches.at(iii) = 180.0 - iii * 180.0 / (PITCHBINS - 1);
 	
 	//Populate Electron Data
 	std::cout << "Populating and writing Electrons and Ions...\n";
