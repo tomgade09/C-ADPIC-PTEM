@@ -14,14 +14,8 @@ def getElectricFieldLUT(self, cols, entries):
         ret.append(column)
     
     return ret
-
-def terminateSimulation(self):
-    self.simDLL_m.terminateSimulationAPI.argtypes = (ctypes.c_void_p,)
-    self.simDLL_m.terminateSimulationAPI.restype = None
-    self.simDLL_m.terminateSimulationAPI(self.simulationptr)
     
 Simulation.getElectricFieldLUT = getElectricFieldLUT
-Simulation.terminateSimulation = terminateSimulation
 
 if __name__ == '__main__':
     print("SimulationAPI.py is not meant to be called as main.  Run a simulation file and that will import this.")

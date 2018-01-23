@@ -1,5 +1,8 @@
 from __future__ import absolute_import, division, print_function
-import ctypes
+import ctypes, os, inspect
+
+sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)) + './../'))
+from __simulationvariables import *
 
 class Simulation:
     def __init__(self, DLLloc, rootdir, dt, simMin, simMax, ionT, magT, constEQSPS=0.0, fnLUT=""):
@@ -73,6 +76,8 @@ class Simulation:
         self.simDLL_m.freeGPUMemoryAPI.restype = None
         self.simDLL_m.prepareResultsAPI.argtypes = (ctypes.c_void_p, ctypes.c_bool)
         self.simDLL_m.prepareResultsAPI.restype = ctypes.POINTER(ctypes.c_double)
+        self.simDLL_m.terminateSimulationAPI.argtypes = (ctypes.c_void_p,)
+        self.simDLL_m.terminateSimulationAPI.restype = None
         self.simDLL_m.loadCompletedSimDataAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int)
         self.simDLL_m.loadCompletedSimDataAPI.restype = None
 
@@ -118,13 +123,13 @@ class Simulation:
 
     #Run Simulation
     def runSim(self, iterations):
-        self.createParticle("elec", "vpara,vperp,z", 9.1093836e-31, -1 * 1.6021766e-19, 1800*64, 1, 2, 6.371e6, './../../_in/data/')
-        self.createParticle("ions", "vpara,vperp,z", 1.6726219e-27,  1 * 1.6021766e-19, 1800*64, 1, 2, 6.371e6, './../../_in/data/')
+        self.createParticle("elec", "vpara,vperp,z", MASS_ELEC, -1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, './../../_in/data/')
+        self.createParticle("ions", "vpara,vperp,z", MASS_PROT,  1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, './../../_in/data/')
 
-        self.createSatellite(0, 2030837.49610366 * 0.999, True, "bottomElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
-        self.createSatellite(1, 2030837.49610366 * 0.999, True, "bottomIons")#need to pass in either height from Re/geocentric or s - right now it's s
-        self.createSatellite(0, 19881647.2473464 * 1.001, False, "topElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
-        self.createSatellite(1, 19881647.2473464 * 1.001, False, "topIons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(0, MIN_S_SIM * 0.999, True, "bottomElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(1, MIN_S_SIM * 0.999, True, "bottomIons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(0, MAX_S_SIM * 1.001, False, "topElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
+        self.createSatellite(1, MAX_S_SIM * 1.001, False, "topIons")#need to pass in either height from Re/geocentric or s - right now it's s
 
         self.initializeSimulation()
         self.copyDataToGPU()
@@ -254,6 +259,9 @@ class Simulation:
 
     def prepareResults(self, normalizeToRe=True):
         return self.simDLL_m.prepareResultsAPI(self.simulationptr, normalizeToRe)
+
+    def terminateSimulation(self):
+        self.simDLL_m.terminateSimulationAPI(self.simulationptr)
 
     #Satellite functions
     def getNumberOfSatellites(self):

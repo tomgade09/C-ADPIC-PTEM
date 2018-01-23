@@ -1,16 +1,16 @@
 import time, csv
-import os, sys, inspect, shutil
+import os, sys, shutil
 
-pyfiledir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
-sys.path.append(os.path.normpath(pyfiledir + '/SimulationClass/'))
+from __simulationvariables import *
 
-from AlfvenLUT import *
+sys.path.append(os.path.normpath(PYROOTDIR + '/SimulationClass/'))
+
+from Simulation import *
 from __plotParticles import *
 
 #Setting up folders, changing directory
 def setupFolders():
-    os.chdir(pyfiledir)
-    rootdir = os.path.dirname(os.path.abspath('./'))
+    os.chdir(PYROOTDIR)
     dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M.%S")
     savedir = os.path.abspath(rootdir + '/_dataout' + dtg)
     if (not(os.path.isdir(savedir))):
@@ -23,34 +23,27 @@ def setupFolders():
         os.makedirs(savedir + '/graphs/satellites')
     os.chdir(savedir)
 
-    #srcfile = '../../include/_simulationvariables.h' #change this
-    #shutil.copy(srcfile, './')
+    srcfile = PYROOTDIR + '/__simulationvariables.py' #change this
+    shutil.copy(srcfile, './')
 
-    dllLocation = os.path.abspath('./../../lib/geoplasmasim.dll')
-
-    return dllLocation, savedir, rootdir, dtg
+    return savedir, dtg
 
 def simulationRunMain():
-    dllLocation, savedir, rootdir, dtg = setupFolders()
+    savedir, dtg = setupFolders()
     print("================  SIMULATION ", dtg, " ================")
 
-    sim = Simulation(dllLocation, rootdir, 0.01, 2030837.49610366, 19881647.2473464, 2.5, 1000, 0.0)#, "ez.out") #need to pass in either height from Re/geocentric or s - right now it's s
+    sim = Simulation(DLLLOCATION, ROOTDIR, DT, MIN_S_SIM, MAX_S_SIM, INITIAL_T_ION_EV, INITIAL_T_MAG_EV, ALFVENLUTCSV)
     finalDat, origDat, satDat = sim.runSim(25000)
-    #                        time, bins,           binsize,                           z0
+
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
     for iii in range(len(fields[2])):
-        fields[2][iii] /= 6.371e6
+        fields[2][iii] /= RADIUS_EARTH #Normalizes location where field is measured (makes graph reading easier)
+    for iii in range(len(fields[0])):
+        fields[0][iii] *= 1e9 #Displays B Field in nT
 
     sim.logWriteEntry('Python: Done getting data.  Plotting.')
 
     plotFields(fields[0], fields[1], fields[2], True)
-    #plotAllParticles(results[0][0], results[0][1], results[0][2], results[1][0], results[1][1], \
-        #results[1][2], fields[0], fields[1], fields[2], False)
-
-    sim.logWriteEntry('Python: Plotting satellite data.')
-
-    #Eventually, read names from satellites and construct into array
-    #plotSatelliteData(satDat, 1, sim.satNum_m, sim.dt_m, ['downwardElectrons', 'downwardIons', 'upwardElectrons', 'upwardIons'])
 
     sim.logWriteEntry('Python: Done plotting data.  Terminating simulation.')
 

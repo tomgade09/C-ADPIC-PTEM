@@ -10,6 +10,7 @@ MOSTLY DONE - Remove frivolous messages
 - Weighted particles by maxwellian distribution
 - Alfven E generator (Dr. Lysak's code)
 - Restructure Physics (E (Alfven LUT, Alfven Calc, QSPS), B (dipole, IGRF) Classes with common function names, class to handle EOM, backscatter class, photoelectrons, maybe dist function stuff)
+- Add post processing classes (maybe?)
 - Put GPU particle array functions in Particle class
 - CDF file output
 - Python, maybe set num particles based on bin size
