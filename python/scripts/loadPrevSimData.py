@@ -24,7 +24,8 @@ print("Currently in directory: ", os.getcwd(), rootdir, savedir, prevSimDir)
 dllLocation = os.path.abspath('./../../lib/geoplasmasim.dll')
 sim = Simulation(dllLocation, rootdir, 0.01, 8.371e6, 4 * 6.371e6, 2.5, 1000, 0.0)
 
-NUMPARTS = int(1800*64)
+NUMPARTS = int(os.stat('./bins/particles_final/elec_vpara.bin').st_size/8)
+print("Number of particles read from files: ", NUMPARTS)
 finalDat, origDat, satDat = sim.loadCompletedSimData(prevSimDir, "elec,ions", "vpara,vperp,z", "bottomElectrons,bottomIons,topElectrons,topIons", NUMPARTS, 2, 3, 4)
 
 MASS_ELEC = 9.10938356e-31
@@ -35,29 +36,29 @@ atan2vec = np.vectorize(math.atan2)
 
 elecpitches = atan2vec(abs(np.array(origDat[0][1])), -np.array(origDat[0][0])) * 180 / math.pi
 elecenergies = 0.5 * MASS_ELEC * (np.square(np.array(origDat[0][0])) + np.square(np.array(origDat[0][1]))) / J_PER_EV
-elecIonsphEnergies = elecenergies[int(NUMPARTS / 2):NUMPARTS]#[0:int(NUMPARTS / 2)]
-elecIonsphPitches = elecpitches[int(NUMPARTS / 2):NUMPARTS]#[0:int(NUMPARTS / 2)]
-elecIonsphVpara = np.array(origDat[0][0][int(NUMPARTS / 2):NUMPARTS])#[0:int(NUMPARTS / 2)])
-elecIonsphVperp = np.array(origDat[0][1][int(NUMPARTS / 2):NUMPARTS])#[0:int(NUMPARTS / 2)])
-elecIonsphZ = np.array(origDat[0][2][int(NUMPARTS / 2):NUMPARTS])#[0:int(NUMPARTS / 2)])
-elecMagsphEnergies = elecenergies[0:int(NUMPARTS / 2)]#[int(NUMPARTS / 2):NUMPARTS]
-elecMagsphPitches = elecpitches[0:int(NUMPARTS / 2)]#[int(NUMPARTS / 2):NUMPARTS]
-elecMagsphVpara = np.array(origDat[0][0][0:int(NUMPARTS / 2)])#[int(NUMPARTS / 2):NUMPARTS])
-elecMagsphVperp = np.array(origDat[0][1][0:int(NUMPARTS / 2)])#[int(NUMPARTS / 2):NUMPARTS])
-elecMagsphZ = np.array(origDat[0][2][0:int(NUMPARTS / 2)])#[int(NUMPARTS / 2):NUMPARTS])
+elecIonsphEnergies = elecenergies[0:int(NUMPARTS / 2)]
+elecIonsphPitches = elecpitches[0:int(NUMPARTS / 2)]
+elecIonsphVpara = np.array(origDat[0][0][0:int(NUMPARTS / 2)])
+elecIonsphVperp = np.array(origDat[0][1][0:int(NUMPARTS / 2)])
+elecIonsphZ = np.array(origDat[0][2][0:int(NUMPARTS / 2)])
+elecMagsphEnergies = elecenergies[int(NUMPARTS / 2):NUMPARTS]
+elecMagsphPitches = elecpitches[int(NUMPARTS / 2):NUMPARTS]
+elecMagsphVpara = np.array(origDat[0][0][int(NUMPARTS / 2):NUMPARTS])
+elecMagsphVperp = np.array(origDat[0][1][int(NUMPARTS / 2):NUMPARTS])
+elecMagsphZ = np.array(origDat[0][2][int(NUMPARTS / 2):NUMPARTS])
 
 ionspitches = atan2vec(abs(np.array(origDat[1][1])), -np.array(origDat[1][0])) * 180 / math.pi
 ionsenergies = 0.5 * MASS_PROT * (np.square(np.array(origDat[1][0])) + np.square(np.array(origDat[1][1]))) / J_PER_EV
-ionsIonsphEnergies = ionsenergies[int(NUMPARTS / 2):NUMPARTS]#[0:int(NUMPARTS / 2)]
-ionsIonsphPitches = ionspitches[int(NUMPARTS / 2):NUMPARTS]#[0:int(NUMPARTS / 2)]
-ionsIonsphVpara = np.array(origDat[1][0][int(NUMPARTS / 2):NUMPARTS])#[0:int(NUMPARTS / 2)])
-ionsIonsphVperp = np.array(origDat[1][1][int(NUMPARTS / 2):NUMPARTS])#[0:int(NUMPARTS / 2)])
+ionsIonsphEnergies = ionsenergies[0:int(NUMPARTS / 2)]
+ionsIonsphPitches = ionspitches[0:int(NUMPARTS / 2)]
+ionsIonsphVpara = np.array(origDat[1][0][0:int(NUMPARTS / 2)])
+ionsIonsphVperp = np.array(origDat[1][1][0:int(NUMPARTS / 2)])
 ionsIonsphZ = np.array(origDat[1][2])
-ionsMagsphEnergies = ionsenergies[0:int(NUMPARTS / 2)]#[int(NUMPARTS / 2):NUMPARTS]
-ionsMagsphPitches = ionspitches[0:int(NUMPARTS / 2)]#[int(NUMPARTS / 2):NUMPARTS]
-ionsMagsphVpara = np.array(origDat[1][0][0:int(NUMPARTS / 2)])#[int(NUMPARTS / 2):NUMPARTS])
-ionsMagsphVperp = np.array(origDat[1][1][0:int(NUMPARTS / 2)])#[int(NUMPARTS / 2):NUMPARTS])
-ionsMagsphZ = np.array(origDat[1][2][0:int(NUMPARTS / 2)])#[int(NUMPARTS / 2):NUMPARTS])
+ionsMagsphEnergies = ionsenergies[int(NUMPARTS / 2):NUMPARTS]
+ionsMagsphPitches = ionspitches[int(NUMPARTS / 2):NUMPARTS]
+ionsMagsphVpara = np.array(origDat[1][0][int(NUMPARTS / 2):NUMPARTS])
+ionsMagsphVperp = np.array(origDat[1][1][int(NUMPARTS / 2):NUMPARTS])
+ionsMagsphZ = np.array(origDat[1][2][int(NUMPARTS / 2):NUMPARTS])
 
 elecIonsphTimesPre = np.array([[]])
 elecMagsphTimesPre = np.array([[]])

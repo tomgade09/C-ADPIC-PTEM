@@ -1,5 +1,4 @@
-from __future__ import absolute_import, division, print_function
-import ctypes, os, inspect
+import ctypes, os, sys, inspect
 
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)) + './../'))
 from __simulationvariables import *
@@ -123,8 +122,8 @@ class Simulation:
 
     #Run Simulation
     def runSim(self, iterations):
-        self.createParticle("elec", "vpara,vperp,z", MASS_ELEC, -1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, './../../_in/data/')
-        self.createParticle("ions", "vpara,vperp,z", MASS_PROT,  1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, './../../_in/data/')
+        self.createParticle("elec", "vpara,vperp,z", MASS_ELEC, -1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, DISTINFOLDER)
+        self.createParticle("ions", "vpara,vperp,z", MASS_PROT,  1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, DISTINFOLDER)
 
         self.createSatellite(0, MIN_S_SIM * 0.999, True, "bottomElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
         self.createSatellite(1, MIN_S_SIM * 0.999, True, "bottomIons")#need to pass in either height from Re/geocentric or s - right now it's s

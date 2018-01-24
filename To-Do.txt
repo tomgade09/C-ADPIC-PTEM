@@ -16,7 +16,9 @@ MOSTLY DONE - Remove frivolous messages
 - Python, maybe set num particles based on bin size
 - Maybe a common simulation run in C++
 - Maybe a LUT Grad B w/ linear interpolation
+- Add way to either shutoff log or to add additional log file
 
+- Fix log file time width oddity
 - Better name
 - Document things better
 - Ionosphere scattering

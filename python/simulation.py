@@ -12,7 +12,7 @@ from __plotParticles import *
 def setupFolders():
     os.chdir(PYROOTDIR)
     dtg = '/' + time.strftime("%y%m%d") + "_" + time.strftime("%H.%M.%S")
-    savedir = os.path.abspath(rootdir + '/_dataout' + dtg)
+    savedir = os.path.abspath(ROOTDIR + '/_dataout' + dtg)
     if (not(os.path.isdir(savedir))):
         os.makedirs(savedir)
         os.makedirs(savedir + '/bins/particles_init')
@@ -32,7 +32,7 @@ def simulationRunMain():
     savedir, dtg = setupFolders()
     print("================  SIMULATION ", dtg, " ================")
 
-    sim = Simulation(DLLLOCATION, ROOTDIR, DT, MIN_S_SIM, MAX_S_SIM, INITIAL_T_ION_EV, INITIAL_T_MAG_EV, ALFVENLUTCSV)
+    sim = Simulation(DLLLOCATION, ROOTDIR, DT, MIN_S_SIM, MAX_S_SIM, INITIAL_T_ION_EV, INITIAL_T_MAG_EV, 0.0, ALFVENLUTCSV)
     finalDat, origDat, satDat = sim.runSim(25000)
 
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)

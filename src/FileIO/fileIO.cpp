@@ -18,7 +18,7 @@ namespace fileIO
 		}
 		
 		binFile.seekg(0, binFile.end);
-		int length{ binFile.tellg() };
+		int length{ static_cast<int>(binFile.tellg()) };
 		binFile.seekg(0, binFile.beg);
 
 		if (length < numOfDblsToRead * 8)
