@@ -5,12 +5,18 @@
 #include <string>
 #include <iostream>
 #include "FileIO\fileIO.h"
+#include "StandaloneTools\StandaloneTools.h"
 
 class Particle
 {
 protected:
 	std::vector<std::vector<double>> origData_m;
 	std::vector<std::vector<double>> currData_m;
+
+	double*  origData1D_d{ nullptr };
+	double*  currData1D_d{ nullptr };
+	double** origData2D_d{ nullptr };
+	double** currData2D_d{ nullptr };
 
 	std::vector<std::string> attributeNames_m;
 
@@ -25,6 +31,7 @@ protected:
 	std::string name_m;
 
 	bool initDataLoaded_m{ false };
+	bool usedGPU{ false };
 	bool normalized_m{ false };
 
 public:
@@ -47,16 +54,22 @@ public:
 				attributeNames_m.push_back(std::to_string(diff) + ".bin");
 		}
 	}
-	~Particle(){}
+	~Particle()
+	{
+		if (usedGPU)
+			freeGPUMemory();
+	}
 
 	std::vector<std::vector<double>>& getOrigData() { return origData_m; }
 	std::vector<std::vector<double>>& getCurrData() { return currData_m; }
 	std::string getName() { return name_m; }
-	double getMass() { return mass_m; }
-	double getCharge() { return charge_m; }
-	long   getNumberOfParticles() { return particleCount_m; }
-	int    getNumberOfAttributes() { return numberOfPositionDims_m + numberOfVelocityDims_m; }
-	bool   getInitDataLoaded() { return initDataLoaded_m; }
+	double   getMass() { return mass_m; }
+	double   getCharge() { return charge_m; }
+	long     getNumberOfParticles() { return particleCount_m; }
+	int      getNumberOfAttributes() { return numberOfPositionDims_m + numberOfVelocityDims_m; }
+	bool     getInitDataLoaded() { return initDataLoaded_m; }
+	double** getOrigDataGPUPtr() { return origData2D_d; }
+	double** getCurrDataGPUPtr() { return currData2D_d; }
 
 	virtual int getDimensionIndByName(std::string searchName);
 	virtual std::string getDimensionNameByInd(int searchIndx);
@@ -64,6 +77,11 @@ public:
 	virtual void loadFilesToArray(std::string folder, bool orig=false);
 	virtual void saveArrayToFiles(std::string folder, bool orig);
 	virtual void normalizeParticles(bool orig, bool curr, bool inverse=false);
+
+	virtual void initializeGPU();
+	virtual void copyDataToGPU();
+	virtual void copyDataToHost();
+	virtual void freeGPUMemory();
 };
 
 #endif

@@ -23,21 +23,19 @@
     <ClCompile Include="..\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\src\LogFile\LogFileAPI.cpp" />
-    <ClCompile Include="..\src\ParticleClass\Particle.cpp" />
-    <ClCompile Include="..\src\SimulationClass\AlfvenLUT.cpp" />
     <ClCompile Include="..\src\SimulationClass\Simulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp" />
     <ClCompile Include="..\src\StandaloneTools\binaryfiletools.cpp" />
     <ClCompile Include="..\src\StandaloneTools\numericaltools.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\BField\BField.h" />
     <ClInclude Include="..\include\FileIO\fileIO.h" />
     <ClInclude Include="..\include\LogFile\LogFile.h" />
     <ClInclude Include="..\include\LogFile\LogFileAPI.h" />
     <ClInclude Include="..\include\ParticleClass\Particle.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\SatelliteClass\Satellite.h" />
-    <ClInclude Include="..\include\SimulationClass\AlfvenLUT.h" />
     <ClInclude Include="..\include\SimulationClass\Simulation.h" />
     <ClInclude Include="..\include\SimulationClass\SimulationAPI.h" />
     <ClInclude Include="..\include\StandaloneTools\binaryfiletools.h" />
@@ -46,9 +44,10 @@
     <ClInclude Include="..\include\_simulationvariables.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="..\src\BField\BField.cu" />
     <CudaCompile Include="..\src\CUDA\alfvencompute.cu" />
-    <CudaCompile Include="..\src\CUDA\alfvenlut.cu" />
     <CudaCompile Include="..\src\CUDA\simulationphysics.cu" />
+    <CudaCompile Include="..\src\ParticleClass\Particle.cu" />
     <CudaCompile Include="..\src\SatelliteClass\Satellite.cu" />
   </ItemGroup>
   <ItemGroup>

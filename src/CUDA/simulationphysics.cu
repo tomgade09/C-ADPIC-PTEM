@@ -13,7 +13,8 @@
 
 //Project specific includes
 #include "_simulationvariables.h"
-#include "SimulationClass\AlfvenLUT.h"
+#include "SimulationClass\Simulation.h"
+//#include "SimulationClass\AlfvenLUT.h"
 
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
 
@@ -25,8 +26,8 @@ constexpr int  NUMRNGSTATES{ 64 * BLOCKSIZE };
 //Commonly used values
 extern const int SIMCHARSIZE{ 8 * sizeof(double) };
 
-__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime, double omegaE);
-__host__ __device__ double alfvenWaveEbyCompute(double z, double simtime);
+//__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime, double omegaE);
+//__host__ __device__ double alfvenWaveEbyCompute(double z, double simtime);
 
 __host__ __device__ double qspsEatZ(double z, double simtime, double constE)
 {
@@ -45,7 +46,7 @@ __host__ __device__ double EFieldatZ(double** LUT, double z, double simtime, dou
 	else if (LUT != nullptr && alfven)
 		alfLUT = true;
 
-	return (qsps ? (qspsEatZ(z, simtime, constE)) : (0.0)) + (alfLUT ? (alfvenWaveEbyLUT(LUT, z, simtime, omegaE)) : (0.0)) + (alfCalc ? (alfvenWaveEbyCompute(z, simtime)) : (0.0));
+	return (qsps ? (qspsEatZ(z, simtime, constE)) : (0.0));//+ (alfLUT ? (alfvenWaveEbyLUT(LUT, z, simtime, omegaE)) : (0.0)) + (alfCalc ? (alfvenWaveEbyCompute(z, simtime)) : (0.0));
 }
 
 /* THIS IS THE NEW STUFF, ADDED CODE TO TRY DIPOLE B FIELD CONFIGURATION */
@@ -287,20 +288,10 @@ void Simulation::initializeSimulation()
 	//
 
 	//Allocate room in vectors for GPU Memory Pointers
-	gpuDblMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr data, part 1 curr data... part 0 orig data, part 1 orig data... simconsts, LUT
-	gpuOtherMemoryPointers_m.resize(2 * particleTypes_m.size() + 2); //part 0 curr 2D, part 1 curr 2D... part 0 orig 2D, part 1 orig 2D... curand, LUT 2D
 	satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
 
 	//Allocate memory on GPU for elec/ions variables
-	for (int ind = 0; ind < 2 * particleTypes_m.size(); ind++) //[0] = e data, [1] = i data, [2] = e orig data, [3] = i orig data
-	{
-		Particle* partTmp{ particleTypes_m.at(ind % particleTypes_m.size()) };
-		size_t memSize{ partTmp->getNumberOfParticles() * partTmp->getNumberOfAttributes() * sizeof(double) };
-		
-		CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(ind), memSize));
-		CUDA_CALL(cudaMemset(gpuDblMemoryPointers_m.at(ind), 0, memSize));
-		CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(ind), partTmp->getNumberOfAttributes() * sizeof(double*))); //2D array
-	}
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->initializeGPU(););
 
 	if (tempSats_m.size() > 0)
 	{
@@ -310,16 +301,16 @@ void Simulation::initializeSimulation()
 		logFile_m.writeLogFileEntry("Warning: Simulation::initializeSimulation: No satellites created.  That's odd.");
 
 	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
-	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), SIMCHARSIZE));
+	CUDA_CALL(cudaMalloc((void **)&simConstants_d, SIMCHARSIZE)); //for right now, fine
 
 	//Array of random number generator states
-	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size()), NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
+	CUDA_CALL(cudaMalloc((void **)&curandRNGStates_d, NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
 
 	//For derived classes to add code
-	initializeFollowOn();
+	initializeFollowOn(); //need to remove these
 
 	initialized_m = true;
-	logFile_m.createTimeStruct("End Sim Init"); //index 2
+	logFile_m.createTimeStruct("End Sim Init");
 	logFile_m.writeTimeDiff(1, 2);
 }
 
@@ -342,29 +333,19 @@ void Simulation::copyDataToGPU()
 	//
 
 	//Copies initial data of particles to GPU, if loaded
-	for (int parts = 0; parts < particleTypes_m.size(); parts++)
-	{
-		if (particleTypes_m.at(parts)->getInitDataLoaded())
-		{
-			Particle* tmpPart{ particleTypes_m.at(parts) };
-			size_t memSize{ tmpPart->getNumberOfParticles() * sizeof(double) };
-			LOOP_OVER_1D_ARRAY(tmpPart->getNumberOfAttributes(), CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(parts) + tmpPart->getNumberOfParticles() * iii, tmpPart->getCurrData().at(iii).data(), memSize, cudaMemcpyHostToDevice));)
-		}
-	}
-
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToGPU(););
+	
+	
 	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS Const E
 	double data[]{ dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m, 0.0, constE_m };
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()), data, SIMCHARSIZE, cudaMemcpyHostToDevice));
-	
-	for (int iii = 0; iii < 2 * particleTypes_m.size(); iii++)
-		setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(iii), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(iii)), particleTypes_m.at(iii % particleTypes_m.size())->getNumberOfAttributes(), particleTypes_m.at(iii % particleTypes_m.size())->getNumberOfParticles());
+	CUDA_CALL(cudaMemcpy(simConstants_d, data, SIMCHARSIZE, cudaMemcpyHostToDevice));
 	
 	//Prepare curand states for random number generation
 	long long seed = time(NULL);
-	initCurand <<< NUMRNGSTATES / 256, 256 >>> (reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size())), seed);
+	initCurand <<< NUMRNGSTATES / 256, 256 >>> (static_cast<curandStateMRG32k3a*>(curandRNGStates_d), seed);
 	
 	//For derived classes to add code
-	copyDataToGPUFollowOn();
+	copyDataToGPUFollowOn(); //need to get rid of later
 
 	copied_m = true;
 	
@@ -384,21 +365,19 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		errorEncountered = true;
 		return;
 	}
-
 	if (!copied_m)
 	{
 		logFile_m.writeErrorEntry("Simulation::iterateSimulation", "You haven't copied any data to the GPU with Simulation::copyDataToGPU.  Do that first or the GPU has no numbers to work on.", { std::to_string(numberOfIterations) });
 		errorEncountered = true;
 		return;
 	}
-
 	if (errorEncountered)
 		return;
 	//Check for user error complete
 	//
 
 	//For derived classes to add code
-	iterateSimulationFollowOnPreLoop();
+	iterateSimulationFollowOnPreLoop(); //remove this later
 
 	size_t numParts{ particleTypes_m.size() };
 
@@ -410,12 +389,12 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		{
 			Particle* tmpPart{ particleTypes_m.at(parts) };
 
-			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts)), //2D array of particle data
-				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(parts + particleTypes_m.size())), //2D array for original particle data
-				reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), //2D array of LUT data (nullptr if not used)
-				gpuDblMemoryPointers_m.at(2 * numParts), //1D array of sim characteristics
-				reinterpret_cast<curandStateMRG32k3a*>(gpuOtherMemoryPointers_m.at(2 * numParts)), //1D array of curand states
-				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, 0);// (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
+			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (tmpPart->getCurrDataGPUPtr(), //2D array of particle data
+																						  tmpPart->getOrigDataGPUPtr(), //2D array for original particle data
+				nullptr,				//2D array of LUT data (nullptr if not used)
+				simConstants_d,																							//1D array of sim characteristics
+				static_cast<curandStateMRG32k3a*>(curandRNGStates_d),						//1D array of curand states
+				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, 0);	// (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
 
 			cudaDeviceSynchronize();
 		}
@@ -442,13 +421,13 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 			//receiveSatelliteData();
 
 		//For derived classes to add code
-		iterateSimulationFollowOnInsideLoop();
+		iterateSimulationFollowOnInsideLoop(); //remove this eventually
 	}
 	receiveSatelliteData(false);
 	std::cout << "\nReceive sat data outside main loop.  Remove after.\n";
 
 	//For derived classes to add code
-	iterateSimulationFollowOnPostLoop();
+	iterateSimulationFollowOnPostLoop(); //remove later
 
 	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
 	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
@@ -473,17 +452,10 @@ void Simulation::copyDataToHost()
 	//Check for user error complete
 	//
 
-	for (int parts = 0; parts < particleTypes_m.size(); parts++)
-	{
-		Particle* tmpPart{ particleTypes_m.at(parts) };
-		size_t memSize{ tmpPart->getNumberOfParticles() * sizeof(double) };
-		long numParts{ tmpPart->getNumberOfParticles() };
-		LOOP_OVER_1D_ARRAY(tmpPart->getNumberOfAttributes(), CUDA_CALL(cudaMemcpy(tmpPart->getCurrData().at(iii).data(), gpuDblMemoryPointers_m.at(parts) + numParts * iii, memSize, cudaMemcpyDeviceToHost));)
-		LOOP_OVER_1D_ARRAY(tmpPart->getNumberOfAttributes(), CUDA_CALL(cudaMemcpy(tmpPart->getOrigData().at(iii).data(), gpuDblMemoryPointers_m.at(parts + particleTypes_m.size()) + numParts * iii, memSize, cudaMemcpyDeviceToHost));)
-	}
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToHost(););
 
 	//For derived classes to add code
-	copyDataToHostFollowOn();
+	copyDataToHostFollowOn(); //remove later
 
 	logFile_m.writeLogFileEntry("Simulation::copyDataToHost: Done with copying.");
 }
@@ -502,11 +474,10 @@ void Simulation::freeGPUMemory()
 	//Check for user error complete
 	//
 
-	LOOP_OVER_1D_ARRAY(gpuDblMemoryPointers_m.size(), CUDA_CALL(cudaFree(gpuDblMemoryPointers_m.at(iii)));)
-	LOOP_OVER_1D_ARRAY(gpuOtherMemoryPointers_m.size(), CUDA_CALL(cudaFree(gpuOtherMemoryPointers_m.at(iii)));)
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->freeGPUMemory(););
 
 	//For derived classes to add code
-	freeGPUMemoryFollowOn();
+	freeGPUMemoryFollowOn(); //remove later
 
 	freedGPUMem_m = true;
 

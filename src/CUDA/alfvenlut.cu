@@ -4,7 +4,6 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "cuda_profiler_api.h"
-#include "curand_kernel.h"
 
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries);
@@ -36,20 +35,21 @@ __host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simti
 void AlfvenLUT::initializeFollowOn()
 {
 	useAlfLUT_m = true;
-	CUDA_CALL(cudaMalloc((void **)&gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), numOfColsLUT_m * numOfEntrLUT_m * sizeof(double)));
-	CUDA_CALL(cudaMalloc((void **)&gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1), numOfColsLUT_m * sizeof(double*)));
+	CUDA_CALL(cudaMalloc((void **)&elcFieldLUT1D_d, numOfColsLUT_m * numOfEntrLUT_m * sizeof(double)));
+	CUDA_CALL(cudaMalloc((void **)&elcFieldLUT_d,   numOfColsLUT_m * sizeof(double*)));
+	CUDA_CALL(cudaMalloc((void **)&omegaE_d, sizeof(double)));
 }
 
 void AlfvenLUT::copyDataToGPUFollowOn()
 {
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), elcFieldLUT_m[0], numOfColsLUT_m * numOfEntrLUT_m * sizeof(double), cudaMemcpyHostToDevice));
-	setup2DArray <<< 1, 1 >>> (gpuDblMemoryPointers_m.at(2 * particleTypes_m.size() + 1), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1)), numOfColsLUT_m, numOfEntrLUT_m);
-	CUDA_CALL(cudaMemcpy(gpuDblMemoryPointers_m.at(2 * particleTypes_m.size()) + 6, &omegaE_m, sizeof(double), cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMemcpy(elcFieldLUT1D_d, elcFieldLUT_m[0], numOfColsLUT_m * numOfEntrLUT_m * sizeof(double), cudaMemcpyHostToDevice));
+	setup2DArray <<< 1, 1 >>> (elcFieldLUT1D_d, elcFieldLUT_d, numOfColsLUT_m, numOfEntrLUT_m);
+	CUDA_CALL(cudaMemcpy(omegaE_d, &omegaE_m, sizeof(double), cudaMemcpyHostToDevice));
 }
 
 void AlfvenLUT::iterateSimulationFollowOnPreLoop()
 {
-	if (useAlfLUT_m && gpuOtherMemoryPointers_m.at(2 * particleTypes_m.size() + 1) == nullptr)
+	if (useAlfLUT_m && elcFieldLUT_d == nullptr)
 		logFile_m.writeLogFileEntry("AlfvenLUT::iterateSimulationFollowOnPreLoop:  Warning: LUT pointer is a nullptr.  Alfven wave function will return 0.0.  Continuing.");
 }
 

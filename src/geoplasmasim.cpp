@@ -1,9 +1,9 @@
 #include "_simulationvariables.h"
 #include "SimulationClass\SimulationAPI.h"
-#include "SimulationClass\AlfvenLUT.h"
+//#include "SimulationClass\AlfvenLUT.h"
 
-DLLEXPORT double* getPointerToElectricFieldDataAPI(AlfvenLUT* simulation, int index) {
-	return simulation->getPointerToElectricFieldData(index); }
+//DLLEXPORT double* getPointerToElectricFieldDataAPI(AlfvenLUT* simulation, int index) {
+	//return simulation->getPointerToElectricFieldData(index); }
 
 DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir, double constEQSPS=0.0, const char* fnLUT="")
 {
@@ -11,10 +11,7 @@ DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMa
 
 	Simulation* ret{ nullptr };
 
-	if (fnLUTstr == "")
-		ret = new Simulation(dt, simMin, simMax, ionT, magT, rootdir);
-	else
-		ret = new AlfvenLUT(dt, simMin, simMax, ionT, magT, rootdir, fnLUT);
+	ret = new Simulation(dt, simMin, simMax, ionT, magT, rootdir);
 	
 	if (constEQSPS != 0.0)
 	{
@@ -29,7 +26,7 @@ DLLEXPORT void terminateSimulationAPI(Simulation* simulation) { //change
 	delete simulation; }
 
 #ifndef DLLFILE
-int main()//defined in fileIO.h
+int main()//defined in fileIO.h - need to update this
 {
 	Simulation* sim;
 	sim = createSimulation170925("./../../../");

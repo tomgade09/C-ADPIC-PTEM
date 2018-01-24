@@ -18,6 +18,7 @@ MOSTLY DONE - Remove frivolous messages
 - Maybe a LUT Grad B w/ linear interpolation
 - Add way to either shutoff log or to add additional log file
 
+- Remove unnecessary includes
 - Fix log file time width oddity
 - Better name
 - Document things better
@@ -28,6 +29,7 @@ MOSTLY DONE - Remove frivolous messages
       - Encapsulate everything in try, except blocks?
 	  DONE - Or flag set that ends simulation on certain errors
 - Cross platform compiling
+- Do callback with FORK and acceleration function?
 IN PROGRESS - XLSX writing with xlnt library?
 IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 

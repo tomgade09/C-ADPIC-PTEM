@@ -50,7 +50,7 @@ void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing
 		logFile_m.writeErrorEntry("Simulation::createSatellite", "particleTypes.at(" + std::to_string(partInd) + ") does not exist!", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
 		errorEncountered = true;
 	}
-	if (gpuOtherMemoryPointers_m.at(partInd) == nullptr)
+	if (particleTypes_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
 	{
 		logFile_m.writeErrorEntry("Simulation::createSatellite", "Pointer to GPU data is a nullptr.  That's just asking for trouble.", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
 		errorEncountered = true;
@@ -59,7 +59,7 @@ void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing
 	logFile_m.writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd)->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
 	Particle* tmpPart{ particleTypes_m.at(partInd) };
-	Satellite* newSat = new Satellite(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), reinterpret_cast<double**>(gpuOtherMemoryPointers_m.at(partInd)), name);
+	Satellite* newSat = new Satellite(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), tmpPart->getCurrDataGPUPtr(), name);
 	SatandPart* newStruct = new SatandPart{ newSat, tmpPart };
 	satellites_m.push_back(newStruct);
 }

@@ -52,8 +52,10 @@ protected:
 	std::vector<std::vector<std::vector<double>>> satelliteData_m; //3D satelliteData[satellite number][attribute number][particle number]
 	
 	//GPU Memory Pointers
-	std::vector<double*> gpuDblMemoryPointers_m { nullptr };
-	std::vector<void*>	 gpuOtherMemoryPointers_m{ nullptr };
+	//std::vector<double*> gpuDblMemoryPointers_m { nullptr };
+	//std::vector<void*>	 gpuOtherMemoryPointers_m{ nullptr };
+	double* simConstants_d;
+	void*   curandRNGStates_d; //void* is used instead of curandStateMRG32k3a* so I don't have to include the cuda headers here (which are used in other sections of code not requiring CUDA)
 
 	//Flags
 	bool initialized_m{ false };
