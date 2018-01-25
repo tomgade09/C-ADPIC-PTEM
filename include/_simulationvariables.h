@@ -24,7 +24,7 @@
 
 //E+M Variables
 //constexpr double DIPOLETHETA{ 20.0 }; // theta (in deg) - to calculate dipole electric field
-constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };//sqrt(1 + 3 * pow(cos(20.0 * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))
+//constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };//sqrt(1 + 3 * pow(cos(20.0 * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))
 
 //CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
 // For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime
@@ -36,7 +36,7 @@ constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };//sqrt(1 + 3 * pow(cos(2
 //constexpr int    LOOPS_BTW_PROGRESS_COUT{ 500 };
 
 //Functions I can't bring myself to write a header for
-double BFieldatZ(double z, double simtime);
-double EFieldatZ(double** LUT, double z, double simtime, double omegaE, double constE, bool qsps, bool alfven);
+//double BFieldatZ(double z, double simtime);
+//double EFieldatZ(double** LUT, double z, double simtime, double omegaE, double constE, bool qsps, bool alfven);
 
 #endif

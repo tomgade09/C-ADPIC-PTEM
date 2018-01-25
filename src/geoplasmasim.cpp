@@ -12,12 +12,6 @@ DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMa
 	Simulation* ret{ nullptr };
 
 	ret = new Simulation(dt, simMin, simMax, ionT, magT, rootdir);
-	
-	if (constEQSPS != 0.0)
-	{
-		std::cout << "createSimulation: QSPS\n";
-		ret->setQSPS(constEQSPS);
-	}
 
 	return ret;
 }

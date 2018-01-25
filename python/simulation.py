@@ -33,7 +33,7 @@ def simulationRunMain():
     print("================  SIMULATION ", dtg, " ================")
 
     sim = Simulation(DLLLOCATION, ROOTDIR, DT, MIN_S_SIM, MAX_S_SIM, INITIAL_T_ION_EV, INITIAL_T_MAG_EV, 0.0, ALFVENLUTCSV)
-    finalDat, origDat, satDat = sim.runSim(25000)
+    finalDat, origDat, satDat = sim.runSim(250)
 
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
     for iii in range(len(fields[2])):

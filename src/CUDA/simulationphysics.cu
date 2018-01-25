@@ -14,9 +14,11 @@
 //Project specific includes
 #include "_simulationvariables.h"
 #include "SimulationClass\Simulation.h"
-//#include "SimulationClass\AlfvenLUT.h"
 
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
+__device__ double getBFieldAtS(double s, double t);
+__device__ double getGradBAtS(double s, double t);
+//__device__ double getEFieldAtS(double s, double t);
 
 //CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
 // For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime
@@ -24,144 +26,42 @@ constexpr int  BLOCKSIZE{ 256 }; //Number of threads per block - this is most ef
 constexpr int  NUMRNGSTATES{ 64 * BLOCKSIZE };
 
 //Commonly used values
-extern const int SIMCHARSIZE{ 8 * sizeof(double) };
+extern const int SIMCHARSIZE{ 6 * sizeof(double) };
 
-//__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime, double omegaE);
-//__host__ __device__ double alfvenWaveEbyCompute(double z, double simtime);
-
-__host__ __device__ double qspsEatZ(double z, double simtime, double constE)
-{
-	//if ((z > E_RNG_CENTER + E_RNG_DELTA) || (z < E_RNG_CENTER - E_RNG_DELTA))
-		//return 0.0;
-	return constE;
-}
-
-__host__ __device__ double EFieldatZ(double** LUT, double z, double simtime, double omegaE, double constE, bool qsps, bool alfven)
-{
-	bool alfLUT { false };
-	bool alfCalc{ false };
-	
-	if (LUT == nullptr && alfven)
-		alfCalc = true;
-	else if (LUT != nullptr && alfven)
-		alfLUT = true;
-
-	return (qsps ? (qspsEatZ(z, simtime, constE)) : (0.0));//+ (alfLUT ? (alfvenWaveEbyLUT(LUT, z, simtime, omegaE)) : (0.0)) + (alfCalc ? (alfvenWaveEbyCompute(z, simtime)) : (0.0));
-}
-
-/* THIS IS THE NEW STUFF, ADDED CODE TO TRY DIPOLE B FIELD CONFIGURATION */
-constexpr double ILATDEGS{ 72.0 };
-constexpr double ERRTOLERANCE{ 1e-4 };
-constexpr double B0{ 3.12e-5 };
-constexpr double DS{ 6.371e3 }; //seems to me a reasonable value maybe??
-//double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) }; //calculate this in advance, pass it in
-constexpr double L{ 66717978.1693023 }; //valid for 72.0 ILAT ONLY!!!!
-constexpr double Lnorm{ L / RADIUS_EARTH }; //same as above
-constexpr double s_max{ 85670894.104915 };
-//pass in s_max as well
-
-__host__ __device__ double getSAtLambda(double lambdaDegrees, double L)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
-{//returns s in units of L
-	double x{ asinh(sqrt(3.0) * sin(lambdaDegrees * PI / 180)) };
-
-	return (0.5 * L / sqrt(3.0)) * (x + sinh(x) * cosh(x));
-}
-
-__host__ __device__ double getLambdaAtS(double s, double dipoleEquatorialDist, double ILATdegrees)
-{//s, L, and dipoleEquatorialDist must be in same units
-	//double s_max{ getSAtLambda(ILATdegrees, dipoleEquatorialDist) };
-	double lambda_tmp{ (-ILATdegrees / s_max) * s + ILATdegrees };
-	double s_tmp{ s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist) };
-	double dlambda{ 1.0 };
-	bool   over{ 0 };
-
-	while (abs((s_tmp - s) / s) > ERRTOLERANCE)
-	{
-		while (1)
-		{
-			over = (s_tmp >= s);
-			if (over)
-			{
-				lambda_tmp += dlambda;
-				s_tmp = s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist);
-				if (s_tmp < s)
-					break;
-			}
-			else
-			{
-				lambda_tmp -= dlambda;
-				s_tmp = s_max - getSAtLambda(lambda_tmp, dipoleEquatorialDist);
-				if (s_tmp >= s)
-					break;
-			}
-		}
-		if (dlambda < ERRTOLERANCE / 100.0)
-			break;
-		dlambda /= 5.0; //through trial and error, this reduces the number of calculations usually (compared with 2, 10, and other divisors)
-	}
-
-	return lambda_tmp;
-}
-
-__host__ __device__ double BFieldatZ(double s, double simtime)
-{
-	//double L{ RADIUS_EARTH / pow(cos(ILATDEGS * PI / 180.0), 2) }; //calculate this in advance, pass it in
-	double lambda_deg{ getLambdaAtS(s, L, ILATDEGS) };
-	double lambda_rad{ lambda_deg * PI / 180.0 };
-	double rnorm{ Lnorm * pow(cos(lambda_rad), 2) };
-
-	return -B0 / pow(rnorm, 3) * sqrt(1.0 + 3 * pow(sin(lambda_rad),2));
-}
-/* END NEW STUFF */
-
-/*__host__ __device__ double BFieldatZ(double z, double simtime)
-{//for now, a simple dipole field
-	if (z == 0)
-		return 0.0; //add an error here if this case is true, at some point
-
-	double norm{ RADIUS_EARTH };
-
-	if ((z < RADIUS_EARTH) && (z > 0))
-		norm = 1.0;
-
-	return B0ATTHETA / pow(z / norm, 3); //Bz = B0 at theta * (1/rz(in Re))^3
-}*/
-
-__device__ double accel1dCUDA(double* args, int len, double** LUT, bool qsps, bool alfven) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]
-	double F_lor, F_mir, ztmp;
-	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
+__device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Fourth Order Runge Kutta code
+{//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
+	double F_lor, F_mir, stmp;
+	stmp = args[5] + args[1] * args[0]; //ps_0 + vs * t_RK
 	
 	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * EFieldatZ(LUT, ztmp, args[6] + args[0], args[8], args[9], qsps, alfven); //will need to replace E with a function to calculate in more complex models
+	F_lor = args[3] * 0.0; //getEFieldAtS(some arguments, etc)
 
 	//Mirror force
-	//F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / RADIUS_EARTH, 4))) / RADIUS_EARTH; //mu in [kg.m^2 / s^2.T] = [N.m / T]
-	F_mir = -args[2] * (BFieldatZ(ztmp + DS, args[6] + args[0]) - BFieldatZ(ztmp - DS, args[6] + args[0])) / (2 * DS); //-mu * gradB
+	F_mir = -args[2] * getGradBAtS(stmp, args[0] + args[6]); //-mu * gradB
 
 	return (F_lor + F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
 
-__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen, double** LUT, bool qsps, bool alfven)
+__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
-	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]
+	//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
 	double k1, k2, k3, k4, y_0;
 	y_0 = funcArg[1];
 
-	k1 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k1 = f(t_n, y_n), units of dy / dt
+	k1 = accel1dCUDA(funcArg, arrayLen); //k1 = f(t_n, y_n), units of dy / dt
 	
 	funcArg[0] = funcArg[7] / 2;
 	funcArg[1] = y_0 + k1 * funcArg[0];
-	k2 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k2 = f(t_n + h/2, y_n + h/2 k1)
+	k2 = accel1dCUDA(funcArg, arrayLen); //k2 = f(t_n + h/2, y_n + h/2 k1)
 
 	funcArg[1] = y_0 + k2 * funcArg[0];
-	k3 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k3 = f(t_n + h/2, y_n + h/2 k2)
+	k3 = accel1dCUDA(funcArg, arrayLen); //k3 = f(t_n + h/2, y_n + h/2 k2)
 
 	funcArg[0] = funcArg[7];
 	funcArg[1] = y_0 + k3 * funcArg[0];
-	k4 = accel1dCUDA(funcArg, arrayLen, LUT, qsps, alfven); //k4 = f(t_n + h, y_n + h k3)
+	k4 = accel1dCUDA(funcArg, arrayLen); //k4 = f(t_n + h, y_n + h k3)
 
 	return (k1 + 2 * k2 + 2 * k3 + k4) * funcArg[7] / 6; //returns delta y, not dy / dt, not total y
 }
@@ -181,91 +81,88 @@ __global__ void setup2DArray(double* array1D, double** array2D, int cols, int en
 		array2D[iii] = &array1D[iii * entries];
 }
 
-__device__ void ionosphereGenerator(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
-{//takes pointers to single particle location in attribute arrays (ex: particle 100: ptr to v[100], ptr to mu[100], ptr to z[100], elecTF, ptr to crndStateA[rnd index of thread]
+__device__ void ionosphereGenerator(double* v_part, double* mu_part, double* s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
+{//takes pointers to single particle location in attribute arrays (ex: particle 100: ptr to v[100], ptr to mu[100], ptr to s[100], elecTF, ptr to crndStateA[rnd index of thread]
 	double2 v_norm; //v_norm.x = v_para; v_norm.y = v_perp
 	v_norm = curand_normal2_double(rndState); //more efficient to generate two doubles in the one function than run curand_normal_double twice according to CUDA docs
 	v_norm.x = v_norm.x * sqrt(simConsts[3] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	v_norm.y = v_norm.y * sqrt(simConsts[3] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	///change to Maxwellian E and pitch angle
-	*z_part = simConsts[1];
+	*s_part = simConsts[1];
 	*v_part = abs(v_norm.x);
 	*mu_part = v_norm.y;
 }
 
-__device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
+__device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {
 	double2 v_norm; //two normal dist values returned to v_norm.x and v_norm.y; v_norm.x = v_para; v_norm.y = v_perp
 	v_norm = curand_normal2_double(rndState);
 	v_norm.x = v_norm.x * sqrt(simConsts[4] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	v_norm.y = v_norm.y * sqrt(simConsts[4] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	///change to Maxwellian E and pitch angle
-	*z_part = simConsts[2];
+	*s_part = simConsts[2];
 	*v_part = -abs(v_norm.x);
 	*mu_part = v_norm.y;
 }
 
-__device__ void ionosphereScattering(double* v_part, double* mu_part, double* z_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
+__device__ void ionosphereScattering(double* v_part, double* mu_part, double* s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {
 	//
 	//
 	//
 	//Physics needs to be improved
-	ionosphereGenerator(v_part, mu_part, z_part, simConsts, mass, rndState);
+	ionosphereGenerator(v_part, mu_part, s_part, simConsts, mass, rndState);
 }
 
-__global__ void computeKernel(double** currData_d, double** origData_d, double** LUT, double* simConsts, curandStateMRG32k3a* crndStateA,
-	double simtime, double mass, double charge, long numParts, bool qsps, bool alfven)
+__global__ void computeKernel(double** currData_d, double** origData_d, double* simConsts, curandStateMRG32k3a* crndStateA,	double simtime, double mass, double charge, long numParts)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
-	double* v_d; double* mu_d; double* z_d;
-	double* v_orig; double* vperp_orig; double* z_orig;
-	v_d = currData_d[0]; mu_d = currData_d[1]; z_d = currData_d[2];
-	v_orig = origData_d[0]; vperp_orig = origData_d[1]; z_orig = origData_d[2];
+	double* v_d; double* mu_d; double* s_d;
+	double* v_orig; double* vperp_orig; double* s_orig;
+	v_d = currData_d[0]; mu_d = currData_d[1]; s_d = currData_d[2];
+	v_orig = origData_d[0]; vperp_orig = origData_d[1]; s_orig = origData_d[2];
 
-	if (z_d[thdInd] < 0.001) //if z is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
+	if (s_d[thdInd] < 0.001) //if s is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{//previous way to index curandStates: (blockIdx.x * 2) + (threadIdx.x % 2) - this leads to each block accessing two curand states - 128 threads call the same state simultaneously and end up with the same values
 		if (thdInd < numParts / 2) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
-			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		else
-			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		
 		v_orig[thdInd] = v_d[thdInd];
 		vperp_orig[thdInd] = mu_d[thdInd];
-		z_orig[thdInd] = z_d[thdInd];
-		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / BFieldatZ(z_d[thdInd], simtime);
+		s_orig[thdInd] = s_d[thdInd];
+		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / getBFieldAtS(s_d[thdInd], simtime);
 	}
 	else if (simtime == 0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
 	{
 		v_orig[thdInd] = v_d[thdInd];
 		vperp_orig[thdInd] = mu_d[thdInd];
-		z_orig[thdInd] = z_d[thdInd];
-		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / BFieldatZ(z_d[thdInd], simtime);
+		s_orig[thdInd] = s_d[thdInd];
+		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / getBFieldAtS(s_d[thdInd], simtime);
 	}
-	else if (z_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
-		//ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+	else if (s_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
+		//ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
-	else if (z_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top, particle is lost, new one generated in its place
-		//magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &z_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
+	else if (s_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top, particle is lost, new one generated in its place
+		//magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
 	
-	//args array: [t_RKiter, vz, mu, q, m, pz_0, simtime, dt, omega E, const E]
+	//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
 	//simConsts: dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
 	double args[10];
 	args[0] = 0.0;
-	args[1] = v_d[thdInd];
-	args[2] = mu_d[thdInd];
+	args[1] = v_d[thdInd]; //velocity along s
+	args[2] = mu_d[thdInd]; //mu
 	args[3] = charge;
 	args[4] = mass;
-	args[5] = z_d[thdInd];
+	args[5] = s_d[thdInd]; //position along s
 	args[6] = simtime;
-	args[7] = simConsts[0];
-	args[8] = simConsts[6]; //omega E
-	args[9] = simConsts[7]; //QSPS
+	args[7] = simConsts[0]; //dt
 
-	v_d[thdInd] += foRungeKuttaCUDA(args, 10, LUT, qsps, alfven);
-	z_d[thdInd] += v_d[thdInd] * simConsts[0];
+	v_d[thdInd] += foRungeKuttaCUDA(args, 8);
+	s_d[thdInd] += v_d[thdInd] * simConsts[0];
 }
 
 void Simulation::initializeSimulation()
@@ -336,8 +233,8 @@ void Simulation::copyDataToGPU()
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToGPU(););
 	
 	
-	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS Const E
-	double data[]{ dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m, 0.0, constE_m };
+	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean
+	double data[]{ dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m, };
 	CUDA_CALL(cudaMemcpy(simConstants_d, data, SIMCHARSIZE, cudaMemcpyHostToDevice));
 	
 	//Prepare curand states for random number generation
@@ -389,12 +286,8 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		{
 			Particle* tmpPart{ particleTypes_m.at(parts) };
 
-			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (tmpPart->getCurrDataGPUPtr(), //2D array of particle data
-																						  tmpPart->getOrigDataGPUPtr(), //2D array for original particle data
-				nullptr,				//2D array of LUT data (nullptr if not used)
-				simConstants_d,																							//1D array of sim characteristics
-				static_cast<curandStateMRG32k3a*>(curandRNGStates_d),						//1D array of curand states
-				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles(), useQSPS_m, 0);	// (useAlfLUT_m || useAlfCal_m)); //other quantities and flags
+			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (tmpPart->getCurrDataGPUPtr(), tmpPart->getOrigDataGPUPtr(), simConstants_d,
+				static_cast<curandStateMRG32k3a*>(curandRNGStates_d),	simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles());
 
 			cudaDeviceSynchronize();
 		}

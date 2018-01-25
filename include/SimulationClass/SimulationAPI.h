@@ -11,7 +11,7 @@ DLLEXPORT double   getDtAPI(Simulation* simulation);
 DLLEXPORT double   getSimMinAPI(Simulation* simulation);
 DLLEXPORT double   getSimMaxAPI(Simulation* simulation);
 DLLEXPORT void     incrementSimulationTimeByDtAPI(Simulation* simulation);
-DLLEXPORT void     setQSPSAPI(Simulation* simulation, double constE);
+//DLLEXPORT void     setQSPSAPI(Simulation* simulation, double constE);
 DLLEXPORT int      getNumberOfParticleTypesAPI(Simulation* simulation);
 DLLEXPORT int      getNumberOfParticlesAPI(Simulation* simulation, int partInd);
 DLLEXPORT int      getNumberOfAttributesAPI(Simulation* simulation, int partInd);

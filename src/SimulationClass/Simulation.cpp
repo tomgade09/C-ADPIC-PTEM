@@ -11,9 +11,9 @@ void Simulation::receiveSatelliteData(bool removeZeros)
 	//Check particle for index of vperp/mu, iterate over particles
 	LOOP_OVER_1D_ARRAY(satellites_m.size(),\
 		int vperpInd{ satellites_m.at(iii)->particle->getDimensionIndByName("vperp") };
-		int zInd    { satellites_m.at(iii)->particle->getDimensionIndByName("z") };
+		int sInd    { satellites_m.at(iii)->particle->getDimensionIndByName("s") };
 		int tInd    { satellites_m.at(iii)->satellite->getNumberOfAttributes() };
-		convertMuToVPerp(satelliteData_m.at(iii).at(vperpInd), satelliteData_m.at(iii).at(zInd), satelliteData_m.at(iii).at(tInd), satellites_m.at(iii)->particle->getMass());
+		convertMuToVPerp(satelliteData_m.at(iii).at(vperpInd), satelliteData_m.at(iii).at(sInd), satelliteData_m.at(iii).at(tInd), satellites_m.at(iii)->particle->getMass());
 	);
 
 	LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes() + 2,\
@@ -65,14 +65,14 @@ void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing
 }
 
 //Vperp <-> Mu conversion tools
-void Simulation::convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& z, double mass)
+void Simulation::convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, double mass)
 {
-	LOOP_OVER_1D_ARRAY(vperp.size(), vperp.at(iii) = 0.5 * mass * vperp.at(iii) * vperp.at(iii) / BFieldatZ(z.at(iii), simTime_m););
+	LOOP_OVER_1D_ARRAY(vperp.size(), vperp.at(iii) = 0.5 * mass * vperp.at(iii) * vperp.at(iii) / BFieldModel->getBFieldAtS(s.at(iii), simTime_m););
 }
 
 void Simulation::convertVPerpToMu(Particle* particle)
 {
-	convertVPerpToMu(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("z")), particle->getMass());
+	convertVPerpToMu(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("s")), particle->getMass());
 }
 
 void Simulation::convertVPerpToMu(int partInd)
@@ -86,19 +86,19 @@ void Simulation::convertVPerpToMu(int partInd)
 	convertVPerpToMu(particleTypes_m.at(partInd));
 }
 
-void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, double mass)
+void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldatZ(z.at(iii), simTime_m) / mass););
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel->getBFieldAtS(s.at(iii), simTime_m) / mass););
 }
 
-void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, std::vector<double>& t, double mass)
+void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldatZ(z.at(iii), t.at(iii)) / mass););
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel->getBFieldAtS(s.at(iii), t.at(iii)) / mass););
 }
 
 void Simulation::convertMuToVPerp(Particle* particle)
 {
-	convertMuToVPerp(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("z")), particle->getMass());
+	convertMuToVPerp(particle->getCurrData().at(particle->getDimensionIndByName("vperp")), particle->getCurrData().at(particle->getDimensionIndByName("s")), particle->getMass());
 }
 
 void Simulation::convertMuToVPerp(int partInd)
@@ -136,13 +136,13 @@ void Simulation::writeSatelliteDataToCSV()
 		std::vector<double> zeros;
 		zeros.resize(numParts);
 
-		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(tmpPart->getOrigData().at(iii));); //orig para, perp, z
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(tmpPart->getOrigData().at(iii));); //orig para, perp, s
 		data.push_back(zeros); //spacer
 		data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(numAttrs)); //time escaped top
-		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(iii));); //top para, perp, z
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(iii));); //top para, perp, s
 		data.push_back(zeros);
 		data.push_back(satelliteData_m.at(hhh).at(numAttrs)); //time escaped bottom
-		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh).at(iii));); //bottom para, perp, z
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh).at(iii));); //bottom para, perp, s
 		data.push_back(zeros);
 
 		int vparaInd{ tmpPart->getDimensionIndByName("vpara") };
@@ -181,8 +181,6 @@ void Simulation::prepareResults(bool normalizeToRe)
 
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true););
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false););
-
-	LOOP_OVER_1D_ARRAY(satelliteData_m.size(), )
 
 	//normalizes m to Re
 	if (normalizeToRe)

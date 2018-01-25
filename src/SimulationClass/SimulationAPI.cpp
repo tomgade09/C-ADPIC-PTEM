@@ -16,8 +16,8 @@ DLLEXPORT double getSimMaxAPI(Simulation* simulation) {
 DLLEXPORT void incrementSimulationTimeByDtAPI(Simulation* simulation) {
 	simulation->incTime(); }
 
-DLLEXPORT void setQSPSAPI(Simulation* simulation, double constE) {
-	simulation->setQSPS(constE); }
+//DLLEXPORT void setQSPSAPI(Simulation* simulation, double constE) {
+	//simulation->setQSPS(constE); }
 
 DLLEXPORT int getNumberOfParticleTypesAPI(Simulation* simulation) {
 	return static_cast<int>(simulation->getNumberOfParticleTypes()); }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include "BField\DipoleB.h"
 #include "ParticleClass\Particle.h"
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
@@ -38,13 +39,10 @@ protected:
 	const double ionT_m;
 	const double magT_m;
 	const double vmean_m{ 0.0 };
-	double constE_m{ 0.0 };
-	
-	bool useQSPS_m  { false };
-	bool useAlfLUT_m{ false };
-	bool useAlfCal_m{ false };
 
+	//Classes tracked by Simulation
 	std::vector<Particle*> particleTypes_m;
+	BField* BFieldModel{ new DipoleB(72.0) };
 
 	//Satellites and data
 	std::vector<TempSat*> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
@@ -87,6 +85,8 @@ public:
 	{	
 		if (initialized_m && !freedGPUMem_m) { freeGPUMemory(); }
 
+		delete BFieldModel;
+
 		//Delete satellites and particles
 		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii););
 		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii););
@@ -101,29 +101,27 @@ public:
 	double    getSimMin() { return simMin_m; }
 	double    getSimMax() { return simMax_m; }
 	void	  incTime() { simTime_m += dt_m; }
-	void      setQSPS(double constE) { constE_m = constE; useQSPS_m = true; }
 
 	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); }
 	size_t    getNumberOfParticles(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); }
 	size_t    getNumberOfAttributes(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); }
 
 	bool	  areResultsPrepared() { return resultsPrepared_m; }
-	//bool	  getNormalized() { return normalizedToRe_m; }
 
 	LogFile*  getLogFilePointer() { return &logFile_m; }
 	double*   getPointerToParticleAttributeArray(int partIndex, int attrIndex, bool originalData);
 
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
-	virtual double calculateBFieldAtZandTime(double z, double time) { return BFieldatZ(z, time); }
-	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(nullptr, z, time, 0.0, constE_m, useQSPS_m, false); }
+	virtual double calculateBFieldAtZandTime(double s, double time) { return BFieldModel->getBFieldAtS(s, time); }
+	virtual double calculateEFieldAtZandTime(double s, double time) { return 0.0; }//EFieldatZ(nullptr, s, time, 0.0, constE_m, useQSPS_m, false); }
 	
 	//Array tools
-	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& z, double mass);
+	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, double mass);
 	virtual void convertVPerpToMu(Particle* particle);
 	virtual void convertVPerpToMu(int partInd);
-	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, double mass);
-	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& z, std::vector<double>& t, double mass);
+	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass);
+	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass);
 	virtual void convertMuToVPerp(Particle* particle);
 	virtual void convertMuToVPerp(int partInd);
 
