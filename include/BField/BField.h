@@ -10,6 +10,7 @@
 #include "cuda_profiler_api.h"
 
 typedef double(*callbackFcn)(double*, int, double, double);
+typedef double(*callback2Fcn)(double*, int, double);
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
 
 //on GPU global variables
@@ -17,6 +18,7 @@ extern __device__ double*     fieldConstArray_GPU;
 extern __device__ int         arraySize_GPU;
 extern __device__ callbackFcn BFieldFcnPtr_GPU;
 extern __device__ callbackFcn gradBFcnPtr_GPU;
+extern __device__ callback2Fcn getSAtLambdaPtr_GPU;
 
 class BField
 {

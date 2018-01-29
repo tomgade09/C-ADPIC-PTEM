@@ -3,7 +3,9 @@
 //B Field related kernels
 __host__ __device__ double getSAtLambda_DipoleB(double* consts, int arrayLength, double lambdaDegrees)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
 {//returns s in units of L
-	double x{ asinh(sqrt(3.0) * sin(lambdaDegrees * PI / 180)) };
+	//double xtmp{ sqrt(3.0) * sin(lambdaDegrees * PI / 180) };
+	//double x{ log(xtmp + sqrt(xtmp * xtmp + 1)) };
+	double x{ asinh(sqrt(3.0) * sin(lambdaDegrees * PI / 180.0)) };
 
 	return (0.5 * /* L */consts[2] / sqrt(3.0)) * (x + sinh(x) * cosh(x));
 }
@@ -62,12 +64,15 @@ __global__ void setupEnvironmentGPU_DipoleB(double* constArrayPtr)
 {
 	BFieldFcnPtr_GPU = BFieldAtS_DipoleB;
 	gradBFcnPtr_GPU = gradBAtS_DipoleB;
+	getSAtLambdaPtr_GPU = getSAtLambda_DipoleB;
+
 	arraySize_GPU = 7;
 	fieldConstArray_GPU = constArrayPtr;
 
 	printf("%d, %f, %f, %f, %f, %f, %f, %f\n", arraySize_GPU, fieldConstArray_GPU[0], fieldConstArray_GPU[1], fieldConstArray_GPU[2], fieldConstArray_GPU[3], fieldConstArray_GPU[4], fieldConstArray_GPU[5], fieldConstArray_GPU[6]);
-	printf("%f, %f\n", BFieldFcnPtr_GPU(fieldConstArray_GPU, arraySize_GPU, 0.0, 0.0), gradBFcnPtr_GPU(fieldConstArray_GPU, arraySize_GPU, 6.3712e6, 0.0));
+	printf("%.6e, %.6e\n", BFieldFcnPtr_GPU(fieldConstArray_GPU, arraySize_GPU, 0.0, 0.0), gradBFcnPtr_GPU(fieldConstArray_GPU, arraySize_GPU, 6.3712e6, 0.0));
 	printf("%f, %f\n", BFieldAtS_DipoleB(fieldConstArray_GPU, arraySize_GPU, 0.0, 0.0), gradBAtS_DipoleB(fieldConstArray_GPU, arraySize_GPU, 6.3712e6, 0.0));
+	printf("%f\n", 85670894.1 - getSAtLambdaPtr_GPU(fieldConstArray_GPU, arraySize_GPU, 70.29323259));
 }
 
 //DipoleB class member functions
@@ -77,9 +82,12 @@ void DipoleB::setupEnvironment()
 	CUDA_CALL(cudaMalloc((void **)&fieldConstants_d, fieldConstArray_m.size() * sizeof(double)));
 	CUDA_CALL(cudaMemcpy(fieldConstants_d, fieldConstArray_m.data(), fieldConstArray_m.size() * sizeof(double), cudaMemcpyHostToDevice));
 
+	std::cout << "================= GPU" << std::endl;
 	setupEnvironmentGPU_DipoleB <<< 1, 1 >>> (fieldConstants_d);
-	std::cout << BFieldAtS_DipoleB(fieldConstArray_GPU, arraySize_GPU, 0.0, 0.0) << ", " << gradBAtS_DipoleB(fieldConstArray_GPU, arraySize_GPU, 6.3712e6, 0.0) << std::endl;
 	cudaDeviceSynchronize();
+	std::cout << "================= HOST" << std::endl;
+	std::cout << BFieldAtS_DipoleB(fieldConstArray_m.data(), 7, 0.0, 0.0) << ", " << gradBAtS_DipoleB(fieldConstArray_m.data(), 7, 6.3712e6, 0.0) << std::endl;
+	std::cout << 85670894.1 - getSAtLambda_DipoleB(fieldConstArray_m.data(), 7, 70.29323259) << std::endl;
 }
 
 double DipoleB::getBFieldAtS(double s, double t)
