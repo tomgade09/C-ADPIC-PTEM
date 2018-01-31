@@ -12,7 +12,7 @@
 #include "curand_kernel.h"
 
 //Project specific includes
-#include "_simulationvariables.h"
+#include "physicalconstants.h"
 #include "SimulationClass\Simulation.h"
 
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
@@ -46,7 +46,7 @@ __device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
-	//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
+	// args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
 	double k1, k2, k3, k4, y_0;
 	y_0 = funcArg[1];
 
@@ -124,7 +124,7 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 	v_orig = origData_d[0]; vperp_orig = origData_d[1]; s_orig = origData_d[2];
 
 	if (s_d[thdInd] < 0.001) //if s is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
-	{//previous way to index curandStates: (blockIdx.x * 2) + (threadIdx.x % 2) - this leads to each block accessing two curand states - 128 threads call the same state simultaneously and end up with the same values
+	{
 		if (thdInd < numParts / 2) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
 			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		else
@@ -143,15 +143,13 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / getBFieldAtS(s_d[thdInd], simtime);
 	}
 	else if (s_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
-		//ionosphereScattering(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
 	else if (s_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top, particle is lost, new one generated in its place
-		//magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], elecTF, &crndStateA[(blockIdx.x * 2) + (threadIdx.x % 2)]);
 		return;
 	
 	//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
 	//simConsts: dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
-	double args[10];
+	double args[8];
 	args[0] = 0.0;
 	args[1] = v_d[thdInd]; //velocity along s
 	args[2] = mu_d[thdInd]; //mu
@@ -167,18 +165,23 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 
 void Simulation::initializeSimulation()
 {	
-	logFile_m.createTimeStruct("Start Sim Init"); //index 1
-	logFile_m.writeTimeDiff(0, 1);
+	logFile_m->createTimeStruct("Start Sim Init"); //index 1
+	logFile_m->writeTimeDiff(0, 1);
 
 	//
 	//Check for user error
-	if (particleTypes_m.size() == 0)
+	if (BFieldModel_m == nullptr)
 	{
-		logFile_m.writeErrorEntry("Simulation::initializeSimulation", "No particles in sim.  You need to add particles before calling this function.  Returning.", {});
+		logFile_m->writeErrorEntry("Simulation::initializeSimulation", "No Magnetic Field model specified.  This doesn't make sense.  You need to add a model with Simulation::addBFieldModel.  Returning.", {});
 		errorEncountered = true;
 		return;
 	}
-
+	if (particleTypes_m.size() == 0)
+	{
+		logFile_m->writeErrorEntry("Simulation::initializeSimulation", "No particles in sim.  You need to add particles before calling this function.  Returning.", {});
+		errorEncountered = true;
+		return;
+	}
 	if (errorEncountered)
 		return;
 	//Check for user error complete
@@ -195,7 +198,7 @@ void Simulation::initializeSimulation()
 		LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii)->particleInd, tempSats_m.at(iii)->altitude, tempSats_m.at(iii)->upwardFacing, tempSats_m.at(iii)->name););
 	}
 	else
-		logFile_m.writeLogFileEntry("Warning: Simulation::initializeSimulation: No satellites created.  That's odd.");
+		logFile_m->writeLogFileEntry("Warning: Simulation::initializeSimulation: No satellites created.  That's odd.");
 
 	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
 	CUDA_CALL(cudaMalloc((void **)&simConstants_d, SIMCHARSIZE)); //for right now, fine
@@ -203,23 +206,20 @@ void Simulation::initializeSimulation()
 	//Array of random number generator states
 	CUDA_CALL(cudaMalloc((void **)&curandRNGStates_d, NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
 
-	//For derived classes to add code
-	initializeFollowOn(); //need to remove these
-
 	initialized_m = true;
-	logFile_m.createTimeStruct("End Sim Init");
-	logFile_m.writeTimeDiff(1, 2);
+	logFile_m->createTimeStruct("End Sim Init");
+	logFile_m->writeTimeDiff(1, 2);
 }
 
 void Simulation::copyDataToGPU()
 {//copies particle distribution and associated data to GPU in preparation of iterative calculations over the data
-	logFile_m.writeLogFileEntry("Simulation::copyDataToGPU: Start copy to GPU");
+	logFile_m->writeLogFileEntry("Simulation::copyDataToGPU: Start copy to GPU");
 
 	//
 	//Check for user error
 	if (!initialized_m)
 	{
-		logFile_m.writeErrorEntry("Simulation::copyDataToGPU", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
+		logFile_m->writeErrorEntry("Simulation::copyDataToGPU", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
 		errorEncountered = true;
 		return;
 	}
@@ -240,31 +240,28 @@ void Simulation::copyDataToGPU()
 	//Prepare curand states for random number generation
 	long long seed = time(NULL);
 	initCurand <<< NUMRNGSTATES / 256, 256 >>> (static_cast<curandStateMRG32k3a*>(curandRNGStates_d), seed);
-	
-	//For derived classes to add code
-	copyDataToGPUFollowOn(); //need to get rid of later
 
 	copied_m = true;
 	
-	logFile_m.writeLogFileEntry("Simulation::copyDataToGPU: End copy to GPU");
+	logFile_m->writeLogFileEntry("Simulation::copyDataToGPU: End copy to GPU");
 }
 
 void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 {//conducts iterative calculations of data previously copied to GPU - runs the data through the computeKernel
-	logFile_m.createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 3
-	logFile_m.writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
+	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 3
+	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
 	
 	//
 	//Check for user error
 	if (!initialized_m)
 	{
-		logFile_m.writeErrorEntry("Simulation::iterateSimulation", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.  You also need to copy data to the GPU with Simulation::copyDataToGPU.", { std::to_string(numberOfIterations) });
+		logFile_m->writeErrorEntry("Simulation::iterateSimulation", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.  You also need to copy data to the GPU with Simulation::copyDataToGPU.", { std::to_string(numberOfIterations) });
 		errorEncountered = true;
 		return;
 	}
 	if (!copied_m)
 	{
-		logFile_m.writeErrorEntry("Simulation::iterateSimulation", "You haven't copied any data to the GPU with Simulation::copyDataToGPU.  Do that first or the GPU has no numbers to work on.", { std::to_string(numberOfIterations) });
+		logFile_m->writeErrorEntry("Simulation::iterateSimulation", "You haven't copied any data to the GPU with Simulation::copyDataToGPU.  Do that first or the GPU has no numbers to work on.", { std::to_string(numberOfIterations) });
 		errorEncountered = true;
 		return;
 	}
@@ -272,11 +269,6 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		return;
 	//Check for user error complete
 	//
-
-	//For derived classes to add code
-	iterateSimulationFollowOnPreLoop(); //remove this later
-
-	size_t numParts{ particleTypes_m.size() };
 
 	//Loop code
 	long cudaloopind{ 0 };
@@ -306,36 +298,30 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 			out.str(""); out.clear();
 			out << std::setw(std::to_string(static_cast<double>(numberOfIterations) * dt_m).size()) << std::fixed << simTime_m; //not sure if I like the setw(std::to_string(blah)) solution...
 			std::cout << out.str() << "  |  Real Time Elapsed (s): ";
-			logFile_m.printTimeNowFromLastTS(); //need to add to log file as well?
+			logFile_m->printTimeNowFromLastTS(); //need to add to log file as well?
 			std::cout << "\n";
 		}
 
 		//if (cudaloopind % 2500 == 0)//need better conditional
 			//receiveSatelliteData();
-
-		//For derived classes to add code
-		iterateSimulationFollowOnInsideLoop(); //remove this eventually
 	}
 	receiveSatelliteData(false);
 	std::cout << "\nReceive sat data outside main loop.  Remove after.\n";
 
-	//For derived classes to add code
-	iterateSimulationFollowOnPostLoop(); //remove later
-
-	logFile_m.createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
-	logFile_m.writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
-	logFile_m.writeLogFileEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + std::to_string(numberOfIterations));
+	logFile_m->createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 4
+	logFile_m->writeTimeDiffFromNow(3, "End Iterate " + std::to_string(numberOfIterations));
+	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }
 
 void Simulation::copyDataToHost()
 {//copies data back to host from GPU
-	logFile_m.writeLogFileEntry("Simulation::copyDataToHost: Copy simulation data from GPU back to host");
+	logFile_m->writeLogFileEntry("Simulation::copyDataToHost: Copy simulation data from GPU back to host");
 	
 	//
 	//Check for user error
 	if (!initialized_m)
 	{
-		logFile_m.writeErrorEntry("Simulation::copyDataToHost", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
+		logFile_m->writeErrorEntry("Simulation::copyDataToHost", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
 		errorEncountered = true;
 		return;
 	}
@@ -347,21 +333,18 @@ void Simulation::copyDataToHost()
 
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToHost(););
 
-	//For derived classes to add code
-	copyDataToHostFollowOn(); //remove later
-
-	logFile_m.writeLogFileEntry("Simulation::copyDataToHost: Done with copying.");
+	logFile_m->writeLogFileEntry("Simulation::copyDataToHost: Done with copying.");
 }
 
 void Simulation::freeGPUMemory()
 {//used to free the memory on the GPU that's no longer needed
-	logFile_m.writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
+	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
 
 	//
 	//Check for user error
 	if (!initialized_m)
 	{
-		logFile_m.writeErrorEntry("Simulation::freeGPUMemory", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
+		logFile_m->writeErrorEntry("Simulation::freeGPUMemory", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
 		return;
 	}
 	//Check for user error complete
@@ -369,12 +352,9 @@ void Simulation::freeGPUMemory()
 
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->freeGPUMemory(););
 
-	//For derived classes to add code
-	freeGPUMemoryFollowOn(); //remove later
-
 	freedGPUMem_m = true;
 
-	logFile_m.writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
+	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
 
-	CUDA_CALL(cudaProfilerStop()); //For profiling the profiler in the CUDA bundle}
+	CUDA_CALL(cudaProfilerStop()); //For profiling with the CUDA bundle
 }

@@ -1,30 +1,83 @@
 #include <cmath>
 #include <iostream>
 
-constexpr double MASS_PROTON{ 1.6726219e-27 }; //kg
-constexpr double MASS_ELECTRON{ 9.1093836e-31 }; //kg
-constexpr double CHARGE_ELEM{ 1.6021766e-19 }; //C
-constexpr double RADIUS_EARTH{ 6.371e6 };		 //m
-constexpr double BFIELD_EARTH{ -32.5e-6 };		 //T (at surface - 1 Re, Wiki mentioned a range from 25-65 uT, B0 would be about this, negative so B points into the Earth at North Pole)
-constexpr double PI{ 3.1415927 };
-constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };
+constexpr double MASS_PROTON{ 1.672621898e-27 };	//kg
+constexpr double MASS_ELECTRON{ 9.10938356e-31 };	//kg
+constexpr double CHARGE_ELEM{ 1.6021766209e-19 }; //C
+constexpr double RADIUS_EARTH{ 6.3712e6 };			//m
+constexpr double JOULE_PER_EV{ 1.6021766209e-19 };
+constexpr double PI{ 3.14159265358979323846 };
+
 constexpr double DT{ 0.01 };
-constexpr double MIN_Z_SIM{ (2.0e6 + RADIUS_EARTH) };
-constexpr double MAX_Z_SIM{ 4 * RADIUS_EARTH };
+constexpr double MIN_Z_SIM{ 2030837.49610366 };
+constexpr double MAX_Z_SIM{ 19881647.2473464 };
 constexpr double MIN_Z_NORM{ MIN_Z_SIM / RADIUS_EARTH };
 constexpr double MAX_Z_NORM{ MAX_Z_SIM / RADIUS_EARTH };
 
-double BFieldatZ(double z, double simtime)
-{//for now, a simple dipole field
-	if (z == 0)
-		return 0.0; //add an error here if this case is true, at some point
+double sinpi(double x)
+{
+	return sin(PI * x);
+}
 
-	double norm{ RADIUS_EARTH };
+double cospi(double x)
+{
+	return cos(PI * x);
+}
 
-	if ((z < RADIUS_EARTH) && (z > MIN_Z_NORM))
-		norm = 1.0;
+//B Field related kernels
+double getSAtLambda(double* consts, int arrayLength, double lambdaDegrees)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
+{
+	double x{ asinh(sqrt(3.0) * sinpi(lambdaDegrees / 180.0)) };
 
-	return B0ATTHETA / pow(z / norm, 3); //Bz = B0 at theta * (1/rz(in Re))^3
+	return (0.5 * consts[2] / sqrt(3.0)) * (x + sinh(x) * cosh(x)); /* L */
+}
+
+double getLambdaAtS(double* consts, int arrayLength, double s)
+{// consts: [ B0, ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
+	double lambda_tmp{ (-consts[1] / consts[4]) * s + consts[1] }; //-ILAT / s_max * s + ILAT
+	double s_tmp{ consts[4] - getSAtLambda(consts, arrayLength, lambda_tmp) };
+	double dlambda{ 1.0 };
+	bool   over{ 0 };
+
+	while (abs((s_tmp - s) / s) > consts[6]) //errorTolerance
+	{
+		while (1)
+		{
+			over = (s_tmp >= s);
+			if (over)
+			{
+				lambda_tmp += dlambda;
+				s_tmp = consts[4] - getSAtLambda(consts, arrayLength, lambda_tmp);
+				if (s_tmp < s)
+					break;
+			}
+			else
+			{
+				lambda_tmp -= dlambda;
+				s_tmp = consts[4] - getSAtLambda(consts, arrayLength, lambda_tmp);
+				if (s_tmp >= s)
+					break;
+			}
+		}
+		if (dlambda < consts[6] / 100.0) //errorTolerance
+			break;
+		dlambda /= 5.0; //through trial and error, this reduces the number of calculations usually (compared with 2, 2.5, 3, 4, 10)
+	}
+
+	return lambda_tmp;
+}
+
+double BFieldAtS(double* consts, int arrayLength, double s, double simtime)
+{// consts: [ B0, ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
+	double lambda_deg{ getLambdaAtS(consts, arrayLength, s) };
+	double rnorm{ consts[3] * cospi(lambda_deg / 180.0) * cospi(lambda_deg / 180.0) };
+
+	return -consts[0] / (rnorm * rnorm * rnorm) * sqrt(1.0 + 3 * sinpi(lambda_deg / 180.0) * sinpi(lambda_deg / 180.0));
+}
+
+double gradBAtS(double* consts, int arrayLength, double s, double simtime)
+{
+	return (BFieldAtS(consts, arrayLength, s + consts[5], simtime) - BFieldAtS(consts, arrayLength, s - consts[5], simtime)) / (2 * consts[5]);
 }
 
 void printArgs(double* args, int len)
@@ -39,11 +92,14 @@ double accel1dCUDA(double* args, int len, double** LUT) //made to pass into 1D F
 	//printArgs(args, len);
 	//std::cout << "\n";
 
+	double Bargs[]{ 3.12e-5, 72.0, RADIUS_EARTH / pow(cospi(72.0 / 180.0), 2), 1 / pow(cospi(72.0 / 180.0), 2), 0.0, 6371.2, 10e-4 };
+	Bargs[4] = getSAtLambda(Bargs, 7, 72.0);
+
 	double F_mir, ztmp;
 	ztmp = args[5] + args[1] * args[0]; //pz_0 + vz * t_RK
 	
 	//Mirror force
-	F_mir = -args[2] * B0ATTHETA * (-3 / (pow(ztmp / RADIUS_EARTH, 4)) / RADIUS_EARTH); //mu in [kg.m^2 / s^2.T] = [N.m / T]
+	F_mir = -args[2] * gradBAtS(Bargs, 7, ztmp, 0.0); //mu in [kg.m^2 / s^2.T] = [N.m / T]
 
 	return (F_mir) / args[4];
 }//returns an acceleration in the parallel direction to the B Field
@@ -96,8 +152,13 @@ int main()
 
 	std::cout << "Simulation Starting:\n" << "v_para: " << v_para << "\nv_perp: " << v_perp << "\nz: " << z << "\nsimtime: " << simtime << "\nelecTF: " << elecTF << "\n\n\n";
 
+	double Bargs[]{ 3.12e-5, 72.0, RADIUS_EARTH / pow(cospi(72.0 / 180.0), 2), 1 / pow(cospi(72.0 / 180.0), 2), 0.0, 6371.2, 10e-4 };
+	Bargs[4] = getSAtLambda(Bargs, 7, 72.0);
+
+	std::cout << "\n\nB Field At Top: " << BFieldAtS(Bargs, 7, MAX_Z_SIM, 0.0) << "\nB Field At Btm: " << BFieldAtS(Bargs, 7, MIN_Z_SIM, 0.0) << std::endl;
+
 	//convert to mu
-	v_perp = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * v_perp * v_perp / BFieldatZ(z, simtime);
+	v_perp = 0.5 * ((elecTF) ? (MASS_ELECTRON) : (MASS_PROTON)) * v_perp * v_perp / BFieldAtS(Bargs, 7, z, simtime);
 	std::cout << "mu: " << v_perp << "\n\n\n";
 
 	double args[7];
@@ -126,11 +187,11 @@ int main()
 	}
 
 	//convert to v_perp
-	v_perp = sqrt(2 * v_perp * BFieldatZ(z, simtime) / args[4]);
+	v_perp = sqrt(2 * v_perp * BFieldAtS(Bargs, 7, z, simtime) / args[4]);
 
-	v_para /= 6.371e6;
-	v_perp /= 6.371e6;
-	z /= 6.371e6;
+	v_para /= RADIUS_EARTH;
+	v_perp /= RADIUS_EARTH;
+	z /= RADIUS_EARTH;
 
 	if (simtime == 5000) { std::cout << "Didn't escape!! Time: " << simtime - DT << "\npara: " << v_para << "\nperp: " << v_perp << "\nz: " << z; }
 	else { std::cout << "Escaped at time: " << simtime - DT << "\npara: " << v_para << "\nperp: " << v_perp << "\nz: " << z; }

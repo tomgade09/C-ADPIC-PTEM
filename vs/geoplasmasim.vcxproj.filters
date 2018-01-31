@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="..\src\BField\BField.cu">
+      <Filter>Source Files\BField</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\BField\DipoleB.cu">
+      <Filter>Source Files\BField</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\ParticleClass\Particle.cu">
+      <Filter>Source Files\Particle</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\SatelliteClass\Satellite.cu">
+      <Filter>Source Files\Satellite</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\SimulationClass\simulationphysics.cu">
+      <Filter>Source Files\Simulation</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\EField\EField.cu">
+      <Filter>Source Files\EField</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\FileIO\fileIO.cpp">
+      <Filter>Source Files\FileIO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\LogFile\LogFile.cpp">
+      <Filter>Source Files\LogFile</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\LogFile\LogFileAPI.cpp">
+      <Filter>Source Files\LogFile</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\StandaloneTools\binaryfiletools.cpp">
+      <Filter>Source Files\StandaloneTools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\StandaloneTools\numericaltools.cpp">
+      <Filter>Source Files\StandaloneTools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SimulationClass\Simulation.cpp">
+      <Filter>Source Files\Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp">
+      <Filter>Source Files\Simulation</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\physicalconstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\BField\BField.h">
+      <Filter>Header Files\BField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\BField\DipoleB.h">
+      <Filter>Header Files\BField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SimulationClass\Simulation.h">
+      <Filter>Header Files\Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SimulationClass\SimulationAPI.h">
+      <Filter>Header Files\Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FileIO\fileIO.h">
+      <Filter>Header Files\FileIO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\LogFile\LogFile.h">
+      <Filter>Header Files\LogFile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\LogFile\LogFileAPI.h">
+      <Filter>Header Files\LogFile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SatelliteClass\Satellite.h">
+      <Filter>Header Files\Satellite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\StandaloneTools\StandaloneTools.h">
+      <Filter>Header Files\StandaloneTools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\StandaloneTools\binaryfiletools.h">
+      <Filter>Header Files\StandaloneTools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\StandaloneTools\numericaltools.h">
+      <Filter>Header Files\StandaloneTools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ParticleClass\Particle.h">
+      <Filter>Header Files\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\EField\EField.h">
+      <Filter>Header Files\EField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h">
+      <Filter>Header Files\ErrorHandling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SimulationClass\PreviousSimulation.h">
+      <Filter>Header Files\Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\BField\AllBModels.h">
+      <Filter>Header Files\BField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\EField\AllEModels.h">
+      <Filter>Header Files\EField</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\python\__simulationvariables.py">
+      <Filter>Python Files</Filter>
+    </None>
+    <None Include="..\python\simulation.py">
+      <Filter>Python Files</Filter>
+    </None>
+    <None Include="..\python\scripts\loadPrevSimData.py">
+      <Filter>Python Files\Scripts</Filter>
+    </None>
+    <None Include="..\python\scripts\simFromInterpreter.py">
+      <Filter>Python Files\Scripts</Filter>
+    </None>
+    <None Include="..\python\FileIO\fileIO.py">
+      <Filter>Python Files\FileIO</Filter>
+    </None>
+    <None Include="..\python\SimulationClass\Simulation.py">
+      <Filter>Python Files\Simulation</Filter>
+    </None>
+    <None Include="..\python\SimulationClass\AlfvenLUT.py">
+      <Filter>Python Files\Simulation</Filter>
+    </None>
+    <None Include="..\python\SimulationClass\__plotParticles.py">
+      <Filter>Python Files\Simulation</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\To-Do.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{f1a3072b-2885-4f51-a637-f21420ff9cb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Python Files">
+      <UniqueIdentifier>{e2a48867-6cdf-402e-aa34-e0a75a1dec44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{f6669d6b-cde1-418e-92c5-3cd63184a770}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BField">
+      <UniqueIdentifier>{ba659dad-a628-4300-924e-e492427f860d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FileIO">
+      <UniqueIdentifier>{d77afa6d-5635-4d4d-9d71-467f1407e6cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LogFile">
+      <UniqueIdentifier>{cf1f2022-4a66-4e24-8c8e-2c7bb92d6264}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Satellite">
+      <UniqueIdentifier>{5b6c793a-800a-41a3-8fa6-3c6535b1af47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\StandaloneTools">
+      <UniqueIdentifier>{c612fc43-a659-4fb0-93f1-ee6f9d1d6072}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Particle">
+      <UniqueIdentifier>{84b230f3-9fbf-436d-9b04-b5cd37ee6fdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\EField">
+      <UniqueIdentifier>{523d7121-b52c-4601-81f2-a5ba317588d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\BField">
+      <UniqueIdentifier>{01bb1a25-1a1b-45c1-a9fa-8021922d0424}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EField">
+      <UniqueIdentifier>{0fdaec53-8f12-47b3-b3ed-858680093151}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FileIO">
+      <UniqueIdentifier>{bd321946-5252-4cff-b3ab-4d7072e850a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\LogFile">
+      <UniqueIdentifier>{6d5cdd2f-af6b-4d89-9818-df241cdb4ea2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Particle">
+      <UniqueIdentifier>{f082d824-4f6c-4e35-9272-e3931f9c9df2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Simulation">
+      <UniqueIdentifier>{36fedd8d-4452-445f-ba98-9d41dfa68bcc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Satellite">
+      <UniqueIdentifier>{3dd4282a-5a36-49af-8dcc-c9e611987447}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Simulation">
+      <UniqueIdentifier>{924029cb-e739-45ec-aaf1-d217d6c76583}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\StandaloneTools">
+      <UniqueIdentifier>{c03f2f55-99b1-404b-8fef-e0652a16e792}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Python Files\Scripts">
+      <UniqueIdentifier>{1a0a30fe-50df-4458-a643-efa38e910a71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Python Files\FileIO">
+      <UniqueIdentifier>{ec41d45f-9c8f-4821-9ce1-862dd6e6864b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Python Files\Simulation">
+      <UniqueIdentifier>{ae4bb753-1e6f-49fc-bb21-c7af59e356b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ErrorHandling">
+      <UniqueIdentifier>{64f89fb8-0de4-4577-be61-c1b8fac0a175}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

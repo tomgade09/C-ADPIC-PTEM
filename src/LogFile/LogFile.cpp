@@ -6,7 +6,7 @@ void LogFile::writeLogFileEntry(std::string logMessage)
 	std::string writeTxt;
 	std::stringstream ss;
 
-	ss << std::setprecision(10) << std::setw(11) << static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[0]->tp).count()) / 1000;
+	ss << std::setprecision(10) << std::fixed << std::setw(11) << static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[0]->tp).count()) / 1000;
 	writeTxt = "[ " + ss.str() + " ] : " + logMessage + "\n"; //time
 	
 	fileIO::writeTxtFile(logFileName_m.c_str(), writeTxt.c_str());

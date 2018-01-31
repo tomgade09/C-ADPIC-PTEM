@@ -11,7 +11,6 @@ DLLEXPORT double   getDtAPI(Simulation* simulation);
 DLLEXPORT double   getSimMinAPI(Simulation* simulation);
 DLLEXPORT double   getSimMaxAPI(Simulation* simulation);
 DLLEXPORT void     incrementSimulationTimeByDtAPI(Simulation* simulation);
-//DLLEXPORT void     setQSPSAPI(Simulation* simulation, double constE);
 DLLEXPORT int      getNumberOfParticleTypesAPI(Simulation* simulation);
 DLLEXPORT int      getNumberOfParticlesAPI(Simulation* simulation, int partInd);
 DLLEXPORT int      getNumberOfAttributesAPI(Simulation* simulation, int partInd);
@@ -46,5 +45,10 @@ DLLEXPORT void    writeSatelliteDataToCSVAPI(Simulation* simulation);
 
 DLLEXPORT void    createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir="");
 DLLEXPORT void    loadCompletedSimDataAPI(Simulation* simulation, const char* fileDir, const char* partNames, const char* attrNames, const char* satNames, int numParts);
+
+DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir);
+DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery = 100, const char* loadFileDir = "");
+DLLEXPORT void terminateSimulationAPI(Simulation* simulation);
+DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1);
 
 #endif//end if for header guard

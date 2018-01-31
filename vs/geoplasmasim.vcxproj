@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\geoplasmasim.cpp" />
     <ClCompile Include="..\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\src\LogFile\LogFileAPI.cpp" />
@@ -29,27 +28,32 @@
     <ClCompile Include="..\src\StandaloneTools\numericaltools.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\BField\AllBModels.h" />
     <ClInclude Include="..\include\BField\BField.h" />
     <ClInclude Include="..\include\BField\DipoleB.h" />
+    <ClInclude Include="..\include\EField\AllEModels.h" />
+    <ClInclude Include="..\include\EField\EField.h" />
+    <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h" />
     <ClInclude Include="..\include\FileIO\fileIO.h" />
     <ClInclude Include="..\include\LogFile\LogFile.h" />
     <ClInclude Include="..\include\LogFile\LogFileAPI.h" />
     <ClInclude Include="..\include\ParticleClass\Particle.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\SatelliteClass\Satellite.h" />
+    <ClInclude Include="..\include\SimulationClass\PreviousSimulation.h" />
     <ClInclude Include="..\include\SimulationClass\Simulation.h" />
     <ClInclude Include="..\include\SimulationClass\SimulationAPI.h" />
     <ClInclude Include="..\include\StandaloneTools\binaryfiletools.h" />
     <ClInclude Include="..\include\StandaloneTools\numericaltools.h" />
     <ClInclude Include="..\include\StandaloneTools\StandaloneTools.h" />
-    <ClInclude Include="..\include\_simulationvariables.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\BField\BField.cu" />
     <CudaCompile Include="..\src\BField\DipoleB.cu" />
-    <CudaCompile Include="..\src\CUDA\simulationphysics.cu" />
+    <CudaCompile Include="..\src\EField\EField.cu" />
     <CudaCompile Include="..\src\ParticleClass\Particle.cu" />
     <CudaCompile Include="..\src\SatelliteClass\Satellite.cu" />
+    <CudaCompile Include="..\src\SimulationClass\simulationphysics.cu" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\FileIO\fileIO.py" />

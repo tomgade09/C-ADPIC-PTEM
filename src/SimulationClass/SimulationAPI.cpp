@@ -16,9 +16,6 @@ DLLEXPORT double getSimMaxAPI(Simulation* simulation) {
 DLLEXPORT void incrementSimulationTimeByDtAPI(Simulation* simulation) {
 	simulation->incTime(); }
 
-//DLLEXPORT void setQSPSAPI(Simulation* simulation, double constE) {
-	//simulation->setQSPS(constE); }
-
 DLLEXPORT int getNumberOfParticleTypesAPI(Simulation* simulation) {
 	return static_cast<int>(simulation->getNumberOfParticleTypes()); }
 
@@ -95,6 +92,51 @@ DLLEXPORT void writeSatelliteDataToCSVAPI(Simulation* simulation) {
 DLLEXPORT void loadCompletedSimDataAPI(Simulation* simulation, const char* fileDir, const char* partNames, const char* attrNames, const char* satNames, int numParts) {
 	simulation->loadCompletedSimData(fileDir, constCharToStrVec(partNames), constCharToStrVec(attrNames), constCharToStrVec(satNames), numParts); }
 
+
 //Particle functions
 DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir) {
 	simulation->createParticleType(name, constCharToStrVec(attrNames), mass, charge, numParts, posDims, velDims, normFactor, loadFileDir); }
+
+
+//Simulation creation and deletion
+DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir) {
+	return new Simulation(dt, simMin, simMax, ionT, magT, rootdir); }
+
+DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery, const char* loadFileDir)
+{
+	double simMin{ sim->getSimMin() };
+	double simMax{ sim->getSimMax() };
+
+	sim->setBFieldModel("DipoleB", { 72.0 });
+
+	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
+	sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
+
+	sim->createTempSat(0, simMin * 0.999, true, "bottomElectrons");
+	sim->createTempSat(1, simMin * 0.999, true, "bottomIons");
+	sim->createTempSat(0, simMax * 1.001, false, "topElectrons");
+	sim->createTempSat(1, simMax * 1.001, false, "topIons");
+
+	sim->initializeSimulation();
+	sim->copyDataToGPU();
+	sim->iterateSimulation(iterations, printEvery);
+	sim->copyDataToHost();
+	sim->freeGPUMemory();
+	sim->prepareResults(true);
+}
+
+DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
+	delete simulation; }
+
+DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
+	sim->setBFieldModel(modelName, { arg1 }); }
+
+#ifndef DLLFILE
+int main()
+{
+	Simulation* sim{ normalSimulationAPI() };
+	delete sim;
+
+	return 0;
+}
+#endif

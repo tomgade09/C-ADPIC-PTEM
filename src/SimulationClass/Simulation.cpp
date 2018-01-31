@@ -34,7 +34,7 @@ void Simulation::receiveSatelliteData(bool removeZeros)
 void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir)
 {
 	//some sort of debug message??  Necessary for daily use?
-	logFile_m.writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Pos Dimensions: " + std::to_string(posDims) + ", Vel Dimensions: " + std::to_string(velDims) + ", Files Loaded?: " + ((loadFilesDir == "") ? "False" : "True"));
+	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Pos Dimensions: " + std::to_string(posDims) + ", Vel Dimensions: " + std::to_string(velDims) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
 
 	Particle* newPart = new Particle(name, attrNames, mass, charge, numParts, posDims, velDims, normFactor);
 	particleTypes_m.push_back(newPart);
@@ -47,16 +47,16 @@ void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing
 {//remove elecTF, change to struct
 	if (particleTypes_m.size() <= partInd)
 	{
-		logFile_m.writeErrorEntry("Simulation::createSatellite", "particleTypes.at(" + std::to_string(partInd) + ") does not exist!", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
+		logFile_m->writeErrorEntry("Simulation::createSatellite", "particleTypes.at(" + std::to_string(partInd) + ") does not exist!", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
 		errorEncountered = true;
 	}
 	if (particleTypes_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
 	{
-		logFile_m.writeErrorEntry("Simulation::createSatellite", "Pointer to GPU data is a nullptr.  That's just asking for trouble.", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
+		logFile_m->writeErrorEntry("Simulation::createSatellite", "Pointer to GPU data is a nullptr.  That's just asking for trouble.", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
 		errorEncountered = true;
 	}
 
-	logFile_m.writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd)->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
+	logFile_m->writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd)->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
 	Particle* tmpPart{ particleTypes_m.at(partInd) };
 	Satellite* newSat = new Satellite(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), tmpPart->getCurrDataGPUPtr(), name);
@@ -67,7 +67,7 @@ void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing
 //Vperp <-> Mu conversion tools
 void Simulation::convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, double mass)
 {
-	LOOP_OVER_1D_ARRAY(vperp.size(), vperp.at(iii) = 0.5 * mass * vperp.at(iii) * vperp.at(iii) / BFieldModel->getBFieldAtS(s.at(iii), simTime_m););
+	LOOP_OVER_1D_ARRAY(vperp.size(), vperp.at(iii) = 0.5 * mass * vperp.at(iii) * vperp.at(iii) / BFieldModel_m->getBFieldAtS(s.at(iii), simTime_m););
 }
 
 void Simulation::convertVPerpToMu(Particle* particle)
@@ -79,7 +79,7 @@ void Simulation::convertVPerpToMu(int partInd)
 {
 	if (partInd > (particleTypes_m.size() - 1))
 	{
-		logFile_m.writeErrorEntry("Simulation::convertVPerpToMu", "Index out of range.  Returning without change.", { std::to_string(partInd) });
+		logFile_m->writeErrorEntry("Simulation::convertVPerpToMu", "Index out of range.  Returning without change.", { std::to_string(partInd) });
 		return;
 	}
 
@@ -88,12 +88,12 @@ void Simulation::convertVPerpToMu(int partInd)
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel->getBFieldAtS(s.at(iii), simTime_m) / mass););
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), simTime_m) / mass););
 }
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel->getBFieldAtS(s.at(iii), t.at(iii)) / mass););
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), t.at(iii)) / mass););
 }
 
 void Simulation::convertMuToVPerp(Particle* particle)
@@ -105,7 +105,7 @@ void Simulation::convertMuToVPerp(int partInd)
 {
 	if (partInd > (particleTypes_m.size() - 1))
 	{
-		logFile_m.writeErrorEntry("Simulation::convertMuToVPerp", "Index out of range.  Returning without change.", { std::to_string(partInd) });
+		logFile_m->writeErrorEntry("Simulation::convertMuToVPerp", "Index out of range.  Returning without change.", { std::to_string(partInd) });
 		return;
 	}
 
@@ -118,7 +118,7 @@ void Simulation::writeSatelliteDataToCSV()
 
 	if (satelliteData_m.size() == 0)
 	{
-		logFile_m.writeErrorEntry("Simulation::writeSatelliteDataToCSV", "satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.", {});
+		logFile_m->writeErrorEntry("Simulation::writeSatelliteDataToCSV", "satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.", {});
 		return;
 	}
 	//need to index the satellite data with the orig data by the saved index number
@@ -163,12 +163,12 @@ double* Simulation::getPointerToParticleAttributeArray(int partIndex, int attrIn
 {
 	if (partIndex > (particleTypes_m.size() - 1))
 	{
-		logFile_m.writeErrorEntry("Simulation::getPointerToParticleAttributeArray", "Particle Index out of bounds.  There aren't that many particle types.  Returning nullptr.", { std::to_string(partIndex), std::to_string(attrIndex), std::to_string(originalData) });
+		logFile_m->writeErrorEntry("Simulation::getPointerToParticleAttributeArray", "Particle Index out of bounds.  There aren't that many particle types.  Returning nullptr.", { std::to_string(partIndex), std::to_string(attrIndex), std::to_string(originalData) });
 		return nullptr;
 	}
 	else if (attrIndex > (particleTypes_m.at(partIndex)->getNumberOfAttributes() - 1))
 	{
-		logFile_m.writeErrorEntry("Simulation::getPointerToParticleAttributeArray", "Attribute Index out of bounds.  There aren't that many attributes for the particle type.  Returning nullptr.", { std::to_string(partIndex), std::to_string(attrIndex), std::to_string(originalData) });
+		logFile_m->writeErrorEntry("Simulation::getPointerToParticleAttributeArray", "Attribute Index out of bounds.  There aren't that many attributes for the particle type.  Returning nullptr.", { std::to_string(partIndex), std::to_string(attrIndex), std::to_string(originalData) });
 		return nullptr;
 	}
 
@@ -221,4 +221,39 @@ void Simulation::loadCompletedSimData(std::string fileDir, std::vector<std::stri
 	}
 
 	satelliteData_m = tmp3D;
+}
+
+void Simulation::setBFieldModel(std::string name, std::vector<double> args)
+{//add log file messages
+	if (BFieldModel_m != nullptr)
+	{
+		std::cout << "Warning: Simulation::setBFieldModel: B Field Model already assigned.  Returning without creating a new one." << std::endl;
+		return;
+	}
+
+	if (name == "DipoleB")
+		BFieldModel_m = new DipoleB(args.at(0));
+	else if (name == "DipoleBLUT")
+	{
+		//BFieldModel_m = new DipoleBLUT(arg1);
+		std::cout << "DipoleBLUT not implemented yet!! :D  Using DipoleB" << std::endl;
+		BFieldModel_m = new DipoleB(args.at(0));
+	}
+	else if (name == "IGRF")
+	{
+		//BFieldModel_m = new DipoleBLUT(arg1);
+		std::cout << "IGRF not implemented yet!! :D  Using DipoleB" << std::endl;
+		BFieldModel_m = new DipoleB(args.at(0));
+	}
+	else if (name == "InvRCubed")
+	{//BFieldModel_m = new InvRCubed(args.at(0));
+		std::cout << "InvRCubed not implemented yet!! :D  Using DipoleB" << std::endl;
+		BFieldModel_m = new DipoleB(args.at(0));
+	}
+	else
+	{
+		std::cout << "Not sure what model is being referenced.  Using DipoleB" << std::endl;
+		BFieldModel_m = new DipoleB(args.at(0));
+	}
+
 }

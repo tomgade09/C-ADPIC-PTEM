@@ -40,7 +40,7 @@
 *.pdb
 # *.sln
 # *.vcxproj
-*.filters
+#*.filters
 *.user
 *.gitattributes
 *.snip

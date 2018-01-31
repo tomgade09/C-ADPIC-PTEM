@@ -5,7 +5,6 @@ __device__ double*     fieldConstArray_GPU{ nullptr };
 __device__ int         arraySize_GPU{ 0 };
 __device__ callbackFcn BFieldFcnPtr_GPU{ nullptr };
 __device__ callbackFcn gradBFcnPtr_GPU{ nullptr };
-__device__ callback2Fcn getSAtLambdaPtr_GPU{ nullptr };
 
 __device__ double getBFieldAtS(double s, double t)
 {

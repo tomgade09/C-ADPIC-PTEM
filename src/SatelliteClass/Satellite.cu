@@ -4,7 +4,6 @@
 #include "cuda_profiler_api.h"
 
 //Project specific includes
-#include "_simulationvariables.h"
 #include "SatelliteClass\Satellite.h"
 
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
@@ -104,13 +103,3 @@ std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros
 
 		return tmp2D;
 }
-
-/*void Satellite::vectorTest(std::vector<double*>& in)
-{
-	int wrong{ 0 };
-	for (int iii = 0; iii < numberOfAttributes_m; iii++)
-		for (int jjj = 0; jjj < numberOfParticles_m; jjj++)
-			if (in.at(iii)[jjj] != data_m.at(iii)[jjj]) { wrong++; }
-
-	std::cout << "Wrong: " << wrong << "\n";
-}*/

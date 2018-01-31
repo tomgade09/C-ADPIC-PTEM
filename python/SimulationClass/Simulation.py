@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))
 from __simulationvariables import *
 
 class Simulation:
-    def __init__(self, DLLloc, rootdir, dt, simMin, simMax, ionT, magT, constEQSPS=0.0, fnLUT=""):
+    def __init__(self, DLLloc, rootdir, dt, simMin, simMax, ionT, magT):
         self.dllLoc_m = DLLloc
         self.rootdir_m = rootdir
         self.dt_m = dt
@@ -12,8 +12,6 @@ class Simulation:
         self.simMax_m = simMax
         self.ionT_m = ionT
         self.magT_m = magT
-        self.constE_m = constEQSPS
-        self.fnLUT_m = fnLUT
         self.numTypes_m = 0
         self.numParts_m = []
         self.nameParts_m = []
@@ -34,7 +32,6 @@ class Simulation:
         self.simDLL_m.getSimMaxAPI.restype = ctypes.c_double
         self.simDLL_m.incrementSimulationTimeByDtAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.incrementSimulationTimeByDtAPI.restype = None
-        #void setQSPSAPI(Simulation* simulation, double constE);
         self.simDLL_m.getNumberOfParticleTypesAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getNumberOfParticleTypesAPI.restype = ctypes.c_int
         self.simDLL_m.getNumberOfParticlesAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
@@ -61,7 +58,7 @@ class Simulation:
         self.simDLL_m.calculateEFieldAtZandTimeAPI.restype = ctypes.c_double
 
         #Simulation management
-        self.simDLL_m.createSimulationAPI.argtypes = (ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_char_p, ctypes.c_double, ctypes.c_char_p)
+        self.simDLL_m.createSimulationAPI.argtypes = (ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_char_p)
         self.simDLL_m.createSimulationAPI.restype = ctypes.c_void_p
         self.simDLL_m.initializeSimulationAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.initializeSimulationAPI.restype = None
@@ -79,6 +76,10 @@ class Simulation:
         self.simDLL_m.terminateSimulationAPI.restype = None
         self.simDLL_m.loadCompletedSimDataAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int)
         self.simDLL_m.loadCompletedSimDataAPI.restype = None
+        self.simDLL_m.runNormalSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_char_p)
+        self.simDLL_m.runNormalSimulationAPI.restype = None
+        self.simDLL_m.setBFieldModelAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double)
+        self.simDLL_m.setBFieldModelAPI.restype = None
 
         #Satellite functions
         self.simDLL_m.createSatelliteAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_double, ctypes.c_bool, ctypes.c_char_p)
@@ -108,9 +109,8 @@ class Simulation:
 
         #Now code for init
         rootdirBuf = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
-        lutFileNameBuf = ctypes.create_string_buffer(bytes(self.fnLUT_m, encoding='utf-8'))
         self.simulationptr = ctypes.c_void_p
-        self.simulationptr = self.simDLL_m.createSimulationAPI(dt, simMin, simMax, ionT, magT, rootdirBuf, constEQSPS, lutFileNameBuf)
+        self.simulationptr = self.simDLL_m.createSimulationAPI(dt, simMin, simMax, ionT, magT, rootdirBuf)
         self.logFileObj_m = self.simDLL_m.getLogFilePointerAPI(self.simulationptr)
 
         self.particles_m = []
@@ -121,22 +121,21 @@ class Simulation:
     
 
     #Run Simulation
-    def runSim(self, iterations):
-        self.createParticle("elec", "vpara,vperp,s", MASS_ELEC, -1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, DISTINFOLDER)
-        self.createParticle("ions", "vpara,vperp,s", MASS_PROT,  1 * CHARGE_ELEM, 1800*64, 1, 2, RADIUS_EARTH, DISTINFOLDER)
+    def runSim(self, iterations, loadFile=False):
+        if (loadFile):
+            loadFileBuf = ctypes.create_string_buffer(bytes(DISTINFOLDER, encoding='utf-8'))
+        else:
+            loadFileBuf = ctypes.create_string_buffer(bytes("", encoding='utf-8'))
 
-        self.createSatellite(0, MIN_S_SIM * 0.999, True, "bottomElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
-        self.createSatellite(1, MIN_S_SIM * 0.999, True, "bottomIons")#need to pass in either height from Re/geocentric or s - right now it's s
-        self.createSatellite(0, MAX_S_SIM * 1.001, False, "topElectrons")#need to pass in either height from Re/geocentric or s - right now it's s
-        self.createSatellite(1, MAX_S_SIM * 1.001, False, "topIons")#need to pass in either height from Re/geocentric or s - right now it's s
+        #eventually replace with the functions to get the data from the CPP class, name these better
+        self.numTypes_m = 2
+        self.numAttrs_m = [3, 3]
+        self.numParts_m = [115200, 115200]
+        self.nameParts_m = ["elec", "ions"]
+        self.satellites_m = ["bottomElectrons", "bottomIons", "topElectrons", "topIons"]
+        self.satPartInd_m = [0, 1, 0, 1]
 
-        self.initializeSimulation()
-        self.copyDataToGPU()
-        self.iterateSimulation(iterations, 100)
-        self.copyDataToHost()
-        self.freeGPUMemory()
-        self.prepareResults()
-
+        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 100, loadFileBuf)
         self.simDLL_m.writeSatelliteDataToCSVAPI(self.simulationptr)
 
         return self.getFinalDataAllParticles(), self.getOriginalDataAllParticles(), self.getSatelliteData()  #Returns final particle data, original particle data, satellite data

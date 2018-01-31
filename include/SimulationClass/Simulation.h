@@ -4,12 +4,12 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
-#include "BField\DipoleB.h"
+#include "BField\AllBModels.h"
+#include "EField\AllEModels.h"
 #include "ParticleClass\Particle.h"
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
 #include "StandaloneTools\StandaloneTools.h"
-#include "_simulationvariables.h" //remove this later, replace with passed in variables
 
 struct SatandPart
 {
@@ -42,7 +42,8 @@ protected:
 
 	//Classes tracked by Simulation
 	std::vector<Particle*> particleTypes_m;
-	BField* BFieldModel{ new DipoleB(72.0) };
+	BField* BFieldModel_m{ nullptr };
+	std::vector<EField*> EFieldElements;
 
 	//Satellites and data
 	std::vector<TempSat*> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
@@ -50,8 +51,6 @@ protected:
 	std::vector<std::vector<std::vector<double>>> satelliteData_m; //3D satelliteData[satellite number][attribute number][particle number]
 	
 	//GPU Memory Pointers
-	//std::vector<double*> gpuDblMemoryPointers_m { nullptr };
-	//std::vector<void*>	 gpuOtherMemoryPointers_m{ nullptr };
 	double* simConstants_d;
 	void*   curandRNGStates_d; //void* is used instead of curandStateMRG32k3a* so I don't have to include the cuda headers here (which are used in other sections of code not requiring CUDA)
 
@@ -63,60 +62,56 @@ protected:
 	bool errorEncountered{ false };
 
 	//LogFile and Error Handling
-	LogFile logFile_m{ "simulation.log", 20 };
+	LogFile* logFile_m{ nullptr };
 
 	//Protected functions
 	virtual void receiveSatelliteData(bool removeZeros);
-
-	virtual void initializeFollowOn() { return; }
-	virtual void copyDataToGPUFollowOn() { return; }
-	virtual void iterateSimulationFollowOnPreLoop() { return; }
-	virtual void iterateSimulationFollowOnInsideLoop() { return; }
-	virtual void iterateSimulationFollowOnPostLoop() { return; }
-	virtual void copyDataToHostFollowOn() { return; }
-	virtual void freeGPUMemoryFollowOn() { return; }
+	virtual void createSatellite(int partInd, double altitude, bool upwardFacing, std::string name);
 
 public:
-	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir):
+	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir, std::string logName="simulation.log"):
 		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
-	{ /*logFile_m.writeTimeDiffFromNow(0, "Simulation base class constructor");*/ }
+	{
+		logFile_m = new LogFile(logName, 20);
+		//write log entry??
+	}
 
 	virtual ~Simulation()
-	{	
+	{
 		if (initialized_m && !freedGPUMem_m) { freeGPUMemory(); }
-
-		delete BFieldModel;
+		delete BFieldModel_m;
 
 		//Delete satellites and particles
 		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii););
 		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii););
 
-		logFile_m.writeTimeDiffFromNow(0, "End Simulation Destructor");
-	};
-	//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
+		logFile_m->writeTimeDiffFromNow(0, "End Simulation Destructor");
+		delete logFile_m;
+	}//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
 	///One liner functions (usually access)
-	double	  getTime() { return simTime_m; }
-	double	  getdt() { return dt_m; };
-	double    getSimMin() { return simMin_m; }
-	double    getSimMax() { return simMax_m; }
-	void	  incTime() { simTime_m += dt_m; }
+	double	  getTime() { return simTime_m; }  //not API worthy, not checking mid simulation
+	double	  getdt() { return dt_m; };		   //not API worthy, probably passed in
+	double    getSimMin() { return simMin_m; } //not API worthy, probably passed in
+	double    getSimMax() { return simMax_m; } //not API worthy, probably passed in
+	void	  incTime() { simTime_m += dt_m; } //not API worthy, never need to increment time from outside cpp
 
-	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); }
-	size_t    getNumberOfParticles(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); }
-	size_t    getNumberOfAttributes(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); }
+	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); } //not API worthy, probably passed in
+	size_t    getNumberOfParticles(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); } //not API worthy, probably passed in
+	size_t    getNumberOfAttributes(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); } //not API worthy, probably passed in
 
-	bool	  areResultsPrepared() { return resultsPrepared_m; }
+	bool	  areResultsPrepared() { return resultsPrepared_m; } //do I even use this??
 
-	LogFile*  getLogFilePointer() { return &logFile_m; }
+	LogFile*  getLogFilePointer() { return logFile_m; }
 	double*   getPointerToParticleAttributeArray(int partIndex, int attrIndex, bool originalData);
 
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
-	virtual double calculateBFieldAtZandTime(double s, double time) { return BFieldModel->getBFieldAtS(s, time); }
+	virtual double calculateBFieldAtZandTime(double s, double time) { return BFieldModel_m->getBFieldAtS(s, time); }
 	virtual double calculateEFieldAtZandTime(double s, double time) { return 0.0; }//EFieldatZ(nullptr, s, time, 0.0, constE_m, useQSPS_m, false); }
 	
 	//Array tools
+	/* Are API functions needed for these?  Prob not... */
 	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, double mass);
 	virtual void convertVPerpToMu(Particle* particle);
 	virtual void convertVPerpToMu(int partInd);
@@ -134,7 +129,6 @@ public:
 	virtual void prepareResults(bool normalizeToRe);
 
 	//Satellite management functions
-	virtual void	createSatellite(int partInd, double altitude, bool upwardFacing, std::string name);
 	virtual size_t	getNumberOfSatellites() { return satellites_m.size(); }
 	virtual size_t  getSatelliteNumberOfDetectedParticles(int satIndex) { return satelliteData_m.at(satIndex).at(0).size(); } ///add index checking
 	virtual double* getSatelliteDataPointers(int satelliteInd, int attributeInd) { //some sort of check here to make sure you've received data
@@ -142,11 +136,20 @@ public:
 	virtual void	writeSatelliteDataToCSV();
 	virtual void    createTempSat(int particleInd, double altitude, bool upwardFacing, std::string name)
 	{
-		if (initialized_m) { logFile_m.writeErrorEntry("Simulation::createTempSat", "initializeSimulation has already been called.  Calling this now will have no effect.  Call this function before initializeSimulation.  Returning without creating a satellite.", { std::to_string(particleInd), std::to_string(altitude), std::to_string(upwardFacing), name }); return; }
-		if (particleInd >= particleTypes_m.size()) { logFile_m.writeErrorEntry("Simulation::createTempSat", "particle index variable (variable 0) is greater than the size of the existing particle types.  Create more particle types or check your index.  Returning without creating a satellite.", { std::to_string(particleInd), std::to_string(altitude), std::to_string(upwardFacing), name }); return; }
+		if (initialized_m) { logFile_m->writeErrorEntry("Simulation::createTempSat", "initializeSimulation has already been called.  Calling this now will have no effect.  Call this function before initializeSimulation.  Returning without creating a satellite.", { std::to_string(particleInd), std::to_string(altitude), std::to_string(upwardFacing), name }); return; }
+		if (particleInd >= particleTypes_m.size()) { logFile_m->writeErrorEntry("Simulation::createTempSat", "particle index variable (variable 0) is greater than the size of the existing particle types.  Create more particle types or check your index.  Returning without creating a satellite.", { std::to_string(particleInd), std::to_string(altitude), std::to_string(upwardFacing), name }); return; }
 		tempSats_m.push_back(new TempSat{ particleInd, altitude, upwardFacing, name });
 	}
 
+	virtual void	setBFieldModel(std::string name, std::vector<double> args);
+	virtual void	setBFieldModelOther(BField* bfieldptr) { BFieldModel_m = bfieldptr; }
+
+	//virtual void	addEFieldModel(std::string name, std::vector<double> args);
+	//virtual void	addEFieldModelOther(EField* efieldptr);
+
+	//add function that saves simulation constants, data, etc to disk
+
+	//going to restructure this
 	virtual void    loadCompletedSimData(std::string fileDir, std::vector<std::string> partNames, std::vector<std::string> attrNames, std::vector<std::string> satNames, int numParts);
 
 	virtual void    createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir="");

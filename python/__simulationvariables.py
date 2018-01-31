@@ -9,12 +9,13 @@ ROOTDIR = os.path.abspath(PYROOTDIR + './../')
 LIBDIR = os.path.abspath(ROOTDIR + './lib/')
 DLLLOCATION = os.path.abspath(LIBDIR + './geoplasmasim.dll')
 
-#Physics Constants
+#Physical Constants
 RADIUS_EARTH = 6.3712e6
-J_PER_EV = 1.60218e-19
-MASS_ELEC = 9.1093836e-31
-MASS_PROT = 1.6726219e-27
-CHARGE_ELEM = 1.6021766e-19
+J_PER_EV = 1.6021766209e-19
+MASS_ELEC = 9.10938356e-31
+MASS_PROT = 1.672621898e-27
+CHARGE_ELEM = 1.6021766209e-19
+PI = 3.14159265358979323846
 
 #Simulation Specific Constants
 DT = 0.01

@@ -31,6 +31,7 @@ public:
 	DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double normFactor = RADIUS_EARTH, double ds = RADIUS_EARTH / 1000) :
 		BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
 	{
+		modelName_m = "DipoleB";
 		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * PI / 180.0), 2);
 		L_norm_m = L_m / RADIUS_EARTH;
 		

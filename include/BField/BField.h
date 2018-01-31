@@ -10,7 +10,6 @@
 #include "cuda_profiler_api.h"
 
 typedef double(*callbackFcn)(double*, int, double, double);
-typedef double(*callback2Fcn)(double*, int, double);
 #define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
 
 //on GPU global variables
@@ -18,7 +17,6 @@ extern __device__ double*     fieldConstArray_GPU;
 extern __device__ int         arraySize_GPU;
 extern __device__ callbackFcn BFieldFcnPtr_GPU;
 extern __device__ callbackFcn gradBFcnPtr_GPU;
-extern __device__ callback2Fcn getSAtLambdaPtr_GPU;
 
 class BField
 {
@@ -29,6 +27,7 @@ protected:
 	//GPU pointer to field constants array
 	double* fieldConstants_d{ nullptr };
 
+	std::string modelName_m{ "" };
 	//callback function GPU pointer
 	/*
 	  I would imagine the process is like so:
@@ -40,6 +39,8 @@ protected:
 	  Above is an option, but I did it differently:
 	  - Declare global variables on GPU
 	  - Call CUDA kernel to set globals to the function desired (from derived classes)
+
+	  Can also use function templates with CUDA!!
 	*/
 
 	virtual void setupEnvironment() = 0; //define this function in derived classes to assign a pointer to that function's B Field code to the location indicated by BFieldFcnPtr_d and gradBFcnPtr_d
