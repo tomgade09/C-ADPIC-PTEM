@@ -1,7 +1,7 @@
 #ifndef SIMEXCEPHANDLER_H
 #define SIMEXCEPHANDLER_H
 
-#include <stdexcept>
+#include <stdexcept> //necessary?
 #include "ErrorHandling\SimFatalException.h"
 
 //I think I want to throw a CUDA specific exception - if anything CUDA fails, might as well just exit(1/some other int)

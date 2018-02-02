@@ -78,6 +78,7 @@ void Particle::initializeGPU()
 
 	setup2DArray <<< 1, 1 >>> (origData1D_d, origData2D_d, getNumberOfAttributes(), particleCount_m);
 	setup2DArray <<< 1, 1 >>> (currData1D_d, currData2D_d, getNumberOfAttributes(), particleCount_m);
+	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	usingGPU = true;
 }

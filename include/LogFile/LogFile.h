@@ -5,12 +5,16 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <memory>
 #include "FileIO\fileIO.h"
 
 struct timeStruct
 {
 	std::string label;
 	std::chrono::steady_clock::time_point tp;
+
+	timeStruct(std::string lbl, std::chrono::steady_clock::time_point time) :
+		label{ lbl }, tp{ time } {}
 };
 
 class LogFile
@@ -18,7 +22,7 @@ class LogFile
 private:
 	std::string logFileName_m;
 	bool overwrite_m;
-	std::vector<timeStruct*> timeStructs_m;
+	std::vector<std::unique_ptr<timeStruct>> timeStructs_m;
 
 public:
 	LogFile(std::string logFileName, int timeStructToReserve, bool overwrite=false) : logFileName_m{ logFileName }, overwrite_m{ overwrite }
@@ -30,15 +34,10 @@ public:
 		createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
 	}
 
-	~LogFile()
-	{
-		for (int iii = 0; iii < timeStructs_m.size(); iii++)
-			delete timeStructs_m[iii];
-	}
+	~LogFile() {}
 
 	void createTimeStruct(std::string label);
 	void writeLogFileEntry(std::string logMessage);
-	//void writeErrorEntry(std::string functionName, std::string logMessage, std::vector<std::string> args); //depreciated
 	
 	void writeTimeDiff(timeStruct* startTS, timeStruct* endTS);
 	void writeTimeDiff(int startTSind, timeStruct* endTS);

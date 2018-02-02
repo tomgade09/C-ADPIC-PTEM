@@ -35,7 +35,7 @@ public:
 		initializeSatelliteOnGPU();
 	}
 	
-	virtual ~Satellite() { freeGPUMemory();	}
+	virtual ~Satellite() { freeGPUMemory(); }
 	
 	virtual void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??

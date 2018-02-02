@@ -29,42 +29,48 @@ namespace fileIO
 		binFile.close();
 	}
 
-	DLLEXPORT double** read2DCSV(std::string filename, int numofentries, int numofcols, const char delim)
+	DLLEXPORT void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, int numofentries, int numofcols, const char delim)
 	{
 		std::ifstream csv{ filename };
 		if (!csv.is_open())
 			throw std::invalid_argument ("fileIO::read2DCSV: could not open file " + filename + " for reading");
-
-		double** ret = new double*[numofcols];
-		double* inner = new double[numofentries * numofcols];
-
-		//1D array converted to 2D by using pointers to location of the start of the next column:
-		// idx:  0				1			2		 "numofentries"  "numofe + 1"	"2*numofe"
-		//[col 0 elem 0, col 0 elem 1, col 0 elem 2...col 1 elem 0, col 1 elem 1...col 2 elem 0...]
-		//ptrs: [0]										[1]							[2]
-		//So - 2nd dimension of array looks like this:
-		//[pointer to 0, pointer to numofentries, pointer to 2 * numofentries...]
-		for (int iii = 0; iii < numofcols; iii++)
-			ret[iii] = &inner[iii * numofentries];
-
-		for (int iii = 0; iii < numofentries; iii++)
+		if (array2DToReadInto.size() < numofcols)
+			throw std::invalid_argument ("fileIO::read2DCSV: std::vector outer vector is not big enough to contain the data being read from file " + filename);
+		if (array2DToReadInto.size() > numofcols)
+			std::cerr << "fileIO::read2DCSV: std::vector outer vector is bigger than numofcols, some data in the vector will remain unmodified" << std::endl;
+		for (int col = 0; col < array2DToReadInto.size(); col++)
 		{
-			std::string in;
-			std::getline(csv, in);
+			if (array2DToReadInto.at(col).size() < numofentries)
+				throw std::invalid_argument("fileIO::read2DCSV: std::vector inner vector is not big enough to contain the data being read from file " + filename);
+			if (array2DToReadInto.at(col).size() > numofentries)
+				std::cerr << "fileIO::read2DCSV: std::vector inner vector is bigger than numofentries, some data in the vector will remain unmodified" << std::endl;
+		}
 
-			std::stringstream in_ss(in);
-
-			for (int jjj = 0; jjj < numofcols; jjj++)
+		try
+		{
+			for (int iii = 0; iii < numofentries; iii++)
 			{
-				std::string val;
-				std::getline(in_ss, val, delim);
-				std::stringstream convert(val);
-				convert >> ret[jjj][iii];
+				std::string in;
+				std::getline(csv, in);
+
+				std::stringstream in_ss(in);
+
+				for (int jjj = 0; jjj < numofcols; jjj++)
+				{
+					std::string val;
+					std::getline(in_ss, val, delim);
+					std::stringstream convert(val);
+					convert >> array2DToReadInto.at(jjj).at(iii);
+				}
 			}
 		}
+		catch(...)
+		{
+			csv.close();
+			throw;
+		}
+
 		csv.close();
-		
-		return ret;
 	}
 
 	DLLEXPORT void writeDblBin(std::vector<double> dataarray, std::string filename, long numelements, bool overwrite)//overwrite defaults to true

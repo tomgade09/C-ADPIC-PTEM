@@ -15,26 +15,9 @@ void LogFile::writeLogFileEntry(std::string logMessage)
 	fileIO::writeTxtFile(logFileName_m.c_str(), writeTxt.c_str());
 }
 
-/*void LogFile::writeErrorEntry(std::string functionName, std::string logMessage, std::vector<std::string> args)
-{
-	std::string error{ "ERROR: " + functionName + "(" };
-	for (size_t arg = 0; arg < args.size(); arg++)
-		error += args.at(arg) + ((arg == args.size()-1) ? "" : ", ");
-	error += ")";
-
-	writeLogFileEntry(error);
-
-	logMessage = "                  -> " + logMessage + "\n";
-
-	fileIO::writeTxtFile(logFileName_m.c_str(), logMessage.c_str());
-}*/ //depreciated
-
 void LogFile::createTimeStruct(std::string label)
 {
-	timeStruct* tS = new timeStruct;
-	tS->label = label;
-	tS->tp = std::chrono::steady_clock::now();
-	timeStructs_m.push_back(tS);
+	timeStructs_m.push_back(std::make_unique<timeStruct>(label, std::chrono::steady_clock::now()));
 }
 
 //writeTimeDiff plus overloads
@@ -49,28 +32,26 @@ void LogFile::writeTimeDiff(timeStruct* startTS, timeStruct* endTS)
 
 void LogFile::writeTimeDiff(int startTSind, timeStruct* endTS)
 {
-	writeTimeDiff(timeStructs_m.at(startTSind), endTS);
+	writeTimeDiff(timeStructs_m.at(startTSind).get(), endTS);
 }
 
 void LogFile::writeTimeDiff(int startTSind, int endTSind)
 {
-	writeTimeDiff(timeStructs_m.at(startTSind), timeStructs_m.at(endTSind) );
+	writeTimeDiff(timeStructs_m.at(startTSind).get(), timeStructs_m.at(endTSind).get() );
 }
 
 
 //writeTimeDiffFromNow plus overloads
 void LogFile::writeTimeDiffFromNow(timeStruct* startTS, std::string nowLabel)
 {
-	timeStruct* ts = new timeStruct;
-	ts->label = nowLabel;
-	ts->tp = std::chrono::steady_clock::now();
-
-	writeTimeDiff(startTS, ts);
+	std::unique_ptr<timeStruct> ts{ std::make_unique<timeStruct>(nowLabel, std::chrono::steady_clock::now()) };
+	writeTimeDiff(startTS, ts.get());
+	timeStructs_m.push_back(std::move(ts));
 }
 
 void LogFile::writeTimeDiffFromNow(int startTSind, std::string nowLabel)
 {
-	writeTimeDiffFromNow(timeStructs_m.at(startTSind), nowLabel);
+	writeTimeDiffFromNow(timeStructs_m.at(startTSind).get(), nowLabel);
 }
 
 

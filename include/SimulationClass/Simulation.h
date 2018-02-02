@@ -2,9 +2,9 @@
 #define SIMULATIONCLASS_H
 
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <chrono>
+#include <memory> //smart pointers
 #include "BField\AllBModels.h"
 #include "EField\AllEModels.h"
 #include "ParticleClass\Particle.h"
@@ -14,10 +14,11 @@
 
 struct SatandPart
 {
-	Satellite* satellite;
-	Particle*  particle;
+	std::unique_ptr<Satellite> satellite;
+	std::shared_ptr<Particle>  particle;
 
-	~SatandPart() { delete satellite; }
+	SatandPart(std::unique_ptr<Satellite> sat, std::shared_ptr<Particle> part) :
+		satellite{ std::move(sat) }, particle{ std::move(part) } {}
 };
 
 struct TempSat
@@ -26,6 +27,9 @@ struct TempSat
 	double altitude;
 	bool upwardFacing;
 	std::string name;
+
+	TempSat(int partInd, double alt, bool upward, std::string nameStr) :
+		particleInd{ partInd }, altitude{ alt }, upwardFacing{ upward }, name{ nameStr } {}
 };
 
 class Simulation
@@ -42,13 +46,13 @@ protected:
 	const double vmean_m{ 0.0 };
 
 	//Classes tracked by Simulation
-	std::vector<Particle*> particleTypes_m;
-	BField* BFieldModel_m{ nullptr };
-	std::vector<EField*> EFieldElements;
+	std::vector<std::shared_ptr<Particle>> particleTypes_m; //need shared_ptr because it will be assigned to SatandPart
+	std::unique_ptr<BField> BFieldModel_m;
+	std::vector<std::unique_ptr<EField>> EFieldElements;
 
 	//Satellites and data
-	std::vector<TempSat*> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
-	std::vector<SatandPart*> satellites_m;
+	std::vector<std::unique_ptr<TempSat>> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
+	std::vector<std::unique_ptr<SatandPart>> satellites_m; //don't know if I'm crazy about this solution
 	std::vector<std::vector<std::vector<double>>> satelliteData_m; //3D satelliteData[satellite number][attribute number][particle number]
 	
 	//GPU Memory Pointers
@@ -63,7 +67,7 @@ protected:
 	bool errorEncountered{ false };
 
 	//LogFile and Error Handling
-	LogFile* logFile_m{ nullptr };
+	std::unique_ptr<LogFile> logFile_m;
 
 	//Protected functions
 	virtual void receiveSatelliteData(bool removeZeros);
@@ -76,8 +80,7 @@ public:
 	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir, std::string logName="simulation.log"):
 		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
 	{
-		logFile_m = new LogFile(logName, 20); //use std::unique_ptr / std::make_unique here
-		//write log entry??
+		logFile_m = std::make_unique<LogFile>(logName, 20);
 
 		std::cerr.rdbuf(errLogOut.rdbuf());
 	}
@@ -87,14 +90,8 @@ public:
 		std::cerr.rdbuf(cerrStrBuf);
 
 		if (initialized_m && !freedGPUMem_m) { freeGPUMemory(); }
-		delete BFieldModel_m;
-
-		//Delete satellites and particles
-		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii));
-		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii));
 
 		logFile_m->writeTimeDiffFromNow(0, "End Simulation Destructor");
-		delete logFile_m;
 	}//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
 	///One liner functions (usually access)
@@ -110,7 +107,7 @@ public:
 
 	bool	  areResultsPrepared() { return resultsPrepared_m; } //do I even use this??
 
-	LogFile*  getLogFilePointer() { return logFile_m; }
+	LogFile*  getLogFilePointer() { return logFile_m.get(); }
 	double*   getPointerToParticleAttributeArray(int partInd, int attrInd, bool originalData);
 
 	///Forward decs for cpp file, or pure virtuals
@@ -142,18 +139,13 @@ public:
 	virtual double* getSatelliteDataPointers(int satInd, int attrInd) { //some sort of check here to make sure you've received data
 		return satelliteData_m.at(satInd).at(attrInd).data(); } //also check indicies
 	virtual void	writeSatelliteDataToCSV();
-	virtual void    createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
-	{
-		if (initialized_m) { throw std::runtime_error ("createTempSat: initializeSimulation has already been called, no satellite will be created of name " + name); }
-		if (partInd >= particleTypes_m.size()) { throw std::out_of_range ("createTempSat: no particle at the specifed index " + std::to_string(partInd)); }
-		tempSats_m.push_back(new TempSat{ partInd, altitude, upwardFacing, name });
-	}
+	virtual void    createTempSat(int partInd, double altitude, bool upwardFacing, std::string name);
 
 	virtual void	setBFieldModel(std::string name, std::vector<double> args);
-	virtual void	setBFieldModelOther(BField* bfieldptr) { BFieldModel_m = bfieldptr; } //add API function for this
+	virtual void	setBFieldModelOther(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 
 	//virtual void	addEFieldModel(std::string name, std::vector<double> args);
-	//virtual void	addEFieldModelOther(EField* efieldptr);
+	//virtual void	addEFieldModelOther(std::unique_ptr<EField> efieldptr);
 
 	//add function that saves simulation constants, data, etc to disk
 
@@ -161,6 +153,6 @@ public:
 	virtual void    loadCompletedSimData(std::string fileDir, std::vector<std::string> partNames, std::vector<std::string> attrNames, std::vector<std::string> satNames, int numParts);
 
 	virtual void    createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir="");
-	virtual Particle* getParticlePointer(int ind) { return particleTypes_m.at(ind); }
+	virtual Particle* getParticlePointer(int ind) { return particleTypes_m.at(ind).get(); }
 };//end class
 #endif //end header guard
