@@ -9,14 +9,13 @@
 #include "device_launch_parameters.h"
 #include "cuda_profiler_api.h"
 
-typedef double(*callbackFcn)(double*, int, double, double);
-#define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
+#include "ErrorHandling\cudaErrorCheck.h"
+
+typedef double(*callbackFcn)(const double, const double);
 
 //on GPU global variables
-extern __device__ double*     fieldConstArray_GPU;
-extern __device__ int         arraySize_GPU;
-extern __device__ callbackFcn BFieldFcnPtr_GPU;
-extern __device__ callbackFcn gradBFcnPtr_GPU;
+extern __device__   callbackFcn BFieldFcnPtr_GPU;
+extern __device__   callbackFcn gradBFcnPtr_GPU;
 
 class BField
 {
@@ -25,7 +24,7 @@ protected:
 	std::vector<double> fieldConstArray_m;
 	
 	//GPU pointer to field constants array
-	double* fieldConstants_d{ nullptr };
+	//double* fieldConstants_d{ nullptr };
 
 	std::string modelName_m{ "" };
 	//callback function GPU pointer
@@ -49,8 +48,9 @@ public:
 	BField() {}
 	~BField() {}
 
-	virtual double getBFieldAtS(double s, double t)=0;
-	virtual double getGradBAtS(double s, double t)=0;
+	virtual double      getBFieldAtS(double s, double t)=0;
+	virtual double      getGradBAtS(double s, double t)=0;
+	virtual std::string getName() { return modelName_m; }
 };
 
 #endif

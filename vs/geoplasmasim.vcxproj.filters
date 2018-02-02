@@ -98,6 +98,15 @@
     <ClInclude Include="..\include\EField\AllEModels.h">
       <Filter>Header Files\EField</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\ErrorHandling\SimException.h">
+      <Filter>Header Files\ErrorHandling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ErrorHandling\simExceptionMacros.h">
+      <Filter>Header Files\ErrorHandling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ErrorHandling\SimFatalException.h">
+      <Filter>Header Files\ErrorHandling</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\__simulationvariables.py">
@@ -150,9 +159,6 @@
     <Filter Include="Header Files\Satellite">
       <UniqueIdentifier>{5b6c793a-800a-41a3-8fa6-3c6535b1af47}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\StandaloneTools">
-      <UniqueIdentifier>{c612fc43-a659-4fb0-93f1-ee6f9d1d6072}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Particle">
       <UniqueIdentifier>{84b230f3-9fbf-436d-9b04-b5cd37ee6fdc}</UniqueIdentifier>
     </Filter>
@@ -197,6 +203,9 @@
     </Filter>
     <Filter Include="Header Files\ErrorHandling">
       <UniqueIdentifier>{64f89fb8-0de4-4577-be61-c1b8fac0a175}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\StandaloneTools">
+      <UniqueIdentifier>{c612fc43-a659-4fb0-93f1-ee6f9d1d6072}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

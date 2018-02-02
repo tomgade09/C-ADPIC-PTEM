@@ -4,6 +4,7 @@
 #include <iostream>
 #include "SimulationClass\Simulation.h"
 #include "StandaloneTools\numericaltools.h"
+#include "ErrorHandling\simExceptionMacros.h"
 
 ///One liner functions
 DLLEXPORT double   getSimulationTimeAPI(Simulation* simulation);

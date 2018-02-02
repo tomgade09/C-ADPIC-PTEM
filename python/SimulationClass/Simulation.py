@@ -127,7 +127,7 @@ class Simulation:
         else:
             loadFileBuf = ctypes.create_string_buffer(bytes("", encoding='utf-8'))
 
-        #eventually replace with the functions to get the data from the CPP class, name these better
+        #eventually replace with the functions to get the data from the CPP class, name these arrays better
         self.numTypes_m = 2
         self.numAttrs_m = [3, 3]
         self.numParts_m = [115200, 115200]
@@ -135,7 +135,7 @@ class Simulation:
         self.satellites_m = ["bottomElectrons", "bottomIons", "topElectrons", "topIons"]
         self.satPartInd_m = [0, 1, 0, 1]
 
-        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 100, loadFileBuf)
+        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 500, loadFileBuf)
         self.simDLL_m.writeSatelliteDataToCSVAPI(self.simulationptr)
 
         return self.getFinalDataAllParticles(), self.getOriginalDataAllParticles(), self.getSatelliteData()  #Returns final particle data, original particle data, satellite data
@@ -240,7 +240,6 @@ class Simulation:
     #however if more refined control is needed, call them one by one and ignore runSim
     def initializeSimulation(self):
         self.simDLL_m.initializeSimulationAPI(self.simulationptr)
-        self.printSimCharacteristics()
 
     def copyDataToGPU(self):
         self.simDLL_m.copyDataToGPUAPI(self.simulationptr)
@@ -300,17 +299,6 @@ class Simulation:
 
     def logWriteTimeDiff(self, startTSind, endTSind):
         self.simDLL_m.writeTimeDiffAPI(self.logFileObj_m, startTSind, endTSind)
-
-    def printSimCharacteristics(self):
-        print("Sim between:          ", self.simMin_m / 6.371e6, " - ", self.simMax_m / 6.371e6, " Re") if self.normalized_m else \
-            print("Sim between:          ", self.simMin_m, " - ", self.simMax_m, " m")
-        
-        namenumStr = ""
-        for iii in range(len(self.numParts_m)):
-            namenumStr += self.nameParts_m[iii] + ": " + str(self.numParts_m[iii]) + "  "
-
-        print("Names and Numbers of Particles:  ", namenumStr)
-        print("Sim dt:               ", self.dt_m, " s")
 
 
 if __name__ == '__main__':

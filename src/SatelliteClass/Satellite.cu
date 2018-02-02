@@ -5,8 +5,8 @@
 
 //Project specific includes
 #include "SatelliteClass\Satellite.h"
+#include "ErrorHandling\cudaErrorCheck.h"
 
-#define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries);
 
 __global__ void satelliteDetector(double** data_d, double** capture_d, double simtime, double dt, double altitude, bool upward)
@@ -44,19 +44,17 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 
 void Satellite::initializeSatelliteOnGPU()
 {
-	//dataAllocateNewMsmtVector(); //make room for the first measurement data set
+	CUDA_API_ERRCHK(cudaMalloc((void **)&satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //makes room for data of detected particles
+	CUDA_API_ERRCHK(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
+	CUDA_API_ERRCHK(cudaMalloc((void **)&dblppGPU_m.at(1), sizeof(double*) * numberOfAttributes_m));
 
-	CUDA_CALL(cudaMalloc((void **)&satCaptureGPU_m, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //makes room for data of detected particles
-	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
-	CUDA_CALL(cudaMalloc((void **)&dblppGPU_m[1], sizeof(double*) * numberOfAttributes_m));
-
-	setup2DArray <<< 1, 1 >>> (satCaptureGPU_m, dblppGPU_m[1], numberOfAttributes_m + 2, numberOfParticles_m);
+	setup2DArray <<< 1, 1 >>> (satCaptureGPU_m, dblppGPU_m.at(1), numberOfAttributes_m + 2, numberOfParticles_m);
 }
 
-void Satellite::iterateDetector(int blockSize, double simtime, double dt)
+void Satellite::iterateDetector(double simtime, double dt, int blockSize)
 {
 	if (numberOfParticles_m % blockSize != 0)
-		std::cout << "Warning: " << name_m << ": Satellite::iterateDetector: numberOfParticles is not a whole multiple of blocksize.  Best case: some particles aren't checked.  Worst case: undefined.\n";
+		throw std::invalid_argument ("Satellite::iterateDetector: numberOfParticles is not a whole multiple of blocksize, some particles will not be checked");
 	
 	satelliteDetector <<< numberOfParticles_m / blockSize, blockSize >>> (dblppGPU_m.at(0), dblppGPU_m.at(1), simtime, dt, altitude_m, upwardFacing_m);
 }
@@ -67,17 +65,21 @@ void Satellite::copyDataToHost()
 	std::vector<std::vector<double>>& mostRecent{ data_m.at(data_m.size() - 1) };
 
 	for (int satattr = 0; satattr < numberOfAttributes_m + 2; satattr++)
-		CUDA_CALL(cudaMemcpy(mostRecent.at(satattr).data(), satCaptureGPU_m + satattr * numberOfParticles_m, sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost));
+		CUDA_API_ERRCHK(cudaMemcpy(mostRecent.at(satattr).data(), satCaptureGPU_m + satattr * numberOfParticles_m, sizeof(double) * numberOfParticles_m, cudaMemcpyDeviceToHost));
 	
-	CUDA_CALL(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
+	CUDA_API_ERRCHK(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
 
 	dataReady_m = true; //sets to true the first time called
 }
 
 void Satellite::freeGPUMemory()
 {
-	CUDA_CALL(cudaFree(satCaptureGPU_m));
-	CUDA_CALL(cudaFree(dblppGPU_m.at(1))); //DO NOT FREE dblppGPU_m[0] - this is the 2D data array that the sim uses (not the satellite)
+	if (!dataOnGPU_m)
+		return;
+
+	dataOnGPU_m = false;
+	CUDA_API_ERRCHK(cudaFree(satCaptureGPU_m));
+	CUDA_API_ERRCHK(cudaFree(dblppGPU_m.at(1))); //DO NOT FREE dblppGPU_m.at(0) - this is the 2D data array that the sim uses (not the satellite)
 }
 
 std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros)

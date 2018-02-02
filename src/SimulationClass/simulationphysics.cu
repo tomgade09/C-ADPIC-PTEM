@@ -14,8 +14,9 @@
 //Project specific includes
 #include "physicalconstants.h"
 #include "SimulationClass\Simulation.h"
+#include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\SimFatalException.h"
 
-#define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
 __device__ double getBFieldAtS(double s, double t);
 __device__ double getGradBAtS(double s, double t);
 //__device__ double getEFieldAtS(double s, double t);
@@ -28,42 +29,41 @@ constexpr int  NUMRNGSTATES{ 64 * BLOCKSIZE };
 //Commonly used values
 extern const int SIMCHARSIZE{ 6 * sizeof(double) };
 
-__device__ double accel1dCUDA(double* args, int len) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
+__device__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args) //made to pass into 1D Fourth Order Runge Kutta code
+{//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]  //args array: [ps_0, mu, q, m, simtime]
 	double F_lor, F_mir, stmp;
-	stmp = args[5] + args[1] * args[0]; //ps_0 + vs * t_RK
+	stmp = args[0] + vs_RK * t_RK; //ps_0 + vs_RK * t_RK
 	
-	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[3] * 0.0; //getEFieldAtS(some arguments, etc)
-
 	//Mirror force
-	F_mir = -args[2] * getGradBAtS(stmp, args[0] + args[6]); //-mu * gradB
+	F_mir = -args[1] * getGradBAtS(stmp, t_RK + args[4]); //-mu * gradB(pos, runge-kutta time + simtime)
 
-	return (F_lor + F_mir) / args[4];
+	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
+	F_lor = args[2] * 0.0; //q * getEFieldAtS(some arguments, etc)
+
+	return (F_lor + F_mir) / args[3];
 }//returns an acceleration in the parallel direction to the B Field
 
-__device__ double foRungeKuttaCUDA(double* funcArg, int arrayLen)
+__device__ double foRungeKuttaCUDA(const double y_0, const double h, const double* funcArg)
 {	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
 	// dy / dt = f(t, y), y(t_0) = y_0
 	// remaining funcArg elements are whatever you need in your callback function passed in
 	// args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
-	double k1, k2, k3, k4, y_0;
-	y_0 = funcArg[1];
+	double k1, k2, k3, k4; double y{ y_0 }; double t_RK{ 0.0 };
 
-	k1 = accel1dCUDA(funcArg, arrayLen); //k1 = f(t_n, y_n), units of dy / dt
+	k1 = accel1dCUDA(y, t_RK, funcArg); //k1 = f(t_n, y_n), units of dy / dt
 	
-	funcArg[0] = funcArg[7] / 2;
-	funcArg[1] = y_0 + k1 * funcArg[0];
-	k2 = accel1dCUDA(funcArg, arrayLen); //k2 = f(t_n + h/2, y_n + h/2 k1)
+	t_RK = h / 2;
+	y = y_0 + k1 * t_RK;
+	k2 = accel1dCUDA(y, t_RK, funcArg); //k2 = f(t_n + h/2, y_n + h/2 k1)
 
-	funcArg[1] = y_0 + k2 * funcArg[0];
-	k3 = accel1dCUDA(funcArg, arrayLen); //k3 = f(t_n + h/2, y_n + h/2 k2)
+	y = y_0 + k2 * t_RK;
+	k3 = accel1dCUDA(y, t_RK, funcArg); //k3 = f(t_n + h/2, y_n + h/2 k2)
 
-	funcArg[0] = funcArg[7];
-	funcArg[1] = y_0 + k3 * funcArg[0];
-	k4 = accel1dCUDA(funcArg, arrayLen); //k4 = f(t_n + h, y_n + h k3)
+	t_RK = h;
+	y = y_0 + k3 * t_RK;
+	k4 = accel1dCUDA(y, t_RK, funcArg); //k4 = f(t_n + h, y_n + h k3)
 
-	return (k1 + 2 * k2 + 2 * k3 + k4) * funcArg[7] / 6; //returns delta y, not dy / dt, not total y
+	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns delta y, not dy / dt, not total y
 }
 
 __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
@@ -81,54 +81,49 @@ __global__ void setup2DArray(double* array1D, double** array2D, int cols, int en
 		array2D[iii] = &array1D[iii * entries];
 }
 
-__device__ void ionosphereGenerator(double* v_part, double* mu_part, double* s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
+__device__ void ionosphereGenerator(double& v_part, double& mu_part, double& s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {//takes pointers to single particle location in attribute arrays (ex: particle 100: ptr to v[100], ptr to mu[100], ptr to s[100], elecTF, ptr to crndStateA[rnd index of thread]
 	double2 v_norm; //v_norm.x = v_para; v_norm.y = v_perp
 	v_norm = curand_normal2_double(rndState); //more efficient to generate two doubles in the one function than run curand_normal_double twice according to CUDA docs
 	v_norm.x = v_norm.x * sqrt(simConsts[3] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	v_norm.y = v_norm.y * sqrt(simConsts[3] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	///change to Maxwellian E and pitch angle
-	*s_part = simConsts[1];
-	*v_part = abs(v_norm.x);
-	*mu_part = v_norm.y;
+	s_part = simConsts[1];
+	v_part = abs(v_norm.x);
+	mu_part = v_norm.y;
 }
 
-__device__ void magnetosphereGenerator(double* v_part, double* mu_part, double* s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
+__device__ void magnetosphereGenerator(double& v_part, double& mu_part, double& s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
 {
 	double2 v_norm; //two normal dist values returned to v_norm.x and v_norm.y; v_norm.x = v_para; v_norm.y = v_perp
 	v_norm = curand_normal2_double(rndState);
 	v_norm.x = v_norm.x * sqrt(simConsts[4] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	v_norm.y = v_norm.y * sqrt(simConsts[4] * JOULE_PER_EV / mass) + simConsts[5]; //normal dist -> maxwellian
 	///change to Maxwellian E and pitch angle
-	*s_part = simConsts[2];
-	*v_part = -abs(v_norm.x);
-	*mu_part = v_norm.y;
+	s_part = simConsts[2];
+	v_part = -abs(v_norm.x);
+	mu_part = v_norm.y;
 }
 
-__device__ void ionosphereScattering(double* v_part, double* mu_part, double* s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
-{
-	//
-	//
-	//
-	//Physics needs to be improved
-	ionosphereGenerator(v_part, mu_part, s_part, simConsts, mass, rndState);
-}
-
-__global__ void computeKernel(double** currData_d, double** origData_d, double* simConsts, curandStateMRG32k3a* crndStateA,	double simtime, double mass, double charge, long numParts)
+__global__ void computeKernel(double** currData_d, double** origData_d, double* simConsts, curandStateMRG32k3a* crndStateA,	const double simtime, const double mass, const double charge, const long numParts)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
+	//double v_d = currData_d[0][thdInd]; //not sure why, but switching to kernel-local variables causes a bunch of "unspecified launch failure" errors
+	//double mu_d = currData_d[1][thdInd];
+	//double s_d = currData_d[2][thdInd];
+
 	double* v_d; double* mu_d; double* s_d;
-	double* v_orig; double* vperp_orig; double* s_orig;
 	v_d = currData_d[0]; mu_d = currData_d[1]; s_d = currData_d[2];
+	double* v_orig; double* vperp_orig; double* s_orig;
 	v_orig = origData_d[0]; vperp_orig = origData_d[1]; s_orig = origData_d[2];
 
 	if (s_d[thdInd] < 0.001) //if s is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{
 		if (thdInd < numParts / 2) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
-			ionosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+			ionosphereGenerator(v_d[thdInd], mu_d[thdInd], s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		else
-			magnetosphereGenerator(&v_d[thdInd], &mu_d[thdInd], &s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
+			magnetosphereGenerator(v_d[thdInd], mu_d[thdInd], s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
 		
 		v_orig[thdInd] = v_d[thdInd];
 		vperp_orig[thdInd] = mu_d[thdInd];
@@ -146,21 +141,15 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 		return;
 	else if (s_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top, particle is lost, new one generated in its place
 		return;
-	
-	//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
-	//simConsts: dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
-	double args[8];
-	args[0] = 0.0;
-	args[1] = v_d[thdInd]; //velocity along s
-	args[2] = mu_d[thdInd]; //mu
-	args[3] = charge;
-	args[4] = mass;
-	args[5] = s_d[thdInd]; //position along s
-	args[6] = simtime;
-	args[7] = simConsts[0]; //dt
 
-	v_d[thdInd] += foRungeKuttaCUDA(args, 8);
+	//args array: [ps_0, mu, q, m, simtime]
+	const double args[]{ s_d[thdInd], mu_d[thdInd], charge, mass, simtime };
+
+	v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], simConsts[0], args);
 	s_d[thdInd] += v_d[thdInd] * simConsts[0];
+
+	//currData_d[0][thdInd] = v_d;
+	//currData_d[2][thdInd] = s_d;
 }
 
 void Simulation::initializeSimulation()
@@ -171,19 +160,10 @@ void Simulation::initializeSimulation()
 	//
 	//Check for user error
 	if (BFieldModel_m == nullptr)
-	{
-		logFile_m->writeErrorEntry("Simulation::initializeSimulation", "No Magnetic Field model specified.  This doesn't make sense.  You need to add a model with Simulation::addBFieldModel.  Returning.", {});
-		errorEncountered = true;
-		return;
-	}
+		throw SimFatalException ("initializeSimulation: no Magnetic Field model specified", __FILE__, __LINE__);
 	if (particleTypes_m.size() == 0)
-	{
-		logFile_m->writeErrorEntry("Simulation::initializeSimulation", "No particles in sim.  You need to add particles before calling this function.  Returning.", {});
-		errorEncountered = true;
-		return;
-	}
-	if (errorEncountered)
-		return;
+		throw SimFatalException ("initializeSimulation: no particles in simulation, sim cannot be initialized without particles", __FILE__, __LINE__);
+
 	//Check for user error complete
 	//
 
@@ -191,24 +171,36 @@ void Simulation::initializeSimulation()
 	satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
 
 	//Allocate memory on GPU for elec/ions variables
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->initializeGPU(););
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->initializeGPU());
 
 	if (tempSats_m.size() > 0)
 	{
-		LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii)->particleInd, tempSats_m.at(iii)->altitude, tempSats_m.at(iii)->upwardFacing, tempSats_m.at(iii)->name););
+		LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii)->particleInd, tempSats_m.at(iii)->altitude, tempSats_m.at(iii)->upwardFacing, tempSats_m.at(iii)->name));
 	}
 	else
-		logFile_m->writeLogFileEntry("Warning: Simulation::initializeSimulation: No satellites created.  That's odd.");
+		std::cerr << "Simulation::initializeSimulation: warning: no satellites created" << std::endl;
 
-	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean, omega E Alfven, QSPS const E
-	CUDA_CALL(cudaMalloc((void **)&simConstants_d, SIMCHARSIZE)); //for right now, fine
+	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean
+	CUDA_API_ERRCHK(cudaMalloc((void **)&simConstants_d, SIMCHARSIZE));
 
 	//Array of random number generator states
-	CUDA_CALL(cudaMalloc((void **)&curandRNGStates_d, NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
+	CUDA_API_ERRCHK(cudaMalloc((void **)&curandRNGStates_d, NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
 
 	initialized_m = true;
 	logFile_m->createTimeStruct("End Sim Init");
 	logFile_m->writeTimeDiff(1, 2);
+
+	//some cout statements about the sim here
+	//Sim Header printed from Python - move here eventually
+	std::cout << "Sim between:    " << simMin_m << " m - " << simMax_m << " m" << std::endl;
+	std::cout << "BField Model:   " << BFieldModel_m->getName() << std::endl;
+	std::cout << "EField Elems:   " << /*something here to iterate and print all E Field elements <<*/ std::endl;
+	std::cout << "Particles:      " << particleTypes_m.at(0)->getName() << ": #: " << particleTypes_m.at(0)->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(0)->getInitDataLoaded() ? "true" : "false") << std::endl;
+	for (int iii = 1; iii < particleTypes_m.size(); iii++) {
+		std::cout << "                " << particleTypes_m.at(iii)->getName() << ": #: " << particleTypes_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl; }
+	std::cout << "Satellites:     " << satellites_m.at(0)->satellite->getName() << ": alt: " << satellites_m.at(0)->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(0)->satellite->getUpward() ? "true" : "false") << std::endl;
+	for (int iii = 1; iii < satellites_m.size(); iii++) {
+		std::cout << "                " << satellites_m.at(iii)->satellite->getName() << ": alt: " << satellites_m.at(iii)->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(iii)->satellite->getUpward() ? "true" : "false") << std::endl; }
 }
 
 void Simulation::copyDataToGPU()
@@ -218,28 +210,21 @@ void Simulation::copyDataToGPU()
 	//
 	//Check for user error
 	if (!initialized_m)
-	{
-		logFile_m->writeErrorEntry("Simulation::copyDataToGPU", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
-		errorEncountered = true;
-		return;
-	}
-
-	if (errorEncountered)
-		return;
+		throw SimFatalException ("copyDataToGPU: simulation not initialized with initializeSimulation()", __FILE__, __LINE__);
 	//Check for user error complete
 	//
 
 	//Copies initial data of particles to GPU, if loaded
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToGPU(););
-	
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToGPU());
 	
 	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean
 	double data[]{ dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m, };
-	CUDA_CALL(cudaMemcpy(simConstants_d, data, SIMCHARSIZE, cudaMemcpyHostToDevice));
+	CUDA_API_ERRCHK(cudaMemcpy(simConstants_d, data, SIMCHARSIZE, cudaMemcpyHostToDevice));
 	
 	//Prepare curand states for random number generation
 	long long seed = time(NULL);
 	initCurand <<< NUMRNGSTATES / 256, 256 >>> (static_cast<curandStateMRG32k3a*>(curandRNGStates_d), seed);
+	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	copied_m = true;
 	
@@ -254,21 +239,16 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 	//
 	//Check for user error
 	if (!initialized_m)
-	{
-		logFile_m->writeErrorEntry("Simulation::iterateSimulation", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.  You also need to copy data to the GPU with Simulation::copyDataToGPU.", { std::to_string(numberOfIterations) });
-		errorEncountered = true;
-		return;
-	}
+		throw SimFatalException ("iterateSimulation: sim not initialized with initializeSimulation(), and data not copied to GPU with copyDataToGPU()", __FILE__, __LINE__);
 	if (!copied_m)
-	{
-		logFile_m->writeErrorEntry("Simulation::iterateSimulation", "You haven't copied any data to the GPU with Simulation::copyDataToGPU.  Do that first or the GPU has no numbers to work on.", { std::to_string(numberOfIterations) });
-		errorEncountered = true;
-		return;
-	}
-	if (errorEncountered)
-		return;
+		throw SimFatalException ("iterateSimulation: data not copied to the GPU with copyDataToGPU()", __FILE__, __LINE__);
 	//Check for user error complete
 	//
+
+	std::cout << "Iterations:     " << numberOfIterations << std::endl;
+	std::cout << "Iters Btw Cout: " << itersBtwCouts << std::endl;
+	std::cout << "Time to setup:  "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;
+	std::cout << "===============================================================" << std::endl;
 
 	//Loop code
 	long cudaloopind{ 0 };
@@ -280,12 +260,14 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 
 			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (tmpPart->getCurrDataGPUPtr(), tmpPart->getOrigDataGPUPtr(), simConstants_d,
 				static_cast<curandStateMRG32k3a*>(curandRNGStates_d),	simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles());
-
-			cudaDeviceSynchronize();
 		}
 
+		CUDA_KERNEL_ERRCHK_WSYNC(); //side effect: cudaDeviceSynchronize() needed for computeKernel to function properly, which this macro provides
+
 		for (int sats = 0; sats < satellites_m.size(); sats++)
-			satellites_m.at(sats)->satellite->iterateDetector(BLOCKSIZE, simTime_m, dt_m);
+			satellites_m.at(sats)->satellite->iterateDetector(simTime_m, dt_m, BLOCKSIZE);
+
+		CUDA_KERNEL_ERRCHK();
 		
 		cudaloopind++;
 		incTime();
@@ -305,6 +287,8 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		//if (cudaloopind % 2500 == 0)//need better conditional
 			//receiveSatelliteData();
 	}
+	std::cout << "Total sim time: "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;
+
 	receiveSatelliteData(false);
 	std::cout << "\nReceive sat data outside main loop.  Remove after.\n";
 
@@ -320,18 +304,12 @@ void Simulation::copyDataToHost()
 	//
 	//Check for user error
 	if (!initialized_m)
-	{
-		logFile_m->writeErrorEntry("Simulation::copyDataToHost", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
-		errorEncountered = true;
-		return;
-	}
-	
-	if (errorEncountered)
-		return;
+		throw SimFatalException("copyDataToGPU: simulation not initialized with initializeSimulation()", __FILE__, __LINE__);
 	//Check for user error complete
 	//
 
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToHost(););
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToHost());
+	//maybe add transferring data from satellite over here
 
 	logFile_m->writeLogFileEntry("Simulation::copyDataToHost: Done with copying.");
 }
@@ -343,18 +321,15 @@ void Simulation::freeGPUMemory()
 	//
 	//Check for user error
 	if (!initialized_m)
-	{
-		logFile_m->writeErrorEntry("Simulation::freeGPUMemory", "You haven't initialized the simulation yet with Simulation::initializeSimulation.  Do that first.", {});
-		return;
-	}
+		throw SimFatalException ("freeGPUMemory: simulation not initialized with initializeSimulation()", __FILE__, __LINE__);
 	//Check for user error complete
 	//
 
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->freeGPUMemory(););
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->freeGPUMemory());
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->freeGPUMemory()); //need to return and process data before this...
 
 	freedGPUMem_m = true;
-
 	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
 
-	CUDA_CALL(cudaProfilerStop()); //For profiling with the CUDA bundle
+	CUDA_API_ERRCHK(cudaProfilerStop()); //For profiling with the CUDA bundle
 }

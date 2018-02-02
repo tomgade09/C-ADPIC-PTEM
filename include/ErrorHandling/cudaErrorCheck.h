@@ -1,52 +1,44 @@
-#pragma once
+#ifndef CUDAERRORCHECK_H
+#define CUDAERRORCHECK_H
+
+/*
+	Code originally posted at: https://codeyarns.com/2011/03/02/how-to-do-error-checking-in-cuda/
+	Modified slightly
+*/
+
 #include <iostream>
 
 //CUDA includes
 #include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "cuda_profiler_api.h"
-#include "curand_kernel.h"
 
-#define CUDA_ERROR_CHECK
+#define CUDA_API_ERRCHK( err ) __cudaSafeCall( err, __FILE__, __LINE__ )
+#define CUDA_KERNEL_ERRCHK() __cudaCheckError( __FILE__, __LINE__ )
+#define CUDA_KERNEL_ERRCHK_WSYNC() __cudaCheckError( __FILE__, __LINE__, true )
 
-#define CudaSafeCall( err ) __cudaSafeCall( err, __FILE__, __LINE__ )
-#define CudaCheckError()    __cudaCheckError( __FILE__, __LINE__ )
-
-inline void __cudaSafeCall(cudaError err, const char *file, const int line)
+inline void __cudaSafeCall(cudaError err, const char* file, const int line)
 {
-#ifdef CUDA_ERROR_CHECK
 	if (cudaSuccess != err)
-	{
-		fprintf(stderr, "cudaSafeCall() failed at %s:%i : %s\n",
-			file, line, cudaGetErrorString(err));
-		exit(-1);
-	}
-#endif
+		std::cerr << "API error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
 
 	return;
 }
 
-inline void __cudaCheckError(const char *file, const int line)
+inline void __cudaCheckError(const char* file, const int line, bool sync=false)
 {
-#ifdef CUDA_ERROR_CHECK
-	cudaError err = cudaGetLastError();
-	if (cudaSuccess != err)
+	if (sync)
 	{
-		fprintf(stderr, "cudaCheckError() failed at %s:%i : %s\n",
-			file, line, cudaGetErrorString(err));
-		exit(-1);
+		cudaError err = cudaDeviceSynchronize();
+		if (cudaSuccess != err)
+			std::cerr << "Kernel error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
 	}
-
-	// More careful checking. However, this will affect performance.
-	// Comment away if needed.
-	err = cudaDeviceSynchronize();
-	if (cudaSuccess != err)
+	else
 	{
-		fprintf(stderr, "cudaCheckError() with sync failed at %s:%i : %s\n",
-			file, line, cudaGetErrorString(err));
-		exit(-1);
+		cudaError err = cudaGetLastError();
+		if (cudaSuccess != err)
+			std::cerr << "Kernel error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
 	}
-#endif
 
 	return;
 }
+
+#endif /* CUDAERRORCHECK_H */

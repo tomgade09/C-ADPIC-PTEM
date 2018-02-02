@@ -1,35 +1,28 @@
 TO-DO:
-IN PROGRESS - Python simulation variables file
-MOSTLY DONE - Change over current error messages to log file
-MOSTLY DONE - Remove frivolous messages
-- Python check returned data, fix print functions
+- Offload folder creation, changing folder to C++
 - RNG generates total energy and pitch angle
-- Dipole coordinate system
-- Bin particles, output to file format
+- Bin particles
+- CDF file output
+- Maybe a LUT Grad B w/ linear interpolation
+- Handle satellite copying data to host from within satellite host
+WORKS IN C++, OFFLOAD TO PY - Fix sideways CSV Writing (python)
+- Finish class for loading previous sim data
+
+- Python check returned data, fix print functions
 - Photoelectrons
+- Ionosphere scattering
 - Weighted particles by maxwellian distribution
 - Alfven E generator (Dr. Lysak's code)
 - Restructure Physics (E (Alfven LUT, Alfven Calc, QSPS), B (dipole, IGRF) Classes with common function names, class to handle EOM, backscatter class, photoelectrons, maybe dist function stuff)
 - Add post processing classes (maybe?)
-- Put GPU particle array functions in Particle class
-- CDF file output
-- Python, maybe set num particles based on bin size
-- Maybe a common simulation run in C++
-- Maybe a LUT Grad B w/ linear interpolation
-- Add way to either shutoff log or to add additional log file
+IS DONE?? - Python, maybe set num particles based on bin size
 
-- Remove unnecessary includes
+- Remove unnecessary includes/maybe all/most includes in headers
 - Fix log file time width oddity
 - Better name
 - Document things better
-- Ionosphere scattering
 - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
-- Some sort of error handling system instead of cout messages
-      - Class of some sort, some common error codes (indexing errors, values out of range, etc)
-      - Encapsulate everything in try, except blocks?
-	  DONE - Or flag set that ends simulation on certain errors
 - Cross platform compiling
-- Do callback with FORK and acceleration function?
 IN PROGRESS - XLSX writing with xlnt library?
 IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 
@@ -56,11 +49,26 @@ DONE - Enable qsps, alfven via switch
 DONE - Write Satellite values to disk along with times
 DONE - Quick folder restructure, also tools
 DONE - Loading files - check bin size, compare with input number read
+DONE - Python simulation variables file
+DONE - Add way to either shutoff log or to add additional log file
+DONE - Put GPU particle array functions in Particle class
+DONE - Maybe a common simulation run in C++
+DONE - Dipole coordinate system
+DONE - Remove frivolous messages
+DONE - API Wrap with try/catch
+DONE - Change over current error messages to log file
+DONE - Some sort of error handling system instead of cout messages
+      DONE - Class of some sort, some common error codes (indexing errors, values out of range, etc)
+      DONE - Encapsulate everything in try, catch blocks?
+	  DONE - Or flag set that ends simulation on certain errors
+	  DONE - Exit on certain criteria (CUDA errors)
+	  DONE, RATHER FATAL ERROR - Cuda error class
+	  DONE, NEEDS TEST - Redirect std::cerr, maybe std::clog
+	  DONE, ADD LATER WHERE NECESSARY - Where appropriate throw exceptions, remove error boolean
 
 STUFF THAT IS DONE WITH CAVEATS:
 DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution
 DONE, BUT FACTOR IN DENSITY? - Make distribution maxwellian
 DONE, CONSIDER OTHER INJECTION SCHEMES - More particles, e, p injected over simulation (bump up to a million?, 10000 particles injected every iteration/so many hundredths of second?)
 SOMEWHAT, RESULTS ARE REASONABLE - Validation with known values (possibly magnetic bottle) - Calculations checked against excel and are good
-WORKS IN C++ - Fix sideways CSV Writing (python)
 DONE, ADD STRUCTURE WHERE NECESSARY IN THE FUTURE - Enforce calling certain functions after other required (saving csv/xlsx after the data is copied and formed)

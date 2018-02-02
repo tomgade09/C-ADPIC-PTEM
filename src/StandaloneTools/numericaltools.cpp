@@ -2,11 +2,8 @@
 
 void normalizeArray(std::vector<double>& arrayToNorm, double normFactor, bool inverse)
 {//this is duplicated from particle class, I know, I know
-	if (normFactor == 1)
-	{
-		std::cout << "Warning: Norm factor is 1.  Normalizing will have no effect.  Returning.\n";
+	if (normFactor == 1.0)
 		return;
-	}
 
 	for (int elems = 0; elems < arrayToNorm.size(); elems++) //normalize -> divide by normalization factor
 		arrayToNorm.at(elems) /= (inverse ? (1 / normFactor) : (normFactor));

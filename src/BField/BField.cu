@@ -1,19 +1,17 @@
 #include "BField\BField.h"
 
 //on GPU variables for various functions
-__device__ double*     fieldConstArray_GPU{ nullptr };
-__device__ int         arraySize_GPU{ 0 };
-__device__ callbackFcn BFieldFcnPtr_GPU{ nullptr };
-__device__ callbackFcn gradBFcnPtr_GPU{ nullptr };
+__device__   callbackFcn BFieldFcnPtr_GPU{ nullptr };
+__device__   callbackFcn gradBFcnPtr_GPU { nullptr };
 
 __device__ double getBFieldAtS(double s, double t)
 {
-	return BFieldFcnPtr_GPU(fieldConstArray_GPU, arraySize_GPU, s, t);
+	return BFieldFcnPtr_GPU(s, t);
 }
 
 __device__ double getGradBAtS(double s, double t)
 {
-	return gradBFcnPtr_GPU(fieldConstArray_GPU, arraySize_GPU, s, t);
+	return gradBFcnPtr_GPU(s, t);
 }
 
 //constexpr double B0ATTHETA{ BFIELD_EARTH *  1.9102530 };//sqrt(1 + 3 * pow(cos(20.0 * PI / 180),2)) }; //B0 * sqrt(1 + 3*cos^2(theta))

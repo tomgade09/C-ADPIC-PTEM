@@ -2,6 +2,7 @@
 #define SIMULATIONCLASS_H
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <chrono>
 #include "BField\AllBModels.h"
@@ -68,30 +69,37 @@ protected:
 	virtual void receiveSatelliteData(bool removeZeros);
 	virtual void createSatellite(int partInd, double altitude, bool upwardFacing, std::string name);
 
+	std::streambuf* cerrStrBuf{ std::cerr.rdbuf() };
+	std::ofstream   errLogOut{ "errors.log" };
+
 public:
 	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir, std::string logName="simulation.log"):
 		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
 	{
-		logFile_m = new LogFile(logName, 20);
+		logFile_m = new LogFile(logName, 20); //use std::unique_ptr / std::make_unique here
 		//write log entry??
+
+		std::cerr.rdbuf(errLogOut.rdbuf());
 	}
 
 	virtual ~Simulation()
 	{
+		std::cerr.rdbuf(cerrStrBuf);
+
 		if (initialized_m && !freedGPUMem_m) { freeGPUMemory(); }
 		delete BFieldModel_m;
 
 		//Delete satellites and particles
-		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii););
-		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii););
+		LOOP_OVER_1D_ARRAY(satellites_m.size(), delete satellites_m.at(iii));
+		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), delete particleTypes_m.at(iii));
 
 		logFile_m->writeTimeDiffFromNow(0, "End Simulation Destructor");
 		delete logFile_m;
 	}//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
 	///One liner functions (usually access)
-	double	  getTime() { return simTime_m; }  //not API worthy, not checking mid simulation
-	double	  getdt() { return dt_m; };		   //not API worthy, probably passed in
+	double	  getTime()   { return simTime_m; }//not API worthy, not checking mid simulation
+	double	  getdt()     { return dt_m; }	   //not API worthy, probably passed in
 	double    getSimMin() { return simMin_m; } //not API worthy, probably passed in
 	double    getSimMax() { return simMax_m; } //not API worthy, probably passed in
 	void	  incTime() { simTime_m += dt_m; } //not API worthy, never need to increment time from outside cpp
@@ -103,7 +111,7 @@ public:
 	bool	  areResultsPrepared() { return resultsPrepared_m; } //do I even use this??
 
 	LogFile*  getLogFilePointer() { return logFile_m; }
-	double*   getPointerToParticleAttributeArray(int partIndex, int attrIndex, bool originalData);
+	double*   getPointerToParticleAttributeArray(int partInd, int attrInd, bool originalData);
 
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
@@ -130,19 +138,19 @@ public:
 
 	//Satellite management functions
 	virtual size_t	getNumberOfSatellites() { return satellites_m.size(); }
-	virtual size_t  getSatelliteNumberOfDetectedParticles(int satIndex) { return satelliteData_m.at(satIndex).at(0).size(); } ///add index checking
-	virtual double* getSatelliteDataPointers(int satelliteInd, int attributeInd) { //some sort of check here to make sure you've received data
-		return satelliteData_m.at(satelliteInd).at(attributeInd).data(); } //also check indicies
+	virtual size_t  getSatelliteNumberOfDetectedParticles(int satInd) { return satelliteData_m.at(satInd).at(0).size(); } ///add index checking
+	virtual double* getSatelliteDataPointers(int satInd, int attrInd) { //some sort of check here to make sure you've received data
+		return satelliteData_m.at(satInd).at(attrInd).data(); } //also check indicies
 	virtual void	writeSatelliteDataToCSV();
-	virtual void    createTempSat(int particleInd, double altitude, bool upwardFacing, std::string name)
+	virtual void    createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
 	{
-		if (initialized_m) { logFile_m->writeErrorEntry("Simulation::createTempSat", "initializeSimulation has already been called.  Calling this now will have no effect.  Call this function before initializeSimulation.  Returning without creating a satellite.", { std::to_string(particleInd), std::to_string(altitude), std::to_string(upwardFacing), name }); return; }
-		if (particleInd >= particleTypes_m.size()) { logFile_m->writeErrorEntry("Simulation::createTempSat", "particle index variable (variable 0) is greater than the size of the existing particle types.  Create more particle types or check your index.  Returning without creating a satellite.", { std::to_string(particleInd), std::to_string(altitude), std::to_string(upwardFacing), name }); return; }
-		tempSats_m.push_back(new TempSat{ particleInd, altitude, upwardFacing, name });
+		if (initialized_m) { throw std::runtime_error ("createTempSat: initializeSimulation has already been called, no satellite will be created of name " + name); }
+		if (partInd >= particleTypes_m.size()) { throw std::out_of_range ("createTempSat: no particle at the specifed index " + std::to_string(partInd)); }
+		tempSats_m.push_back(new TempSat{ partInd, altitude, upwardFacing, name });
 	}
 
 	virtual void	setBFieldModel(std::string name, std::vector<double> args);
-	virtual void	setBFieldModelOther(BField* bfieldptr) { BFieldModel_m = bfieldptr; }
+	virtual void	setBFieldModelOther(BField* bfieldptr) { BFieldModel_m = bfieldptr; } //add API function for this
 
 	//virtual void	addEFieldModel(std::string name, std::vector<double> args);
 	//virtual void	addEFieldModelOther(EField* efieldptr);

@@ -5,8 +5,16 @@
 
 void Simulation::receiveSatelliteData(bool removeZeros)
 {
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->copyDataToHost(););
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satelliteData_m.push_back(satellites_m.at(iii)->satellite->getConsolidatedData(removeZeros)););
+	//
+	//
+	//
+	//Add some exceptions and try/catch blocks in here - need to continue in event of error
+	//
+	//
+	//
+
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->copyDataToHost());
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), satelliteData_m.push_back(satellites_m.at(iii)->satellite->getConsolidatedData(removeZeros)));
 
 	//Check particle for index of vperp/mu, iterate over particles
 	LOOP_OVER_1D_ARRAY(satellites_m.size(),\
@@ -46,15 +54,9 @@ void Simulation::createParticleType(std::string name, std::vector<std::string> a
 void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing, std::string name)
 {//remove elecTF, change to struct
 	if (particleTypes_m.size() <= partInd)
-	{
-		logFile_m->writeErrorEntry("Simulation::createSatellite", "particleTypes.at(" + std::to_string(partInd) + ") does not exist!", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
-		errorEncountered = true;
-	}
+		throw std::out_of_range ("createSatellite: no particle at the specifed index " + std::to_string(partInd));
 	if (particleTypes_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
-	{
-		logFile_m->writeErrorEntry("Simulation::createSatellite", "Pointer to GPU data is a nullptr.  That's just asking for trouble.", { std::to_string(partInd), std::to_string(altitude), std::to_string(upwardFacing), name });
-		errorEncountered = true;
-	}
+		throw std::runtime_error ("createSatellite: pointer to GPU data is a nullptr of particle " + particleTypes_m.at(partInd)->getName() + " - that's just asking for trouble");
 
 	logFile_m->writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd)->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
@@ -78,22 +80,19 @@ void Simulation::convertVPerpToMu(Particle* particle)
 void Simulation::convertVPerpToMu(int partInd)
 {
 	if (partInd > (particleTypes_m.size() - 1))
-	{
-		logFile_m->writeErrorEntry("Simulation::convertVPerpToMu", "Index out of range.  Returning without change.", { std::to_string(partInd) });
-		return;
-	}
+		throw std::out_of_range ("convertVPerpToMu: no particle at the specifed index " + std::to_string(partInd));
 
 	convertVPerpToMu(particleTypes_m.at(partInd));
 }
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), simTime_m) / mass););
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), simTime_m) / mass));
 }
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), t.at(iii)) / mass););
+	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), t.at(iii)) / mass));
 }
 
 void Simulation::convertMuToVPerp(Particle* particle)
@@ -104,23 +103,26 @@ void Simulation::convertMuToVPerp(Particle* particle)
 void Simulation::convertMuToVPerp(int partInd)
 {
 	if (partInd > (particleTypes_m.size() - 1))
-	{
-		logFile_m->writeErrorEntry("Simulation::convertMuToVPerp", "Index out of range.  Returning without change.", { std::to_string(partInd) });
-		return;
-	}
+		throw std::out_of_range ("convertMuToVPerp: no particle at the specifed index " + std::to_string(partInd));
 
 	convertMuToVPerp(particleTypes_m.at(partInd));
 }
 
-void Simulation::writeSatelliteDataToCSV()
+void Simulation::writeSatelliteDataToCSV() //think I'm going to export this to python eventually...
 {//need to make this more generic
 	std::vector<std::string> filename{ "./elecoutput.csv", "./ionsoutput.csv" };
 
 	if (satelliteData_m.size() == 0)
-	{
-		logFile_m->writeErrorEntry("Simulation::writeSatelliteDataToCSV", "satelliteData size is 0.  This probably means Simulation::receiveSatelliteData hasn't been called yet.  Returning.", {});
-		return;
-	}
+		throw std::runtime_error ("writeSatelliteDataToCSV: satelliteData size is 0 - this probably means Simulation::receiveSatelliteData hasn't been called yet");
+	
+	//
+	//
+	//
+	//Add some exceptions and try/catch blocks in here - need to continue in event of error
+	//
+	//
+	//
+
 	//need to index the satellite data with the orig data by the saved index number
 	for (int hhh = 0; hhh < particleTypes_m.size(); hhh++)
 	{
@@ -136,57 +138,51 @@ void Simulation::writeSatelliteDataToCSV()
 		std::vector<double> zeros;
 		zeros.resize(numParts);
 
-		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(tmpPart->getOrigData().at(iii));); //orig para, perp, s
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(tmpPart->getOrigData().at(iii))); //orig para, perp, s
 		data.push_back(zeros); //spacer
 		data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(numAttrs)); //time escaped top
-		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(iii));); //top para, perp, s
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh + particleTypes_m.size()).at(iii))); //top para, perp, s
 		data.push_back(zeros);
 		data.push_back(satelliteData_m.at(hhh).at(numAttrs)); //time escaped bottom
-		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh).at(iii));); //bottom para, perp, s
+		LOOP_OVER_1D_ARRAY(numAttrs, data.push_back(satelliteData_m.at(hhh).at(iii))); //bottom para, perp, s
 		data.push_back(zeros);
 
 		int vparaInd{ tmpPart->getDimensionIndByName("vpara") };
 		int vperpInd{ tmpPart->getDimensionIndByName("vperp") };
 		std::vector<double> tmp;
-		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(0.5 * tmpPart->getMass() * ((pow(tmpPart->getOrigData().at(vparaInd).at(iii), 2) + pow(tmpPart->getOrigData().at(vperpInd).at(iii), 2)) * pow(RADIUS_EARTH, 2)) / 1.60218e-19););
+		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(0.5 * tmpPart->getMass() * ((pow(tmpPart->getOrigData().at(vparaInd).at(iii), 2) + pow(tmpPart->getOrigData().at(vperpInd).at(iii), 2)) * pow(RADIUS_EARTH, 2)) / 1.60218e-19));
 		data.push_back(tmp); //Energies in eV
 		tmp.clear();
 
-		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(atan2(abs(tmpPart->getOrigData().at(vperpInd).at(iii)), -tmpPart->getOrigData().at(vparaInd).at(iii)) * 180 / PI););
+		LOOP_OVER_1D_ARRAY(numParts, tmp.push_back(atan2(abs(tmpPart->getOrigData().at(vperpInd).at(iii)), -tmpPart->getOrigData().at(vparaInd).at(iii)) * 180 / PI));
 		data.push_back(tmp);
 
 		fileIO::write2DCSV(data, filename.at(hhh), numParts, numAttrs * 3 + 7, ',', false);
 	}
 }
 
-double* Simulation::getPointerToParticleAttributeArray(int partIndex, int attrIndex, bool originalData)
+double* Simulation::getPointerToParticleAttributeArray(int partInd, int attrInd, bool originalData)
 {
-	if (partIndex > (particleTypes_m.size() - 1))
-	{
-		logFile_m->writeErrorEntry("Simulation::getPointerToParticleAttributeArray", "Particle Index out of bounds.  There aren't that many particle types.  Returning nullptr.", { std::to_string(partIndex), std::to_string(attrIndex), std::to_string(originalData) });
-		return nullptr;
-	}
-	else if (attrIndex > (particleTypes_m.at(partIndex)->getNumberOfAttributes() - 1))
-	{
-		logFile_m->writeErrorEntry("Simulation::getPointerToParticleAttributeArray", "Attribute Index out of bounds.  There aren't that many attributes for the particle type.  Returning nullptr.", { std::to_string(partIndex), std::to_string(attrIndex), std::to_string(originalData) });
-		return nullptr;
-	}
+	if (partInd > (particleTypes_m.size() - 1))
+		throw std::out_of_range ("getPointerToParticleAttributeArray: no particle at the specifed index " + std::to_string(partInd));
+	else if (attrInd > (particleTypes_m.at(partInd)->getNumberOfAttributes() - 1))
+		throw std::out_of_range ("getPointerToParticleAttributeArray: no attribute at the specifed index " + std::to_string(attrInd) + " for particle at index " + std::to_string(partInd));
 
-	return ((originalData) ? (particleTypes_m.at(partIndex)->getOrigData().at(attrIndex).data()) : (particleTypes_m.at(partIndex)->getCurrData().at(attrIndex).data()));
+	return ((originalData) ? (particleTypes_m.at(partInd)->getOrigData().at(attrInd).data()) : (particleTypes_m.at(partInd)->getCurrData().at(attrInd).data()));
 }
 
 void Simulation::prepareResults(bool normalizeToRe)
 {
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), convertMuToVPerp(particleTypes_m.at(iii)););
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), convertMuToVPerp(particleTypes_m.at(iii)));
 
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true););
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false););
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true));
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false));
 
 	//normalizes m to Re
 	if (normalizeToRe)
 	{
-		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->normalizeParticles(true, true););
-		LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes(), normalizeArray(satelliteData_m.at(iii).at(jjj), RADIUS_EARTH););
+		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->normalizeParticles(true, true));
+		LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes(), normalizeArray(satelliteData_m.at(iii).at(jjj), RADIUS_EARTH));
 	}
 
 	resultsPrepared_m = true;
@@ -226,10 +222,7 @@ void Simulation::loadCompletedSimData(std::string fileDir, std::vector<std::stri
 void Simulation::setBFieldModel(std::string name, std::vector<double> args)
 {//add log file messages
 	if (BFieldModel_m != nullptr)
-	{
-		std::cout << "Warning: Simulation::setBFieldModel: B Field Model already assigned.  Returning without creating a new one." << std::endl;
-		return;
-	}
+		throw std::invalid_argument ("Simulation::setBFieldModel: trying to assign B Field Model when one is already assigned - existing: " + BFieldModel_m->getName() + ", attempted: " + name);
 
 	if (name == "DipoleB")
 		BFieldModel_m = new DipoleB(args.at(0));
@@ -252,7 +245,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args)
 	}
 	else
 	{
-		std::cout << "Not sure what model is being referenced.  Using DipoleB" << std::endl;
+		std::cout << "Not sure what model is being referenced.  Using DipoleB instead of " << name << std::endl;
 		BFieldModel_m = new DipoleB(args.at(0));
 	}
 

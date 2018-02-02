@@ -6,15 +6,11 @@ namespace fileIO
 	{
 		std::ifstream binFile{ filename, std::ios::binary };
 		if (!binFile.is_open())
-		{
-			std::cout << "Error: Could not open file " << filename << " for reading!" << std::endl;
-			return;
-		}
+			throw std::invalid_argument ("fileIO::readDblBin: could not open file " + filename + " for reading");
 		if (arrayToReadInto.size() < numOfDblsToRead)
 		{
-			std::cout << "Error: std::vector is not big enough to contain the data being read.  Resize the vector to at least as big as numOfDblsToRead. Returning without reading file " << filename << std::endl;
 			binFile.close();
-			return;
+			throw std::invalid_argument ("fileIO::readDblBin: std::vector is not big enough to contain the data being read from file " + filename);
 		}
 		
 		binFile.seekg(0, binFile.end);
@@ -23,14 +19,11 @@ namespace fileIO
 
 		if (length < numOfDblsToRead * 8)
 		{
-			std::cout << "Error: Filesize is smaller than the number of doubles specified to read.  This won't go well.  Returning without reading file " << filename << std::endl;
 			binFile.close();
-			return;
+			throw std::invalid_argument ("fileIO::readDblBin: filesize of \"" + filename + "\" is smaller than specified number of doubles to read");
 		}
 		if (length > numOfDblsToRead * 8)
-		{
-			std::cout << "Warning: Number of doubles to read is less than the total number of doubles in the file.  You may be missing data.  Continuing to read file " << filename << std::endl;
-		}
+			std::cerr << "fileIO::readDblBin: warning: size of data read is less than the size of all data in file " << filename << ": continuing" << std::endl;
 
 		binFile.read(reinterpret_cast<char*>(arrayToReadInto.data()), std::streamsize(numOfDblsToRead * sizeof(double)));
 		binFile.close();
@@ -40,10 +33,7 @@ namespace fileIO
 	{
 		std::ifstream csv{ filename };
 		if (!csv.is_open())
-		{
-			std::cout << "Could not open file: " << filename << std::endl;
-			return nullptr;
-		}
+			throw std::invalid_argument ("fileIO::read2DCSV: could not open file " + filename + " for reading");
 
 		double** ret = new double*[numofcols];
 		double* inner = new double[numofentries * numofcols];
@@ -81,14 +71,11 @@ namespace fileIO
 	{
 		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 		if (!binfile.is_open())
-		{
-			std::cout << "Error: Could not open (or create) file " << filename << " for writing!" << std::endl;
-			return;
-		}
+			throw std::invalid_argument ("fileIO::writeDblBin: could not open file " + filename + " for writing");
 		if (dataarray.size() < numelements)
 		{
-			std::cout << "Error: Size of passed in vector is less than the number of doubles requested from it.  Returning without saving file " << filename << std::endl;
-			return;
+			binfile.close();
+			throw std::invalid_argument ("fileIO::writeDblBin: size of data vector is less than the number of doubles requested from it for filename " + filename);
 		}
 
 		binfile.write(reinterpret_cast<char*>(dataarray.data()), std::streamsize(numelements * sizeof(double)));
@@ -99,14 +86,11 @@ namespace fileIO
 	{
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())
-		{
-			std::cout << "Error: Could not open file: " << filename << std::endl;
-			return;
-		}
+			throw std::invalid_argument ("fileIO::write2DCSV: could not open file " + filename + " for writing");
 		if (dataarray.size() < numofcols)
 		{
-			std::cout << "Error: Size of passed in vector has less cols than numofcols.  Returning without saving file " << filename << std::endl;
-			return;
+			csv.close();
+			throw std::invalid_argument ("fileIO::write2DCSV: size of data vector is less than the doubles requested from it for filename " + filename);
 		}
 
 		for (int iii = 0; iii < numofentries; iii++)
@@ -122,14 +106,11 @@ namespace fileIO
 		return;
 	}
 
-	DLLEXPORT void writeTxtFile(const char* filename, const char* textToWrite, bool overwrite)//overwrite defaults to false
+	DLLEXPORT void writeTxtFile(std::string filename, std::string textToWrite, bool overwrite)//overwrite defaults to false
 	{//could return ofstream, leave file open, or provide a boolean option, but I don't know how to return a null ofstream
 		std::ofstream txt(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!txt.is_open())
-		{
-			std::cout << "Could not open file: " << filename << std::endl;
-			return;
-		}
+			throw std::invalid_argument ("fileIO::writeTxtFile: could not open file " + filename + " for writing");
 
 		txt << textToWrite;
 		txt.close();

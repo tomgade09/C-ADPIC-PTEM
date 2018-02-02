@@ -6,7 +6,7 @@
 #include "device_launch_parameters.h"
 #include "cuda_profiler_api.h"
 
-typedef double(*callbackFcn)(double*, int, double, double);
+typedef double(*callbackFcn)(const double, const double);
 
 //on GPU global variables
 extern __device__ callbackFcn EFieldFcnPtr_GPU;

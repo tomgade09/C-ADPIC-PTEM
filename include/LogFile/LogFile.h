@@ -38,7 +38,7 @@ public:
 
 	void createTimeStruct(std::string label);
 	void writeLogFileEntry(std::string logMessage);
-	void writeErrorEntry(std::string functionName, std::string logMessage, std::vector<std::string> args);
+	//void writeErrorEntry(std::string functionName, std::string logMessage, std::vector<std::string> args); //depreciated
 	
 	void writeTimeDiff(timeStruct* startTS, timeStruct* endTS);
 	void writeTimeDiff(int startTSind, timeStruct* endTS);
@@ -48,6 +48,7 @@ public:
 	void writeTimeDiffFromNow(int startTSind, std::string nowLabel);
 	
 	void printTimeNowFromLastTS();
+	void printTimeNowFromFirstTS();
 };
 
 #endif

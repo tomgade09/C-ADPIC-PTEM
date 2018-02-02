@@ -6,13 +6,16 @@ void LogFile::writeLogFileEntry(std::string logMessage)
 	std::string writeTxt;
 	std::stringstream ss;
 
-	ss << std::setprecision(10) << std::fixed << std::setw(11) << static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[0]->tp).count()) / 1000;
-	writeTxt = "[ " + ss.str() + " ] : " + logMessage + "\n"; //time
+	ss << std::setprecision(10) << std::setw(11) << static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m.at(0)->tp).count()) / 1000;
+	std::string ssstr{ ss.str() };
+	while (ss.str().length() > 11)
+		ssstr.erase(std::ios::end);
+	writeTxt = "[ " + ssstr + " ] : " + logMessage + "\n"; //time
 	
 	fileIO::writeTxtFile(logFileName_m.c_str(), writeTxt.c_str());
 }
 
-void LogFile::writeErrorEntry(std::string functionName, std::string logMessage, std::vector<std::string> args)
+/*void LogFile::writeErrorEntry(std::string functionName, std::string logMessage, std::vector<std::string> args)
 {
 	std::string error{ "ERROR: " + functionName + "(" };
 	for (size_t arg = 0; arg < args.size(); arg++)
@@ -24,7 +27,7 @@ void LogFile::writeErrorEntry(std::string functionName, std::string logMessage, 
 	logMessage = "                  -> " + logMessage + "\n";
 
 	fileIO::writeTxtFile(logFileName_m.c_str(), logMessage.c_str());
-}
+}*/ //depreciated
 
 void LogFile::createTimeStruct(std::string label)
 {
@@ -46,12 +49,12 @@ void LogFile::writeTimeDiff(timeStruct* startTS, timeStruct* endTS)
 
 void LogFile::writeTimeDiff(int startTSind, timeStruct* endTS)
 {
-	writeTimeDiff(timeStructs_m[startTSind], endTS);
+	writeTimeDiff(timeStructs_m.at(startTSind), endTS);
 }
 
 void LogFile::writeTimeDiff(int startTSind, int endTSind)
 {
-	writeTimeDiff(timeStructs_m[startTSind], timeStructs_m[endTSind] );
+	writeTimeDiff(timeStructs_m.at(startTSind), timeStructs_m.at(endTSind) );
 }
 
 
@@ -67,11 +70,16 @@ void LogFile::writeTimeDiffFromNow(timeStruct* startTS, std::string nowLabel)
 
 void LogFile::writeTimeDiffFromNow(int startTSind, std::string nowLabel)
 {
-	writeTimeDiffFromNow(timeStructs_m[startTSind], nowLabel);
+	writeTimeDiffFromNow(timeStructs_m.at(startTSind), nowLabel);
 }
 
 
 void LogFile::printTimeNowFromLastTS()
 {
-	std::cout << static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m[timeStructs_m.size()-1]->tp).count()) / 1000000;
+	std::cout << static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m.at(timeStructs_m.size()-1)->tp).count()) / 1000000;
+}
+
+void LogFile::printTimeNowFromFirstTS()
+{
+	std::cout << static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m.at(0)->tp).count()) / 1000000;
 }

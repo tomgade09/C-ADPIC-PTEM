@@ -34,6 +34,9 @@
     <ClInclude Include="..\include\EField\AllEModels.h" />
     <ClInclude Include="..\include\EField\EField.h" />
     <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h" />
+    <ClInclude Include="..\include\ErrorHandling\SimException.h" />
+    <ClInclude Include="..\include\ErrorHandling\simExceptionMacros.h" />
+    <ClInclude Include="..\include\ErrorHandling\SimFatalException.h" />
     <ClInclude Include="..\include\FileIO\fileIO.h" />
     <ClInclude Include="..\include\LogFile\LogFile.h" />
     <ClInclude Include="..\include\LogFile\LogFileAPI.h" />

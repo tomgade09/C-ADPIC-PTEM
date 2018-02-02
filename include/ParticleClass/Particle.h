@@ -31,7 +31,7 @@ protected:
 	std::string name_m;
 
 	bool initDataLoaded_m{ false };
-	bool usedGPU{ false };
+	bool usingGPU{ false };
 	bool normalized_m{ false };
 
 public:
@@ -49,14 +49,14 @@ public:
 
 		if (attributeNames.size() < numberOfVelocityDims_m + numberOfPositionDims_m)
 		{
-			std::cout << "Warning: Particle: not enough attribute names specified.  Generic names being generated.  If you try to load bin files into the data array, it probably won't work.\n";
+			std::cerr << "Particle::Particle: warning: not enough attribute names specified, generic names being generated" << std::endl;
 			for (int diff = 0; diff = numberOfVelocityDims_m + numberOfPositionDims_m - static_cast<int>(attributeNames.size()); diff++)
 				attributeNames_m.push_back(std::to_string(diff) + ".bin");
 		}
 	}
 	~Particle()
 	{
-		if (usedGPU)
+		if (usingGPU)
 			freeGPUMemory();
 	}
 
