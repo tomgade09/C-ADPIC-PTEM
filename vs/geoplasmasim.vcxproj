@@ -31,6 +31,7 @@
     <ClInclude Include="..\include\BField\AllBModels.h" />
     <ClInclude Include="..\include\BField\BField.h" />
     <ClInclude Include="..\include\BField\DipoleB.h" />
+    <ClInclude Include="..\include\dllexport.h" />
     <ClInclude Include="..\include\EField\AllEModels.h" />
     <ClInclude Include="..\include\EField\EField.h" />
     <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="..\include\ErrorHandling\simExceptionMacros.h" />
     <ClInclude Include="..\include\ErrorHandling\SimFatalException.h" />
     <ClInclude Include="..\include\FileIO\fileIO.h" />
+    <ClInclude Include="..\include\FileIO\fileIOAPI.h" />
     <ClInclude Include="..\include\LogFile\LogFile.h" />
     <ClInclude Include="..\include\LogFile\LogFileAPI.h" />
     <ClInclude Include="..\include\ParticleClass\Particle.h" />

@@ -72,6 +72,7 @@ protected:
 	//Protected functions
 	virtual void receiveSatelliteData(bool removeZeros);
 	virtual void createSatellite(int partInd, double altitude, bool upwardFacing, std::string name);
+	virtual void writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave="./_chars/");
 
 	std::streambuf* cerrStrBuf{ std::cerr.rdbuf() };
 	std::ofstream   errLogOut{ "errors.log" };
@@ -83,6 +84,8 @@ public:
 		logFile_m = std::make_unique<LogFile>(logName, 20);
 
 		std::cerr.rdbuf(errLogOut.rdbuf());
+
+		writeCharsToFiles( {dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m}, {"dt", "simMin", "simMax", "T_ion", "T_mag", "v_mean"}, "Simulation");
 	}
 
 	virtual ~Simulation()

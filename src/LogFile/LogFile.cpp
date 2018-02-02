@@ -8,11 +8,11 @@ void LogFile::writeLogFileEntry(std::string logMessage)
 
 	ss << std::setprecision(10) << std::setw(11) << static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m.at(0)->tp).count()) / 1000;
 	std::string ssstr{ ss.str() };
-	while (ss.str().length() > 11)
+	while (ssstr.length() > 11)
 		ssstr.erase(std::ios::end);
 	writeTxt = "[ " + ssstr + " ] : " + logMessage + "\n"; //time
-	
-	fileIO::writeTxtFile(logFileName_m.c_str(), writeTxt.c_str());
+
+	fileIO::writeTxtFile(writeTxt, logFileName_m);
 }
 
 void LogFile::createTimeStruct(std::string label)

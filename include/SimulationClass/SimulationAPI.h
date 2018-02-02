@@ -2,6 +2,7 @@
 #define SIMULATIONAPI_H
 
 #include <iostream>
+#include "dllexport.h"
 #include "SimulationClass\Simulation.h"
 #include "StandaloneTools\numericaltools.h"
 #include "ErrorHandling\simExceptionMacros.h"

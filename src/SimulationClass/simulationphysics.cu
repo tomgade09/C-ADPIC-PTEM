@@ -171,7 +171,7 @@ void Simulation::initializeSimulation()
 	satelliteData_m.reserve(100); //not resize...Don't know the exact size here so need to use push_back
 
 	//Allocate memory on GPU for elec/ions variables
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->initializeGPU());
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->initializeGPU());
 
 	if (tempSats_m.size() > 0)
 	{
@@ -195,12 +195,12 @@ void Simulation::initializeSimulation()
 	std::cout << "Sim between:    " << simMin_m << " m - " << simMax_m << " m" << std::endl;
 	std::cout << "BField Model:   " << BFieldModel_m->getName() << std::endl;
 	std::cout << "EField Elems:   " << /*something here to iterate and print all E Field elements <<*/ std::endl;
-	std::cout << "Particles:      " << particleTypes_m.at(0).get()->getName() << ": #: " << particleTypes_m.at(0).get()->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(0).get()->getInitDataLoaded() ? "true" : "false") << std::endl;
+	std::cout << "Particles:      " << particleTypes_m.at(0)->getName() << ": #: " << particleTypes_m.at(0)->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(0)->getInitDataLoaded() ? "true" : "false") << std::endl;
 	for (int iii = 1; iii < particleTypes_m.size(); iii++) {
-		std::cout << "                " << particleTypes_m.at(iii).get()->getName() << ": #: " << particleTypes_m.at(iii).get()->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(iii).get()->getInitDataLoaded() ? "true" : "false") << std::endl; }
-	std::cout << "Satellites:     " << satellites_m.at(0).get()->satellite->getName() << ": alt: " << satellites_m.at(0).get()->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(0).get()->satellite->getUpward() ? "true" : "false") << std::endl;
+		std::cout << "                " << particleTypes_m.at(iii)->getName() << ": #: " << particleTypes_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl; }
+	std::cout << "Satellites:     " << satellites_m.at(0)->satellite->getName() << ": alt: " << satellites_m.at(0)->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(0)->satellite->getUpward() ? "true" : "false") << std::endl;
 	for (int iii = 1; iii < satellites_m.size(); iii++) {
-		std::cout << "                " << satellites_m.at(iii).get()->satellite->getName() << ": alt: " << satellites_m.at(iii).get()->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(iii).get()->satellite->getUpward() ? "true" : "false") << std::endl; }
+		std::cout << "                " << satellites_m.at(iii)->satellite->getName() << ": alt: " << satellites_m.at(iii)->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(iii)->satellite->getUpward() ? "true" : "false") << std::endl; }
 }
 
 void Simulation::copyDataToGPU()
@@ -215,7 +215,7 @@ void Simulation::copyDataToGPU()
 	//
 
 	//Copies initial data of particles to GPU, if loaded
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->copyDataToGPU());
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToGPU());
 	
 	//Copies array of sim characteristics to GPU - dt, sim min, sim max, t ion, t mag, v mean
 	double data[]{ dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m, };
@@ -308,7 +308,7 @@ void Simulation::copyDataToHost()
 	//Check for user error complete
 	//
 
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->copyDataToHost());
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->copyDataToHost());
 	//maybe add transferring data from satellite over here
 
 	logFile_m->writeLogFileEntry("Simulation::copyDataToHost: Done with copying.");
@@ -325,7 +325,7 @@ void Simulation::freeGPUMemory()
 	//Check for user error complete
 	//
 
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->freeGPUMemory());
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->freeGPUMemory());
 	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->freeGPUMemory()); //need to return and process data before this...
 
 	freedGPUMem_m = true;

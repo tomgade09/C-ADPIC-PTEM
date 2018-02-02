@@ -3,6 +3,25 @@
 
 #include "SimulationClass\Simulation.h"
 
+void Simulation::writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave)
+{
+	try { fileIO::writeDblBin(chars, folderFromSave + className + ".bin", chars.size()); }
+	catch(std::exception& exp) { std::cout << "Exception!! " << exp.what() << std::endl; }
+	catch (...) { std::cout << "Unhandled exception" << std::endl; throw; }
+
+	std::string charNamesStr{ "" };
+	for (int charNm = 0; charNm < charNames.size(); charNm++)
+	{
+		charNamesStr += charNames.at(charNm);
+		if (charNm != charNames.size() - 1)
+			charNamesStr += ",";
+	}
+	
+	try { fileIO::writeTxtFile(charNamesStr, folderFromSave + className + ".txt"); }
+	catch (std::exception& exp) { std::cout << "Exception!! " << exp.what() << std::endl; }
+	catch (...) { std::cout << "Unhandled exception" << std::endl; throw; }
+}
+
 void Simulation::receiveSatelliteData(bool removeZeros)
 {
 	//
@@ -43,11 +62,15 @@ void Simulation::createParticleType(std::string name, std::vector<std::string> a
 {
 	//some sort of debug message??  Necessary for daily use?
 	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Pos Dimensions: " + std::to_string(posDims) + ", Vel Dimensions: " + std::to_string(velDims) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
+	
 
+	writeCharsToFiles({ mass, charge, static_cast<double>(numParts), static_cast<double>(posDims), static_cast<double>(velDims), normFactor },
+		{ "mass", "charge", "numParts", "posDims", "velDims", "normFactor", "attrNames", attrNames.at(0), attrNames.at(1), attrNames.at(2), name }, "Particle_" + name);
+	
 	std::shared_ptr<Particle> newPart{ std::make_shared<Particle>(name, attrNames, mass, charge, numParts, posDims, velDims, normFactor) };
 
 	if (loadFilesDir != "")
-		newPart.get()->loadFilesToArray(loadFilesDir);
+		newPart->loadFilesToArray(loadFilesDir);
 
 	particleTypes_m.push_back(std::move(newPart));
 }
@@ -56,10 +79,14 @@ void Simulation::createSatellite(int partInd, double altitude, bool upwardFacing
 {//remove elecTF, change to struct
 	if (particleTypes_m.size() <= partInd)
 		throw std::out_of_range ("createSatellite: no particle at the specifed index " + std::to_string(partInd));
-	if (particleTypes_m.at(partInd).get()->getCurrDataGPUPtr() == nullptr)
-		throw std::runtime_error ("createSatellite: pointer to GPU data is a nullptr of particle " + particleTypes_m.at(partInd).get()->getName() + " - that's just asking for trouble");
+	if (particleTypes_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
+		throw std::runtime_error ("createSatellite: pointer to GPU data is a nullptr of particle " + particleTypes_m.at(partInd)->getName() + " - that's just asking for trouble");
 
-	logFile_m->writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd).get()->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
+	writeCharsToFiles({ static_cast<double>(partInd), altitude, static_cast<double>(upwardFacing) },
+		{ "partInd", "altitude", "upwardFacing", name }, "Satellite_" + name);
+
+
+	logFile_m->writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particleTypes_m.at(partInd)->getName() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
 	std::shared_ptr<Particle> tmpPart{ particleTypes_m.at(partInd) };
 	std::unique_ptr<Satellite> newSat{ std::make_unique<Satellite>(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), tmpPart->getCurrDataGPUPtr(), name) };
@@ -176,24 +203,24 @@ double* Simulation::getPointerToParticleAttributeArray(int partInd, int attrInd,
 {
 	if (partInd > (particleTypes_m.size() - 1))
 		throw std::out_of_range ("getPointerToParticleAttributeArray: no particle at the specifed index " + std::to_string(partInd));
-	else if (attrInd > (particleTypes_m.at(partInd).get()->getNumberOfAttributes() - 1))
+	else if (attrInd > (particleTypes_m.at(partInd)->getNumberOfAttributes() - 1))
 		throw std::out_of_range ("getPointerToParticleAttributeArray: no attribute at the specifed index " + std::to_string(attrInd) + " for particle at index " + std::to_string(partInd));
 
-	return ((originalData) ? (particleTypes_m.at(partInd).get()->getOrigData().at(attrInd).data()) : (particleTypes_m.at(partInd).get()->getCurrData().at(attrInd).data()));
+	return ((originalData) ? (particleTypes_m.at(partInd)->getOrigData().at(attrInd).data()) : (particleTypes_m.at(partInd)->getCurrData().at(attrInd).data()));
 }
 
 void Simulation::prepareResults(bool normalizeToRe)
 {
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), convertMuToVPerp(particleTypes_m.at(iii).get()));
 
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->saveArrayToFiles("./bins/particles_init/", true));
-	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->saveArrayToFiles("./bins/particles_final/", false));
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true));
+	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false));
 
 	//normalizes m to Re
 	if (normalizeToRe)
 	{
-		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii).get()->normalizeParticles(true, true));
-		LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii).get()->satellite->getNumberOfAttributes(), normalizeArray(satelliteData_m.at(iii).at(jjj), RADIUS_EARTH));
+		LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->normalizeParticles(true, true));
+		LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes(), normalizeArray(satelliteData_m.at(iii).at(jjj), RADIUS_EARTH));
 	}
 
 	resultsPrepared_m = true;
@@ -204,7 +231,7 @@ void Simulation::loadCompletedSimData(std::string fileDir, std::vector<std::stri
 	for (size_t parts = 0; parts < partNames.size(); parts++)
 	{
 		createParticleType(partNames.at(parts), attrNames, 1, 1, numParts, static_cast<int>(attrNames.size() - 1), 1, 1, fileDir + "particles_final/");
-		particleTypes_m.at(parts).get()->loadFilesToArray(fileDir + "particles_init/", true);
+		particleTypes_m.at(parts)->loadFilesToArray(fileDir + "particles_init/", true);
 	}
 
 	for (size_t sats = 0; sats < satNames.size(); sats++)
@@ -234,6 +261,8 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args)
 {//add log file messages
 	if (BFieldModel_m)
 		throw std::invalid_argument ("Simulation::setBFieldModel: trying to assign B Field Model when one is already assigned - existing: " + BFieldModel_m->getName() + ", attempted: " + name);
+
+	writeCharsToFiles(args, { "args" }, "BField_" + name);
 
 	if (name == "DipoleB")
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));

@@ -2,7 +2,7 @@
 
 namespace fileIO
 {
-	DLLEXPORT void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, long numOfDblsToRead)
+	void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, long numOfDblsToRead)
 	{
 		std::ifstream binFile{ filename, std::ios::binary };
 		if (!binFile.is_open())
@@ -29,7 +29,7 @@ namespace fileIO
 		binFile.close();
 	}
 
-	DLLEXPORT void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, int numofentries, int numofcols, const char delim)
+	void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, int numofentries, int numofcols, const char delim)
 	{
 		std::ifstream csv{ filename };
 		if (!csv.is_open())
@@ -73,7 +73,7 @@ namespace fileIO
 		csv.close();
 	}
 
-	DLLEXPORT void writeDblBin(std::vector<double> dataarray, std::string filename, long numelements, bool overwrite)//overwrite defaults to true
+	void writeDblBin(const std::vector<double>& dataarray, std::string filename, long numelements, bool overwrite)//overwrite defaults to true
 	{
 		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 		if (!binfile.is_open())
@@ -84,11 +84,11 @@ namespace fileIO
 			throw std::invalid_argument ("fileIO::writeDblBin: size of data vector is less than the number of doubles requested from it for filename " + filename);
 		}
 
-		binfile.write(reinterpret_cast<char*>(dataarray.data()), std::streamsize(numelements * sizeof(double)));
+		binfile.write(reinterpret_cast<const char*>(dataarray.data()), std::streamsize(numelements * sizeof(double)));
 		binfile.close();
 	}
 
-	DLLEXPORT void write2DCSV(std::vector<std::vector<double>> dataarray, std::string filename, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
+	void write2DCSV(const std::vector<std::vector<double>>& dataarray, std::string filename, int numofentries, int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
 	{
 		std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!csv.is_open())
@@ -112,13 +112,17 @@ namespace fileIO
 		return;
 	}
 
-	DLLEXPORT void writeTxtFile(std::string filename, std::string textToWrite, bool overwrite)//overwrite defaults to false
-	{//could return ofstream, leave file open, or provide a boolean option, but I don't know how to return a null ofstream
+	void writeTxtFile(std::string textToWrite, std::string filename, bool overwrite)//overwrite defaults to false
+	{
 		std::ofstream txt(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 		if (!txt.is_open())
-			throw std::invalid_argument ("fileIO::writeTxtFile: could not open file " + filename + " for writing");
+		{
+			txt.close();
+			throw std::invalid_argument("fileIO::writeTxtFile: could not open file " + filename + " for writing " + std::to_string(txt.is_open()));
+		}
 
 		txt << textToWrite;
+
 		txt.close();
 	}
 }

@@ -107,6 +107,12 @@
     <ClInclude Include="..\include\ErrorHandling\SimFatalException.h">
       <Filter>Header Files\ErrorHandling</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\dllexport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FileIO\fileIOAPI.h">
+      <Filter>Header Files\FileIO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\__simulationvariables.py">

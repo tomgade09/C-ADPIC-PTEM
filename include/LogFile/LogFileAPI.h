@@ -1,6 +1,7 @@
 #ifndef LOGFILEAPI_H
 #define LOGFILEAPI_H
 
+#include "dllexport.h"
 #include "LogFile\LogFile.h"
 
 DLLEXPORT void writeLogFileEntryAPI(LogFile* log, const char* logMessage);

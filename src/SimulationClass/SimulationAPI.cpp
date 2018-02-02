@@ -113,9 +113,9 @@ DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int print
 	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
 	sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
 
-	sim->createTempSat(0, simMin * 0.999, true, "bottomElectrons");
-	sim->createTempSat(1, simMin * 0.999, true, "bottomIons");
-	sim->createTempSat(0, simMax * 1.001, false, "topElectrons");
+	sim->createTempSat(0, simMin * 0.999, true,  "btmElec");
+	sim->createTempSat(1, simMin * 0.999, true,  "btmIons");
+	sim->createTempSat(0, simMax * 1.001, false, "topElec");
 	sim->createTempSat(1, simMax * 1.001, false, "topIons");
 
 	sim->initializeSimulation();
@@ -133,7 +133,7 @@ DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
 	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, { arg1 })); }
 
-#undef DLLFILE
+//#undef DLLFILE //uncomment for making an exe file for profiling
 #ifndef DLLFILE
 int main()
 {

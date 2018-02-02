@@ -30,7 +30,7 @@ public:
 		timeStructs_m.reserve(timeStructToReserve);
 		std::string logHeader{ "[  Time (ms)  ] : Log Message\n" }; //do I want to add the time, other attributes to file???
 		logHeader += "[ 0.000000000 ] : LogFile class created, file created on disk, first entry written, first time point recorded.\n";
-		fileIO::writeTxtFile(logFileName_m.c_str(), logHeader.c_str(), overwrite_m);
+		fileIO::writeTxtFile(logHeader, logFileName_m, overwrite_m);
 		createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
 	}
 

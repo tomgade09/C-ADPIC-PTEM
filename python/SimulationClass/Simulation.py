@@ -132,7 +132,7 @@ class Simulation:
         self.numAttrs_m = [3, 3]
         self.numParts_m = [115200, 115200]
         self.nameParts_m = ["elec", "ions"]
-        self.satellites_m = ["bottomElectrons", "bottomIons", "topElectrons", "topIons"]
+        self.satellites_m = ["btmElec", "btmIons", "topElec", "topIons"]
         self.satPartInd_m = [0, 1, 0, 1]
 
         self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 500, loadFileBuf)
