@@ -135,7 +135,7 @@ class Simulation:
         self.satellites_m = ["btmElec", "btmIons", "topElec", "topIons"]
         self.satPartInd_m = [0, 1, 0, 1]
 
-        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 500, loadFileBuf)
+        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 50, loadFileBuf)
         self.simDLL_m.writeSatelliteDataToCSVAPI(self.simulationptr)
 
         return self.getFinalDataAllParticles(), self.getOriginalDataAllParticles(), self.getSatelliteData()  #Returns final particle data, original particle data, satellite data

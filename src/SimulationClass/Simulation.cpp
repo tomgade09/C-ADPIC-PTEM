@@ -289,5 +289,23 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args)
 		std::cout << "Not sure what model is being referenced.  Using DipoleB instead of " << name << std::endl;
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
 	}
+}
 
+void Simulation::addEFieldModel(std::string name, std::vector<double> args, std::string altMinMaxStr, std::string magnitudeStr)
+{
+	if (EFieldModel_m == nullptr)
+		EFieldModel_m = std::make_unique<EField>(5); //add the ability to specify number of elements later
+
+	if (name == "QSPS")
+		EFieldModel_m->add(std::make_unique<QSPS>(altMinMaxStr, magnitudeStr));
+	else if (name == "AlfvenLUT")
+	{
+		std::cout << "AlfvenLUT not implemented quite yet.  Returning." << std::endl;
+		return;
+	}
+	else if (name == "AlfvenCompute")
+	{
+		std::cout << "AlfvenCompute not implemented quite yet.  Returning." << std::endl;
+		return;
+	}
 }

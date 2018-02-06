@@ -19,6 +19,9 @@
     <CudaCompile Include="..\src\EField\EField.cu">
       <Filter>Source Files\EField</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\EField\QSPS.cu">
+      <Filter>Source Files\EField</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FileIO\fileIO.cpp">
@@ -92,12 +95,6 @@
     <ClInclude Include="..\include\SimulationClass\PreviousSimulation.h">
       <Filter>Header Files\Simulation</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\BField\AllBModels.h">
-      <Filter>Header Files\BField</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\EField\AllEModels.h">
-      <Filter>Header Files\EField</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\ErrorHandling\SimException.h">
       <Filter>Header Files\ErrorHandling</Filter>
     </ClInclude>
@@ -112,6 +109,15 @@
     </ClInclude>
     <ClInclude Include="..\include\FileIO\fileIOAPI.h">
       <Filter>Header Files\FileIO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\EField\QSPS.h">
+      <Filter>Header Files\EField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\EField\allEModels.h">
+      <Filter>Header Files\EField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\BField\allBModels.h">
+      <Filter>Header Files\BField</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

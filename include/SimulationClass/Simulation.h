@@ -5,8 +5,8 @@
 #include <vector>
 #include <chrono>
 #include <memory> //smart pointers
-#include "BField\AllBModels.h"
-#include "EField\AllEModels.h"
+#include "BField\allBModels.h"
+#include "EField\allEModels.h"
 #include "ParticleClass\Particle.h"
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
@@ -48,7 +48,7 @@ protected:
 	//Classes tracked by Simulation
 	std::vector<std::shared_ptr<Particle>> particleTypes_m; //need shared_ptr because it will be assigned to SatandPart
 	std::unique_ptr<BField> BFieldModel_m;
-	std::vector<std::unique_ptr<EField>> EFieldElements;
+	std::unique_ptr<EField> EFieldModel_m;
 
 	//Satellites and data
 	std::vector<std::unique_ptr<TempSat>> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
@@ -147,7 +147,7 @@ public:
 	virtual void	setBFieldModel(std::string name, std::vector<double> args);
 	virtual void	setBFieldModelOther(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 
-	//virtual void	addEFieldModel(std::string name, std::vector<double> args);
+	void Simulation::addEFieldModel(std::string name, std::vector<double> args, std::string altMinMaxStr, std::string magnitudeStr);
 	//virtual void	addEFieldModelOther(std::unique_ptr<EField> efieldptr);
 
 	//add function that saves simulation constants, data, etc to disk

@@ -1,55 +1,50 @@
 #ifndef SIMULATIONCLASSEXTENSIONS_H
 #define SIMULATIONCLASSEXTENSIONS_H
 
-#include "_simulationvariables.h"
-#include "SimulationClass\Simulation.h"
+#include "EField\EField.h"
 #include "FileIO\fileIO.h"
+#include "physicalconstants.h"
 
-class AlfvenLUT
+class AlfvenLUT : public EElem
 {
 protected:
 	std::string LUTfilename_m;
-	double**  elcFieldLUT_m{ nullptr }; //use instead of a 2D vector so I don't have to rewrite EFieldAtZ and have two copies (GPU and host)
-	double**  elcFieldLUT_d{ nullptr }; //device (GPU) electric field LUT pointer
-	double*   elcFieldLUT1D_d{ nullptr };
+	std::vector<std::vector<double>> EFieldLUT_m;
 
-	double  omegaE_m{ 20 * PI }; //angular frequency, 10 Hz wave, matches ez.out
-	double* omegaE_d{ nullptr };
-	int numOfColsLUT_m{ 3 }; //pass in
-	int numOfEntrLUT_m{ 2951 }; //pass in
+	double*   EFieldLUT1D_d{ nullptr }; //device (GPU) electric field LUT pointer
+	double**  EFieldLUT2D_d{ nullptr };
 
-	virtual void initializeFollowOn();
-	virtual void copyDataToGPUFollowOn();
-	virtual void iterateSimulationFollowOnPreLoop();
-	virtual void iterateSimulationFollowOnInsideLoop();
-	virtual void iterateSimulationFollowOnPostLoop();
-	virtual void copyDataToHostFollowOn();
-	virtual void freeGPUMemoryFollowOn();
+	double  omegaE_m{ 20 * PI }; //angular frequency of wave - make sure this matches the LUT passed in
+	int     numOfColsLUT_m{ 3 };
+	int     numOfEntrLUT_m{ 2951 };
 
 public:
-	AlfvenLUT(std::string LUTfilename) : LUTfilename_m{ LUTfilename }
+	AlfvenLUT(double omegaE, int cols, int entrs, std::string LUTfilename, bool CSV = true, const char delim = ' ') :
+		EField(), omegaE_m{ omegaE }, numOfColsLUT_m{ cols }, numOfEntrLUT_m{ entrs }, LUTfilename_m { LUTfilename }
 	{
-		//Populate E Field LUT
-		setElecMagLUT(LUTfilename_m.c_str(), numOfEntrLUT_m, numOfColsLUT_m);
-	}//end constructor
+		for (int iii = 0; iii < cols; iii++)
+			EFieldLUT_m.push_back(std::vector<double>(entrs));
 
-	~AlfvenLUT() //Destructor
-	{
-		//Delete double arrays
-		delete[] elcFieldLUT_m[0];
-		delete[] elcFieldLUT_m;
-		//logFile_m.writeTimeDiffFromNow(0, "End AlfvenLUT Destructor");
+		if (CSV)
+			fileIO::read2DCSV(EFieldLUT_m, LUTfilename, entrs, cols, delim);
+		else
+		{
+			std::vector<double> tmpSerial(cols * entrs);
+			fileIO::readDblBin(tmpSerial, LUTfilename, cols * entrs);
+			for (int col = 0; col < cols; col++)
+			{
+				for (int entr = 0; entr < entrs; entr++)
+					EFieldLUT_m.at(col).at(entr) = tmpSerial.at(col * entrs + entr);
+			}
+		}
 	}
 
+	~AlfvenLUT() {}
+
+	void setupEnvironment();
+
 	//One liners
-	double*  getPointerToElectricFieldData(int column) { if (elcFieldLUT_m == nullptr)
-		{ logFile_m.writeErrorEntry("AlfvenLUT::getPointerToElectricFieldData", "Array not initialized yet.  Run Simulation::setElecMagLUT.  Returning nullptr.", {std::to_string(column)}); return nullptr; } return elcFieldLUT_m[column]; }
-
-	//Array tools
-	virtual void   setElecMagLUT(const char* filename, int rows, int cols) { elcFieldLUT_m = fileIO::read2DCSV(filename, rows, cols, ' '); }
-
-	virtual double calculateBFieldAtZandTime(double z, double time) { return BFieldatZ(z, time); }
-	virtual double calculateEFieldAtZandTime(double z, double time) { return EFieldatZ(elcFieldLUT_m, z, time, omegaE_m, constE_m, useQSPS_m, useAlfLUT_m); }
+	std::vector<std::vector<double>> getElectricFieldLUT() { return EFieldLUT_m; }
 };
 
 #endif //end header guard

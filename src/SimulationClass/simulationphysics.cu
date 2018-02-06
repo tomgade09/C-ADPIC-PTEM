@@ -17,8 +17,8 @@
 #include "ErrorHandling\cudaErrorCheck.h"
 #include "ErrorHandling\SimFatalException.h"
 
-__device__ double getBFieldAtS(double s, double t);
-__device__ double getGradBAtS(double s, double t);
+//__device__ double getBFieldAtS(double s, double t);
+//__device__ double getGradBAtS (double s, double t);
 //__device__ double getEFieldAtS(double s, double t);
 
 //CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
@@ -28,43 +28,6 @@ constexpr int  NUMRNGSTATES{ 64 * BLOCKSIZE };
 
 //Commonly used values
 extern const int SIMCHARSIZE{ 6 * sizeof(double) };
-
-__device__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]  //args array: [ps_0, mu, q, m, simtime]
-	double F_lor, F_mir, stmp;
-	stmp = args[0] + vs_RK * t_RK; //ps_0 + vs_RK * t_RK
-	
-	//Mirror force
-	F_mir = -args[1] * getGradBAtS(stmp, t_RK + args[4]); //-mu * gradB(pos, runge-kutta time + simtime)
-
-	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-	F_lor = args[2] * 0.0; //q * getEFieldAtS(some arguments, etc)
-
-	return (F_lor + F_mir) / args[3];
-}//returns an acceleration in the parallel direction to the B Field
-
-__device__ double foRungeKuttaCUDA(const double y_0, const double h, const double* funcArg)
-{	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
-	// dy / dt = f(t, y), y(t_0) = y_0
-	// remaining funcArg elements are whatever you need in your callback function passed in
-	// args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
-	double k1, k2, k3, k4; double y{ y_0 }; double t_RK{ 0.0 };
-
-	k1 = accel1dCUDA(y, t_RK, funcArg); //k1 = f(t_n, y_n), units of dy / dt
-	
-	t_RK = h / 2;
-	y = y_0 + k1 * t_RK;
-	k2 = accel1dCUDA(y, t_RK, funcArg); //k2 = f(t_n + h/2, y_n + h/2 k1)
-
-	y = y_0 + k2 * t_RK;
-	k3 = accel1dCUDA(y, t_RK, funcArg); //k3 = f(t_n + h/2, y_n + h/2 k2)
-
-	t_RK = h;
-	y = y_0 + k3 * t_RK;
-	k4 = accel1dCUDA(y, t_RK, funcArg); //k4 = f(t_n + h, y_n + h k3)
-
-	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns delta y, not dy / dt, not total y
-}
 
 __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
 {
@@ -76,9 +39,46 @@ __global__ void setup2DArray(double* array1D, double** array2D, int cols, int en
 {//run once on only one thread
 	if (blockIdx.x * blockDim.x + threadIdx.x != 0)
 		return;
-	
+
 	for (int iii = 0; iii < cols; iii++)
 		array2D[iii] = &array1D[iii * entries];
+}
+
+__device__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args, BField** bfield, EField** efield) //made to pass into 1D Fourth Order Runge Kutta code
+{//args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]  //args array: [ps_0, mu, q, m, simtime]
+	double F_lor, F_mir, stmp;
+	stmp = args[0] + vs_RK * t_RK; //ps_0 + vs_RK * t_RK
+	
+	//Mirror force
+	F_mir = -args[1] * (*bfield)->getGradBAtS(stmp, t_RK + args[4]); //-mu * gradB(pos, runge-kutta time + simtime)
+
+	//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
+	F_lor = args[2] * 0.0; //q * (*efield)->getEFieldAtS(some arguments, etc)
+
+	return (F_lor + F_mir) / args[3];
+}//returns an acceleration in the parallel direction to the B Field
+
+__device__ double foRungeKuttaCUDA(const double y_0, const double h, const double* funcArg, BField** bfield, EField** efield)
+{	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
+	// dy / dt = f(t, y), y(t_0) = y_0
+	// remaining funcArg elements are whatever you need in your callback function passed in
+	// args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
+	double k1, k2, k3, k4; double y{ y_0 }; double t_RK{ 0.0 };
+
+	k1 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k1 = f(t_n, y_n), units of dy / dt
+	
+	t_RK = h / 2;
+	y = y_0 + k1 * t_RK;
+	k2 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k2 = f(t_n + h/2, y_n + h/2 k1)
+
+	y = y_0 + k2 * t_RK;
+	k3 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k3 = f(t_n + h/2, y_n + h/2 k2)
+
+	t_RK = h;
+	y = y_0 + k3 * t_RK;
+	k4 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k4 = f(t_n + h, y_n + h k3)
+
+	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns delta y, not dy / dt, not total y
 }
 
 __device__ void ionosphereGenerator(double& v_part, double& mu_part, double& s_part, double* simConsts, double mass, curandStateMRG32k3a* rndState)
@@ -105,7 +105,7 @@ __device__ void magnetosphereGenerator(double& v_part, double& mu_part, double& 
 	mu_part = v_norm.y;
 }
 
-__global__ void computeKernel(double** currData_d, double** origData_d, double* simConsts, curandStateMRG32k3a* crndStateA,	const double simtime, const double mass, const double charge, const long numParts)
+__global__ void computeKernel(double** currData_d, double** origData_d, double* simConsts, curandStateMRG32k3a* crndStateA, BField** bfield, EField** efield, const double simtime, const double mass, const double charge, const long numParts)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
@@ -128,14 +128,14 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 		v_orig[thdInd] = v_d[thdInd];
 		vperp_orig[thdInd] = mu_d[thdInd];
 		s_orig[thdInd] = s_d[thdInd];
-		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / getBFieldAtS(s_d[thdInd], simtime);
+		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / (*bfield)->getBFieldAtS(s_d[thdInd], simtime);
 	}
 	else if (simtime == 0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
 	{
 		v_orig[thdInd] = v_d[thdInd];
 		vperp_orig[thdInd] = mu_d[thdInd];
 		s_orig[thdInd] = s_d[thdInd];
-		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / getBFieldAtS(s_d[thdInd], simtime);
+		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / (*bfield)->getBFieldAtS(s_d[thdInd], simtime);
 	}
 	else if (s_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
 		return;
@@ -145,7 +145,7 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 	//args array: [ps_0, mu, q, m, simtime]
 	const double args[]{ s_d[thdInd], mu_d[thdInd], charge, mass, simtime };
 
-	v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], simConsts[0], args);
+	v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], simConsts[0], args, bfield, efield);
 	s_d[thdInd] += v_d[thdInd] * simConsts[0];
 
 	//currData_d[0][thdInd] = v_d;
@@ -259,7 +259,8 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 			Particle* tmpPart{ particleTypes_m.at(parts).get() };
 
 			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (tmpPart->getCurrDataGPUPtr(), tmpPart->getOrigDataGPUPtr(), simConstants_d,
-				static_cast<curandStateMRG32k3a*>(curandRNGStates_d),	simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles());
+				static_cast<curandStateMRG32k3a*>(curandRNGStates_d), BFieldModel_m->getPtrGPU(), (EFieldModel_m == nullptr) ? nullptr : EFieldModel_m->getPtrGPU(),
+				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles());
 		}
 
 		CUDA_KERNEL_ERRCHK_WSYNC(); //side effect: cudaDeviceSynchronize() needed for computeKernel to function properly, which this macro provides

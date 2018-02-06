@@ -1,40 +1,76 @@
-#include "SimulationClass\AlfvenLUT.h"
+#include "EField\AlfvenLUT.h"
 
 //CUDA includes
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "cuda_profiler_api.h"
 
-#define CUDA_CALL(x) do { if((x) != cudaSuccess) { printf("Error %d at %s:%d\n",EXIT_FAILURE,__FILE__,__LINE__);}} while(0)
+#include "ErrorHandling\cudaErrorCheck.h"
+
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries);
 
-extern const int SIMCHARSIZE;
+__device__ double   omegaE_AlfvenLUT;
+__device__ double** alfLUT_AlfvenLUT;
 
-__host__ __device__ double alfvenWaveEbyLUT(double** LUT, double z, double simtime, double omegaE)
+__host__ __device__ double EAlfven_AlfvenLUT(const double s, const double simtime)
 {//E Field in the direction of B (radially outward)
-	if (LUT == nullptr)
+	if (alfLUT_AlfvenLUT == nullptr)
 		return 0.0;
-	if (z > RADIUS_EARTH) //in case z is passed in as m, not Re, convert to Re
-		z = z / RADIUS_EARTH;
-	if (z < LUT[0][0] || z > LUT[0][2950])
+	if (s > RADIUS_EARTH) //in case z is passed in as m, not Re, convert to Re
+		s = s / RADIUS_EARTH;
+	if (s < alfLUT_AlfvenLUT[0][0] || s > alfLUT_AlfvenLUT[0][2950])
 		return 0.0;
 
-	double offset{ LUT[0][0] };
-	int stepsFromZeroInd{ static_cast<int>(floor((z - offset) / (LUT[0][1] - LUT[0][0]))) }; //only works for constant bin size - if the binsize changes throughout LUT, need to iterate which will take longer
+	double offset{ alfLUT_AlfvenLUT[0][0] };
+	int stepsFrZero{ static_cast<int>(floor((s - offset) / (alfLUT_AlfvenLUT[0][1] - alfLUT_AlfvenLUT[0][0]))) }; //only works for constant bin size - if the binsize changes throughout LUT, need to iterate which will take longer
 
 	//y = mx + b
-	double linearInterpReal{ ((LUT[1][stepsFromZeroInd + 1] - LUT[1][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
-		(z - LUT[0][stepsFromZeroInd]) + LUT[1][stepsFromZeroInd] };
-	double linearInterpImag{ ((LUT[2][stepsFromZeroInd + 1] - LUT[2][stepsFromZeroInd]) / (LUT[0][stepsFromZeroInd + 1] - LUT[0][stepsFromZeroInd])) *
-		(z - LUT[0][stepsFromZeroInd]) + LUT[2][stepsFromZeroInd] };
+	double linearInterpReal{ ((alfLUT_AlfvenLUT[1][stepsFrZero + 1] - alfLUT_AlfvenLUT[1][stepsFrZero]) / (alfLUT_AlfvenLUT[0][stepsFrZero + 1] - alfLUT_AlfvenLUT[0][stepsFrZero])) *
+		(s - alfLUT_AlfvenLUT[0][stepsFrZero]) + alfLUT_AlfvenLUT[1][stepsFrZero] };
+	double linearInterpImag{ ((alfLUT_AlfvenLUT[2][stepsFrZero + 1] - alfLUT_AlfvenLUT[2][stepsFrZero]) / (alfLUT_AlfvenLUT[0][stepsFrZero + 1] - alfLUT_AlfvenLUT[0][stepsFrZero])) *
+		(s - alfLUT_AlfvenLUT[0][stepsFrZero]) + alfLUT_AlfvenLUT[2][stepsFrZero] };
 
 	//E-par = (column 2)*cos(omega*t) + (column 3)*sin(omega*t), omega - angular frequency of wave
-	return (linearInterpReal * cos(omegaE * simtime) + linearInterpImag * sin(omegaE * simtime)) / 1000; //LUT E is in mV / m
+	return (linearInterpReal * cos(omegaE_AlfvenLUT * simtime) + linearInterpImag * sin(omegaE_AlfvenLUT * simtime)) / 1000.0; //LUT E is in mV / m
 }
 
-void AlfvenLUT::initializeFollowOn()
+__global__ void setupEnvironmentGPU_AlfvenLUT(double** LUT, int ind)
 {
-	useAlfLUT_m = true;
+	if (ind >= MAXEFIELDELEMS)
+	{
+		fprintf(stderr, "CUDA: __global__ void assignElemToIndex: cannot assign pointer to index specified");
+		return;
+	}
+
+	EFieldFcnPtrs_EField[ind] = EAlfven_AlfvenLUT;
+}
+
+
+
+void AlfvenLUT::setupEnvironment()
+{
+	names_m.push_back("AlfvenLUT");
+
+	int num{ 0 };
+	cudaMemcpyFromSymbol(&num, numEFldElems_EField, sizeof(int));
+
+	if (num >= MAXEFIELDELEMS)
+		throw SimException("addEFieldElem: too many field elements, cannot add more", __FILE__, __LINE__);
+
+	setupEnvironmentGPU_AlfvenLUT <<< 1, 1 >>> (EFieldLUT2D_d, num);
+
+	num++;
+	cudaMemcpyToSymbol(numEFldElems_EField, &num, sizeof(int));
+	cudaMemcpyToSymbol(omegaE_AlfvenLUT, &omegaE_m, sizeof(double));
+	cudaMemcpyToSymbol(alfLUT_AlfvenLUT, )
+}
+
+//GPU kernel setup - 2D array, etc
+//Host call GPU kernel setup
+//getEFieldAtS(), device, host
+
+/*void AlfvenLUT::initializeFollowOn()
+{
 	CUDA_CALL(cudaMalloc((void **)&elcFieldLUT1D_d, numOfColsLUT_m * numOfEntrLUT_m * sizeof(double)));
 	CUDA_CALL(cudaMalloc((void **)&elcFieldLUT_d,   numOfColsLUT_m * sizeof(double*)));
 	CUDA_CALL(cudaMalloc((void **)&omegaE_d, sizeof(double)));
@@ -71,4 +107,4 @@ void AlfvenLUT::copyDataToHostFollowOn()
 void AlfvenLUT::freeGPUMemoryFollowOn()
 {
 	return;
-}
+}*/

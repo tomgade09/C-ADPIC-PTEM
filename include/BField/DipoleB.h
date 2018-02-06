@@ -6,11 +6,6 @@
 #include "BField\BField.h"
 #include "physicalconstants.h"
 
-__host__ __device__ double getSAtLambda_DipoleB(const double* consts, const int arrayLength, const double s);
-__host__ __device__ double getLambdaAtS_DipoleB(const double* consts, const int arrayLength, const double s);
-__device__ double BFieldAtS_DipoleB(const double s, const double simtime);
-__device__ double gradBAtS_DipoleB(const double s, const double simtime);
-
 constexpr double B0{ 3.12e-5 }; //won't change from sim to sim
 
 class DipoleB : public BField
@@ -27,26 +22,35 @@ protected:
 	double errorTolerance_m{ 0.0 };
 
 	//protected functions
-	virtual void setupEnvironment();
+	__host__ virtual    void   setupEnvironment();
+	__host__ virtual    void   deleteEnvironment();
+	__host__ __device__ double getSAtLambda(const double lambdaDegrees);
+	__host__ __device__ double getLambdaAtS(const double s);
 
 public:
-	DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double normFactor = RADIUS_EARTH, double ds = RADIUS_EARTH / 1000) :
+	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double normFactor = RADIUS_EARTH, double ds = RADIUS_EARTH / 1000) :
 		BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
 	{
-		modelName_m = "DipoleB";
 		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * PI / 180.0), 2);
 		L_norm_m = L_m / RADIUS_EARTH;
-		
-		fieldConstArray_m = { ILATDegrees_m, L_m, L_norm_m, 0.0, ds_m, errorTolerance_m };
-		s_max_m = getSAtLambda_DipoleB(fieldConstArray_m.data(), static_cast<int>(fieldConstArray_m.size()), ILATDegrees_m);
-		fieldConstArray_m.at(3) = s_max_m;
+		s_max_m = getSAtLambda(ILATDegrees_m);
 
-		setupEnvironment();
+	#ifndef __CUDA_ARCH__
+		modelName_m = "DipoleB";
+		setupEnvironment(); //executed on host only
+	#endif /* !__CUDA_ARCH__ */
 	}
-	~DipoleB() {}
 
-	virtual double getBFieldAtS(double s, double t);
-	virtual double getGradBAtS(double s, double t);
+	__host__ __device__ virtual ~DipoleB()
+	{
+	#ifndef __CUDA_ARCH__
+		deleteEnvironment();
+		CUDA_API_ERRCHK(cudaFree(this_d));
+	#endif /* !__CUDA_ARCH__ */
+	}
+
+	__host__ __device__ virtual double getBFieldAtS(const double s, const double t);
+	__host__ __device__ virtual double getGradBAtS (const double s, const double t);
 
 	//do you need access functions here?  Return the various constants?  Prob not
 };

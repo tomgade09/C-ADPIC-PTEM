@@ -18,6 +18,17 @@ std::vector<std::string> constCharToStrVec(const char* str, const char delim)
 	return charVec;
 }
 
+std::vector<double> constCharToDblVec(const char* str, const char delim)
+{
+	std::vector<std::string> strVec{ constCharToStrVec(str, delim) };
+	std::vector<double> ret;
+
+	for (int str = 0; str < strVec.size(); str++)
+		ret.push_back(atof(strVec.at(str).c_str()));
+
+	return ret;
+}
+
 void stringPadder(std::string& in, int totalStrLen, int indEraseFrom)
 {
 	if (totalStrLen <= 0 || indEraseFrom <= 0)
