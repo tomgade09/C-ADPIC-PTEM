@@ -14,6 +14,7 @@
 #define CUDA_API_ERRCHK( err ) __cudaSafeCall( err, __FILE__, __LINE__ )
 #define CUDA_KERNEL_ERRCHK() __cudaCheckError( __FILE__, __LINE__ )
 #define CUDA_KERNEL_ERRCHK_WSYNC() __cudaCheckError( __FILE__, __LINE__, true )
+#define CUDA_KERNEL_ERRCHK_WSYNC_WABORT() __cudaCheckError( __FILE__, __LINE__, true, true )
 
 inline void __cudaSafeCall(cudaError err, const char* file, const int line)
 {
@@ -23,13 +24,17 @@ inline void __cudaSafeCall(cudaError err, const char* file, const int line)
 	return;
 }
 
-inline void __cudaCheckError(const char* file, const int line, bool sync=false)
+inline void __cudaCheckError(const char* file, const int line, bool sync=false, bool abort=false)
 {
 	if (sync)
 	{
 		cudaError err = cudaDeviceSynchronize();
 		if (cudaSuccess != err)
+		{
 			std::cout << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
+			if (abort)
+				exit(1);
+		}
 	}
 	else
 	{

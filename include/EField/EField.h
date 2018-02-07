@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <sstream>
 
 //CUDA includes
 #include "cuda_runtime.h"
@@ -84,6 +85,13 @@ public:
 	
 	__host__ __device__ double getEFieldAtS(const double s, const double t);
 	__host__ EField** getPtrGPU() { return this_d; }
+	
+	__host__ std::string getEElemsStr()
+	#ifndef __CUDA_ARCH__ //host code
+	{ std::stringstream out; for (int elem = 0; elem < Eelems_m.size(); elem++) { out << Eelems_m.at(elem)->getName() << ", "; }; return out.str(); }
+	#else  //device code
+	;
+	#endif /* !__CUDA_ARCH__ */
 };
 
 #endif /* EFIELD_H */

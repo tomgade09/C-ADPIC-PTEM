@@ -1,5 +1,4 @@
 TO-DO:
-- Offload folder creation, changing folder to C++
 - RNG generates total energy and pitch angle
 - Bin particles
 - CDF file output
@@ -25,7 +24,7 @@ IS DONE?? - Python, maybe set num particles based on bin size
 - Cross platform compiling
 IN PROGRESS - XLSX writing with xlnt library?
 IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
-
+NOT PLATFORM AGNOSTIC, HOLD OFF - Offload folder creation, changing folder to C++
 
 STUFF THAT IS DONE:
 DONE - Top at 4 Re

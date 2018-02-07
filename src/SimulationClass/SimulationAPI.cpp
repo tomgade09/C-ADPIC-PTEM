@@ -38,11 +38,11 @@ DLLEXPORT double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, 
 
 
 //Field tools
-DLLEXPORT double calculateBFieldAtZandTimeAPI(Simulation* simulation, double z, double time) {
-	return simulation->calculateBFieldAtZandTime(z, time); }
+DLLEXPORT double getBFieldAtSAPI(Simulation* simulation, double s, double time) {
+	return simulation->getBFieldAtS(s, time); }
 
-DLLEXPORT double calculateEFieldAtZandTimeAPI(Simulation* simulation, double z, double time) {
-	return simulation->calculateEFieldAtZandTime(z, time); }
+DLLEXPORT double getEFieldAtSAPI(Simulation* simulation, double s, double time) {
+	return simulation->getEFieldAtS(s, time); }
 
 
 //Mu<->VPerp Functions - Should I be exposing this functionality??  Maybe
@@ -109,7 +109,7 @@ DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int print
 	double simMax{ sim->getSimMax() };
 
 	sim->setBFieldModel("DipoleB", { 72.0 });
-	sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,9556500.0", "0.02");
+	sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
 	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
 	sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
@@ -134,14 +134,14 @@ DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
 	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, { arg1 })); }
 
-//#undef DLLFILE //uncomment for making an exe file for profiling
+#undef DLLFILE //uncomment for making an exe file for profiling
 #ifndef DLLFILE
 int main()
 {
 	SIM_API_EXCEP_CHECK( \
-	Simulation* sim{ createSimulationAPI(0.01, 2030837.49610366, 19881647.2473464, 2.5, 1000.0, "./../") };
+	Simulation* sim{ createSimulationAPI(0.01, 2030837.49610366, 19881647.2473464, 2.5, 1000.0, "./out/") };
 
-	runNormalSimulationAPI(sim, 250, 50, "./../_in/data");
+	runNormalSimulationAPI(sim, 250, 50, ""); // "./../_in/data/");
 
 	terminateSimulationAPI(sim);
 	); /* SIM_API_EXCEP_CHECK() */

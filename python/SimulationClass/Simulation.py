@@ -52,10 +52,10 @@ class Simulation:
         self.simDLL_m.convertParticleMuToVPerpAPI.restype = None
 
         #Field tools
-        self.simDLL_m.calculateBFieldAtZandTimeAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-        self.simDLL_m.calculateBFieldAtZandTimeAPI.restype = ctypes.c_double
-        self.simDLL_m.calculateEFieldAtZandTimeAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-        self.simDLL_m.calculateEFieldAtZandTimeAPI.restype = ctypes.c_double
+        self.simDLL_m.getBFieldAtSAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
+        self.simDLL_m.getBFieldAtSAPI.restype = ctypes.c_double
+        self.simDLL_m.getEFieldAtSAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
+        self.simDLL_m.getEFieldAtSAPI.restype = ctypes.c_double
 
         #Simulation management
         self.simDLL_m.createSimulationAPI.argtypes = (ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_char_p)
@@ -219,19 +219,19 @@ class Simulation:
 
 
     #Field tools
-    def BFieldatZandT(self, z, time):
-        return self.simDLL_m.calculateBFieldAtZandTimeAPI(self.simulationptr, z, time)
+    def getBFieldatS(self, s, time):
+        return self.simDLL_m.getBFieldAtSAPI(self.simulationptr, s, time)
 
-    def EFieldatZandT(self, z, time):
-        return self.simDLL_m.calculateEFieldAtZandTimeAPI(self.simulationptr, z, time)
+    def getEFieldatS(self, s, time):
+        return self.simDLL_m.getEFieldAtSAPI(self.simulationptr, s, time)
 
     def fieldsAtAllZ(self, time, bins, binsize, z0):
         B_z = []
         E_z = []
         B_E_z_dim = []
         for iii in range(bins):
-            B_z.append(self.BFieldatZandT(z0 + binsize * iii, time))
-            E_z.append(self.EFieldatZandT(z0 + binsize * iii, time))
+            B_z.append(self.getBFieldatS(z0 + binsize * iii, time))
+            E_z.append(self.getEFieldatS(z0 + binsize * iii, time))
             B_E_z_dim.append(z0 + binsize * iii)
         return [B_z, E_z, B_E_z_dim]
 

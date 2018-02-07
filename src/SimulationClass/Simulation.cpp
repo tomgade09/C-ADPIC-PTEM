@@ -5,7 +5,7 @@
 
 void Simulation::writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave)
 {
-	try { fileIO::writeDblBin(chars, folderFromSave + className + ".bin", chars.size()); }
+	try { fileIO::writeDblBin(chars, saveRootDir_m + folderFromSave + className + ".bin", chars.size()); }
 	catch(std::exception& exp) { std::cout << "Exception!! " << exp.what() << std::endl; }
 	catch (...) { std::cout << "Unhandled exception" << std::endl; throw; }
 
@@ -17,7 +17,7 @@ void Simulation::writeCharsToFiles(std::vector<double> chars, std::vector<std::s
 			charNamesStr += ",";
 	}
 	
-	try { fileIO::writeTxtFile(charNamesStr, folderFromSave + className + ".txt"); }
+	try { fileIO::writeTxtFile(charNamesStr, saveRootDir_m + folderFromSave + className + ".txt"); }
 	catch (std::exception& exp) { std::cout << "Exception!! " << exp.what() << std::endl; }
 	catch (...) { std::cout << "Unhandled exception" << std::endl; throw; }
 }
@@ -44,7 +44,7 @@ void Simulation::receiveSatelliteData(bool removeZeros)
 	);
 
 	LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes() + 2,\
-		std::string name{ "./bins/satellites/" };
+		std::string name{ saveRootDir_m + "/bins/satellites/" };
 		name += satellites_m.at(iii)->satellite->getName() + "_";
 		if (jjj == satellites_m.at(iii)->satellite->getNumberOfAttributes())
 			name += "time";
@@ -148,7 +148,7 @@ void Simulation::convertMuToVPerp(int partInd)
 
 void Simulation::writeSatelliteDataToCSV() //think I'm going to export this to python eventually...
 {//need to make this more generic
-	std::vector<std::string> filename{ "./elecoutput.csv", "./ionsoutput.csv" };
+	std::vector<std::string> filename{ saveRootDir_m + "/elecoutput.csv", saveRootDir_m + "/ionsoutput.csv" };
 
 	if (satelliteData_m.size() == 0)
 		throw std::runtime_error ("writeSatelliteDataToCSV: satelliteData size is 0 - this probably means Simulation::receiveSatelliteData hasn't been called yet");

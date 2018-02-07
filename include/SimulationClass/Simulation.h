@@ -36,7 +36,7 @@ class Simulation
 {
 protected:
 	//Simulation Characteristics
-	std::string  rootdir_m;
+	std::string  saveRootDir_m;
 	double       simTime_m{ 0.0 };
 	const double dt_m;
 	const double simMin_m;
@@ -49,6 +49,8 @@ protected:
 	std::vector<std::shared_ptr<Particle>> particleTypes_m; //need shared_ptr because it will be assigned to SatandPart
 	std::unique_ptr<BField> BFieldModel_m;
 	std::unique_ptr<EField> EFieldModel_m;
+	BField** BFieldModel_d{ nullptr };
+	EField** EFieldModel_d{ nullptr };
 
 	//Satellites and data
 	std::vector<std::unique_ptr<TempSat>> tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
@@ -72,16 +74,16 @@ protected:
 	//Protected functions
 	virtual void receiveSatelliteData(bool removeZeros);
 	virtual void createSatellite(int partInd, double altitude, bool upwardFacing, std::string name);
-	virtual void writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave="./_chars/");
+	virtual void writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave="/_chars/");
 
 	std::streambuf* cerrBufBak{ std::cerr.rdbuf() };
-	std::ofstream   cerrLogOut{ "errors.log" };
+	std::ofstream   cerrLogOut{ saveRootDir_m + "errors.log" };
 
 public:
-	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir, std::string logName="simulation.log"):
-		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
+	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string saveRootDir, std::string logName="simulation.log"):
+		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, saveRootDir_m { saveRootDir }
 	{
-		logFile_m = std::make_unique<LogFile>(logName, 20);
+		logFile_m = std::make_unique<LogFile>(saveRootDir_m + logName, 20);
 		std::cerr.rdbuf(cerrLogOut.rdbuf()); //set cerr output to "errors.log"
 
 		writeCharsToFiles( {dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m}, {"dt", "simMin", "simMax", "T_ion", "T_mag", "v_mean"}, "Simulation");
@@ -114,8 +116,8 @@ public:
 
 	///Forward decs for cpp file, or pure virtuals
 	//Field tools
-	virtual double calculateBFieldAtZandTime(double s, double time) { return BFieldModel_m->getBFieldAtS(s, time); }
-	virtual double calculateEFieldAtZandTime(double s, double time) { return 0.0; }//EFieldatZ(nullptr, s, time, 0.0, constE_m, useQSPS_m, false); }
+	virtual double getBFieldAtS(double s, double time) { return BFieldModel_m->getBFieldAtS(s, time); }
+	virtual double getEFieldAtS(double s, double time) { if (EFieldModel_m == nullptr) { return 0.0; } return EFieldModel_m->getEFieldAtS(s, time); }
 	
 	//Array tools
 	/* Are API functions needed for these?  Prob not... */
