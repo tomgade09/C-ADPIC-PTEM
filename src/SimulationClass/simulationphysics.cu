@@ -17,10 +17,6 @@
 #include "ErrorHandling\cudaErrorCheck.h"
 #include "ErrorHandling\SimFatalException.h"
 
-//__device__ double getBFieldAtS(double s, double t);
-//__device__ double getGradBAtS (double s, double t);
-//__device__ double getEFieldAtS(double s, double t);
-
 //CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
 // For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime
 constexpr int  BLOCKSIZE{ 256 }; //Number of threads per block - this is most efficient at a multiple of 128 (256 seems to work well), although 250 has been used with slightly less performance
@@ -157,6 +153,10 @@ void Simulation::initializeSimulation()
 	logFile_m->createTimeStruct("Start Sim Init"); //index 1
 	logFile_m->writeTimeDiff(0, 1);
 
+	size_t free, total;
+	CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
+	std::cout << "Pre-Initialize cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
+
 	//
 	//Check for user error
 	if (BFieldModel_m == nullptr)
@@ -207,6 +207,10 @@ void Simulation::copyDataToGPU()
 {//copies particle distribution and associated data to GPU in preparation of iterative calculations over the data
 	logFile_m->writeLogFileEntry("Simulation::copyDataToGPU: Start copy to GPU");
 
+	size_t free, total;
+	CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
+	std::cout << "Pre-Copy       cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
+
 	//
 	//Check for user error
 	if (!initialized_m)
@@ -236,6 +240,10 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 3
 	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
 	
+	size_t free, total;
+	CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
+	std::cout << "Pre-Iterate    cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
+
 	//
 	//Check for user error
 	if (!initialized_m)
@@ -259,7 +267,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 			Particle* tmpPart{ particleTypes_m.at(parts).get() };
 
 			computeKernel <<< tmpPart->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (tmpPart->getCurrDataGPUPtr(), tmpPart->getOrigDataGPUPtr(), simConstants_d,
-				static_cast<curandStateMRG32k3a*>(curandRNGStates_d), BFieldModel_m->getPtrGPU(), (EFieldModel_m == nullptr) ? nullptr : EFieldModel_m->getPtrGPU(),
+				static_cast<curandStateMRG32k3a*>(curandRNGStates_d), BFieldModel_m->getPtrGPU(), nullptr,
 				simTime_m, tmpPart->getMass(), tmpPart->getCharge(), tmpPart->getNumberOfParticles());
 		}
 
@@ -302,6 +310,10 @@ void Simulation::copyDataToHost()
 {//copies data back to host from GPU
 	logFile_m->writeLogFileEntry("Simulation::copyDataToHost: Copy simulation data from GPU back to host");
 	
+	size_t free, total;
+	CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
+	std::cout << "Pre-Copy       cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
+
 	//
 	//Check for user error
 	if (!initialized_m)
@@ -319,6 +331,10 @@ void Simulation::freeGPUMemory()
 {//used to free the memory on the GPU that's no longer needed
 	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
 
+	size_t free, total;
+	CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
+	std::cout << "Pre-Free       cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
+
 	//
 	//Check for user error
 	if (!initialized_m)
@@ -327,7 +343,13 @@ void Simulation::freeGPUMemory()
 	//
 
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->freeGPUMemory());
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->freeGPUMemory()); //need to return and process data before this...
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->freeGPUMemory());
+
+	CUDA_API_ERRCHK(cudaFree(simConstants_d));
+	CUDA_API_ERRCHK(cudaFree(static_cast<curandStateMRG32k3a*>(curandRNGStates_d)));
+
+	CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
+	std::cout << "Post-Free      cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
 
 	freedGPUMem_m = true;
 	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");

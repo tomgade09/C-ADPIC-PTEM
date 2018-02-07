@@ -18,7 +18,7 @@
 inline void __cudaSafeCall(cudaError err, const char* file, const int line)
 {
 	if (cudaSuccess != err)
-		std::cerr << "API error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
+		std::cout << file << ":" << line << " : " << "CUDA API error: " << cudaGetErrorString(err) << std::endl;
 
 	return;
 }
@@ -29,13 +29,13 @@ inline void __cudaCheckError(const char* file, const int line, bool sync=false)
 	{
 		cudaError err = cudaDeviceSynchronize();
 		if (cudaSuccess != err)
-			std::cerr << "Kernel error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
+			std::cout << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
 	}
 	else
 	{
 		cudaError err = cudaGetLastError();
 		if (cudaSuccess != err)
-			std::cerr << "Kernel error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
+			std::cout << "Kernel error: " << file << ":" << line << " : " << cudaGetErrorString(err) << std::endl;
 	}
 
 	return;

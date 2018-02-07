@@ -82,4 +82,6 @@ void DipoleB::deleteEnvironment()
 {
 	deleteEnvironmentGPU_DipoleB <<< 1, 1 >>> (this_d);
 	CUDA_KERNEL_ERRCHK_WSYNC();
+
+	CUDA_API_ERRCHK(cudaFree(this_d));
 }

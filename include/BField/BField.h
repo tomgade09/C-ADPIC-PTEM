@@ -12,9 +12,10 @@ class BField
 {
 protected:
 	BField** this_d{ nullptr };
-	#ifndef __CUDA_ARCH__
+	
+	#ifndef __CUDA_ARCH__ //host code
 	std::string modelName_m;
-	#else
+	#else //device code
 	const char* modelName_m;
 	#endif /* !__CUDA_ARCH__ */
 
@@ -32,3 +33,11 @@ public:
 };
 
 #endif
+
+/*
+#ifndef __CUDA_ARCH__
+std::cerr << "BField destructor" << std::endl;
+#else
+printf("BField GPU destructor\n");
+#endif
+*/

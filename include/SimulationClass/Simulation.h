@@ -74,23 +74,22 @@ protected:
 	virtual void createSatellite(int partInd, double altitude, bool upwardFacing, std::string name);
 	virtual void writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave="./_chars/");
 
-	std::streambuf* cerrStrBuf{ std::cerr.rdbuf() };
-	std::ofstream   errLogOut{ "errors.log" };
+	std::streambuf* cerrBufBak{ std::cerr.rdbuf() };
+	std::ofstream   cerrLogOut{ "errors.log" };
 
 public:
 	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string rootdir, std::string logName="simulation.log"):
 		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, rootdir_m { rootdir }
 	{
 		logFile_m = std::make_unique<LogFile>(logName, 20);
-
-		std::cerr.rdbuf(errLogOut.rdbuf());
+		std::cerr.rdbuf(cerrLogOut.rdbuf()); //set cerr output to "errors.log"
 
 		writeCharsToFiles( {dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m}, {"dt", "simMin", "simMax", "T_ion", "T_mag", "v_mean"}, "Simulation");
 	}
 
 	virtual ~Simulation()
 	{
-		std::cerr.rdbuf(cerrStrBuf);
+		std::cerr.rdbuf(cerrBufBak); //restore cerr to normal
 
 		if (initialized_m && !freedGPUMem_m) { freeGPUMemory(); }
 

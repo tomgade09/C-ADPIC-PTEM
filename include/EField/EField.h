@@ -15,10 +15,11 @@
 class EElem //inherit from this class
 {
 protected:
-	EElem** this_d{ nullptr }; //not really used on host
-	#ifndef __CUDA_ARCH__
+	EElem** this_d{ nullptr }; //not really used on device
+	
+	#ifndef __CUDA_ARCH__ //host code
 	std::string modelName_m;
-	#else
+	#else //device code
 	const char* modelName_m;
 	#endif /* !__CUDA_ARCH__ */
 
@@ -38,15 +39,17 @@ class EField //not meant to be inherited from
 {
 private:
 	EField** this_d{ nullptr };
-	#ifndef __CUDA_ARCH__
+	
+	#ifndef __CUDA_ARCH__ //host code
 	std::vector<EElem**> Eelems_d;
 	std::vector<std::unique_ptr<EElem>> Eelems_m;
 	std::vector<std::string> modelNames_m;
-	#else
+	#else //device code
 	EElem*** Eelems_m; //array of E Field elements
 	#endif /* !__CUDA_ARCH__ */
-	int elemsSize_m{ 0 }; //need these on device and it's seriously a pain to enclose everything in #ifndef's
-	int numElems_m{ 0 };  //so these will be on both host and device
+
+	int capacity_m{ 0 }; //need these on device and it's seriously a pain to enclose everything in #ifndef's
+	int size_m{ 0 };  //so these will be on both host and device
 	
 	void setupEnvironment();
 	void deleteEnvironment();
@@ -54,32 +57,28 @@ private:
 public:
 	__host__ __device__ EField(int reserveNumElems)
 	{
-	#ifndef __CUDA_ARCH__
+		#ifndef __CUDA_ARCH__ //host code
+		capacity_m = reserveNumElems;
+		Eelems_m.reserve(capacity_m);
 		setupEnvironment();
-		elemsSize_m = reserveNumElems;
-		Eelems_m.reserve(elemsSize_m);
-	#else  //device code
+		#else  //device code
 		Eelems_m = new EElem**[reserveNumElems];
-		elemsSize_m = reserveNumElems;
-	#endif /* !__CUDA_ARCH__ */
+		capacity_m = reserveNumElems;
+		#endif /* !__CUDA_ARCH__ */
 	}
 	
 	__host__ __device__ ~EField()
 	{
-	#ifndef __CUDA_ARCH__
+		#ifndef __CUDA_ARCH__ //host code
 		deleteEnvironment();
-		CUDA_API_ERRCHK(cudaFree(this_d));
-	#else  //device code
-		for (int elem = 0; elem < numElems_m; elem++)
-			delete (*Eelems_m[elem]);
-
+		#else  //device code
 		delete[] Eelems_m;
-	#endif /* !__CUDA_ARCH__ */
+		#endif /* !__CUDA_ARCH__ */
 	}
 
-	#ifndef __CUDA_ARCH__
+	#ifndef __CUDA_ARCH__ //host code
 	__host__            void   add(std::unique_ptr<EElem> elem);
-	#else	
+	#else //device code
 	__device__          void   add(EElem** elem);
 	#endif /* !__CUDA_ARCH__ */
 	

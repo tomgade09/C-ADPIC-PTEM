@@ -35,18 +35,17 @@ public:
 		L_norm_m = L_m / RADIUS_EARTH;
 		s_max_m = getSAtLambda(ILATDegrees_m);
 
-	#ifndef __CUDA_ARCH__
+		#ifndef __CUDA_ARCH__ //host code
 		modelName_m = "DipoleB";
-		setupEnvironment(); //executed on host only
-	#endif /* !__CUDA_ARCH__ */
+		setupEnvironment();
+		#endif /* !__CUDA_ARCH__ */
 	}
 
 	__host__ __device__ virtual ~DipoleB()
 	{
-	#ifndef __CUDA_ARCH__
+		#ifndef __CUDA_ARCH__ //host code
 		deleteEnvironment();
-		CUDA_API_ERRCHK(cudaFree(this_d));
-	#endif /* !__CUDA_ARCH__ */
+		#endif /* !__CUDA_ARCH__ */
 	}
 
 	__host__ __device__ virtual double getBFieldAtS(const double s, const double t);
