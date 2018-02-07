@@ -27,7 +27,8 @@ extern const int SIMCHARSIZE{ 6 * sizeof(double) };
 
 __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
 {
-	long long id = blockIdx.x * blockDim.x + threadIdx.x;
+	int id = blockIdx.x * blockDim.x + threadIdx.x;
+	if (id > 16380) { printf("Index too high: %i, %i\n", id, sizeof(state[id - 1000])); }
 	curand_init(seed, id, 0, &state[id]);
 }
 
@@ -35,6 +36,9 @@ __global__ void setup2DArray(double* array1D, double** array2D, int cols, int en
 {//run once on only one thread
 	if (blockIdx.x * blockDim.x + threadIdx.x != 0)
 		return;
+
+	for (int iii = 0; iii < cols; iii++)
+		array2D[iii] = &array1D[iii * entries];
 }
 
 __device__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args, BField** bfield, EField** efield) //made to pass into 1D Fourth Order Runge Kutta code
@@ -102,13 +106,6 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
-	/*if (simtime == 0.0 && thdInd == 0)
-	{
-		printf("On GPU pointers: %p, %p\n", bfield, efield);
-		printf("BField: %.6e\n", (*bfield)->getBFieldAtS(6.0e6, 0.0));
-		printf("EField: %.6e\n", (*efield)->getEFieldAtS(6.0e6, 0.0));
-	}*/
-
 	//double v_d = currData_d[0][thdInd]; //not sure why, but switching to kernel-local variables causes a bunch of "unspecified launch failure" errors
 	//double mu_d = currData_d[1][thdInd];
 	//double s_d = currData_d[2][thdInd];
@@ -175,7 +172,6 @@ void Simulation::initializeSimulation()
 
 	BFieldModel_d = BFieldModel_m->getPtrGPU(); //set pointers that will be passed into CUDA computeKernel
 	EFieldModel_d = (EFieldModel_m == nullptr) ? (nullptr) : (EFieldModel_m->getPtrGPU());
-	//std::cout << BFieldModel_d << "  " << EFieldModel_d << std::endl;
 
 	//Allocate memory on GPU for elec/ions variables
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->initializeGPU());
@@ -187,11 +183,8 @@ void Simulation::initializeSimulation()
 	else
 		std::cerr << "Simulation::initializeSimulation: warning: no satellites created" << std::endl;
 
-	//Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean
-	CUDA_API_ERRCHK(cudaMalloc((void **)&simConstants_d, SIMCHARSIZE));
-
-	//Array of random number generator states
-	CUDA_API_ERRCHK(cudaMalloc((void **)&curandRNGStates_d, NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //sizeof(curandStateMRG32k3a) is 72 bytes
+	CUDA_API_ERRCHK(cudaMalloc((void **)&simConstants_d, SIMCHARSIZE)); //Array of sim characteristics - dt, sim min, sim max, t ion, t mag, v mean
+	CUDA_API_ERRCHK(cudaMalloc((void **)&curandRNGStates_d, NUMRNGSTATES * sizeof(curandStateMRG32k3a))); //Array of random number generator states - sizeof(curandStateMRG32k3a) is 72 bytes
 
 	initialized_m = true;
 	logFile_m->createTimeStruct("End Sim Init");
@@ -230,8 +223,9 @@ void Simulation::copyDataToGPU()
 	
 	//Prepare curand states for random number generation
 	long long seed = time(NULL);
+	std::cout << "seed: " << seed << ", num RNG states: " << NUMRNGSTATES << std::endl;
 	initCurand <<< NUMRNGSTATES / 256, 256 >>> (static_cast<curandStateMRG32k3a*>(curandRNGStates_d), seed);
-	CUDA_KERNEL_ERRCHK_WSYNC();
+	CUDA_KERNEL_ERRCHK();
 
 	copied_m = true;
 	

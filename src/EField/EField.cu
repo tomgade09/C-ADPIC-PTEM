@@ -32,7 +32,7 @@ __global__ void addGPU_EField(EField** efield, EElem** eelem);
 
 __host__ void EField::add(std::unique_ptr<EElem> eelem)
 {
-	addGPU_EField << < 1, 1 >> > (this_d, eelem->getPtrGPU());
+	addGPU_EField <<< 1, 1 >>> (this_d, eelem->getPtrGPU());
 	CUDA_KERNEL_ERRCHK_WSYNC();
 	Eelems_m.push_back(std::move(eelem));
 }

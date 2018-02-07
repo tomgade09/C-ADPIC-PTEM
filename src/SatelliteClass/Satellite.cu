@@ -48,7 +48,7 @@ void Satellite::initializeSatelliteOnGPU()
 	CUDA_API_ERRCHK(cudaMemset(satCaptureGPU_m, 0, sizeof(double) * (numberOfAttributes_m + 2) * numberOfParticles_m)); //sets values to 0
 	CUDA_API_ERRCHK(cudaMalloc((void **)&dblppGPU_m.at(1), sizeof(double*) * (numberOfAttributes_m + 2)));
 
-	setup2DArray <<< 1, 1 >>> (satCaptureGPU_m, dblppGPU_m.at(1), numberOfAttributes_m + 2, numberOfParticles_m, true);
+	setup2DArray <<< 1, 1 >>> (satCaptureGPU_m, dblppGPU_m.at(1), numberOfAttributes_m + 2, numberOfParticles_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 }
 
