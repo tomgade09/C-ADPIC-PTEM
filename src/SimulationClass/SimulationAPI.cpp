@@ -109,10 +109,10 @@ DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int print
 	double simMax{ sim->getSimMax() };
 
 	sim->setBFieldModel("DipoleB", { 72.0 });
-	sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
+	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
 	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
-	sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
+	//sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
 
 	sim->createTempSat(0, simMin * 0.999, true,  "btmElec");
 	sim->createTempSat(1, simMin * 0.999, true,  "btmIons");

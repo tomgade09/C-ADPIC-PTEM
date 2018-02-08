@@ -22,6 +22,9 @@
     <CudaCompile Include="..\src\EField\QSPS.cu">
       <Filter>Source Files\EField</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\BField\DipoleBLUT.cu">
+      <Filter>Source Files\BField</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FileIO\fileIO.cpp">
@@ -117,6 +120,9 @@
       <Filter>Header Files\EField</Filter>
     </ClInclude>
     <ClInclude Include="..\include\BField\allBModels.h">
+      <Filter>Header Files\BField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\BField\DipoleBLUT.h">
       <Filter>Header Files\BField</Filter>
     </ClInclude>
   </ItemGroup>

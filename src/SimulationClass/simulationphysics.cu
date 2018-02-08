@@ -272,7 +272,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		
 		cudaloopind++;
 		incTime();
-
+		itersBtwCouts = 10;
 		if (cudaloopind % itersBtwCouts == 0)
 		{
 			std::stringstream out;

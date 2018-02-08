@@ -28,7 +28,7 @@ protected:
 	__host__ __device__ double getLambdaAtS(const double s);
 
 public:
-	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double normFactor = RADIUS_EARTH, double ds = RADIUS_EARTH / 1000) :
+	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double ds = RADIUS_EARTH / 1000) :
 		BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
 	{
 		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * PI / 180.0), 2);
