@@ -19,7 +19,10 @@
 inline void __cudaSafeCall(cudaError err, const char* file, const int line)
 {
 	if (cudaSuccess != err)
-		std::cout << file << ":" << line << " : " << "CUDA API error: " << cudaGetErrorString(err) << std::endl;
+	{
+		std::cerr << file << ":" << line << " : " << "CUDA API error: " << cudaGetErrorString(err) << std::endl;
+		std::cout << "CUDA error: check log file for details" << std::endl;
+	}
 
 	return;
 }
@@ -31,7 +34,8 @@ inline void __cudaCheckError(const char* file, const int line, bool sync=false, 
 		cudaError err = cudaDeviceSynchronize();
 		if (cudaSuccess != err)
 		{
-			std::cout << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
+			std::cerr << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
+			std::cout << "CUDA error: check log file for details" << std::endl;
 			if (abort)
 				exit(1);
 		}
@@ -40,7 +44,10 @@ inline void __cudaCheckError(const char* file, const int line, bool sync=false, 
 	{
 		cudaError err = cudaGetLastError();
 		if (cudaSuccess != err)
-			std::cout << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
+		{
+			std::cerr << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
+			std::cout << "CUDA error: check log file for details" << std::endl;
+		}
 	}
 
 	return;

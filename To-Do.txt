@@ -1,20 +1,20 @@
 TO-DO:
-- RNG generates total energy and pitch angle
+75% SOLUTION - CDF file output
 - Bin particles
-- CDF file output
-- Maybe a LUT Grad B w/ linear interpolation
-- Handle satellite copying data to host from within satellite host
-WORKS IN C++, OFFLOAD TO PY - Fix sideways CSV Writing (python)
-- Finish class for loading previous sim data
-
-- Python check returned data, fix print functions
-- Photoelectrons
-- Ionosphere scattering
 - Weighted particles by maxwellian distribution
+- RNG generates total energy and pitch angle
+- Add post processing classes (backscatter class, photoelectrons, ionospheric scattering, maybe dist function stuff, class to handle EOM)
+DONE, NEEDS GOOD TEST - Finish class for loading previous sim data
+- Python interface for loading previous sim data
+DONE, NEEDS GOOD TEST - Maybe a LUT Grad B w/ linear interpolation
+- Python interfaces for E Field and B Field models
+- Loading previous sim data overwrites sim characteristics - stop this - maybe make a part of prepareData
+
+???? - Python check returned data, fix print functions
 - Alfven E generator (Dr. Lysak's code)
-- Restructure Physics (E (Alfven LUT, Alfven Calc, QSPS), B (dipole, IGRF) Classes with common function names, class to handle EOM, backscatter class, photoelectrons, maybe dist function stuff)
-- Add post processing classes (maybe?)
-IS DONE?? - Python, maybe set num particles based on bin size
+IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
+- Python, maybe set num particles based on bin size
+WORKS IN C++, OFFLOAD TO PY - Fix sideways CSV Writing (python)
 
 - Remove unnecessary includes/maybe all/most includes in headers
 - Fix log file time width oddity
@@ -22,8 +22,7 @@ IS DONE?? - Python, maybe set num particles based on bin size
 - Document things better
 - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
 - Cross platform compiling
-IN PROGRESS - XLSX writing with xlnt library?
-IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
+NOT PLATFORM AGNOSTIC, HOLD OFF - IN PROGRESS - XLSX writing with xlnt library?
 NOT PLATFORM AGNOSTIC, HOLD OFF - Offload folder creation, changing folder to C++
 
 STUFF THAT IS DONE:
@@ -64,6 +63,9 @@ DONE - Some sort of error handling system instead of cout messages
 	  DONE, RATHER FATAL ERROR - Cuda error class
 	  DONE, NEEDS TEST - Redirect std::cerr, maybe std::clog
 	  DONE, ADD LATER WHERE NECESSARY - Where appropriate throw exceptions, remove error boolean
+DONE - Make python class easier to read by moving ctypes defs
+DONE - Handle satellite copying data to host from within satellite host
+DONE - Restructure Physics (E (Alfven LUT, Alfven Calc, QSPS), B (dipole, IGRF) Classes with common function names)
 
 STUFF THAT IS DONE WITH CAVEATS:
 DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution

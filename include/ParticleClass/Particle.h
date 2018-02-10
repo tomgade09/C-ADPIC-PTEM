@@ -31,7 +31,7 @@ protected:
 	std::string name_m;
 
 	bool initDataLoaded_m{ false };
-	bool usingGPU{ false };
+	bool usingGPU_m{ false };
 	bool normalized_m{ false };
 
 public:
@@ -56,12 +56,13 @@ public:
 	}
 	~Particle()
 	{
-		if (usingGPU)
+		if (usingGPU_m)
 			freeGPUMemory();
 	}
 
 	std::vector<std::vector<double>>& getOrigData() { return origData_m; }
 	std::vector<std::vector<double>>& getCurrData() { return currData_m; }
+	std::vector<std::string>& getAttrNames() { return attributeNames_m; }
 	std::string getName() { return name_m; }
 	double   getMass() { return mass_m; }
 	double   getCharge() { return charge_m; }

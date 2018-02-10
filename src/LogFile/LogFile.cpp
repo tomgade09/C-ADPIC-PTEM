@@ -12,7 +12,7 @@ void LogFile::writeLogFileEntry(std::string logMessage)
 		ssstr.erase(std::ios::end);
 	writeTxt = "[ " + ssstr + " ] : " + logMessage + "\n"; //time
 
-	fileIO::writeTxtFile(writeTxt, logFileName_m);
+	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(writeTxt, logFileName_m));
 }
 
 void LogFile::createTimeStruct(std::string label)

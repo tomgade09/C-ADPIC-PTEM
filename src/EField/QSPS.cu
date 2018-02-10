@@ -20,7 +20,7 @@ __host__ void QSPS::setupEnvironment()
 	CUDA_API_ERRCHK(cudaMemcpy(altMinMax_d, altMinMax_m.data(), altMinMax_m.size() * sizeof(double), cudaMemcpyHostToDevice));
 	CUDA_API_ERRCHK(cudaMemcpy(magnitude_d, magnitude_m.data(), magnitude_m.size() * sizeof(double), cudaMemcpyHostToDevice));
 
-	setupEnvironmentGPU_QSPS <<< 1, 1 >>> (this_d, altMinMax_d, magnitude_d, magnitude_m.size());
+	setupEnvironmentGPU_QSPS <<< 1, 1 >>> (this_d, altMinMax_d, magnitude_d, static_cast<int>(magnitude_m.size()));
 	CUDA_KERNEL_ERRCHK_WSYNC(); //creates GPU instance of QSPS
 	#endif /* !__CUDA_ARCH__ */
 }

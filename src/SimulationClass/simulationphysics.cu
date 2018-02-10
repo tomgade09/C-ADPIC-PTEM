@@ -28,7 +28,7 @@ extern const int SIMCHARSIZE{ 6 * sizeof(double) };
 __global__ void initCurand(curandStateMRG32k3a* state, long long seed)
 {
 	int id = blockIdx.x * blockDim.x + threadIdx.x;
-	if (id > 16380) { printf("Index too high: %i, %i\n", id, sizeof(state[id - 1000])); }
+	//if (id > 16380) { printf("Index too high: %i, %i\n", id, sizeof(state[id - 1000])); }
 	curand_init(seed, id, 0, &state[id]);
 }
 
@@ -223,7 +223,7 @@ void Simulation::copyDataToGPU()
 	
 	//Prepare curand states for random number generation
 	long long seed = time(NULL);
-	std::cout << "seed: " << seed << ", num RNG states: " << NUMRNGSTATES << std::endl;
+	//std::cout << "seed: " << seed << ", num RNG states: " << NUMRNGSTATES << std::endl;
 	initCurand <<< NUMRNGSTATES / 256, 256 >>> (static_cast<curandStateMRG32k3a*>(curandRNGStates_d), seed);
 	CUDA_KERNEL_ERRCHK();
 
@@ -272,7 +272,6 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		
 		cudaloopind++;
 		incTime();
-		itersBtwCouts = 10;
 		if (cudaloopind % itersBtwCouts == 0)
 		{
 			std::stringstream out;

@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include "dllexport.h"
-#include "SimulationClass\Simulation.h"
+#include "SimulationClass\PreviousSimulation.h"
 #include "StandaloneTools\numericaltools.h"
 #include "ErrorHandling\simExceptionMacros.h"
 
@@ -16,6 +16,8 @@ DLLEXPORT void     incrementSimulationTimeByDtAPI(Simulation* simulation);
 DLLEXPORT int      getNumberOfParticleTypesAPI(Simulation* simulation);
 DLLEXPORT int      getNumberOfParticlesAPI(Simulation* simulation, int partInd);
 DLLEXPORT int      getNumberOfAttributesAPI(Simulation* simulation, int partInd);
+DLLEXPORT const char* getParticleNameAPI(Simulation* simulation, int partInd);
+DLLEXPORT const char* getSatelliteNameAPI(Simulation* simulation, int satInd);
 DLLEXPORT bool     areResultsPreparedAPI(Simulation* simulation);
 DLLEXPORT LogFile* getLogFilePointerAPI(Simulation* simulation);
 
@@ -23,8 +25,8 @@ DLLEXPORT LogFile* getLogFilePointerAPI(Simulation* simulation);
 DLLEXPORT double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData);
 
 //Field tools
-DLLEXPORT double calculateBFieldAtZandTimeAPI(Simulation* simulation, double z, double time);
-DLLEXPORT double calculateEFieldAtZandTimeAPI(Simulation* simulation, double z, double time);
+DLLEXPORT double getBFieldAtSAPI(Simulation* simulation, double z, double time);
+DLLEXPORT double getEFieldAtSAPI(Simulation* simulation, double z, double time);
 
 //Mu<->VPerp Functions
 DLLEXPORT void convertParticleVPerpToMuAPI(Simulation* simulation, int partInd);
@@ -46,10 +48,11 @@ DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int satell
 DLLEXPORT void    writeSatelliteDataToCSVAPI(Simulation* simulation);
 
 DLLEXPORT void    createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir="");
-DLLEXPORT void    loadCompletedSimDataAPI(Simulation* simulation, const char* fileDir, const char* partNames, const char* attrNames, const char* satNames, int numParts);
+DLLEXPORT Simulation* loadCompletedSimDataAPI(const char* fileDir, const char* bFieldModel, const char* eFieldElems, const char* partNames, const char* satNames);
 
 DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir);
-DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery = 100, const char* loadFileDir = "");
+DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir);
+DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery);
 DLLEXPORT void terminateSimulationAPI(Simulation* simulation);
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1);
 

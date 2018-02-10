@@ -22,6 +22,7 @@
     <ClCompile Include="..\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\src\LogFile\LogFileAPI.cpp" />
+    <ClCompile Include="..\src\SimulationClass\PreviousSimulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\Simulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp" />
     <ClCompile Include="..\src\StandaloneTools\binaryfiletools.cpp" />
@@ -71,6 +72,7 @@
     <None Include="..\python\simulation.py" />
     <None Include="..\python\SimulationClass\AlfvenLUT.py" />
     <None Include="..\python\SimulationClass\Simulation.py" />
+    <None Include="..\python\SimulationClass\_Simulation.py" />
     <None Include="..\python\SimulationClass\__plotParticles.py" />
     <None Include="..\python\__simulationvariables.py" />
   </ItemGroup>
@@ -85,13 +87,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>

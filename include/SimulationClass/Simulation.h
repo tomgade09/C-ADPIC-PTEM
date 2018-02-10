@@ -11,6 +11,7 @@
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
 #include "StandaloneTools\StandaloneTools.h"
+#include "ErrorHandling\simExceptionMacros.h"
 
 struct SatandPart
 {
@@ -38,12 +39,12 @@ protected:
 	//Simulation Characteristics
 	std::string  saveRootDir_m;
 	double       simTime_m{ 0.0 };
-	const double dt_m;
-	const double simMin_m;
-	const double simMax_m;
-	const double ionT_m;
-	const double magT_m;
-	const double vmean_m{ 0.0 };
+	double       dt_m;
+	double       simMin_m;
+	double       simMax_m;
+	double       ionT_m;
+	double       magT_m;
+	double       vmean_m{ 0.0 };
 
 	//Classes tracked by Simulation
 	std::vector<std::shared_ptr<Particle>> particleTypes_m; //need shared_ptr because it will be assigned to SatandPart
@@ -77,13 +78,19 @@ protected:
 	virtual void writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave="/_chars/");
 
 	std::streambuf* cerrBufBak{ std::cerr.rdbuf() };
-	std::ofstream   cerrLogOut{ saveRootDir_m + "errors.log" };
+	std::ofstream   cerrLogOut;
+
+	Simulation(std::string prevSaveDir) : saveRootDir_m{ prevSaveDir }
+	{
+		logFile_m = std::make_unique<LogFile>(saveRootDir_m + "/reloadSim.log", 20);
+	}
 
 public:
 	Simulation(double dt, double simMin, double simMax, double ionT, double magT, std::string saveRootDir, std::string logName="simulation.log"):
-		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, saveRootDir_m { saveRootDir }
+		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, ionT_m{ ionT }, magT_m{ magT }, saveRootDir_m { saveRootDir + "/" }
 	{
 		logFile_m = std::make_unique<LogFile>(saveRootDir_m + logName, 20);
+		cerrLogOut.open(saveRootDir_m + "errors.log");
 		std::cerr.rdbuf(cerrLogOut.rdbuf()); //set cerr output to "errors.log"
 
 		writeCharsToFiles( {dt_m, simMin_m, simMax_m, ionT_m, magT_m, vmean_m}, {"dt", "simMin", "simMax", "T_ion", "T_mag", "v_mean"}, "Simulation");
@@ -99,15 +106,16 @@ public:
 	}//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
 
 	///One liner functions (usually access)
-	double	  getTime()   { return simTime_m; }//not API worthy, not checking mid simulation
-	double	  getdt()     { return dt_m; }	   //not API worthy, probably passed in
-	double    getSimMin() { return simMin_m; } //not API worthy, probably passed in
-	double    getSimMax() { return simMax_m; } //not API worthy, probably passed in
-	void	  incTime() { simTime_m += dt_m; } //not API worthy, never need to increment time from outside cpp
+	double	  getTime()   { return simTime_m; }
+	double	  getdt()     { return dt_m; }
+	double    getSimMin() { return simMin_m; }
+	double    getSimMax() { return simMax_m; }
+	void	  incTime()   { simTime_m += dt_m; }
 
-	size_t    getNumberOfParticleTypes() { return particleTypes_m.size(); } //not API worthy, probably passed in
-	size_t    getNumberOfParticles(int partInd) { return particleTypes_m.at(partInd)->getNumberOfParticles(); } //not API worthy, probably passed in
-	size_t    getNumberOfAttributes(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); } //not API worthy, probably passed in
+	size_t    getNumberOfParticleTypes()         { return particleTypes_m.size(); }
+	size_t    getNumberOfParticles(int partInd)  { return particleTypes_m.at(partInd)->getNumberOfParticles(); }
+	size_t    getNumberOfAttributes(int partInd) { return particleTypes_m.at(partInd)->getNumberOfAttributes(); }
+	const char* getParticleName(int partInd)     { return particleTypes_m.at(partInd)->getName().c_str(); }
 
 	bool	  areResultsPrepared() { return resultsPrepared_m; } //do I even use this??
 
@@ -142,6 +150,7 @@ public:
 	virtual size_t  getSatelliteNumberOfDetectedParticles(int satInd) { return satelliteData_m.at(satInd).at(0).size(); } ///add index checking
 	virtual double* getSatelliteDataPointers(int satInd, int attrInd) { //some sort of check here to make sure you've received data
 		return satelliteData_m.at(satInd).at(attrInd).data(); } //also check indicies
+	const char* getSatelliteName(int satInd) { return satellites_m.at(satInd)->satellite->getName().c_str(); }
 	virtual void	writeSatelliteDataToCSV();
 	virtual void    createTempSat(int partInd, double altitude, bool upwardFacing, std::string name);
 

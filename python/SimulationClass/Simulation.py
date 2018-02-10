@@ -2,163 +2,94 @@ import ctypes, os, sys, inspect
 
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)) + './../'))
 from __simulationvariables import *
+import _Simulation
 
-class Simulation:
-    def __init__(self, DLLloc, rootdir, dt, simMin, simMax, ionT, magT):
-        self.dllLoc_m = DLLloc
-        self.rootdir_m = rootdir
+class Simulation(_Simulation._SimulationCDLL):
+    def __init__(self, DLLloc, savedir, dt=None, simMin=None, simMax=None, ionT=None, magT=None):
+        super().__init__(DLLloc)
+        self.savedir_m = savedir
         self.dt_m = dt
         self.simMin_m = simMin
         self.simMax_m = simMax
         self.ionT_m = ionT
         self.magT_m = magT
-        self.numTypes_m = 0
+
+        self.numPartTypes_m = 0
+        self.numSats_m = 0
         self.numParts_m = []
         self.nameParts_m = []
         self.numAttrs_m = []
         self.satPartInd_m = []
-        self.normalized_m = False
-
-        self.simDLL_m = ctypes.CDLL(self.dllLoc_m)
-
-        #One liner functions
-        self.simDLL_m.getSimulationTimeAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getSimulationTimeAPI.restype = ctypes.c_double
-        self.simDLL_m.getDtAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getDtAPI.restype = ctypes.c_double
-        self.simDLL_m.getSimMinAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getSimMinAPI.restype = ctypes.c_double
-        self.simDLL_m.getSimMaxAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getSimMaxAPI.restype = ctypes.c_double
-        self.simDLL_m.incrementSimulationTimeByDtAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.incrementSimulationTimeByDtAPI.restype = None
-        self.simDLL_m.getNumberOfParticleTypesAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getNumberOfParticleTypesAPI.restype = ctypes.c_int
-        self.simDLL_m.getNumberOfParticlesAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.getNumberOfParticlesAPI.restype = ctypes.c_int
-        self.simDLL_m.getNumberOfAttributesAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.getNumberOfAttributesAPI.restype = ctypes.c_int
-        self.simDLL_m.areResultsPreparedAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.areResultsPreparedAPI.restype = ctypes.c_bool
-        
-        #Pointer one liners
-        self.simDLL_m.getPointerToParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
-        self.simDLL_m.getPointerToParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
-
-        #Mu<->VPerp functions
-        self.simDLL_m.convertParticleVPerpToMuAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.convertParticleVPerpToMuAPI.restype = None
-        self.simDLL_m.convertParticleMuToVPerpAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.convertParticleMuToVPerpAPI.restype = None
-
-        #Field tools
-        self.simDLL_m.getBFieldAtSAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-        self.simDLL_m.getBFieldAtSAPI.restype = ctypes.c_double
-        self.simDLL_m.getEFieldAtSAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-        self.simDLL_m.getEFieldAtSAPI.restype = ctypes.c_double
-
-        #Simulation management
-        self.simDLL_m.createSimulationAPI.argtypes = (ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_char_p)
-        self.simDLL_m.createSimulationAPI.restype = ctypes.c_void_p
-        self.simDLL_m.initializeSimulationAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.initializeSimulationAPI.restype = None
-        self.simDLL_m.copyDataToGPUAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.copyDataToGPUAPI.restype = None
-        self.simDLL_m.iterateSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
-        self.simDLL_m.iterateSimulationAPI.restype = None
-        self.simDLL_m.copyDataToHostAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.copyDataToHostAPI.restype = None
-        self.simDLL_m.freeGPUMemoryAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.freeGPUMemoryAPI.restype = None
-        self.simDLL_m.prepareResultsAPI.argtypes = (ctypes.c_void_p, ctypes.c_bool)
-        self.simDLL_m.prepareResultsAPI.restype = ctypes.POINTER(ctypes.c_double)
-        self.simDLL_m.terminateSimulationAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.terminateSimulationAPI.restype = None
-        self.simDLL_m.loadCompletedSimDataAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int)
-        self.simDLL_m.loadCompletedSimDataAPI.restype = None
-        self.simDLL_m.runNormalSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_char_p)
-        self.simDLL_m.runNormalSimulationAPI.restype = None
-        self.simDLL_m.setBFieldModelAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double)
-        self.simDLL_m.setBFieldModelAPI.restype = None
-
-        #Satellite functions
-        self.simDLL_m.createSatelliteAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_double, ctypes.c_bool, ctypes.c_char_p)
-        self.simDLL_m.createSatelliteAPI.restype = None
-        self.simDLL_m.getNumberOfSatellitesAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getNumberOfSatellitesAPI.restype = ctypes.c_int
-        self.simDLL_m.getSatNumOfDetectedPartsAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.getSatNumOfDetectedPartsAPI.restype = ctypes.c_int        
-        self.simDLL_m.getSatelliteDataPointersAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
-        self.simDLL_m.getSatelliteDataPointersAPI.restype = ctypes.POINTER(ctypes.c_double)
-        self.simDLL_m.writeSatelliteDataToCSVAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.writeSatelliteDataToCSVAPI.restype = None
-
-        #Particle Management
-        self.simDLL_m.createParticleTypeAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_long, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_char_p)
-        self.simDLL_m.createParticleTypeAPI.restype = None
-
-        #Log File
-        self.simDLL_m.getLogFilePointerAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getLogFilePointerAPI.restype = ctypes.c_void_p
-        self.simDLL_m.writeLogFileEntryAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
-        self.simDLL_m.writeLogFileEntryAPI.restype = None
-        self.simDLL_m.writeTimeDiffFromNowAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
-        self.simDLL_m.writeTimeDiffFromNowAPI.restype = None
-        self.simDLL_m.writeTimeDiffAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
-        self.simDLL_m.writeTimeDiffAPI.restype = None
+        self.nameSat_m = []
 
         #Now code for init
-        rootdirBuf = ctypes.create_string_buffer(bytes(self.rootdir_m, encoding='utf-8'))
+        savedirBuf = ctypes.create_string_buffer(bytes(self.savedir_m, encoding='utf-8'))
         self.simulationptr = ctypes.c_void_p
-        self.simulationptr = self.simDLL_m.createSimulationAPI(dt, simMin, simMax, ionT, magT, rootdirBuf)
-        self.logFileObj_m = self.simDLL_m.getLogFilePointerAPI(self.simulationptr)
-
-        self.particles_m = []
-        self.satellites_m = []
+        
+        if dt is not None:
+            self.simulationptr = self.simDLL_m.createSimulationAPI(dt, simMin, simMax, ionT, magT, savedirBuf)
+            self.logFileObj_m = self.simDLL_m.getLogFilePointerAPI(self.simulationptr)
 
         return
-    
-    
+
 
     #Run Simulation
-    def runSim(self, iterations, loadFile=False):
-        if (loadFile):
-            loadFileBuf = ctypes.create_string_buffer(bytes(DISTINFOLDER, encoding='utf-8'))
-        else:
-            loadFileBuf = ctypes.create_string_buffer(bytes("", encoding='utf-8'))
+    def setupNormalSim(self, numParts, loadFile=False):
+        self.simDLL_m.setupNormalSimulationAPI(self.simulationptr, numParts, loadFileBuf)
+        if self.numAttrs_m == []:
+            self.getSimChars()
 
-        #eventually replace with the functions to get the data from the CPP class, name these arrays better
-        self.numTypes_m = 2
-        self.numAttrs_m = [3, 3]
-        self.numParts_m = [115200, 115200]
-        self.nameParts_m = ["elec", "ions"]
-        self.satellites_m = ["btmElec", "btmIons", "topElec", "topIons"]
-        self.satPartInd_m = [0, 1, 0, 1]
+    def runNormalSim(self, iterations, iterBtwCouts):
+        if self.numAttrs_m == []:
+            self.getSimChars()
 
-        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, 50, loadFileBuf)
+        self.simDLL_m.runNormalSimulationAPI(self.simulationptr, iterations, iterBtwCouts)
         self.simDLL_m.writeSatelliteDataToCSVAPI(self.simulationptr)
 
         return self.getFinalDataAllParticles(), self.getOriginalDataAllParticles(), self.getSatelliteData()  #Returns final particle data, original particle data, satellite data
 
+
     ###Member functions for Simulation class
     #Particle, Satellite Mgmt
-    #void loadCompletedSimDataAPI(Simulation* simulation, const char* fileDir, const char* partNames, const char* attrNames, const char* satNames, int numParts)
-    def loadCompletedSimData(self, fileDir, partNames, attrNames, satNames, numParts, numPartTypes, numAttrs, numSats):
+    def getSimChars(self): #call this after the simulation is set up
+        if not self.numAttrs_m == []:
+            return
+
+        self.numPartTypes_m = self.simDLL_m.getNumberOfParticleTypesAPI(self.simulationptr)
+        for part in range(self.numPartTypes_m):
+            self.numAttrs_m.append(self.simDLL_m.getNumberOfAttributesAPI(self.simulationptr, part))
+            self.numParts_m.append(self.simDLL_m.getNumberOfParticlesAPI(self.simulationptr, part))
+            self.nameParts_m.append(self.simDLL_m.getParticleNameAPI(self.simulationptr, part))
+        self.numSats_m = self.simDLL_m.getNumberOfSatellitesAPI(self.simulationptr)
+        for sat in range(self.numSats_m):
+            self.nameSat_m.append(self.simDLL_m.getSatelliteNameAPI(self.simulationptr, sat))
+            if "lec" in self.nameSat_m[sat]:
+                self.satPartInd_m.append(0)
+            else:
+                self.satPartInd_m.append(1)
+
+    def loadCompletedSimData(self, fileDir, bFieldModel, eFieldElems, partNames, satNames):
+        if self.dt_m is not None:
+            print("Error, dt specified meaning that an instance of the Simulation class has already been created in c++ through Python. Returning")
+            return
+
         fileDirBuf = ctypes.create_string_buffer(bytes(fileDir, encoding='utf-8'))
-        partNamesBuf = ctypes.create_string_buffer(bytes(partNames, encoding='utf-8'))
-        attrNamesBuf = ctypes.create_string_buffer(bytes(attrNames, encoding='utf-8'))
-        satNamesBuf = ctypes.create_string_buffer(bytes(satNames, encoding='utf-8'))
-        self.simDLL_m.loadCompletedSimDataAPI(self.simulationptr, fileDirBuf, partNamesBuf, attrNamesBuf, satNamesBuf, numParts)
+        bFldMdlBuf = ctypes.create_string_buffer(bytes(bFieldModel, encoding='utf-8'))
+        if eFieldElems is not "":
+            eFldElmBuf = ctypes.create_string_buffer(bytes(eFieldElems, encoding='utf-8'))
+        else:
+            eFldElmBuf = ctypes.create_string_buffer(bytes("", encoding='utf-8'))
+        partNmsBuf = ctypes.create_string_buffer(bytes(partNames, encoding='utf-8'))
+        satNameBuf = ctypes.create_string_buffer(bytes(satNames, encoding='utf-8'))
         
-        self.numTypes_m = numPartTypes
-        
-        for iii in range(numAttrs + 2):
-            self.numAttrs_m.append(numAttrs)
-        for iii in range(numPartTypes):
-            self.numParts_m.append(numParts)
-            self.nameParts_m.append("1")
-        for iii in range(numSats):
-            self.satPartInd_m.append(0)
+        self.simulationptr = self.simDLL_m.loadCompletedSimDataAPI(fileDirBuf, bFldMdlBuf, eFldElmBuf, partNmsBuf, satNameBuf)
+
+        if self.numAttrs_m == []:
+            self.getSimChars()
+
+        self.dt_m = self.simDLL_m.getDtAPI(self.simulationptr)
+        self.simMin_m = self.simDLL_m.getSimMinAPI(self.simulationptr)
+        self.simMax_m = self.simDLL_m.getSimMaxAPI(self.simulationptr)
 
         return self.getFinalDataAllParticles(), self.getOriginalDataAllParticles(), self.getSatelliteData()
 
@@ -168,9 +99,8 @@ class Simulation:
         loadFileDirBuf = ctypes.create_string_buffer(bytes(loadFileDir, encoding='utf-8'))
 
         self.simDLL_m.createParticleTypeAPI(self.simulationptr, nameBuf, attrNamesBuf, mass, charge, numParts, posDims, velDims, normFactor, loadFileDirBuf)
-        self.particles_m.append(name)
 
-        self.numTypes_m += 1 #eventually check to see that C++ has created properly by calling Particle access functions or don't create a python one
+        self.numPartTypes_m += 1 #eventually check to see that C++ has created properly by calling Particle access functions or don't create a python one
         self.numAttrs_m.append(posDims + velDims)
         self.numParts_m.append(numParts)
         self.nameParts_m.append(name)
@@ -178,7 +108,7 @@ class Simulation:
     def createSatellite(self, particleInd, altitude, upwardFacing, name):
         nameBuf = ctypes.create_string_buffer(bytes(name, encoding='utf-8'))
         self.simDLL_m.createSatelliteAPI(self.simulationptr, particleInd, altitude, upwardFacing, nameBuf)
-        self.satellites_m.append(name)
+        self.nameSat_m.append(name)
         self.satPartInd_m.append(particleInd)
     
     def convertParticleVPerpToMu(particleInd):
@@ -200,7 +130,7 @@ class Simulation:
         ret = []
         partattr = []
         partdbl = []
-        for iii in range(self.numTypes_m):
+        for iii in range(self.numPartTypes_m):
             for jjj in range(self.numAttrs_m[iii]):
                 partdbl_c = self.simDLL_m.getPointerToParticleAttributeArrayAPI(self.simulationptr, iii, jjj, origData)
                 for kk in range(self.numParts_m[iii]):
@@ -268,17 +198,18 @@ class Simulation:
         return self.simDLL_m.getSatNumOfDetectedPartsAPI(self.simulationptr, satInd)
 
     def getSatelliteData(self): #Need to add case where satellite captures more or less than the number of particles
-        self.satNum_m = self.getNumberOfSatellites()
+        if self.numAttrs_m == []:
+            self.getSimChars()
 
         satptr = [] #constructs array of double pointers so z value can be checked before recording data
-        for jjj in range(self.satNum_m):
+        for jjj in range(self.numSats_m):
             attrptr = []
             for kk in range(self.numAttrs_m[self.satPartInd_m[jjj]] + 2):
                 attrptr.append(self.simDLL_m.getSatelliteDataPointersAPI(self.simulationptr, jjj, kk))
             satptr.append(attrptr)
         
         satsdata = []
-        for jjj in range(self.satNum_m):
+        for jjj in range(self.numSats_m):
             attr = []
             for kk in range(self.numAttrs_m[self.satPartInd_m[jjj]] + 2):
                 parts=[]
@@ -302,4 +233,4 @@ class Simulation:
 
 
 if __name__ == '__main__':
-    print("SimulationAPI.py is not meant to be called as main.  Run a simulation file and that will import this.")
+    print("SimulationAPI.py is not meant to be called as main.  Run simulation.py and that will import this.")

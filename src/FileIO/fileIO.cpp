@@ -73,6 +73,22 @@ namespace fileIO
 		csv.close();
 	}
 
+	void readTxtFile(std::string& readInto, std::string filename)
+	{
+		std::ifstream txt(filename);
+		if (!txt.is_open())
+		{
+			txt.close();
+			throw std::invalid_argument("fileIO::readTxtFile: could not open file " + filename + " for reading " + std::to_string(txt.is_open()));
+		}
+
+		std::stringstream buf;
+		buf << txt.rdbuf();
+		txt.close();
+
+		readInto = buf.str();
+	}
+
 	void writeDblBin(const std::vector<double>& dataarray, std::string filename, long numelements, bool overwrite)//overwrite defaults to true
 	{
 		std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };

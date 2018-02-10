@@ -5,10 +5,8 @@
 
 void Simulation::writeCharsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string folderFromSave)
 {
-	try { fileIO::writeDblBin(chars, saveRootDir_m + folderFromSave + className + ".bin", chars.size()); }
-	catch(std::exception& exp) { std::cout << "Exception!! " << exp.what() << std::endl; }
-	catch (...) { std::cout << "Unhandled exception" << std::endl; throw; }
-
+	FILE_RDWR_EXCEP_CHECK(fileIO::writeDblBin(chars, saveRootDir_m + folderFromSave + className + ".bin", chars.size()));
+	
 	std::string charNamesStr{ "" };
 	for (int charNm = 0; charNm < charNames.size(); charNm++)
 	{
@@ -17,9 +15,7 @@ void Simulation::writeCharsToFiles(std::vector<double> chars, std::vector<std::s
 			charNamesStr += ",";
 	}
 	
-	try { fileIO::writeTxtFile(charNamesStr, saveRootDir_m + folderFromSave + className + ".txt"); }
-	catch (std::exception& exp) { std::cout << "Exception!! " << exp.what() << std::endl; }
-	catch (...) { std::cout << "Unhandled exception" << std::endl; throw; }
+	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(charNamesStr, saveRootDir_m + folderFromSave + className + ".txt", true));
 }
 
 void Simulation::receiveSatelliteData(bool removeZeros)
@@ -63,10 +59,9 @@ void Simulation::createParticleType(std::string name, std::vector<std::string> a
 	//some sort of debug message??  Necessary for daily use?
 	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Pos Dimensions: " + std::to_string(posDims) + ", Vel Dimensions: " + std::to_string(velDims) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
 	
-
 	writeCharsToFiles({ mass, charge, static_cast<double>(numParts), static_cast<double>(posDims), static_cast<double>(velDims), normFactor },
 		{ "mass", "charge", "numParts", "posDims", "velDims", "normFactor", "attrNames", attrNames.at(0), attrNames.at(1), attrNames.at(2), name }, "Particle_" + name);
-	
+
 	std::shared_ptr<Particle> newPart{ std::make_shared<Particle>(name, attrNames, mass, charge, numParts, posDims, velDims, normFactor) };
 
 	if (loadFilesDir != "")
@@ -228,6 +223,11 @@ void Simulation::prepareResults(bool normalizeToRe)
 
 void Simulation::loadCompletedSimData(std::string fileDir, std::vector<std::string> partNames, std::vector<std::string> attrNames, std::vector<std::string> satNames, int numParts)
 {
+	std::cout << "Simulation::loadCompletedSimData: DEPRECIATEDDDDDD@!!!!!11!1!!11!212344" << std::endl;
+	std::cout << "923489247982173" << std::endl << std::endl << std::endl << std::endl;
+	std::cout << "389m,sando23098uy5hjnf;jlksafgjsadjwa;ok35u5982" << std::endl;
+	throw std::exception("too bad.");
+
 	for (size_t parts = 0; parts < partNames.size(); parts++)
 	{
 		createParticleType(partNames.at(parts), attrNames, 1, 1, numParts, static_cast<int>(attrNames.size() - 1), 1, 1, fileDir + "particles_final/");
@@ -278,7 +278,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args)
 		std::cout << "IGRF not implemented yet!! :D  Using DipoleB" << std::endl;
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
 	}
-	else if (name == "InvRCubed")
+	else if (name == "InvRCubedB")
 	{
 		//BFieldModel_m = std::make_unique<InvRCubedB>(args.at(0));
 		std::cout << "InvRCubed not implemented yet!! :D  Using DipoleB" << std::endl;

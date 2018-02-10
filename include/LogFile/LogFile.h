@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <memory>
 #include "FileIO\fileIO.h"
+#include "ErrorHandling\simExceptionMacros.h"
 
 struct timeStruct
 {
@@ -30,7 +31,7 @@ public:
 		timeStructs_m.reserve(timeStructToReserve);
 		std::string logHeader{ "[  Time (ms)  ] : Log Message\n" }; //do I want to add the time, other attributes to file???
 		logHeader += "[ 0.000000000 ] : LogFile class created, file created on disk, first entry written, first time point recorded.\n";
-		fileIO::writeTxtFile(logHeader, logFileName_m, overwrite_m);
+		FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(logHeader, logFileName_m, overwrite_m));
 		createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
 	}
 

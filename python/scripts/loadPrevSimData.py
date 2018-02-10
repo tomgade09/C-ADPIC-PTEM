@@ -15,18 +15,17 @@ def printArrayNames():
 	print("Example                                     : elecMagsphLogEnergies, elecIonsphZ, ,ionsMagsphLogTimes")
 
 
-#dllLocation, savedir, rootdir, dtg = setupFolders()
-prevSimDir = './../../_dataout/180122_09.08.06/bins/'
-rootdir = os.path.abspath('./../../')
+prevSimDir = './../../_dataout/180209_18.04.12/bins/'
+rootdir = os.path.abspath('./../')
 savedir = os.path.abspath(prevSimDir + '../')
 os.chdir(savedir)
-print("Currently in directory: ", os.getcwd(), rootdir, savedir, prevSimDir)
+#print("Currently in directory: ", os.getcwd())
 dllLocation = os.path.abspath('./../../lib/geoplasmasim.dll')
-sim = Simulation(dllLocation, rootdir, 0.01, 8.371e6, 4 * 6.371e6, 2.5, 1000, 0.0)
 
 NUMPARTS = int(os.stat('./bins/particles_final/elec_vpara.bin').st_size/8)
 print("Number of particles read from files: ", NUMPARTS)
-finalDat, origDat, satDat = sim.loadCompletedSimData(prevSimDir, "elec,ions", "vpara,vperp,z", "bottomElectrons,bottomIons,topElectrons,topIons", NUMPARTS, 2, 3, 4)
+sim = Simulation(dllLocation, savedir)
+finalDat, origDat, satDat = sim.loadCompletedSimData(savedir, "DipoleB", "", "elec", "btmElec,topElec")
 
 MASS_ELEC = 9.10938356e-31
 MASS_PROT = 1.67262190e-27
@@ -47,34 +46,34 @@ elecMagsphVpara = np.array(origDat[0][0][int(NUMPARTS / 2):NUMPARTS])
 elecMagsphVperp = np.array(origDat[0][1][int(NUMPARTS / 2):NUMPARTS])
 elecMagsphZ = np.array(origDat[0][2][int(NUMPARTS / 2):NUMPARTS])
 
-ionspitches = atan2vec(abs(np.array(origDat[1][1])), -np.array(origDat[1][0])) * 180 / math.pi
-ionsenergies = 0.5 * MASS_PROT * (np.square(np.array(origDat[1][0])) + np.square(np.array(origDat[1][1]))) / J_PER_EV
-ionsIonsphEnergies = ionsenergies[0:int(NUMPARTS / 2)]
-ionsIonsphPitches = ionspitches[0:int(NUMPARTS / 2)]
-ionsIonsphVpara = np.array(origDat[1][0][0:int(NUMPARTS / 2)])
-ionsIonsphVperp = np.array(origDat[1][1][0:int(NUMPARTS / 2)])
-ionsIonsphZ = np.array(origDat[1][2])
-ionsMagsphEnergies = ionsenergies[int(NUMPARTS / 2):NUMPARTS]
-ionsMagsphPitches = ionspitches[int(NUMPARTS / 2):NUMPARTS]
-ionsMagsphVpara = np.array(origDat[1][0][int(NUMPARTS / 2):NUMPARTS])
-ionsMagsphVperp = np.array(origDat[1][1][int(NUMPARTS / 2):NUMPARTS])
-ionsMagsphZ = np.array(origDat[1][2][int(NUMPARTS / 2):NUMPARTS])
+#ionspitches = atan2vec(abs(np.array(origDat[1][1])), -np.array(origDat[1][0])) * 180 / math.pi
+#ionsenergies = 0.5 * MASS_PROT * (np.square(np.array(origDat[1][0])) + np.square(np.array(origDat[1][1]))) / J_PER_EV
+#ionsIonsphEnergies = ionsenergies[0:int(NUMPARTS / 2)]
+#ionsIonsphPitches = ionspitches[0:int(NUMPARTS / 2)]
+#ionsIonsphVpara = np.array(origDat[1][0][0:int(NUMPARTS / 2)])
+#ionsIonsphVperp = np.array(origDat[1][1][0:int(NUMPARTS / 2)])
+#ionsIonsphZ = np.array(origDat[1][2])
+#ionsMagsphEnergies = ionsenergies[int(NUMPARTS / 2):NUMPARTS]
+#ionsMagsphPitches = ionspitches[int(NUMPARTS / 2):NUMPARTS]
+#ionsMagsphVpara = np.array(origDat[1][0][int(NUMPARTS / 2):NUMPARTS])
+#ionsMagsphVperp = np.array(origDat[1][1][int(NUMPARTS / 2):NUMPARTS])
+#ionsMagsphZ = np.array(origDat[1][2][int(NUMPARTS / 2):NUMPARTS])
 
 elecIonsphTimesPre = np.array([[]])
 elecMagsphTimesPre = np.array([[]])
-ionsIonsphTimesPre = np.array([[]])
-ionsMagsphTimesPre = np.array([[]])
+#ionsIonsphTimesPre = np.array([[]])
+#ionsMagsphTimesPre = np.array([[]])
 
 elecIonsphTimes = np.array([])
 elecMagsphTimes = np.array([])
-ionsIonsphTimes = np.array([])
-ionsMagsphTimes = np.array([])
+#ionsIonsphTimes = np.array([])
+#ionsMagsphTimes = np.array([])
 
 elecIonsphTimesPre = [np.array(satDat[0][3][int(NUMPARTS / 2):NUMPARTS]), np.array(satDat[2][3][int(NUMPARTS / 2):NUMPARTS])]#[0:int(NUMPARTS / 2)]), np.array(satDat[2][3][0:int(NUMPARTS / 2)])]
 elecMagsphTimesPre = [np.array(satDat[0][3][0:int(NUMPARTS / 2)]), np.array(satDat[2][3][0:int(NUMPARTS / 2)])]#[int(NUMPARTS / 2):NUMPARTS]), np.array(satDat[2][3][int(NUMPARTS / 2):NUMPARTS])]
 
-ionsIonsphTimesPre = [np.array(satDat[1][3][0:int(NUMPARTS / 2)]), np.array(satDat[3][3][0:int(NUMPARTS / 2)])]
-ionsMagsphTimesPre = [np.array(satDat[1][3][int(NUMPARTS / 2):NUMPARTS]), np.array(satDat[3][3][int(NUMPARTS / 2):NUMPARTS])]
+#ionsIonsphTimesPre = [np.array(satDat[1][3][0:int(NUMPARTS / 2)]), np.array(satDat[3][3][0:int(NUMPARTS / 2)])]
+#ionsMagsphTimesPre = [np.array(satDat[1][3][int(NUMPARTS / 2):NUMPARTS]), np.array(satDat[3][3][int(NUMPARTS / 2):NUMPARTS])]
 
 for iii in range(int(NUMPARTS / 2)):
 	if elecIonsphTimesPre[0][iii] == -1:
@@ -93,21 +92,21 @@ for iii in range(int(NUMPARTS / 2)):
 	else:
 		elecMagsphTimes = np.append(elecMagsphTimes, elecMagsphTimesPre[0][iii])
 
-	if ionsIonsphTimesPre[0][iii] == -1:
-		if ionsIonsphTimesPre[1][iii] == -1:
-			ionsIonsphTimes = np.append(ionsIonsphTimes, -1)
-		else:
-			ionsIonsphTimes = np.append(ionsIonsphTimes, ionsIonsphTimesPre[1][iii])
-	else:
-		ionsIonsphTimes = np.append(ionsIonsphTimes, ionsIonsphTimesPre[0][iii])
+	#if ionsIonsphTimesPre[0][iii] == -1:
+		#if ionsIonsphTimesPre[1][iii] == -1:
+			#ionsIonsphTimes = np.append(ionsIonsphTimes, -1)
+		#else:
+			#ionsIonsphTimes = np.append(ionsIonsphTimes, ionsIonsphTimesPre[1][iii])
+	#else:
+		#ionsIonsphTimes = np.append(ionsIonsphTimes, ionsIonsphTimesPre[0][iii])
 	
-	if ionsMagsphTimesPre[0][iii] == -1:
-		if ionsMagsphTimesPre[1][iii] == -1:
-			ionsMagsphTimes = np.append(ionsMagsphTimes, -1)
-		else:
-			ionsMagsphTimes = np.append(ionsMagsphTimes, ionsMagsphTimesPre[1][iii])
-	else:
-		ionsMagsphTimes = np.append(ionsMagsphTimes, ionsMagsphTimesPre[0][iii])
+	#if ionsMagsphTimesPre[0][iii] == -1:
+		#if ionsMagsphTimesPre[1][iii] == -1:
+			#ionsMagsphTimes = np.append(ionsMagsphTimes, -1)
+		#else:
+			#ionsMagsphTimes = np.append(ionsMagsphTimes, ionsMagsphTimesPre[1][iii])
+	#else:
+		#ionsMagsphTimes = np.append(ionsMagsphTimes, ionsMagsphTimesPre[0][iii])
 
 
 elecIonsphTimesPre = np.array([])
@@ -132,13 +131,13 @@ logVec = np.vectorize(log10Excep)
 
 elecIonsphLogEnergies = logVec(elecIonsphEnergies)
 elecMagsphLogEnergies = logVec(elecMagsphEnergies)
-ionsIonsphLogEnergies = logVec(ionsIonsphEnergies)
-ionsMagsphLogEnergies = logVec(ionsMagsphEnergies)
+#ionsIonsphLogEnergies = logVec(ionsIonsphEnergies)
+#ionsMagsphLogEnergies = logVec(ionsMagsphEnergies)
 
 elecIonsphLogTimes = logVec(elecIonsphTimes)
 elecMagsphLogTimes = logVec(elecMagsphTimes)
-ionsIonsphLogTimes = logVec(ionsIonsphTimes)
-ionsMagsphLogTimes = logVec(ionsMagsphTimes)
+#ionsIonsphLogTimes = logVec(ionsIonsphTimes)
+#ionsMagsphLogTimes = logVec(ionsMagsphTimes)
 
 def elecVtoE(x):
 	multfact = 1
@@ -165,10 +164,10 @@ elecIonsphLogEperp = logVec(elecIonsphEperp)
 elecMagsphLogEpara = logVec(elecMagsphEpara)
 elecMagsphLogEperp = logVec(elecMagsphEperp)
 
-ionsIonsphEpara = vToEionsVec(ionsIonsphVpara)
-ionsIonsphEperp = vToEionsVec(ionsIonsphVperp)
-ionsMagsphEpara = vToEionsVec(ionsMagsphVpara)
-ionsMagsphEperp = vToEionsVec(ionsMagsphVperp)
+#ionsIonsphEpara = vToEionsVec(ionsIonsphVpara)
+#ionsIonsphEperp = vToEionsVec(ionsIonsphVperp)
+#ionsMagsphEpara = vToEionsVec(ionsMagsphVpara)
+#ionsMagsphEperp = vToEionsVec(ionsMagsphVperp)
 
 ionsphDelInd = []
 magsphDelInd = []

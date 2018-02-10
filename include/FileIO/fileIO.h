@@ -12,6 +12,7 @@ namespace fileIO
 {
 	void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, long numOfDblsToRead);
 	void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, int numofentries, int numofcols, const char delim);
+	void readTxtFile(std::string& readInto, std::string filename);
 	void writeDblBin(const std::vector<double>& dataarray, std::string filename, long numelements, bool overwrite=true);
 	void write2DCSV(const std::vector<std::vector<double>>& dataarray, std::string filename, int numofentries, int numofcols, const char delim, bool overwrite=true, int precision=20);
 	void writeTxtFile(std::string textToWrite, std::string filename, bool overwrite=false);

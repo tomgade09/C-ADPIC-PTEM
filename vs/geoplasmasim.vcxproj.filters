@@ -48,6 +48,9 @@
     <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\SimulationClass\PreviousSimulation.cpp">
+      <Filter>Source Files\Simulation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
@@ -149,6 +152,9 @@
       <Filter>Python Files\Simulation</Filter>
     </None>
     <None Include="..\python\SimulationClass\__plotParticles.py">
+      <Filter>Python Files\Simulation</Filter>
+    </None>
+    <None Include="..\python\SimulationClass\_Simulation.py">
       <Filter>Python Files\Simulation</Filter>
     </None>
   </ItemGroup>

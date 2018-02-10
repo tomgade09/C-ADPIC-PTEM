@@ -4,6 +4,7 @@
 #include "cuda_profiler_api.h"
 
 #include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\simExceptionMacros.h"
 
 #include "ParticleClass\Particle.h"
 
@@ -11,16 +12,20 @@ __global__ void setup2DArray(double* array1D, double** array2D, int cols, int en
 
 void Particle::loadFilesToArray(std::string folder, bool orig)
 {
+	FILE_RDWR_EXCEP_CHECK( \
 	for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
 		fileIO::readDblBin((orig ? origData_m.at(attrs) : currData_m.at(attrs)), folder + "/" + name_m + "_" + attributeNames_m.at(attrs) + ".bin", particleCount_m);
+	);
 
 	initDataLoaded_m = true;
 }
 
 void Particle::saveArrayToFiles(std::string folder, bool orig)
 {
+	FILE_RDWR_EXCEP_CHECK( \
 	for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
 		fileIO::writeDblBin((orig ? origData_m.at(attrs) : currData_m.at(attrs)), folder + "/" + name_m + "_" + attributeNames_m.at(attrs) + ".bin", particleCount_m);
+	);
 }
 
 void Particle::normalizeParticles(bool orig, bool curr, bool inverse)
@@ -80,12 +85,12 @@ void Particle::initializeGPU()
 	setup2DArray <<< 1, 1 >>> (currData1D_d, currData2D_d, getNumberOfAttributes(), particleCount_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
-	usingGPU = true;
+	usingGPU_m = true;
 }
 
 void Particle::copyDataToGPU()
 {
-	if (!usingGPU)
+	if (!usingGPU_m)
 		throw std::logic_error ("copyDataToGPU: GPU memory has not been initialized yet for particle " + name_m);
 	if (!initDataLoaded_m)
 		return;
@@ -96,7 +101,7 @@ void Particle::copyDataToGPU()
 
 void Particle::copyDataToHost()
 {
-	if (!usingGPU)
+	if (!usingGPU_m)
 		throw std::logic_error ("copyDataToHost: GPU memory has not been initialized yet for particle " + name_m);
 	
 	size_t memSize{ particleCount_m * sizeof(double) };
@@ -106,7 +111,7 @@ void Particle::copyDataToHost()
 
 void Particle::freeGPUMemory()
 {
-	usingGPU = false;
+	usingGPU_m = false;
 
 	CUDA_API_ERRCHK(cudaFree(origData1D_d));
 	CUDA_API_ERRCHK(cudaFree(currData1D_d));

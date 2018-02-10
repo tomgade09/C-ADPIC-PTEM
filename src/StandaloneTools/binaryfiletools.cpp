@@ -4,6 +4,9 @@ std::vector<std::string> constCharToStrVec(const char* str, const char delim)
 {
 	std::string tmp{ str };
 	std::vector<std::string> charVec;
+	
+	if (tmp == "")
+		return charVec;
 
 	size_t loc{ 0 };
 	while (loc != std::string::npos)
@@ -22,6 +25,9 @@ std::vector<double> constCharToDblVec(const char* str, const char delim)
 {
 	std::vector<std::string> strVec{ constCharToStrVec(str, delim) };
 	std::vector<double> ret;
+
+	if (strVec.size() == 0)
+		return ret;
 
 	for (int str = 0; str < strVec.size(); str++)
 		ret.push_back(atof(strVec.at(str).c_str()));

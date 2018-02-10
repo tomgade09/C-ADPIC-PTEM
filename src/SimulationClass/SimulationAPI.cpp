@@ -25,6 +25,12 @@ DLLEXPORT int getNumberOfParticlesAPI(Simulation* simulation, int partInd) {
 DLLEXPORT int getNumberOfAttributesAPI(Simulation* simulation, int partInd) {
 	SIM_API_EXCEP_CHECK(return static_cast<int>(simulation->getNumberOfAttributes(partInd))); }
 
+DLLEXPORT const char* getParticleNameAPI(Simulation* simulation, int partInd) {
+	SIM_API_EXCEP_CHECK(return simulation->getParticleName(partInd)); }
+
+DLLEXPORT const char* getSatelliteNameAPI(Simulation* simulation, int satInd) {
+	SIM_API_EXCEP_CHECK(return simulation->getSatelliteName(satInd)); }
+
 DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation) { //do I even need this?  maybe change way results are prepared
 	return simulation->areResultsPrepared(); }
 
@@ -89,8 +95,8 @@ DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int satell
 DLLEXPORT void writeSatelliteDataToCSVAPI(Simulation* simulation) {
 	SIM_API_EXCEP_CHECK(simulation->writeSatelliteDataToCSV()); }
 
-DLLEXPORT void loadCompletedSimDataAPI(Simulation* simulation, const char* fileDir, const char* partNames, const char* attrNames, const char* satNames, int numParts) {
-	SIM_API_EXCEP_CHECK(simulation->loadCompletedSimData(fileDir, constCharToStrVec(partNames), constCharToStrVec(attrNames), constCharToStrVec(satNames), numParts)); }
+DLLEXPORT Simulation* loadCompletedSimDataAPI(const char* fileDir, const char* bFieldModel, const char* eFieldElems, const char* partNames, const char* satNames) {
+	SIM_API_EXCEP_CHECK( return new PreviousSimulation(fileDir, bFieldModel, constCharToStrVec(eFieldElems), constCharToStrVec(partNames), constCharToStrVec(satNames)) ); }
 
 
 //Particle functions
@@ -102,23 +108,28 @@ DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, c
 DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir) {
 	SIM_API_EXCEP_CHECK(return new Simulation(dt, simMin, simMax, ionT, magT, rootdir)); }
 
-DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery, const char* loadFileDir)
+DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir)
 {
-	SIM_API_EXCEP_CHECK( \
+	SIM_API_EXCEP_CHECK(\
 	double simMin{ sim->getSimMin() };
 	double simMax{ sim->getSimMax() };
 
 	sim->setBFieldModel("DipoleB", { 72.0 });
 	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
-	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
-	//sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, 115200, 1, 2, RADIUS_EARTH, loadFileDir);
+	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
+	//sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
 
-	sim->createTempSat(0, simMin * 0.999, true,  "btmElec");
-	sim->createTempSat(1, simMin * 0.999, true,  "btmIons");
+	sim->createTempSat(0, simMin * 0.999, true, "btmElec");
+	//sim->createTempSat(1, simMin * 0.999, true, "btmIons");
 	sim->createTempSat(0, simMax * 1.001, false, "topElec");
-	sim->createTempSat(1, simMax * 1.001, false, "topIons");
+	//sim->createTempSat(1, simMax * 1.001, false, "topIons");
+	); /* SIM_API_EXCEP_CHECK() */
+}
 
+DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery)
+{
+	SIM_API_EXCEP_CHECK( \
 	sim->initializeSimulation();
 	sim->copyDataToGPU();
 	sim->iterateSimulation(iterations, printEvery);
@@ -134,14 +145,14 @@ DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
 	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, { arg1 })); }
 
-#undef DLLFILE //uncomment for making an exe file for profiling
+//#undef DLLFILE //uncomment for making an exe file for profiling
 #ifndef DLLFILE
 int main()
 {
 	SIM_API_EXCEP_CHECK( \
 	Simulation* sim{ createSimulationAPI(0.01, 2030837.49610366, 19881647.2473464, 2.5, 1000.0, "./out/") };
 
-	runNormalSimulationAPI(sim, 250, 50, ""); // "./../_in/data/");
+	runNormalSimulationAPI(sim, 115200, 250, 50, ""); // "./../_in/data/");
 
 	terminateSimulationAPI(sim);
 	); /* SIM_API_EXCEP_CHECK() */
