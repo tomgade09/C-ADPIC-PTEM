@@ -35,6 +35,11 @@ class Simulation(_Simulation._SimulationCDLL):
 
     #Run Simulation
     def setupNormalSim(self, numParts, loadFile=False):
+        if (loadFile):
+            loadFileBuf = ctypes.create_string_buffer(bytes(DISTINFOLDER, encoding='utf-8'))
+        else:
+            loadFileBuf = ctypes.create_string_buffer(bytes("", encoding='utf-8'))
+
         self.simDLL_m.setupNormalSimulationAPI(self.simulationptr, numParts, loadFileBuf)
         if self.numAttrs_m == []:
             self.getSimChars()

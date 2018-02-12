@@ -115,7 +115,7 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 	double* v_orig; double* vperp_orig; double* s_orig;
 	v_orig = origData_d[0]; vperp_orig = origData_d[1]; s_orig = origData_d[2];
 
-	if (s_d[thdInd] < 0.001) //if s is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
+	if (s_d[thdInd] < 0.001 && simtime == 0.0) //if s is zero (or pretty near zero to account for FP error), generate particles - every other starting at bottom/top of sim
 	{
 		if (thdInd < numParts / 2) //need perhaps a better way to determine distribution of ionosphere/magnetosphere particles
 			ionosphereGenerator(v_d[thdInd], mu_d[thdInd], s_d[thdInd], simConsts, mass, &crndStateA[(blockIdx.x % (NUMRNGSTATES / BLOCKSIZE)) * blockDim.x + (threadIdx.x)]);
@@ -127,7 +127,7 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 		s_orig[thdInd] = s_d[thdInd];
 		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / (*bfield)->getBFieldAtS(s_d[thdInd], simtime);
 	}
-	else if (simtime == 0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
+	else if (simtime == 0.0) //copies data to arrays that track the initial distribution - if data is loaded in, the above block won't be called
 	{
 		v_orig[thdInd] = v_d[thdInd];
 		vperp_orig[thdInd] = mu_d[thdInd];

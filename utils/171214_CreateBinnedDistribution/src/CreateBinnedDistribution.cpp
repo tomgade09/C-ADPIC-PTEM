@@ -11,11 +11,11 @@ constexpr int	 PITCHBINS{ 1800 };
 constexpr int	 NUMPARTICLES{ ENERGYBINS * PITCHBINS };
 constexpr double LOGEMAX{ 4.5 };
 constexpr double LOGEMIN{ 0.5 };
-constexpr double LOGEBINSIZE{ (LOGEMAX - LOGEMIN) / ENERGYBINS };
+constexpr double LOGEBINSIZE{ (LOGEMAX - LOGEMIN) / (ENERGYBINS - 1) };
 constexpr double PITCHBINSIZE{ 180.0 / PITCHBINS };
 constexpr double ZTOP{ 19881647.2473464 };
 constexpr double ZBOTTOM{ 101322.378940846 };
-constexpr double PI_C{ 3.14159265359 };
+constexpr double PI_C{ 3.14159265358979323846 };
 
 int main()
 {
@@ -48,20 +48,24 @@ int main()
 	for (int iii = 0; iii < PITCHBINS; iii++)
 		pitches.at(iii) = 180.0 - iii * 180.0 / (PITCHBINS - 1);
 	
+	std::cout << std::endl << "First two energies: " << energies.at(0) << "  " << energies.at(1) << std::endl;
+
 	//Populate Electron Data
 	std::cout << "Populating and writing Electrons and Ions...\n";
 	for (int iii = 0; iii < PITCHBINS; iii++)
 	{
 		for (int jjj = 0; jjj < ENERGYBINS; jjj++)
 		{
-			elec_vec.at(0).at(iii * ENERGYBINS + jjj) = -sqrt(energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * cos(pitches[iii] * PI_C / 180);
-			elec_vec.at(1).at(iii * ENERGYBINS + jjj) = sqrt(energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[iii] * PI_C / 180);
+			elec_vec.at(0).at(iii * ENERGYBINS + jjj) = -sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * cos(pitches[iii] * PI_C / 180);
+			elec_vec.at(1).at(iii * ENERGYBINS + jjj) = sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[iii] * PI_C / 180);
 			elec_vec.at(2).at(iii * ENERGYBINS + jjj) = (pitches[iii] <= 90) ? ZTOP : ZBOTTOM;
-			ions_vec.at(0).at(iii * ENERGYBINS + jjj) = -sqrt(energies[jjj] * 1.60218e-19 / MASS_PROTON) * cos(pitches[iii] * PI_C / 180);
-			ions_vec.at(1).at(iii * ENERGYBINS + jjj) = sqrt(energies[jjj] * 1.60218e-19 / MASS_PROTON) * sin(pitches[iii] * PI_C / 180);
+			ions_vec.at(0).at(iii * ENERGYBINS + jjj) = -sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_PROTON) * cos(pitches[iii] * PI_C / 180);
+			ions_vec.at(1).at(iii * ENERGYBINS + jjj) = sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_PROTON) * sin(pitches[iii] * PI_C / 180);
 			ions_vec.at(2).at(iii * ENERGYBINS + jjj) = (pitches[iii] <= 90) ? ZTOP : ZBOTTOM;
 		}
 	}
+
+	std::cout << "First two vpara/vperps: " << elec_vec.at(0).at(0) << "/" << elec_vec.at(1).at(0) << "  " << elec_vec.at(0).at(1) << "/" << elec_vec.at(1).at(1) << std::endl << std::endl;
 
 	std::string folderout{ "./../../../out/" };
 	std::vector<std::string> names{ "elec_vpara.bin", "elec_vperp.bin", "elec_s.bin" };
