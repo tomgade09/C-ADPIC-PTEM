@@ -7,7 +7,7 @@ CDFstatus exitStatus;
 char errTxt[CDF_STATUSTEXT_LEN + 1];
 #define CDFCHKERR() { if (exitStatus != CDF_OK) { CDFgetStatusText(exitStatus, errTxt); std::cout << "Something went wrong: " << errTxt << " : " << __FILE__ << ":" << __LINE__ << std::endl; } }
 
-CDFid setupCDF(char* fileName, char* dataName, int energyBins, int angleBins, double eBinSize, double aBinSize, std::vector<int>& indsOut)
+CDFid setupCDF(char* fileName, char* dataName, int energyBins, int angleBins)
 {
 	CDFid     cdfid;
 
@@ -64,42 +64,34 @@ CDFid setupCDF(char* fileName, char* dataName, int energyBins, int angleBins, do
 	double mass{ 9.10938356e-31 };
 	exitStatus = CDFputAttrgEntry(cdfid, massAttrNum, 0, CDF_DOUBLE, 1, &mass); CDFCHKERR();
 
-	int dimSizes[]{ 18, 48 };
-	int dimVar[]{ VARY, VARY };
-	//exitStatus = CDFcreatezVar(cdfid, "Ionospheric-Source Electrons Escape Energy/Pitch Angle Count", CDF_INT4, 1, 2, dimSizes, VARY, dimVar, ionIndOut); CDFCHKERR();
-	//exitStatus = CDFcreatezVar(cdfid, "Magnetospheric-Source Electrons Escape Energy/Pitch Angle Count", CDF_INT4, 1, 2, dimSizes, VARY, dimVar, magIndOut); CDFCHKERR();
-	
-	//CDFstatus CDFcreatezVar(CDFid id, char* varName, int dataType, int numElements, int numDims, int dimSizes[], int recVariance, int dimVariances[], int* varNum)
-	exitStatus = CDFcreatezVar(cdfid, "Electrons Escape Energy/Pitch Angle Count", CDF_INT4, 1, 2, dimSizes, VARY, dimVar, &indsOut.at(0)); CDFCHKERR();
-	exitStatus = CDFcreatezVar(cdfid, "Mid-Bin Energies", CDF_DOUBLE, 1, 1, &dimSizes[1], VARY, &dimVar[0], &indsOut.at(1)); CDFCHKERR();
-	exitStatus = CDFcreatezVar(cdfid, "Mid-Bin Angles", CDF_DOUBLE, 1, 1, &dimSizes[0], VARY, &dimVar[1], &indsOut.at(2)); CDFCHKERR();
-
-	int eBinzAttrNum{ 0 };
-	exitStatus = CDFcreateAttr(cdfid, "LOG E BIN SIZE (LOG EV)", VARIABLE_SCOPE, &eBinzAttrNum); CDFCHKERR();
-	exitStatus = CDFputAttrzEntry(cdfid, eBinzAttrNum, indsOut.at(1), CDF_DOUBLE, 1, &eBinSize); CDFCHKERR();
-
-	int aBinzAttrNum{ 0 };
-	exitStatus = CDFcreateAttr(cdfid, "ANG BIN SIZE (LOG EV)", VARIABLE_SCOPE, &aBinzAttrNum); CDFCHKERR();
-	exitStatus = CDFputAttrzEntry(cdfid, aBinzAttrNum, indsOut.at(2), CDF_DOUBLE, 1, &aBinSize); CDFCHKERR();
-
 	return cdfid;
 }
 
-void writezVar1Rec(CDFid id, int variableInd, std::vector<int> dimSizes, void* arrayXD)
-{
+void createWritezVar1Rec(CDFid id, std::string varName, long cdftype, std::vector<int> dimSizes, void* arrayXD, long& variableInd)
+{//can take up to two dimensions
+	if (dimSizes.size() > 2)
+		throw std::invalid_argument ("writezVar1Rec: function is not able to handle more than 2 dimensions at this time");
+
 	std::vector<int> intervals(dimSizes.size(), 1);
 	std::vector<int> indicies(dimSizes.size(), 0);
+	int dimVar[]{ VARY, VARY };
 
+	//CDFstatus CDFcreatezVar(CDFid id, char* varName, long dataType, long numElements, long numDims, long dimSizes[], long recVariance, long dimVariances[], long* varNum)
 	//CDFstatus CDFhyperPutzVarData(CDFid id, long varNum, long recStart, long recCount, long recInterval, long indicies[], long counts[], long intervals[], void* buffer)
+	exitStatus = CDFcreatezVar(id, varName.c_str(), cdftype, 1, (long)dimSizes.size(), dimSizes.data(), VARY, dimVar, &variableInd); CDFCHKERR();
 	exitStatus = CDFhyperPutzVarData(id, variableInd, 0, 1, 1, indicies.data(), dimSizes.data(), intervals.data(), arrayXD); CDFCHKERR();
 }
 
-std::vector<std::vector<int>> countBins(std::vector<double> energies, std::vector<double> pitches, int particlecount, int nebins, int nanglebins, std::vector<double>& binEnergies, std::vector<double>& binAngles)
+void createzVarAttr(CDFid id, long varNum, std::string attrName, long cdftype, void* data, long& attrNum)
 {
-	std::cout << sizeof(int) << "  " << sizeof(int) << std::endl << std::endl;
+	exitStatus = CDFcreateAttr(id, attrName.c_str(), VARIABLE_SCOPE, &attrNum); CDFCHKERR();
+	exitStatus = CDFputAttrzEntry(id, attrNum, varNum, cdftype, 1, data); CDFCHKERR();
+}
 
-	std::vector<int>                ecount(nebins);
-	std::vector<std::vector<int>>   eAngCount(nanglebins);   //vec[angbin][ebin]
+std::vector<std::vector<long long>> countBins(std::vector<double> energies, std::vector<double> pitches, int particlecount, int nebins, int nanglebins, std::vector<double>& binEnergies, std::vector<double>& binAngles)
+{
+	std::vector<long long>                ecount(nebins);
+	std::vector<std::vector<long long>>   eAngCount(nanglebins);   //vec[angbin][ebin]
 	std::vector<double>             energiesLogMidBin(nebins);
 	std::vector<double>             anglesMidBin(nanglebins);
 
@@ -110,13 +102,11 @@ std::vector<std::vector<int>> countBins(std::vector<double> energies, std::vecto
 	double angleMax{ 180.0 };
 	double aBinSz{ (angleMax - angleMin) / nanglebins};
 
-	double logeMn{ 0.5 };
+	double logeMn{ 0.49 };
 	double logeMx{ 4.5 };
 	double eBinSz{ (logeMx - logeMn) / nebins };
 
-	std::cout << aBinSz << "  " << eBinSz << std::endl;
-
-	int partCountTotal{ 0 };
+	long long partCountTotal{ 0 };
 
 	for (int part = 0; part < particlecount; part++)
 	{
@@ -153,25 +143,41 @@ std::vector<std::vector<int>> countBins(std::vector<double> energies, std::vecto
 	binEnergies = energiesLogMidBin;
 	binAngles = anglesMidBin;
 
-	std::cout << partCountTotal << "  total" << std::endl;
-	std::cout << "Data count out:" << std::endl;
-	for (int angbin = 0; angbin < nanglebins; angbin++)
+	return eAngCount;
+}
+
+std::vector<std::vector<long long>> weightMaxwellian(std::vector<std::vector<long long>> counts, std::vector<double> eBinMids, double logeMin, double dloge, double angleMin, double dangle, double sigmaT_eV)
+{
+	double c{ 1 / (sqrt(2 * 3.14159265358979323846) * sigmaT_eV) };
+	double eBinSize{ pow(10, logeMin + dloge * counts.at(0).size()) - pow(10, logeMin + dloge * (counts.at(0).size() - 1)) };
+	double expNormFactor{ eBinSize * c * exp(- pow(10, logeMin + dloge * (counts.at(0).size() - 0.5)) / sigmaT_eV) }; //logeMin + dloge * ebinsTot gets you to the top - loge = 4.5; we want the last bin which is a half step back from the end point, hence -0.5
+	
+	for (int angs = 0; angs < counts.size(); angs++)
 	{
-		for (int ebin = 0; ebin < nebins; ebin++)
+		for (int engs = 0; engs < counts.at(0).size(); engs++)
 		{
-			std::cout << eAngCount.at(angbin).at(ebin) << "  ";
+			double eBinMin{ pow(10, logeMin + dloge * engs) };
+			double eBinMax{ pow(10, logeMin + dloge * (engs + 1)) };
+			long long multFact{ (long long)round((eBinMax - eBinMin) * c * exp(-eBinMids.at(engs) / sigmaT_eV) / expNormFactor) }; //also have to mult by bin width
+			counts.at(angs).at(engs) *= multFact;
+			//if (angs == 0) { std::cout << multFact << "  "; }
+			//if (angs == counts.size() - 1) { std::cout << counts.at(angs).at(engs) << "  "; }
+		}
+		//if (angs == 0 || angs == counts.size() - 1) { std::cout << std::endl << std::endl; }
+	}
+
+	std::cout << std::endl << "Maxwellian count out:" << std::endl;
+	for (int angbin = 0; angbin < counts.size(); angbin++)
+	{
+		for (int ebin = 0; ebin < counts.at(0).size(); ebin++)
+		{
+			std::cout << counts.at(angbin).at(ebin) << " ";
 		}
 		std::cout << std::endl;
 	}
-	std::cout << std::endl << std::endl << "Angle Bins:" << std::endl;
-	for (int angbin = 0; angbin < nanglebins; angbin++)
-		std::cout << anglesMidBin.at(angbin) << "  ";
-	std::cout << std::endl << std::endl << "Energy Bins:" << std::endl;
-	for (int ebin = 0; ebin < nebins; ebin++)
-		std::cout << std::setprecision(6) << energiesLogMidBin.at(ebin) << "  ";
-	std::cout << std::endl;
 
-	return eAngCount;
+	std::vector<std::vector<long long>> ret{ counts };
+	return ret;
 }
 
 int main()
@@ -225,32 +231,53 @@ int main()
 
 	std::vector<double> binEnergies;
 	std::vector<double> binAngles;
-	std::vector<std::vector<int>> ang_eCounts{ countBins(energies, pitches, PARTICLECOUNT, NEBINS, NANGLEBINS, binEnergies, binAngles) };
+	std::vector<std::vector<long long>> ang_eCounts{ countBins(energies, pitches, PARTICLECOUNT, NEBINS, NANGLEBINS, binEnergies, binAngles) };
+
+	std::cout << std::endl << "Count out:" << std::endl;
+	for (int angbin = 0; angbin < ang_eCounts.size(); angbin++)
+	{
+		for (int ebin = 0; ebin < ang_eCounts.at(0).size(); ebin++)
+		{
+			std::cout << ang_eCounts.at(angbin).at(ebin) << " ";
+		}
+		std::cout << std::endl;
+	}
 
 	//count in bins, mult by maxwellian factor
+	std::vector<std::vector<long long>> maxWeighted{ weightMaxwellian(ang_eCounts, binEnergies, 0.49, (4.5 - 0.49) / 48, 0, 10, 1000.0) };
 	
-	int array2D[NANGLEBINS][NEBINS];
+	long long maxArray2D[NANGLEBINS][NEBINS];
+	long long cntArray2D[NANGLEBINS][NEBINS];
 	for (int ang = 0; ang < NANGLEBINS; ang++)
 		for (int eng = 0; eng < NEBINS; eng++)
-			array2D[ang][eng] = ang_eCounts.at(ang).at(eng);
-
+		{
+			cntArray2D[ang][eng] = ang_eCounts.at(ang).at(eng);
+			maxArray2D[ang][eng] = maxWeighted.at(ang).at(eng);
+		}
 
 	/* Create CDF file and setup with appropriate variables, write data */
 	CDFid     cdfid;
-	std::vector<int> zVarIndicies(10); //[all particles, mid-bin energies, mid-bin angles]
+	std::vector<long> zVarInds(10);
+	std::vector<long> attrInds(10);
 
 	double angleMin{ 0.0 };
 	double angleMax{ 180.0 };
 	double aBinSz{ (angleMax - angleMin) / NANGLEBINS };
 
-	double logeMn{ 0.5 };
+	double logeMn{ 0.49 };
 	double logeMx{ 4.5 };
 	double eBinSz{ (logeMx - logeMn) / NEBINS };
 
-	cdfid = setupCDF("electrons", "Electrons Escape Energy/Pitch Angle Count", NEBINS, NANGLEBINS, eBinSz, aBinSz, zVarIndicies);
-	writezVar1Rec(cdfid, zVarIndicies.at(0), { NANGLEBINS, NEBINS }, array2D); //Counts data
-	writezVar1Rec(cdfid, zVarIndicies.at(1), { NEBINS }, binEnergies.data());  //mid-bin energies
-	writezVar1Rec(cdfid, zVarIndicies.at(2), { NANGLEBINS }, binAngles.data());//mid-bin angles
+	cdfid = setupCDF("test", "Electrons Escape Energy/Pitch Angle Count", NEBINS, NANGLEBINS);
+	//void createWritezVar1Rec(CDFid id, std::string varName, long cdftype, std::vector<int> dimSizes, void* arrayXD, int& variableInd)
+	//void createzVarAttr(CDFid id, long varNum, std::string attrName, long cdftype, void* data, int& attrNum)
+	createWritezVar1Rec(cdfid, "Mid-Bin Energies (eV)",                                          CDF_DOUBLE, { NEBINS }, binEnergies.data(), zVarInds.at(0));
+	createWritezVar1Rec(cdfid, "Mid-Bin Angles (Degrees)",                                       CDF_DOUBLE, { NANGLEBINS }, binAngles.data(), zVarInds.at(1));
+	createWritezVar1Rec(cdfid, "Electrons Escape Energy/Pitch Angle Count, Maxwellian-Weighted", CDF_INT8, { NANGLEBINS, NEBINS }, maxArray2D, zVarInds.at(2));
+	createWritezVar1Rec(cdfid, "Electrons Escape Energy/Pitch Angle Count",                      CDF_INT8, { NANGLEBINS, NEBINS }, cntArray2D, zVarInds.at(3));
+
+	createzVarAttr(cdfid, zVarInds.at(0), "LOG E BIN SIZE (LOG EV)", CDF_DOUBLE, &eBinSz, attrInds.at(0));
+	createzVarAttr(cdfid, zVarInds.at(1), "ANGLE BIN SIZE (DEGREES)", CDF_DOUBLE, &aBinSz, attrInds.at(1));
 
 	CDFcloseCDF(cdfid);
 

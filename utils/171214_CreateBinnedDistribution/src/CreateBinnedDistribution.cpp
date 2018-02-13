@@ -4,7 +4,7 @@
 #include <string>
 #include <cmath>
 
-constexpr double MASS_PROTON{ 1.6726219e-27 }; //kg
+constexpr double MASS_PROTON{ 1.6726219e-27 };   //kg
 constexpr double MASS_ELECTRON{ 9.1093836e-31 }; //kg
 constexpr int	 ENERGYBINS{ 96 };
 constexpr int	 PITCHBINS{ 1800 };
@@ -57,10 +57,10 @@ int main()
 		for (int jjj = 0; jjj < ENERGYBINS; jjj++)
 		{
 			elec_vec.at(0).at(iii * ENERGYBINS + jjj) = -sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * cos(pitches[iii] * PI_C / 180);
-			elec_vec.at(1).at(iii * ENERGYBINS + jjj) = sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[iii] * PI_C / 180);
+			elec_vec.at(1).at(iii * ENERGYBINS + jjj) =  sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_ELECTRON) * sin(pitches[iii] * PI_C / 180);
 			elec_vec.at(2).at(iii * ENERGYBINS + jjj) = (pitches[iii] <= 90) ? ZTOP : ZBOTTOM;
 			ions_vec.at(0).at(iii * ENERGYBINS + jjj) = -sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_PROTON) * cos(pitches[iii] * PI_C / 180);
-			ions_vec.at(1).at(iii * ENERGYBINS + jjj) = sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_PROTON) * sin(pitches[iii] * PI_C / 180);
+			ions_vec.at(1).at(iii * ENERGYBINS + jjj) =  sqrt(2 * energies[jjj] * 1.60218e-19 / MASS_PROTON) * sin(pitches[iii] * PI_C / 180);
 			ions_vec.at(2).at(iii * ENERGYBINS + jjj) = (pitches[iii] <= 90) ? ZTOP : ZBOTTOM;
 		}
 	}
