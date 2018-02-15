@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include "StandaloneTools\StandaloneTools.h"
+#include "FileIO\fileIO.h"
 
 class Satellite
 {
@@ -40,6 +41,7 @@ public:
 	virtual void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 	virtual void freeGPUMemory();
+	virtual void saveDataToDisk(std::string folder, std::vector<std::string> attrNames);
 
 	//Access functions
 	std::vector<std::vector<double>> getConsolidatedData(bool removeZeros);

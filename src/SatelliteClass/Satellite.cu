@@ -23,7 +23,7 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 	if (simtime < dt * 0.9) //not sure I fully like this, but it workscl
 		simtime_d[thdInd] = -1.0;
 
-	if (thdInd == 86580 && simtime == 0.0) { printf("Satellite characteristics: %f, %f, %f, %f, %f\n", v_d[thdInd], mu_d[thdInd], s_d[thdInd], altitude, dt); }
+	//if (thdInd == 86580 && simtime == 0.0) { printf("Satellite characteristics: %f, %f, %f, %f, %f\n", v_d[thdInd], mu_d[thdInd], s_d[thdInd], altitude, dt); }
 
 	if (//if a particle is detected, the slot in array[thdInd] is filled and no further detection happens for that index
 		(simtime_d[thdInd] < -0.1) &&
@@ -36,13 +36,13 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 			)
 		)
 	{
-		if (thdInd == 86580) { printf("86580 detected: %f, %.6e, %f, %f\n", v_d[thdInd]/6.3712e6, mu_d[thdInd], s_d[thdInd]/6.3712e6, s_minus_vdt/6.3712e6); }
+		//if (thdInd == 86580) { printf("86580 detected: %f, %.6e, %f, %f\n", v_d[thdInd]/6.3712e6, mu_d[thdInd], s_d[thdInd]/6.3712e6, s_minus_vdt/6.3712e6); }
 		detected_v_d[thdInd] = v_d[thdInd];
 		detected_mu_d[thdInd] = mu_d[thdInd];
 		detected_s_d[thdInd] = s_d[thdInd];
 		simtime_d[thdInd] = simtime;
 		index_d[thdInd] = static_cast<double>(thdInd);
-		if (thdInd == 86580) { printf("Array elements: %f, %f, %.6e, %f\n\n", simtime_d[thdInd], detected_v_d[thdInd]/6.3712e6, detected_mu_d[thdInd], detected_s_d[thdInd]/6.3712e6); }
+		//if (thdInd == 86580) { printf("Array elements: %f, %f, %.6e, %f\n\n", simtime_d[thdInd], detected_v_d[thdInd]/6.3712e6, detected_mu_d[thdInd], detected_s_d[thdInd]/6.3712e6); }
 	}//particle not removed from sim
 }
 
@@ -107,7 +107,15 @@ std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros
 		}
 		else
 			tmp2D.at(jjj).push_back(data_m.at(iii).at(jjj).at(kk));
-	)
+	);
 
-		return tmp2D;
+	return tmp2D;
+}
+
+void Satellite::saveDataToDisk(std::string folder, std::vector<std::string> attrNames)
+{
+	std::vector<std::vector<double>> results{ getConsolidatedData(false) };
+
+	for (int attr = 0; attr < results.size(); attr++)
+		fileIO::writeDblBin(results.at(attr), folder + name_m + "_" + attrNames.at(attr) + ".bin", results.at(attr).size());
 }

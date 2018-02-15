@@ -39,7 +39,7 @@ void Simulation::receiveSatelliteData(bool removeZeros)
 		convertMuToVPerp(satelliteData_m.at(iii).at(vperpInd), satelliteData_m.at(iii).at(sInd), satelliteData_m.at(iii).at(tInd), satellites_m.at(iii)->particle->getMass());
 	);
 
-	LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes() + 2,\
+	/*LOOP_OVER_2D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->getNumberOfAttributes() + 2,\
 		std::string name{ saveRootDir_m + "/bins/satellites/" };
 		name += satellites_m.at(iii)->satellite->getName() + "_";
 		if (jjj == satellites_m.at(iii)->satellite->getNumberOfAttributes())
@@ -50,7 +50,7 @@ void Simulation::receiveSatelliteData(bool removeZeros)
 			name += satellites_m.at(iii)->particle->getDimensionNameByInd(jjj);
 		name += ".bin";
 		fileIO::writeDblBin(satelliteData_m.at(iii).at(jjj), name, satellites_m.at(iii)->particle->getNumberOfParticles());
-	);
+	);*/
 }
 
 //public functions
@@ -210,6 +210,7 @@ void Simulation::prepareResults(bool normalizeToRe)
 
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true));
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false));
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->saveDataToDisk(saveRootDir_m + "/bins/satellites/", { "vpara", "vperp", "s", "time", "index" }))
 
 	//normalizes m to Re
 	if (normalizeToRe)
