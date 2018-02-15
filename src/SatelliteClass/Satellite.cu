@@ -13,32 +13,36 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 {
 	int thdInd = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	double* v_d; double* mu_d; double* z_d; double* simtime_d; double* index_d;
-	double* detected_v_d; double* detected_mu_d; double* detected_z_d;
-	v_d = data_d[0]; mu_d = data_d[1]; z_d = data_d[2]; simtime_d = capture_d[3]; index_d = capture_d[4];
-	detected_v_d = capture_d[0]; detected_mu_d = capture_d[1]; detected_z_d = capture_d[2];
+	double* v_d; double* mu_d; double* s_d; double* simtime_d; double* index_d;
+	double* detected_v_d; double* detected_mu_d; double* detected_s_d;
+	v_d = data_d[0]; mu_d = data_d[1]; s_d = data_d[2]; simtime_d = capture_d[3]; index_d = capture_d[4];
+	detected_v_d = capture_d[0]; detected_mu_d = capture_d[1]; detected_s_d = capture_d[2];
 
-	double z_minus_vdt{ z_d[thdInd] - v_d[thdInd] * dt };
+	double s_minus_vdt{ s_d[thdInd] - v_d[thdInd] * dt };
 	
-	if (simtime == 0) //not sure I fully like this, but it works
+	if (simtime < dt * 0.9) //not sure I fully like this, but it workscl
 		simtime_d[thdInd] = -1.0;
 
-	if (
-		(detected_z_d[thdInd] < 1) &&
+	if (thdInd == 86580 && simtime == 0.0) { printf("Satellite characteristics: %f, %f, %f, %f, %f\n", v_d[thdInd], mu_d[thdInd], s_d[thdInd], altitude, dt); }
+
+	if (//if a particle is detected, the slot in array[thdInd] is filled and no further detection happens for that index
+		(simtime_d[thdInd] < -0.1) &&
 			( //no detected particle is in the data array at the thread's index already AND
 				//detector is facing down and particle crosses altitude in dt
-				((!upward) && (z_d[thdInd] > altitude) && (z_minus_vdt < altitude))
+				((!upward) && (s_d[thdInd] >= altitude) && (s_minus_vdt < altitude))
 					|| //OR
 				//detector is facing up and particle crosses altitude in dt
-				((upward) && (z_d[thdInd] < altitude) && (z_minus_vdt > altitude))
+				((upward) && (s_d[thdInd] <= altitude) && (s_minus_vdt > altitude))
 			)
 		)
 	{
+		if (thdInd == 86580) { printf("86580 detected: %f, %.6e, %f, %f\n", v_d[thdInd]/6.3712e6, mu_d[thdInd], s_d[thdInd]/6.3712e6, s_minus_vdt/6.3712e6); }
 		detected_v_d[thdInd] = v_d[thdInd];
 		detected_mu_d[thdInd] = mu_d[thdInd];
-		detected_z_d[thdInd] = z_d[thdInd];
+		detected_s_d[thdInd] = s_d[thdInd];
 		simtime_d[thdInd] = simtime;
 		index_d[thdInd] = static_cast<double>(thdInd);
+		if (thdInd == 86580) { printf("Array elements: %f, %f, %.6e, %f\n\n", simtime_d[thdInd], detected_v_d[thdInd]/6.3712e6, detected_mu_d[thdInd], detected_s_d[thdInd]/6.3712e6); }
 	}//particle not removed from sim
 }
 
@@ -58,6 +62,7 @@ void Satellite::iterateDetector(double simtime, double dt, int blockSize)
 		throw std::invalid_argument ("Satellite::iterateDetector: numberOfParticles is not a whole multiple of blocksize, some particles will not be checked");
 	
 	satelliteDetector <<< numberOfParticles_m / blockSize, blockSize >>> (dblppGPU_m.at(0), dblppGPU_m.at(1), simtime, dt, altitude_m, upwardFacing_m);
+	//CUDA_KERNEL_ERRCHK_WSYNC();
 }
 
 void Satellite::copyDataToHost()

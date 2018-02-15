@@ -9,7 +9,7 @@ constexpr double JOULE_PER_EV{ 1.6021766209e-19 };
 constexpr double PI{ 3.14159265358979323846 };
 
 constexpr double DT{ 0.01 };
-constexpr double MIN_Z_SIM{ 2030837.49610366 };
+constexpr double MIN_Z_SIM{ 101322.378940846 };
 constexpr double MAX_Z_SIM{ 19881647.2473464 };
 constexpr double MIN_Z_NORM{ MIN_Z_SIM / RADIUS_EARTH };
 constexpr double MAX_Z_NORM{ MAX_Z_SIM / RADIUS_EARTH };
@@ -165,6 +165,8 @@ int main()
 	args[3] = CHARGE_ELEM * ((elecTF) ? (-1.0) : (1.0));
 	args[4] = (elecTF) ? (MASS_ELECTRON) : (MASS_PROTON);
 
+	double minS{ 1.0e10 };
+
 	while ((z < MAX_Z_SIM * 1.001) && (z > MIN_Z_SIM * 0.999) && simtime <= 5000)
 	{
 		//[t_RK, vz, mu, q, m, pz_0, simtime]
@@ -182,9 +184,15 @@ int main()
 		z += v_para * DT;
 		simtime += DT;
 
+		if (z < minS)
+			minS = z;
+
 		if (static_cast<int>(simtime/DT) % 10000000 == 0)
 			std::cout << "Iterating: " << simtime << " s / 5000 s\n";
 	}
+
+	std::cout << "minS: " << minS << std::endl << std::endl;
+	std::cout << "min/max B: " << BFieldAtS(Bargs, 7, MIN_Z_SIM, 0.0) << "  " << BFieldAtS(Bargs, 7, MAX_Z_SIM, 0.0) << std::endl << std::endl;
 
 	//convert to v_perp
 	v_perp = sqrt(2 * v_perp * BFieldAtS(Bargs, 7, z, simtime) / args[4]);

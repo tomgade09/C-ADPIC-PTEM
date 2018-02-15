@@ -124,6 +124,13 @@ DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const cha
 	//sim->createTempSat(1, simMin * 0.999, true, "btmIons");
 	sim->createTempSat(0, simMax * 1.001, false, "topElec");
 	//sim->createTempSat(1, simMax * 1.001, false, "topIons");
+
+	sim->createTempSat(0, 1014252.60176003, false, "1e6ElecDown"); //altitude = 1000km, s = what you see to the left
+	sim->createTempSat(0, 1014252.60176003, true, "1e6ElecUp");
+	sim->createTempSat(0, 3049829.25570638, false, "3e6ElecDown"); //altitude = 3000km
+	sim->createTempSat(0, 3049829.25570638, true, "3e6ElecUp");
+	sim->createTempSat(0, 4071307.04106411, false, "4e6ElecDown");   //altitude = 4000km
+	sim->createTempSat(0, 4071307.04106411, true, "4e6ElecUp");
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
