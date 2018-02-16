@@ -210,7 +210,11 @@ void Simulation::prepareResults(bool normalizeToRe)
 
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_init/", true));
 	LOOP_OVER_1D_ARRAY(particleTypes_m.size(), particleTypes_m.at(iii)->saveArrayToFiles("./bins/particles_final/", false));
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->saveDataToDisk(saveRootDir_m + "/bins/satellites/", { "vpara", "vperp", "s", "time", "index" }))
+	LOOP_OVER_1D_ARRAY(satellites_m.size(), \
+		Satellite* satTmp{ satellites_m.at(iii)->satellite.get() };
+		double mass{ satellites_m.at(iii)->particle->getMass() };
+		double btmp{ getBFieldAtS(satTmp->getAltitude(), 0.0) };
+		satTmp->saveDataToDisk(saveRootDir_m + "/bins/satellites/", { "vpara", "vperp", "s", "time", "index" }, btmp, mass));
 
 	//normalizes m to Re
 	if (normalizeToRe)

@@ -6,7 +6,7 @@
 
 constexpr double MASS_PROTON{ 1.6726219e-27 };   //kg
 constexpr double MASS_ELECTRON{ 9.1093836e-31 }; //kg
-constexpr int	 ENERGYBINS{ 96 };
+constexpr int	 ENERGYBINS{ 192 };
 constexpr int	 PITCHBINS{ 1800 };
 constexpr int	 NUMPARTICLES{ ENERGYBINS * PITCHBINS };
 constexpr double LOGEMAX{ 4.5 };

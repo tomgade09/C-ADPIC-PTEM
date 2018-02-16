@@ -192,7 +192,8 @@ void Simulation::initializeSimulation()
 
 	//some cout statements about the sim here
 	//Sim Header printed from Python - move here eventually
-	std::cout << "Sim between:    " << simMin_m << " m - " << simMax_m << " m" << std::endl;
+	std::cout << "Sim between:    " << simMin_m << "m - " << simMax_m << "m" << std::endl;
+	std::cout << "dt:             " << dt_m << "s" << std::endl;
 	std::cout << "BField Model:   " << BFieldModel_m->getName() << std::endl;
 	std::cout << "EField Elems:   " << ((EFieldModel_m == nullptr) ? ("") : (EFieldModel_m->getEElemsStr())) << std::endl;
 	std::cout << "Particles:      " << particleTypes_m.at(0)->getName() << ": #: " << particleTypes_m.at(0)->getNumberOfParticles() << ", loaded files?: " << (particleTypes_m.at(0)->getInitDataLoaded() ? "true" : "false") << std::endl;
