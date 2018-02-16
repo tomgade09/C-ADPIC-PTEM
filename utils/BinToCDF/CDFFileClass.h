@@ -16,10 +16,10 @@ protected:
 	std::string filename_m;
 
 	//Attribute and variable characteristics
-	std::vector<long>        attrIndicies;
-	std::vector<std::string> attrNameStrs;
-	std::vector<long>        zVarIndicies;
-	std::vector<std::string> zVarNameStrs;
+	std::vector<long>        attrIndicies_m;
+	std::vector<std::string> attrNameStrs_m;
+	std::vector<long>        zVarIndicies_m;
+	std::vector<std::string> zVarNameStrs_m;
 
 	//Error handling
 	CDFstatus   exitStatus_m;
@@ -30,14 +30,23 @@ protected:
 public:
 	CDFFileClass(std::string filename) : filename_m{ filename }
 	{
-		if (filename.size() > 1023)
-			throw std::invalid_argument ("CDFFileClass::CDFFileClass: filename is too long " + filename);
-
 		char fn[1024];
-		for (int chr = 0; chr < filename.size() + 1; chr++)
-			fn[chr] = filename.c_str()[chr];
+		for (int chr = 0; chr < filename_m.size() + 1; chr++)
+			fn[chr] = filename_m.c_str()[chr];
 		
 		exitStatus_m = CDFcreateCDF(fn, &cdfid_m); //file exists is -2013
+
+		while (exitStatus_m == -2013)
+		{
+			if (filename_m.size() > 1023)
+				throw std::invalid_argument("CDFFileClass::CDFFileClass: filename is too long " + filename);
+
+			filename_m += "2";
+			for (int chr = 0; chr < filename_m.size() + 1; chr++)
+				fn[chr] = filename_m.c_str()[chr];
+			exitStatus_m = CDFcreateCDF(fn, &cdfid_m);
+			
+		}
 	}
 
 	~CDFFileClass()
@@ -46,8 +55,9 @@ public:
 	}
 
 	void writeNewZVar(std::string varName, long cdftype, std::vector<int> dimSizes, void* arrayXD);
-	void createZVarAttr(long varNum, std::string attrName, long cdftype, void* data);
-	void createZVarAttr(std::string varName, std::string attrName, long cdftype, void* data);
+	void createGlobalAttr(std::string attrName, long cdftype, long datalen, void* data);
+	void createZVarAttr(long varNum,         std::string attrName, long cdftype, long datalen, void* data);
+	void createZVarAttr(std::string varName, std::string attrName, long cdftype, long datalen, void* data);
 };
 
 #endif /* !CDFFILE_H */

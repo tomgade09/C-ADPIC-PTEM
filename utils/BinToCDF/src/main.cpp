@@ -171,7 +171,7 @@ int main()
 	constexpr int SIMNANGLEBINS{ 1800 };
 	constexpr int PARTICLECOUNT{ SIMNEBINS * SIMNANGLEBINS };
 
-	std::string savefolder{ "./../../../../../_dataout/180216_13.35.56/" };
+	std::string savefolder{ "./../../../../../_dataout/180216_16.52.03/" };
 
 	std::vector<double> satdown_vpara(PARTICLECOUNT);
 	std::vector<double> satdown_vperp(PARTICLECOUNT);
