@@ -120,12 +120,12 @@ void Satellite::saveDataToDisk(std::string folder, std::vector<std::string> attr
 		if (results.at(1).at(iii) != 0.0)
 			results.at(1).at(iii) = sqrt(2 * results.at(1).at(iii) * BatAltitude / mass);
 
-	int count{ 0 };
+	/*int count{ 0 };
 	for (int iii = 0; iii < numberOfParticles_m; iii++)
 		if (abs(results.at(1).at(iii)) > 0.0 && abs(results.at(1).at(iii)) < 1e-10)
 			count++;
 
-	std::cout << "Count of extremely small vperp values: " << count << " for satellite " << name_m << "  B at altitude: " << BatAltitude << std::endl;
+	std::cout << "Count of extremely small vperp values: " << count << " for satellite " << name_m << "  B at altitude: " << BatAltitude << std::endl;*/
 
 	for (int attr = 0; attr < results.size(); attr++)
 		fileIO::writeDblBin(results.at(attr), folder + name_m + "_" + attrNames.at(attr) + ".bin", results.at(attr).size());

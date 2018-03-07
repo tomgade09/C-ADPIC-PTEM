@@ -156,10 +156,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\CDFFileClass.cpp" />
-    <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\postprocess.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CDFFileClass.h" />
+    <ClInclude Include="..\postprocess.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
