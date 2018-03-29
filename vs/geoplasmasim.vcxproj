@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\classAPI.cpp" />
     <ClCompile Include="..\src\FileIO\fileIO.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\src\LogFile\LogFileAPI.cpp" />
@@ -33,6 +34,7 @@
     <ClInclude Include="..\include\BField\BField.h" />
     <ClInclude Include="..\include\BField\DipoleB.h" />
     <ClInclude Include="..\include\BField\DipoleBLUT.h" />
+    <ClInclude Include="..\include\classAPI.h" />
     <ClInclude Include="..\include\dllexport.h" />
     <ClInclude Include="..\include\EField\allEModels.h" />
     <ClInclude Include="..\include\EField\EField.h" />

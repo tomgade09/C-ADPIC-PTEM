@@ -93,10 +93,10 @@ std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros
 	if (!dataReady_m)
 		copyDataToHost();
 
-	std::vector<std::vector<double>> tmp2D;
+	std::vector<std::vector<double>> tmp2D(numberOfAttributes_m + 2, std::vector<double>());
 
-	for (int attrs = 0; attrs < numberOfAttributes_m + 2; attrs++)
-		tmp2D.push_back(std::vector<double>());
+	//for (int attrs = 0; attrs < numberOfAttributes_m + 2; attrs++)
+		//tmp2D.push_back(std::vector<double>());
 
 	LOOP_OVER_3D_ARRAY(data_m.size(), data_m.at(iii).size(), numberOfParticles_m, \
 		if (removeZeros) //iii is msmt iterator, jjj is attribute iterator, kk is particle iterator
@@ -112,20 +112,13 @@ std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros
 	return tmp2D;
 }
 
-void Satellite::saveDataToDisk(std::string folder, std::vector<std::string> attrNames, double BatAltitude, double mass) //move B and mass to getConsolidatedData and have it convert back (or in gpu?)
+void Satellite::saveDataToDisk(std::string folder, std::vector<std::string> attrNames, std::function<double(double,double)> BatS, double mass) //move B and mass to getConsolidatedData and have it convert back (or in gpu?)
 {
 	std::vector<std::vector<double>> results{ getConsolidatedData(false) };
 
 	for (int iii = 0; iii < results.at(1).size(); iii++)
 		if (results.at(1).at(iii) != 0.0)
-			results.at(1).at(iii) = sqrt(2 * results.at(1).at(iii) * BatAltitude / mass);
-
-	/*int count{ 0 };
-	for (int iii = 0; iii < numberOfParticles_m; iii++)
-		if (abs(results.at(1).at(iii)) > 0.0 && abs(results.at(1).at(iii)) < 1e-10)
-			count++;
-
-	std::cout << "Count of extremely small vperp values: " << count << " for satellite " << name_m << "  B at altitude: " << BatAltitude << std::endl;*/
+			results.at(1).at(iii) = sqrt(2 * results.at(1).at(iii) * BatS(results.at(2).at(iii), results.at(3).at(iii)) / mass);
 
 	for (int attr = 0; attr < results.size(); attr++)
 		fileIO::writeDblBin(results.at(attr), folder + name_m + "_" + attrNames.at(attr) + ".bin", results.at(attr).size());

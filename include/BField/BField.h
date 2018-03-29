@@ -29,15 +29,7 @@ public:
 	__host__ __device__ virtual double getGradBAtS (const double s, const double t)=0;
 
 	__host__ virtual std::string getName() { return modelName_m; }
-	__host__ virtual BField** getPtrGPU()  { return this_d; } //once returned, have to dynamic_cast it to the appropriate type
+	__host__ virtual BField** getPtrGPU()  { return this_d; } //once returned, have to cast it to the appropriate type
 };
 
 #endif
-
-/*
-#ifndef __CUDA_ARCH__
-std::cerr << "BField destructor" << std::endl;
-#else
-printf("BField GPU destructor\n");
-#endif
-*/

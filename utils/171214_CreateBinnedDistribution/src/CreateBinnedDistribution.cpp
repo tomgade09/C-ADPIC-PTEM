@@ -7,7 +7,7 @@
 constexpr double MASS_PROTON{ 1.6726219e-27 };   //kg
 constexpr double MASS_ELECTRON{ 9.1093836e-31 }; //kg
 constexpr int	 ENERGYBINS{ 96 };
-constexpr int	 PITCHBINS{ 3600 };
+constexpr int	 PITCHBINS{ 36000 }; //was 3600
 constexpr int	 NUMPARTICLES{ ENERGYBINS * PITCHBINS };
 constexpr double LOGEMAX{ 4.5 };
 constexpr double LOGEMIN{ 0.5 };
@@ -26,7 +26,7 @@ int main()
 	}
 
 	std::cout << "NUMPARTICLES: " << NUMPARTICLES << "\nENERGYBINS: " << ENERGYBINS << "\nPITCHBINS: " << PITCHBINS << "\nLOGEMAX: " << LOGEMAX << "\nLOGEBINSIZE: " << LOGEBINSIZE;
-	std::cout << "\nPITCHBINSIZE: " << PITCHBINSIZE << "\nZTOP: " << ZTOP << "\nZTOPNORM: " << ZTOP / 6.371e6 << "\nZBOTTOM: " << ZBOTTOM << "\nZBOTTOMNORM: " << ZBOTTOM / 6.371e6 << std::endl;
+	std::cout << "\nPITCHBINSIZE: " << PITCHBINSIZE << "\nZTOP: " << ZTOP << "\nZTOPNORM: " << ZTOP / 6.3712e6 << "\nZBOTTOM: " << ZBOTTOM << "\nZBOTTOMNORM: " << ZBOTTOM / 6.3712e6 << std::endl;
 
 	//Setup
 	std::vector<double> energies; std::vector<double> pitches;

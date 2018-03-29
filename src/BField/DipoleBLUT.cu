@@ -2,16 +2,20 @@
 
 __host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double simtime)
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
-	if (s > simMin_m * 0.999)
-		return 0.0;
+	int startInd{ 0 };
+	if (s < simMin_m)
+		startInd = 0;
+	else if (s > simMax_m)
+		startInd = numMsmts_m - 2; //if s is above simMax, we interpolate based on the highest indicies ([numMsmts - 2] to [numMsmts - 1])
+	else
+		startInd = (int)((s - simMin_m) / ds_msmt_m); //c-style cast to int basically == floor()
 
-	int startInd{ (int)((s - (simMin_m * 0.999)) / ds_msmt_m) }; //c-style cast to int basically == floor()
-	double altBin{ (simMin_m * 0.999 + ds_msmt_m * startInd) };  //or altitude_d[startInd] - not sure which will be faster
-
-	//while ((simMin_m + startInd * ds_msmt_m) > s) // this shouldn't have to be executed - just in case, remove later
-		//startInd--; //if location at startInd is over the actual s, subtract one to get the index below
-	
-	return (s - altBin) * (magnitude_d[startInd + 1] - magnitude_d[startInd]) / (ds_msmt_m); //B = ms + b(0)
+	// deltaB_bin / deltas_bin^3 * (s'(dist up from altBin)) + B@altBin
+	#ifndef __CUDA_ARCH__ //host code
+	return (s - altitude_m[startInd]) * (magnitude_m[startInd + 1] - magnitude_m[startInd]) / ds_msmt_m + magnitude_m[startInd]; //B = ms + b(0)
+	#else
+	return (s - altitude_d[startInd]) * (magnitude_d[startInd + 1] - magnitude_d[startInd]) / ds_msmt_m + magnitude_d[startInd]; //B = ms + b(0)
+	#endif /* !__CUDA_ARCH__ */
 }
 
 __host__ __device__ double DipoleBLUT::getGradBAtS(const double s, const double simtime)
@@ -20,10 +24,15 @@ __host__ __device__ double DipoleBLUT::getGradBAtS(const double s, const double 
 }
 
 //setup CUDA kernels
-__global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts)
+__global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)
 {
 	if (threadIdx.x == 0 && blockIdx.x == 0)
-		(*this_d) = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
+	{
+		DipoleBLUT* tmp_d = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
+		tmp_d->setAltArray(altArray);
+		tmp_d->setMagArray(magArray);
+		(*this_d) = tmp_d;
+	}
 }
 
 __global__ void deleteEnvironmentGPU_DipoleBLUT(BField** this_d)
@@ -41,16 +50,16 @@ __global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double*
 }
 
 //DipoleB class member functions
-void DipoleBLUT::setupEnvironment(double ds_dipoleB)
+void DipoleBLUT::setupEnvironment()
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
-	std::unique_ptr<DipoleB> dip = std::make_unique<DipoleB>(ILATDegrees_m, 1e-6, ds_dipoleB);
+	std::unique_ptr<DipoleB> dip = std::make_unique<DipoleB>(ILATDegrees_m, 1e-10, ds_gradB_m); //destroyed at end of function
 
 	CUDA_API_ERRCHK(cudaMalloc((void **)&this_d, sizeof(BField**)));
 	CUDA_API_ERRCHK(cudaMalloc((void **)&altitude_d, sizeof(double) * numMsmts_m));
 	CUDA_API_ERRCHK(cudaMalloc((void **)&magnitude_d, sizeof(double) * numMsmts_m));
 
 	int blocksize{ 0 };
-	if (numMsmts_m % 256 == 0)
+	if (numMsmts_m % 256 == 0) //maybe add log entry at this point
 		blocksize = 256;
 	else if (numMsmts_m % 128 == 0)
 		blocksize = 128;
@@ -68,8 +77,16 @@ void DipoleBLUT::setupEnvironment(double ds_dipoleB)
 	calcBarray_DipoleBLUT <<< numMsmts_m / blocksize, blocksize >>>(dip->getPtrGPU(), altitude_d, magnitude_d, simMin_m, ds_msmt_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
-	setupEnvironmentGPU_DipoleBLUT <<< 1, 1 >>> (this_d, ILATDegrees_m, simMin_m, simMax_m, ds_gradB_m, numMsmts_m);
+	setupEnvironmentGPU_DipoleBLUT <<< 1, 1 >>> (this_d, ILATDegrees_m, simMin_m, simMax_m, ds_gradB_m, numMsmts_m, altitude_d, magnitude_d);
 	CUDA_KERNEL_ERRCHK_WSYNC();
+
+	//copy generated data back to host into _m arrays
+	#ifndef __CUDA_ARCH__ //host code
+	altitude_m.resize(numMsmts_m);
+	magnitude_m.resize(numMsmts_m);
+	CUDA_API_ERRCHK(cudaMemcpy(altitude_m.data(), altitude_d, sizeof(double) * numMsmts_m, cudaMemcpyDeviceToHost));
+	CUDA_API_ERRCHK(cudaMemcpy(magnitude_m.data(), magnitude_d, sizeof(double) * numMsmts_m, cudaMemcpyDeviceToHost));
+	#endif /* !__CUDA_ARCH__ */
 }
 
 void DipoleBLUT::deleteEnvironment()

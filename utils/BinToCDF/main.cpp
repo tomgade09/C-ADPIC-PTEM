@@ -13,7 +13,7 @@ int main()
 	std::vector<double> binAngles;
 	std::vector<double> binEnergies;
 	vecDbl2D fluxData;
-	TRYCATCHSTDEXP(fluxData = postprocess::steadyFlux("./../../../../../_dataout/180220_15.55.11/", { 0.0, 180.0 }, CDFNANGLEBINS, { 0.5, 4.5 }, CDFNEBINS, { 5.0, 1.25e4 }, { 6.0e3, 0.7e5, 5.0, 1.5e4 }, 9.10938356e-31, PARTICLECOUNT, binAngles, binEnergies));
+	TRYCATCHSTDEXP(fluxData = postprocess::steadyFlux("./../../../../../_dataout/180328_16.42.53/", { 0.0, 180.0 }, CDFNANGLEBINS, { 0.5, 4.5 }, CDFNEBINS, { 10.0, 1.25e5 }, { 5.0e3, 7.0e5, 10.0, 1.5e5 }, 9.10938356e-31, PARTICLECOUNT, binAngles, binEnergies));
 
 	/* Prep Data for CDF */
 	double cntArray2D[CDFNANGLEBINS][CDFNEBINS];

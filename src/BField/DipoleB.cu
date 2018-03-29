@@ -59,10 +59,10 @@ __host__ __device__ double DipoleB::getGradBAtS(const double s, const double sim
 }
 
 //setup CUDA kernels
-__global__ void setupEnvironmentGPU_DipoleB(BField** dipoleb, double ILATDeg, double errTol, double ds)
+__global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, double errTol, double ds)
 {
 	if (threadIdx.x == 0 && blockIdx.x == 0)
-		(*dipoleb) = new DipoleB(ILATDeg, errTol, ds);
+		(*this_d) = new DipoleB(ILATDeg, errTol, ds);
 }
 
 __global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)

@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <functional>
 #include "StandaloneTools\StandaloneTools.h"
 #include "FileIO\fileIO.h"
 
@@ -24,7 +25,8 @@ protected:
 	std::string name_m;
 
 	virtual void initializeSatelliteOnGPU();
-	virtual void dataAllocateNewMsmtVector() { data_m.push_back(form2DvectorArray(numberOfAttributes_m + 2, numberOfParticles_m)); }
+	virtual void dataAllocateNewMsmtVector() { data_m.push_back(std::vector<std::vector<double>>(numberOfAttributes_m + 2, std::vector<double>(numberOfParticles_m)));
+		/*data_m.push_back(form2DvectorArray(numberOfAttributes_m + 2, numberOfParticles_m));*/ }
 
 public:
 	Satellite(double altitude, bool upwardFacing, int numberOfAttributes, long numberOfParticles, double** dataPtrsGPU, std::string name = "Satellite"):
@@ -41,7 +43,7 @@ public:
 	virtual void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 	virtual void freeGPUMemory();
-	virtual void saveDataToDisk(std::string folder, std::vector<std::string> attrNames, double BatAltitude, double mass);
+	virtual void saveDataToDisk(std::string folder, std::vector<std::string> attrNames, std::function<double(double, double)> BatS, double mass);
 
 	//Access functions
 	std::vector<std::vector<double>> getConsolidatedData(bool removeZeros);

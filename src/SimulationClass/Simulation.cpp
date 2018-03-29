@@ -120,12 +120,12 @@ void Simulation::convertVPerpToMu(int partInd)
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), simTime_m) / mass));
+	LOOP_OVER_1D_ARRAY(mu.size(), if (mu.at(iii) != 0.0) { mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), simTime_m) / mass); });
 }
 
 void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass)
 {
-	LOOP_OVER_1D_ARRAY(mu.size(), mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), t.at(iii)) / mass));
+	LOOP_OVER_1D_ARRAY(mu.size(), if (mu.at(iii) != 0.0) { mu.at(iii) = sqrt(2 * mu.at(iii) * BFieldModel_m->getBFieldAtS(s.at(iii), t.at(iii)) / mass); });
 }
 
 void Simulation::convertMuToVPerp(Particle* particle)
@@ -213,8 +213,8 @@ void Simulation::prepareResults(bool normalizeToRe)
 	LOOP_OVER_1D_ARRAY(satellites_m.size(), \
 		Satellite* satTmp{ satellites_m.at(iii)->satellite.get() };
 		double mass{ satellites_m.at(iii)->particle->getMass() };
-		double btmp{ getBFieldAtS(satTmp->getAltitude(), 0.0) };
-		satTmp->saveDataToDisk(saveRootDir_m + "/bins/satellites/", { "vpara", "vperp", "s", "time", "index" }, btmp, mass));
+		std::function<double(double, double)> BatS = std::bind(&Simulation::getBFieldAtS, this, std::placeholders::_1, std::placeholders::_2);
+		satTmp->saveDataToDisk(saveRootDir_m + "/bins/satellites/", { "vpara", "vperp", "s", "time", "index" }, BatS, mass));
 
 	//normalizes m to Re
 	if (normalizeToRe)
@@ -272,11 +272,12 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args)
 	if (name == "DipoleB")
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
 	else if (name == "DipoleBLUT")
-	{
+		BFieldModel_m = std::make_unique<DipoleBLUT>(args.at(0), simMin_m, simMax_m, 6371.2, 1000000);
+	//{
 		//BFieldModel_m = std::make_unique<DipoleBLUT>(args.at(0));
-		std::cout << "DipoleBLUT not implemented yet!! :D  Using DipoleB" << std::endl;
-		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
-	}
+		//std::cout << "DipoleBLUT not implemented yet!! :D  Using DipoleB" << std::endl;
+		//BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
+	//}
 	else if (name == "IGRF")
 	{
 		//BFieldModel_m = std::make_unique<IGRFB>(args.at(0));

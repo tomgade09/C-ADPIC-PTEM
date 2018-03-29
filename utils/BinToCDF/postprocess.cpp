@@ -2,6 +2,7 @@
 
 constexpr double PI_C{ 3.14159265358979323846 };
 constexpr double JPEREV_C{ 1.6021766209e-19 };
+constexpr double DEGTORAD_C{ PI_C / 180.0 };
 
 namespace postprocess
 {
@@ -39,16 +40,6 @@ namespace postprocess
 		utils::loadvFromDisk(datarootfolder, "bins/particles_init/elec_", particlecount, init.at(0), init.at(1));
 		numerical::vToEPitch(init.at(0), init.at(1), mass, init.at(2), init.at(3));
 		TRYCATCHSTDEXP(fileIO::readDblBin(init.at(4), datarootfolder + "/bins/particles_init/elec_s.bin", particlecount));
-		/*int ind{ 95 };
-		int endline{ 0 };
-		while (ind < particlecount)
-		{
-			endline++;
-			std::cout << bottom.at(3).at(ind) << "  ";
-			if (endline == 18) { std::cout << std::endl; endline = 0; }
-			ind += 96;
-		}
-		exit(1);*/
 
 		#ifdef PPCOUTDBG
 		std::cout << std::setprecision(6);
@@ -75,6 +66,18 @@ namespace postprocess
 		std::cout << std::endl << std::endl;
 		#endif /* PPCOUTDBG */
 
+		/* Test energies */
+		for (int iii = 0; iii < init.at(3).size(); iii++)
+		{
+			double TMPEPS{ 1.5e-1 };
+			std::cout << std::setprecision(10);
+			if (abs(init.at(3).at(iii) - satup.at(3).at(iii)) / init.at(3).at(iii) > TMPEPS && satup.at(3).at(iii) != 0.0)
+				std::cout << "satup value off!! ind: " << iii << " val: " << satup.at(3).at(iii) << " should be: " << init.at(3).at(iii) << " err: " << abs(init.at(3).at(iii) - satup.at(3).at(iii)) / init.at(3).at(iii) << std::endl;
+			if (abs(init.at(3).at(iii) - satdn.at(3).at(iii)) / init.at(3).at(iii) > TMPEPS && satdn.at(3).at(iii) != 0.0)
+				std::cout << "satdn value off!! ind: " << iii << " val: " << satdn.at(3).at(iii) << " should be: " << init.at(3).at(iii) << " err: " << abs(init.at(3).at(iii) - satdn.at(3).at(iii)) / init.at(3).at(iii) << std::endl;
+			if (abs(init.at(3).at(iii) - bottom.at(3).at(iii)) / init.at(3).at(iii) > TMPEPS && bottom.at(3).at(iii) != 0.0)
+				std::cout << "bottom value off!! ind: " << iii << " val: " << bottom.at(3).at(iii) << " should be: " << init.at(3).at(iii) << " err: " << abs(init.at(3).at(iii) - bottom.at(3).at(iii)) / init.at(3).at(iii) << std::endl;
+		}
 
 		/* Generate Maxwellian counts for particles */
 		std::vector<double> ionsphE;
@@ -108,31 +111,26 @@ namespace postprocess
 		for (int energy = 0; energy < 96; energy++) { std::cout << maxwCounts.at(energy + maxwCounts.size() / 2) << "  "; if (energy % 8 == 7) { std::cout << std::endl; } }
 		std::cout << std::endl << std::endl;
 		#endif /* PPCOUTDBG */
-		
-		/* Generate fluxes for initial distribution and backscatter */
-		/*std::cout << "Modifying pre-flux array to give initial data" << std::endl;
-		for (int iii = 0; iii < satdn.at(3).size(); iii++)
+
+		for (int iii = 0; iii < init.at(2).size(); iii++)
 		{
-			if (bottom.at(3).at(iii) != 0.0)
-			{
-				satdn.at(3).at(iii) = init.at(3).at(iii);
-				satdn.at(2).at(iii) = init.at(2).at(iii);
-			}
-			else
-				satdn.at(3).at(iii) = 0.0;
+			if (iii < init.at(2).size() / 2) //ionospheric source
+				maxwCounts.at(iii) *= -cos(init.at(2).at(iii) * DEGTORAD_C);
+			else //magnetospheric source
+				maxwCounts.at(iii) *= 1.0 / cos(satup.at(2).at(iii) * DEGTORAD_C);
 		}
-		for (int iii = 0; iii < satup.at(3).size(); iii++)
-		{
-			if (satup.at(3).at(iii) != 0.0)
-			{
-				satup.at(3).at(iii) = init.at(3).at(iii);
-				satup.at(2).at(iii) = init.at(2).at(iii);
-			}
-		}*/
-		
+
+		//double dAngSrc{ abs(init.at(2).at(0) - init.at(2).at(100)) };
+		//double Bsrc{ 5.73447893584459e-5 }; //B at ionosphere - 100km altitude, 101.322 s
+		//for (int iii = 0; iii < init.at(2).size(); iii++)
+		//{
+			//if (iii == init.at(2).size() / 2) { Bsrc = 8.2358677163765e-7; } //B at magnetosphere - 3Re altitude, 3.12Re s
+			//maxwCounts.at(iii) /* * */ /= Bsrc * (cos((init.at(2).at(iii) - 0.5 * dAngSrc) * DEGTORAD_C) - cos((init.at(2).at(iii) + 0.5 * dAngSrc) * DEGTORAD_C));
+		//}
+
 		vecDbl2D simfluxupward{ steady::simEnergyFlux(satdn, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate binned flux for downward facing detector data, upward flux
 		vecDbl2D simfluxdnward{ steady::simEnergyFlux(satup, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate binned flux for upward facing detector data
-		vecDbl2D backscatflux { steady::bsEnergyFlux (init, satdn, bottom, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate backscatter flux
+		//vecDbl2D backscatflux { steady::bsEnergyFlux (init, satdn, bottom, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate backscatter flux
 		
 		#ifdef PPCOUTDBG
 		std::cout << "4. Calculate upward, downward, and backscatter fluxes per bin:" << std::endl;
@@ -141,12 +139,12 @@ namespace postprocess
 		std::cout << "Downward flux by bin:" << std::endl;
 		for (int ang = 0; ang < simfluxdnward.size(); ang++) { for (int eng = 0; eng < simfluxdnward.at(0).size(); eng++) { std::cout << simfluxdnward.at(ang).at(eng) << "  "; } std::cout << std::endl; }
 		std::cout << "Backscatter flux by bin:" << std::endl;
-		for (int ang = 0; ang < backscatflux.size(); ang++)  { for (int eng = 0; eng < backscatflux.at(0).size(); eng++)  { std::cout << backscatflux.at(ang).at(eng) << "  "; }  std::cout << std::endl; }
+		//for (int ang = 0; ang < backscatflux.size(); ang++)  { for (int eng = 0; eng < backscatflux.at(0).size(); eng++)  { std::cout << backscatflux.at(ang).at(eng) << "  "; }  std::cout << std::endl; }
 		#endif /* PPCOUTDBG */
-		std::cout << "exiting" << std::endl; exit(1);
+		
 		for (int iii = 0; iii < simfluxupward.size(); iii++)
 			for (int jjj = 0; jjj < simfluxupward.at(0).size(); jjj++)
-				simfluxupward.at(iii).at(jjj) += simfluxdnward.at(iii).at(jjj) + backscatflux.at(iii).at(jjj);
+				simfluxupward.at(iii).at(jjj) += simfluxdnward.at(iii).at(jjj) /*+ backscatflux.at(iii).at(jjj)*/;
 
 		#ifdef PPCOUTDBG
 		std::cout << "Total flux by bin:" << std::endl;
@@ -191,9 +189,16 @@ namespace postprocess
 			const std::vector<double>& particleEnergies{ particleData.at(3) };
 			
 			vecDbl2D ret{ numerical::countInBinsWeighted(particlePitches, particleEnergies, binAngles, binEnergies, maxwCounts) };
-			numerical::divBinsByCosPitch(ret, binAngles);
-			//numerical::countsToEFlux(ret, binAngles, binEnergies, mass, charge, BatXSection);
-			std::cout << "returning counts NOT EFLUX!!!" << std::endl;
+
+			//convert to dEflux
+			//double Bsat{ 1.35970360638581e-5 }; //B at 4e6 altitude, 4.0713e6 s (along field line from Re)
+			//double dAngBin{ binAngles.at(1) - binAngles.at(0) };
+			for (int ang = 0; ang < ret.size(); ang++)
+			{
+				//double binSolidAngle{ cos((binAngles.at(ang) - 0.5 * dAngBin) * DEGTORAD_C) - cos((binAngles.at(ang) + 0.5 * dAngBin) * DEGTORAD_C) };
+				for (int eng = 0; eng < ret.at(0).size(); eng++)
+					ret.at(ang).at(eng) *= binEnergies.at(eng);// * /* / */ (Bsat * binSolidAngle);
+			}
 
 			return ret;
 		}
@@ -201,24 +206,38 @@ namespace postprocess
 		vecDbl2D bsEnergyFlux(const vecDbl2D& initialData, const vecDbl2D& satData, const vecDbl2D& escapeData,	const std::vector<double>& binAngles,
 			const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts, double mass, double charge, double BatXSection)
 		{
-			vecDbl2D escapedBins{ numerical::countInBinsWeighted(escapeData.at(2), escapeData.at(3), binAngles, binEnergies, maxwCounts) };
-			std::vector<double> escapedBinsNumSum(escapedBins.at(0).size()); //each bin in units of counts -> # particles
-			for (int iii = 0; iii < escapedBinsNumSum.size(); iii++)
+			vecDbl2D escCntBins{ numerical::countInBinsWeighted(escapeData.at(2), escapeData.at(3), binAngles, binEnergies, maxwCounts) };
+			double Bion{ 5.73447893584459e-5 }; //B at ionosphere - 100km altitude, 101.322 s
+			std::vector<double> escCntBinsSum(escCntBins.at(0).size()); //each bin in units of counts -> # particles
+			for (int iii = 0; iii < escCntBinsSum.size(); iii++)
 			{
-				for (int jjj = 0; jjj < escapedBins.size(); jjj++)
-					escapedBinsNumSum.at(iii) += escapedBins.at(jjj).at(iii);
-				escapedBinsNumSum.at(iii) /= escapedBins.size(); //isotropically space across pitch angle bins
+				for (int jjj = 0; jjj < escCntBins.size(); jjj++)
+					escCntBinsSum.at(iii) += escCntBins.at(jjj).at(iii);
+				escCntBinsSum.at(iii) /= (Bion * escCntBins.size()); //isotropically space across pitch angle bins
 			}
 
-			for (int iii = 0; iii < escapedBinsNumSum.size(); iii++)
-				std::cout << escapedBinsNumSum.at(iii) << "  ";
-			std::cout << std::endl;
+			/*for (int iii = 0; iii < escCntBinsSum.size(); iii++)
+				std::cout << escCntBinsSum.at(iii) << "  ";
+			std::cout << std::endl;*/
 
-			std::vector<double> numFluxByBin{ backscat::sumIntegralsOfNumFluxFcnsPerBin(escapedBinsNumSum, binEnergies, 1.5, -4.0, -2.1, 0.3) }; //obtained by log linefitting Evans, 1974 - these seem closest
-			vecDbl2D ret{ backscat::matchIonBSToSatAndCount(numFluxByBin, initialData, satData, binAngles, binEnergies) };
+			std::vector<double> numFluxByBin{ backscat::sumIntegralsOfNumFluxFcnsPerBin(escCntBinsSum, binEnergies, 1.5, -4.0, -2.1, 0.3) }; //obtained by log linefitting Evans, 1974 - these seem closest
 
-			numerical::divBinsByCosPitch(ret, binAngles);
-			//numerical::countsToEFlux(ret, binAngles, binEnergies, mass, charge, BatXSection);
+			double dAngBin{ binAngles.at(1) - binAngles.at(0) };
+			vecDbl2D numFlux(binAngles.size(), std::vector<double>(binEnergies.size()));
+			for (int ang = 0; ang < binAngles.size(); ang++)
+				for (int eng = 0; eng < binEnergies.size(); eng++)
+					numFlux.at(ang).at(eng) = numFluxByBin.at(eng) * Bion * (cos((binAngles.at(ang) - 0.5 * dAngBin) * DEGTORAD_C) - cos((binAngles.at(ang) + 0.5 * dAngBin) * DEGTORAD_C));
+
+			vecDbl2D ret{ backscat::matchIonBSToSatAndCount(numFlux, initialData, satData, binAngles, binEnergies) };
+			
+			//convert to dEflux
+			double Bsat{ 1.35970360638581e-5 }; //B at 4e6 altitude, 4.0713e6 s (along field line from Re)
+			for (int ang = 0; ang < ret.size(); ang++)
+			{
+				double binSolidAngle{ cos((binAngles.at(ang) - 0.5 * dAngBin) * DEGTORAD_C) - cos((binAngles.at(ang) + 0.5 * dAngBin) * DEGTORAD_C) };
+				for (int eng = 0; eng < ret.at(0).size(); eng++)
+					ret.at(ang).at(eng) *= binEnergies.at(eng) / (Bsat * binSolidAngle);
+			}
 
 			return ret;
 		}
@@ -250,7 +269,7 @@ namespace postprocess
 				if (nonZero) //check this or else the function can produce "NaN" in some indicies (I think atan2 is responsible) -> if false, the data at that index will be left 0
 				{
 					particleEnergies.at(part) = (0.5 * mass * (vpara.at(part) * vpara.at(part) + vperp.at(part) * vperp.at(part)) / JPEREV_C);
-					particlePitches.at(part) = atan2(abs(vperp.at(part)), -vpara.at(part)) * 180.0 / PI_C;
+					particlePitches.at(part) = atan2(abs(vperp.at(part)), -vpara.at(part)) / DEGTORAD_C;
 				}
 			}
 		}
@@ -349,7 +368,7 @@ namespace postprocess
 		vecDbl2D countInBinsWeighted(const std::vector<double>& particlePitches, const std::vector<double>& particleEnergies, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts)
 		{
 			vecDbl2D ret(binAngles.size());
-			vecDbl2D tmp(binAngles.size());
+			//vecDbl2D tmp(binAngles.size());
 
 			double logEMinBinMid{ log10(binEnergies.at(0)) };
 			double dlogE{ log10(binEnergies.at(1)) - logEMinBinMid };
@@ -367,7 +386,7 @@ namespace postprocess
 				for (int angbin = 0; angbin < binAngles.size(); angbin++)
 				{
 					if (part == 0) { ret.at(angbin) = std::vector<double>(binEnergies.size()); }
-					if (part == 0) { tmp.at(angbin) = std::vector<double>(binEnergies.size()); }
+					//if (part == 0) { tmp.at(angbin) = std::vector<double>(binEnergies.size()); }
 
 					double angmin{ angbin *       dangle }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
 					double angmax{ (angbin + 1) * dangle };
@@ -382,7 +401,7 @@ namespace postprocess
 							(partEnerg >= emin)   && (partEnerg < emax))
 						{
 							ret.at(angbin).at(ebin) += maxwCounts.at(part); //maxwCounts needs to be as long as particleEnergies/particlePitches
-							tmp.at(angbin).at(ebin) += 1.0;
+							//tmp.at(angbin).at(ebin) += 1.0;
 							angbin = binAngles.size(); //no need to iterate over other bins once particle bin is found
 							ebin = binEnergies.size();
 						}
@@ -416,7 +435,7 @@ namespace postprocess
 					//double solidAngle{ write this }; //involves pitch angle
 					double solidAngle{ 1.0 };
 
-					energyData.at(ang).at(eng) *= abs(cos(binAngles.at(ang) * PI_C / 180.0)) / (A_gyro * solidAngle * binWidth);
+					energyData.at(ang).at(eng) *= abs(cos(binAngles.at(ang) * DEGTORAD_C)) / (A_gyro * solidAngle * binWidth);
 				}
 			}
 		}
@@ -425,7 +444,7 @@ namespace postprocess
 		{
 			for (int iii = 0; iii < data.size(); iii++)
 				for (int jjj = 0; jjj < data.at(0).size(); jjj++)
-					data.at(iii).at(jjj) /= abs(cos(PI_C / 180.0 * binAnglesDegrees.at(iii)));
+					data.at(iii).at(jjj) /= abs(cos(DEGTORAD_C * binAnglesDegrees.at(iii)));
 		}
 	} //end namespace postprocess::numerical
 
@@ -459,28 +478,28 @@ namespace postprocess
 			double logEBinMin{ log10(binEnergies.at(0)) };
 			double dlogE{ log10(binEnergies.at(1)) - logEBinMin };
 
-			std::vector<double> bsEflux(binEnergies.size());
-			for (int ampbin = 0; ampbin < bsEflux.size(); ampbin++)
+			std::vector<double> bsNflux(binEnergies.size());
+			for (int ampbin = 0; ampbin < bsNflux.size(); ampbin++)
 			{
 				double engmin{ pow(10, (ampbin - 0.5) * dlogE + logEBinMin) }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
 				double engmax{ pow(10, (ampbin + 0.5) * dlogE + logEBinMin) };
 
-				for (int cntbin = ampbin; cntbin < bsEflux.size(); cntbin++)
+				for (int cntbin = ampbin; cntbin < bsNflux.size(); cntbin++)
 				{
 					double incidentE{ pow(10, log10(binEnergies.at(cntbin)) + 0.5 * dlogE) }; //incident E is upper limit of bin - particles in here can be up to this energy, so why not use this instead of mid bin?
 					double intF{ integralF_flux(engmin, engmax, incidentE, primary_logm, primary_logb, secondary_logm, secondary_logb) };
 					
-					bsEflux.at(ampbin) += intF * binCounts.at(cntbin) / (engmax - engmin);
+					bsNflux.at(ampbin) += intF * binCounts.at(cntbin) / (engmax - engmin);
 				}
 			}
 			
-			return bsEflux;
+			return bsNflux;
 		}
 
-		vecDbl2D matchIonBSToSatAndCount(const std::vector<double>& bsNumFluxBins, const vecDbl2D& initialData, const vecDbl2D& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies)
+		vecDbl2D matchIonBSToSatAndCount(const vecDbl2D& bsNumFluxBins, const vecDbl2D& initialData, const vecDbl2D& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies)
 		{
-			double ang_epsilon{ 0.026 }; //these can be simulation specific
-			double eng_epsilon{ 0.05 };  //if more bins are used, these may not yield the closest result
+			//double ang_epsilon{ 0.026 }; //these can be simulation specific
+			//double eng_epsilon{ 0.05 };  //if more bins are used, these may not yield the closest result
 
 			vecDbl2D ret(binAngles.size());
 			for (int iii = 0; iii < ret.size(); iii++)
@@ -540,7 +559,7 @@ namespace postprocess
 							if (foundAng >= tmpAngMin && foundAng < tmpAngMax &&
 								foundEng >= tmpEngMin && foundEng < tmpEngMax)// && !found)
 							{
-								ret.at(satAngBin).at(satEngBin) += bsNumFluxBins.at(ionEngBin);
+								ret.at(satAngBin).at(satEngBin) += bsNumFluxBins.at(ionAngBin).at(ionEngBin);
 								found = true;
 								satAngBin = binAngles.size();  //prevents unnecessary iteration
 								satEngBin = binEnergies.size();//and also double counting

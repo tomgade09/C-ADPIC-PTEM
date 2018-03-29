@@ -5,6 +5,7 @@
 #include <vector>
 #include <chrono>
 #include <memory> //smart pointers
+#include <functional>
 #include "BField\allBModels.h"
 #include "EField\allEModels.h"
 #include "ParticleClass\Particle.h"

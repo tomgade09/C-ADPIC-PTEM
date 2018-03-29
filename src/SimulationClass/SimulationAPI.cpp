@@ -114,7 +114,7 @@ DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const cha
 	double simMin{ sim->getSimMin() };
 	double simMax{ sim->getSimMax() };
 
-	sim->setBFieldModel("DipoleB", { 72.0 });
+	sim->setBFieldModel("DipoleBLUT", { 72.0 });
 	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
 	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
@@ -152,14 +152,13 @@ DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
 	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, { arg1 })); }
 
-//#undef DLLFILE //uncomment for making an exe file for profiling
-#ifndef DLLFILE
+#ifdef _DEBUG
 int main()
 {
 	SIM_API_EXCEP_CHECK( \
-	Simulation* sim{ createSimulationAPI(0.01, 2030837.49610366, 19881647.2473464, 2.5, 1000.0, "./out/") };
-
-	runNormalSimulationAPI(sim, 115200, 250, 50, ""); // "./../_in/data/");
+	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, 2.5, 1000.0, "./out/") };
+	setupNormalSimulationAPI(sim, 3456000, "./../in/data");
+	runNormalSimulationAPI(sim, 25000, 500);
 
 	terminateSimulationAPI(sim);
 	); /* SIM_API_EXCEP_CHECK() */

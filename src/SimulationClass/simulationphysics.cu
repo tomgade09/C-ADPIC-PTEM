@@ -134,9 +134,9 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 		s_orig[thdInd] = s_d[thdInd];
 		mu_d[thdInd] = 0.5 * mass * mu_d[thdInd] * mu_d[thdInd] / (*bfield)->getBFieldAtS(s_d[thdInd], simtime);
 	}
-	else if (s_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom, particle has 50% chance of reflecting, 50% chance of new particle
+	else if (s_d[thdInd] < simConsts[1] * 0.999) //out of sim to the bottom
 		return;
-	else if (s_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top, particle is lost, new one generated in its place
+	else if (s_d[thdInd] > simConsts[2] * 1.001) //out of sim to the top
 		return;
 
 	//args array: [ps_0, mu, q, m, simtime]
@@ -150,7 +150,7 @@ __global__ void computeKernel(double** currData_d, double** origData_d, double* 
 }
 
 void Simulation::initializeSimulation()
-{	
+{
 	logFile_m->createTimeStruct("Start Sim Init"); //index 1
 	logFile_m->writeTimeDiff(0, 1);
 

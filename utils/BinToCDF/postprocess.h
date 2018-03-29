@@ -1,7 +1,7 @@
 #ifndef POSTPROCESS_H
 #define POSTPROCESS_H
 
-#define PPCOUTDBG
+//#define PPCOUTDBG
 //#define PPCOUTDBG_VERBOSE
 
 #include <vector>
@@ -46,7 +46,7 @@ namespace postprocess
 		double F_flux(double evalE, double incidentE, double incidentCnt, double prim_logm, double prim_logb, double scnd_logm, double scnd_logb);
 		double integralF_flux(double lower, double upper, double incidentE, double prim_fact, double prim_logb, double scnd_fact, double scnd_logb);
 		std::vector<double> sumIntegralsOfNumFluxFcnsPerBin(const std::vector<double>& binCounts, const std::vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb);
-		vecDbl2D matchIonBSToSatAndCount(const std::vector<double>& bsEFluxBins, const vecDbl2D& initialData, const vecDbl2D& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies);
+		vecDbl2D matchIonBSToSatAndCount(const vecDbl2D& bsEFluxBins, const vecDbl2D& initialData, const vecDbl2D& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies);
 	}
 
 	namespace utils

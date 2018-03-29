@@ -51,6 +51,9 @@
     <ClCompile Include="..\src\SimulationClass\PreviousSimulation.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\classAPI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
@@ -127,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="..\include\BField\DipoleBLUT.h">
       <Filter>Header Files\BField</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\classAPI.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
