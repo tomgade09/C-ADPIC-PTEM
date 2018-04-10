@@ -1,24 +1,26 @@
 TO-DO:
 DONE, NEEDS GOOD TEST - Finish class for loading previous sim data
-- Python interface for loading previous sim data
+DONE, NEEDS GOOD TEST - Python interface for loading previous sim data
 DONE, NEEDS GOOD TEST - Maybe a LUT Grad B w/ linear interpolation
+DONE, NEEDS GOOD TEST - Move random particle generator to Particle class
+IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 - Python interfaces for E Field and B Field models
-- Loading previous sim data overwrites sim characteristics - stop this - maybe make a part of prepareData
 - Hijack clog and write to log file (easy, quick)
 
 ???? - Python check returned data, fix print functions
 - Alfven E generator (Dr. Lysak's code)
-IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 - Python, maybe set num particles based on bin size
 WORKS IN C++, OFFLOAD TO PY - Fix sideways CSV Writing (python)
 
+MAYBE DONE?? - Fix log file time width oddity
 - Remove unnecessary includes/maybe all/most includes in headers
-- Fix log file time width oddity
 - Better name
-- RNG generates total energy and pitch angle
 - Document things better
 - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
 - Cross platform compiling
+MAYBE - CPU Processing vs GPU, ability to compile on machines without CUDA libraries (through preprocessor defines and such)
+	       - Modularize CUDA code - only put explicitly cuda things in .cu files, separate rest to .cpp
+MAYBE, MAYBE NOT - RNG generates total energy and pitch angle
 NOT PLATFORM AGNOSTIC, HOLD OFF - IN PROGRESS - XLSX writing with xlnt library?
 NOT PLATFORM AGNOSTIC, HOLD OFF - Offload folder creation, changing folder to C++
 

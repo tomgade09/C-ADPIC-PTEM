@@ -1,5 +1,16 @@
 #include "BField\DipoleB.h"
 
+//setup CUDA kernels
+__global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, double errTol, double ds)
+{
+	ZEROTH_THREAD_ONLY("setupEnvironmentGPU_DipoleB", (*this_d) = new DipoleB(ILATDeg, errTol, ds));
+}
+
+__global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)
+{
+	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleB", delete (*dipoleb));
+}
+
 //B Field related kernels
 __host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
 {
@@ -58,17 +69,6 @@ __host__ __device__ double DipoleB::getGradBAtS(const double s, const double sim
 	return (getBFieldAtS(s + ds_m, simtime) - getBFieldAtS(s - ds_m, simtime)) / (2 * ds_m);
 }
 
-//setup CUDA kernels
-__global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, double errTol, double ds)
-{
-	if (threadIdx.x == 0 && blockIdx.x == 0)
-		(*this_d) = new DipoleB(ILATDeg, errTol, ds);
-}
-
-__global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)
-{
-	delete (*dipoleb);
-}
 
 //DipoleB class member functions
 void DipoleB::setupEnvironment()

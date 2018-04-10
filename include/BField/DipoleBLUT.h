@@ -34,11 +34,11 @@ protected:
 	__host__ virtual void deleteEnvironment();
 
 public:
-	__host__ __device__ DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_dipoleB, int numberOfMeasurements) :
-		BField(), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_dipoleB }, numMsmts_m{ numberOfMeasurements }
+	__host__ __device__ DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements) :
+		BField(), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }
 	{
-		modelName_m = "DipoleBLUT";
 		ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
+		modelName_m = "DipoleBLUT";
 		
 		#ifndef __CUDA_ARCH__ //host code
 		setupEnvironment();
@@ -57,6 +57,9 @@ public:
 
 	__device__ void setAltArray(double* altArray) { altitude_d = altArray; }
 	__device__ void setMagArray(double* magArray) { magnitude_d = magArray; }
+
+	__host__ virtual double getErrTol() { return 1e-10; }
+	__host__ virtual double getds() { return ds_gradB_m; }
 };
 
 #endif /* !DIPOLEBLUT_BFIELD_H */

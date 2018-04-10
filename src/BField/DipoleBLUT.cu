@@ -1,5 +1,29 @@
 #include "BField\DipoleBLUT.h"
 
+//setup CUDA kernels
+__global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)
+{
+	ZEROTH_THREAD_ONLY("setupEnvironmentGPU_DipoleBLUT",
+		DipoleBLUT* tmp_d = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
+		tmp_d->setAltArray(altArray);
+		tmp_d->setMagArray(magArray);
+		(*this_d) = tmp_d; );
+}
+
+__global__ void deleteEnvironmentGPU_DipoleBLUT(BField** this_d)
+{
+	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleBLUT", delete (*this_d));
+}
+
+__global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double* magnitude, double simMin, double ds)
+{
+	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
+	double s{ simMin + ds * thdInd };
+
+	altitude[thdInd] = s;
+	magnitude[thdInd] = (*dipole)->getBFieldAtS(s, 0.0);
+}
+
 __host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double simtime)
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
 	int startInd{ 0 };
@@ -23,31 +47,6 @@ __host__ __device__ double DipoleBLUT::getGradBAtS(const double s, const double 
 	return (getBFieldAtS(s + ds_gradB_m, simtime) - getBFieldAtS(s - ds_gradB_m, simtime)) / (2 * ds_gradB_m);
 }
 
-//setup CUDA kernels
-__global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)
-{
-	if (threadIdx.x == 0 && blockIdx.x == 0)
-	{
-		DipoleBLUT* tmp_d = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
-		tmp_d->setAltArray(altArray);
-		tmp_d->setMagArray(magArray);
-		(*this_d) = tmp_d;
-	}
-}
-
-__global__ void deleteEnvironmentGPU_DipoleBLUT(BField** this_d)
-{
-	delete (*this_d);
-}
-
-__global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double* magnitude, double simMin, double ds)
-{
-	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
-	double s{ simMin +  ds * thdInd };
-
-	altitude[thdInd] = s;
-	magnitude[thdInd] = (*dipole)->getBFieldAtS(s, 0.0);
-}
 
 //DipoleB class member functions
 void DipoleBLUT::setupEnvironment()

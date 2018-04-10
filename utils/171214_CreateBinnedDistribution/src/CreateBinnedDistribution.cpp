@@ -7,12 +7,12 @@
 constexpr double MASS_PROTON{ 1.6726219e-27 };   //kg
 constexpr double MASS_ELECTRON{ 9.1093836e-31 }; //kg
 constexpr int	 ENERGYBINS{ 96 };
-constexpr int	 PITCHBINS{ 36000 }; //was 3600
+constexpr int	 PITCHBINS{ 3600 }; //was 3600
 constexpr int	 NUMPARTICLES{ ENERGYBINS * PITCHBINS };
 constexpr double LOGEMAX{ 4.5 };
 constexpr double LOGEMIN{ 0.5 };
 constexpr double LOGEBINSIZE{ (LOGEMAX - LOGEMIN) / (ENERGYBINS - 1) };
-constexpr double PITCHBINSIZE{ 180.0 / (PITCHBINS) };
+//constexpr double PITCHBINSIZE{ 180.0 / (PITCHBINS) };
 constexpr double ZTOP{ 19881647.2473464 };
 constexpr double ZBOTTOM{ 101322.378940846 };
 constexpr double PI_C{ 3.14159265358979323846 };
@@ -25,8 +25,8 @@ int main()
 		return 0;
 	}
 
-	std::cout << "NUMPARTICLES: " << NUMPARTICLES << "\nENERGYBINS: " << ENERGYBINS << "\nPITCHBINS: " << PITCHBINS << "\nLOGEMAX: " << LOGEMAX << "\nLOGEBINSIZE: " << LOGEBINSIZE;
-	std::cout << "\nPITCHBINSIZE: " << PITCHBINSIZE << "\nZTOP: " << ZTOP << "\nZTOPNORM: " << ZTOP / 6.3712e6 << "\nZBOTTOM: " << ZBOTTOM << "\nZBOTTOMNORM: " << ZBOTTOM / 6.3712e6 << std::endl;
+	//std::cout << "NUMPARTICLES: " << NUMPARTICLES << "\nENERGYBINS: " << ENERGYBINS << "\nPITCHBINS: " << PITCHBINS << "\nLOGEMAX: " << LOGEMAX << "\nLOGEBINSIZE: " << LOGEBINSIZE;
+	//std::cout << "\nPITCHBINSIZE: " << PITCHBINSIZE << "\nZTOP: " << ZTOP << "\nZTOPNORM: " << ZTOP / 6.3712e6 << "\nZBOTTOM: " << ZBOTTOM << "\nZBOTTOMNORM: " << ZBOTTOM / 6.3712e6 << std::endl;
 
 	//Setup
 	std::vector<double> energies; std::vector<double> pitches;
@@ -46,10 +46,8 @@ int main()
 	for (int iii = 0; iii < ENERGYBINS; iii++)
 		energies.at(iii) = pow(10, iii * LOGEBINSIZE + LOGEMIN);
 	for (int iii = 0; iii < PITCHBINS; iii++)
-		pitches.at(iii) = 180.0 - (iii + 0.5) * PITCHBINSIZE;
+		pitches.at(iii) = (iii <  PITCHBINS / 2) ? (180.0 - (iii + 0.5) * 180.0 / (PITCHBINS)) : (16.0 - ((iii - PITCHBINS / 2) + 0.5) * 16.0 / (PITCHBINS / 2));
 	
-	std::cout << std::endl << "First two energies: " << energies.at(0) << "  " << energies.at(1) << std::endl;
-
 	//Populate Electron Data
 	std::cout << "Populating and writing Electrons and Ions...\n";
 	for (int iii = 0; iii < PITCHBINS; iii++)

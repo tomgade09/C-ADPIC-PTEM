@@ -67,7 +67,7 @@ namespace postprocess
 		#endif /* PPCOUTDBG */
 
 		/* Test energies */
-		for (int iii = 0; iii < init.at(3).size(); iii++)
+		/*for (int iii = 0; iii < init.at(3).size(); iii++)
 		{
 			double TMPEPS{ 1.5e-1 };
 			std::cout << std::setprecision(10);
@@ -77,7 +77,12 @@ namespace postprocess
 				std::cout << "satdn value off!! ind: " << iii << " val: " << satdn.at(3).at(iii) << " should be: " << init.at(3).at(iii) << " err: " << abs(init.at(3).at(iii) - satdn.at(3).at(iii)) / init.at(3).at(iii) << std::endl;
 			if (abs(init.at(3).at(iii) - bottom.at(3).at(iii)) / init.at(3).at(iii) > TMPEPS && bottom.at(3).at(iii) != 0.0)
 				std::cout << "bottom value off!! ind: " << iii << " val: " << bottom.at(3).at(iii) << " should be: " << init.at(3).at(iii) << " err: " << abs(init.at(3).at(iii) - bottom.at(3).at(iii)) / init.at(3).at(iii) << std::endl;
-		}
+		}*/
+		
+		//utils::numerical::coutMinMaxErr(init.at(3), satup.at(3), "satup");
+		//utils::numerical::coutMinMaxErr(init.at(3), satdn.at(3), "satdn");
+		//utils::numerical::coutMinMaxErr(init.at(3), bottom.at(3), "bottm");
+		//exit(1);
 
 		/* Generate Maxwellian counts for particles */
 		std::vector<double> ionsphE;

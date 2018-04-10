@@ -12,6 +12,7 @@
 #include "cuda_profiler_api.h"
 
 #include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\cudaDeviceMacros.h"
 
 class EElem //inherit from this class
 {
@@ -25,6 +26,7 @@ protected:
 	#endif /* !__CUDA_ARCH__ */
 
 	__host__ virtual void setupEnvironment() = 0; //define this function in derived classes to assign a pointer to that function's B Field code to the location indicated by BFieldFcnPtr_d and gradBFcnPtr_d
+	__host__ virtual void deleteEnvironment() = 0;
 
 public:
 	__host__ __device__ EElem() {}
@@ -42,29 +44,22 @@ private:
 	EField** this_d{ nullptr };
 	
 	#ifndef __CUDA_ARCH__ //host code
-	std::vector<EElem**> Eelems_d;
 	std::vector<std::unique_ptr<EElem>> Eelems_m;
-	std::vector<std::string> modelNames_m;
-	#else //device code
-	EElem*** Eelems_m; //array of E Field elements
+	std::vector<std::string> modelNames_m; //could be useful, definitely not essential
 	#endif /* !__CUDA_ARCH__ */
 
-	int capacity_m{ 0 }; //need these on device and it's seriously a pain to enclose everything in #ifndef's
-	int size_m{ 0 };  //so these will be on both host and device
-	
-	void setupEnvironment();
-	void deleteEnvironment();
+	EElem*** Eelems_d; //host: holds ptr to on GPU array, used to increase size, device: holds ptr to on GPU array, used to access elements
+	int capacity_d{ 5 }; //denotes size and capacity of E element array on device
+	int size_d{ 0 };
+
+	__host__ void setupEnvironment();
+	__host__ void deleteEnvironment();
 
 public:
-	__host__ __device__ EField(int reserveNumElems)
+	__host__ __device__ EField()
 	{
 		#ifndef __CUDA_ARCH__ //host code
-		capacity_m = reserveNumElems;
-		Eelems_m.reserve(capacity_m);
 		setupEnvironment();
-		#else  //device code
-		Eelems_m = new EElem**[reserveNumElems];
-		capacity_m = reserveNumElems;
 		#endif /* !__CUDA_ARCH__ */
 	}
 	
@@ -72,15 +67,21 @@ public:
 	{
 		#ifndef __CUDA_ARCH__ //host code
 		deleteEnvironment();
-		#else  //device code
-		delete[] Eelems_m;
 		#endif /* !__CUDA_ARCH__ */
 	}
 
+	__host__   void add(std::unique_ptr<EElem> elem);
+	__device__ void add(EElem** elem);
+	
+	__device__ int      elemCapacity() { return capacity_d; }
+	__device__ int      elemSize() { return size_d; }
+	__device__ EElem*** getElemArray() { return Eelems_d; }
+	__device__ void     setCap(int capacity) { capacity_d = capacity; }
+	__device__ void     setElemArray(EElem*** eelems) { Eelems_d = eelems; }
+	
 	#ifndef __CUDA_ARCH__ //host code
-	__host__            void   add(std::unique_ptr<EElem> elem);
-	#else //device code
-	__device__          void   add(EElem** elem);
+	#else  //device code
+	//__device__ void setElemArray(EElem*** eelems) { Eelems_d = eelems; }
 	#endif /* !__CUDA_ARCH__ */
 	
 	__host__ __device__ double getEFieldAtS(const double s, const double t);

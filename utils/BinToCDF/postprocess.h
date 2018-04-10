@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "FileIO\fileIO.h"
+#include "utils\numerical.h"
 
 #define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
 

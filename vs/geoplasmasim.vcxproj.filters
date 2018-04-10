@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CudaCompile Include="..\src\BField\BField.cu">
-      <Filter>Source Files\BField</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\src\BField\DipoleB.cu">
       <Filter>Source Files\BField</Filter>
     </CudaCompile>
@@ -36,23 +33,32 @@
     <ClCompile Include="..\src\LogFile\LogFileAPI.cpp">
       <Filter>Source Files\LogFile</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\StandaloneTools\binaryfiletools.cpp">
-      <Filter>Source Files\StandaloneTools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\StandaloneTools\numericaltools.cpp">
-      <Filter>Source Files\StandaloneTools</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\SimulationClass\Simulation.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
     <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SimulationClass\PreviousSimulation.cpp">
-      <Filter>Source Files\Simulation</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\classAPI.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\numerical.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\random.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\string.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SimulationClass\previousSimulation.cpp">
+      <Filter>Source Files\Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ParticleClass\Particle.cpp">
+      <Filter>Source Files\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\write.cpp">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,15 +89,6 @@
     <ClInclude Include="..\include\SatelliteClass\Satellite.h">
       <Filter>Header Files\Satellite</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\StandaloneTools\StandaloneTools.h">
-      <Filter>Header Files\StandaloneTools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\StandaloneTools\binaryfiletools.h">
-      <Filter>Header Files\StandaloneTools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\StandaloneTools\numericaltools.h">
-      <Filter>Header Files\StandaloneTools</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\ParticleClass\Particle.h">
       <Filter>Header Files\Particle</Filter>
     </ClInclude>
@@ -100,9 +97,6 @@
     </ClInclude>
     <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h">
       <Filter>Header Files\ErrorHandling</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\SimulationClass\PreviousSimulation.h">
-      <Filter>Header Files\Simulation</Filter>
     </ClInclude>
     <ClInclude Include="..\include\ErrorHandling\SimException.h">
       <Filter>Header Files\ErrorHandling</Filter>
@@ -133,6 +127,27 @@
     </ClInclude>
     <ClInclude Include="..\include\classAPI.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\beElements.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\loopmacros.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\numerical.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\random.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\string.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ErrorHandling\cudaDeviceMacros.h">
+      <Filter>Header Files\ErrorHandling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\write.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -219,9 +234,6 @@
     <Filter Include="Source Files\Simulation">
       <UniqueIdentifier>{924029cb-e739-45ec-aaf1-d217d6c76583}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\StandaloneTools">
-      <UniqueIdentifier>{c03f2f55-99b1-404b-8fef-e0652a16e792}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Python Files\Scripts">
       <UniqueIdentifier>{1a0a30fe-50df-4458-a643-efa38e910a71}</UniqueIdentifier>
     </Filter>
@@ -234,8 +246,11 @@
     <Filter Include="Header Files\ErrorHandling">
       <UniqueIdentifier>{64f89fb8-0de4-4577-be61-c1b8fac0a175}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\StandaloneTools">
-      <UniqueIdentifier>{c612fc43-a659-4fb0-93f1-ee6f9d1d6072}</UniqueIdentifier>
+    <Filter Include="Header Files\utils">
+      <UniqueIdentifier>{b7d6010c-2433-4168-9947-b5d1a46fdec1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utils">
+      <UniqueIdentifier>{6ee7cffb-7aa9-4938-ad52-b8ae24313940}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

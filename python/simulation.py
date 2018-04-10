@@ -33,9 +33,10 @@ def simulationRunMain():
     savedir, dtg = setupFolders()
     print("================  SIMULATION ", dtg, " ================")
 
-    sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM, INITIAL_T_ION_EV, INITIAL_T_MAG_EV)
+    sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM)
     sim.setupNormalSim(NUMPARTICLES)
     finalDat, origDat, satDat = sim.runNormalSim(NUMITER, 500)
+    sim.writeCommonCSV()
 
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
     for iii in range(len(fields[2])):

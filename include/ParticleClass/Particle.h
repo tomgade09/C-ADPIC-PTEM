@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 #include "FileIO\fileIO.h"
-#include "StandaloneTools\StandaloneTools.h"
+#include "utils\loopmacros.h"
 
 class Particle
 {
@@ -20,7 +20,7 @@ protected:
 
 	std::vector<std::string> attributeNames_m;
 
-	long particleCount_m;
+	long numberOfParticles_m;
 	int  numberOfPositionDims_m;
 	int  numberOfVelocityDims_m;
 
@@ -30,43 +30,41 @@ protected:
 
 	std::string name_m;
 
+	virtual void initializeGPU();
+
 	bool initDataLoaded_m{ false };
-	bool usingGPU_m{ false };
-	bool normalized_m{ false };
+	bool dataOnGPU_m{ false };
 
 public:
 	Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor=1) :
-		name_m{ name }, attributeNames_m{ attributeNames }, mass_m{ mass }, charge_m{ charge }, particleCount_m{ numParts }, numberOfPositionDims_m{ posDims },
+		name_m{ name }, attributeNames_m{ attributeNames }, mass_m{ mass }, charge_m{ charge }, numberOfParticles_m{ numParts }, numberOfPositionDims_m{ posDims },
 		numberOfVelocityDims_m{ velDims }, normFactor_m{ normFactor }
 	{
-		std::vector<double> tmp;
-		tmp.resize(numParts);
-		for (int dataind = 0; dataind < velDims + posDims; dataind++)
-		{
-			origData_m.push_back(tmp);
-			currData_m.push_back(tmp);
-		}
+		origData_m = std::vector<std::vector<double>>(posDims + velDims, std::vector<double>(numParts));
+		currData_m = std::vector<std::vector<double>>(posDims + velDims, std::vector<double>(numParts));
 
 		if (attributeNames.size() < numberOfVelocityDims_m + numberOfPositionDims_m)
 		{
 			std::cerr << "Particle::Particle: warning: not enough attribute names specified, generic names being generated" << std::endl;
-			for (int diff = 0; diff = numberOfVelocityDims_m + numberOfPositionDims_m - static_cast<int>(attributeNames.size()); diff++)
+			for (int diff = 0; diff = numberOfVelocityDims_m + numberOfPositionDims_m - (int)(attributeNames.size()); diff++)
 				attributeNames_m.push_back(std::to_string(diff) + ".bin");
 		}
+
+		//#ifdef SOME_DEFINE_TO_INDICATE_COMPILE_WITH_CUDA
+		initializeGPU();
+		//copyDataToGPU(); //maybe??  Sometimes data is copied in after the fact...could set it that either a folder is specified in constructor or random particles are generated
+		//#endif
 	}
 	~Particle()
-	{
-		if (usingGPU_m)
-			freeGPUMemory();
-	}
+	{ freeGPUMemory(); }
 
 	std::vector<std::vector<double>>& getOrigData() { return origData_m; }
 	std::vector<std::vector<double>>& getCurrData() { return currData_m; }
 	std::vector<std::string>& getAttrNames() { return attributeNames_m; }
-	std::string getName() { return name_m; }
-	double   getMass() { return mass_m; }
-	double   getCharge() { return charge_m; }
-	long     getNumberOfParticles() { return particleCount_m; }
+	std::string name() { return name_m; }
+	double   mass() { return mass_m; }
+	double   charge() { return charge_m; }
+	long     getNumberOfParticles() { return numberOfParticles_m; }
 	int      getNumberOfAttributes() { return numberOfPositionDims_m + numberOfVelocityDims_m; }
 	bool     getInitDataLoaded() { return initDataLoaded_m; }
 	double** getOrigDataGPUPtr() { return origData2D_d; }
@@ -75,14 +73,14 @@ public:
 	virtual int getDimensionIndByName(std::string searchName);
 	virtual std::string getDimensionNameByInd(int searchIndx);
 
-	virtual void loadFilesToArray(std::string folder, bool orig=false);
-	virtual void saveArrayToFiles(std::string folder, bool orig);
-	virtual void normalizeParticles(bool orig, bool curr, bool inverse=false);
-
-	virtual void initializeGPU();
+	virtual void loadDataFromDisk(std::string folder, bool orig=true);
+	virtual void saveDataToDisk(std::string folder, bool orig);
+	virtual void generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass);
+	
 	virtual void copyDataToGPU();
 	virtual void copyDataToHost();
 	virtual void freeGPUMemory();
+	virtual void clearGPUMemory();
 };
 
 #endif

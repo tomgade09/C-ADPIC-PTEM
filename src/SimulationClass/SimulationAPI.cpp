@@ -2,45 +2,39 @@
 
 ///One liner functions
 DLLEXPORT double getSimulationTimeAPI(Simulation* simulation) {
-	return simulation->getTime(); }
+	return simulation->simtime(); }
 
 DLLEXPORT double getDtAPI(Simulation* simulation) {
-	return simulation->getdt(); }
+	return simulation->dt(); }
 
 DLLEXPORT double getSimMinAPI(Simulation* simulation) {
-	return simulation->getSimMin(); }
+	return simulation->simMin(); }
 
 DLLEXPORT double getSimMaxAPI(Simulation* simulation) {
-	return simulation->getSimMax(); }
-
-DLLEXPORT void incrementSimulationTimeByDtAPI(Simulation* simulation) {
-	simulation->incTime(); }
+	return simulation->simMax(); }
 
 DLLEXPORT int getNumberOfParticleTypesAPI(Simulation* simulation) {
-	return static_cast<int>(simulation->getNumberOfParticleTypes()); }
+	return (int)(simulation->getNumberOfParticleTypes()); }
 
 DLLEXPORT int getNumberOfParticlesAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(return static_cast<int>(simulation->getNumberOfParticles(partInd))); }
+	SIM_API_EXCEP_CHECK(return (int)(simulation->getNumberOfParticles(partInd))); }
 
 DLLEXPORT int getNumberOfAttributesAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(return static_cast<int>(simulation->getNumberOfAttributes(partInd))); }
+	SIM_API_EXCEP_CHECK(return (int)(simulation->getNumberOfAttributes(partInd))); }
 
 DLLEXPORT const char* getParticleNameAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(return simulation->getParticleName(partInd)); }
+	SIM_API_EXCEP_CHECK(return simulation->getParticleName(partInd).c_str()); }
 
 DLLEXPORT const char* getSatelliteNameAPI(Simulation* simulation, int satInd) {
-	SIM_API_EXCEP_CHECK(return simulation->getSatelliteName(satInd)); }
-
-DLLEXPORT bool areResultsPreparedAPI(Simulation* simulation) { //do I even need this?  maybe change way results are prepared
-	return simulation->areResultsPrepared(); }
+	SIM_API_EXCEP_CHECK(return simulation->getSatelliteName(satInd).c_str()); }
 
 DLLEXPORT LogFile* getLogFilePointerAPI(Simulation* simulation) {
-	return simulation->getLogFilePointer(); }
+	SIM_API_EXCEP_CHECK(return simulation->logPtr()); }
 
 
 //Pointer one liners
-DLLEXPORT double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
-	SIM_API_EXCEP_CHECK(return simulation->getPointerToParticleAttributeArray(partIndex, attrIndex, originalData)); }
+DLLEXPORT const double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
+	SIM_API_EXCEP_CHECK(return simulation->getParticleData(partIndex, originalData).at(attrIndex).data()); }
 
 
 //Field tools
@@ -51,70 +45,36 @@ DLLEXPORT double getEFieldAtSAPI(Simulation* simulation, double s, double time) 
 	return simulation->getEFieldAtS(s, time); }
 
 
-//Mu<->VPerp Functions - Should I be exposing this functionality??  Maybe
-DLLEXPORT void convertParticleVPerpToMuAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(simulation->convertVPerpToMu(partInd)); }
-
-DLLEXPORT void convertParticleMuToVPerpAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(simulation->convertMuToVPerp(partInd)); }
-
-
 //Simulation Management Function Wrappers
+DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir) {
+	SIM_API_EXCEP_CHECK(return new Simulation(dt, simMin, simMax, rootdir)); }
+
 DLLEXPORT void initializeSimulationAPI(Simulation* simulation) {
 	SIM_API_EXCEP_CHECK(simulation->initializeSimulation()); }
-
-DLLEXPORT void copyDataToGPUAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(simulation->copyDataToGPU()); }
 
 DLLEXPORT void iterateSimulationAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts) {
 	SIM_API_EXCEP_CHECK(simulation->iterateSimulation(numberOfIterations, itersBtwCouts)); }
 
-DLLEXPORT void copyDataToHostAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(simulation->copyDataToHost()); }
-
 DLLEXPORT void freeGPUMemoryAPI(Simulation* simulation) {
 	SIM_API_EXCEP_CHECK(simulation->freeGPUMemory()); }
 
-DLLEXPORT void prepareResultsAPI(Simulation* simulation, bool normalizeToRe) {
-	SIM_API_EXCEP_CHECK(simulation->prepareResults(normalizeToRe)); }
+DLLEXPORT void saveDataToDiskAPI(Simulation* simulation) {
+	SIM_API_EXCEP_CHECK(simulation->saveDataToDisk()); }
 
+DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
+	delete simulation; }
 
-//Satellite functions
-DLLEXPORT void createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name) {
-	SIM_API_EXCEP_CHECK(simulation->createTempSat(particleInd, altitude, upwardFacing, name)); }
-
-DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
-	return static_cast<int>(simulation->getNumberOfSatellites()); }
-
-DLLEXPORT int  getSatNumOfDetectedPartsAPI(Simulation* simulation, int satIndex) {
-	SIM_API_EXCEP_CHECK(return static_cast<int>(simulation->getSatelliteNumberOfDetectedParticles(satIndex))); }
-
-DLLEXPORT double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int attributeInd) {
-	SIM_API_EXCEP_CHECK(return simulation->getSatelliteDataPointers(satelliteInd, attributeInd)); }
-
-DLLEXPORT void writeSatelliteDataToCSVAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(simulation->writeSatelliteDataToCSV()); }
-
-DLLEXPORT Simulation* loadCompletedSimDataAPI(const char* fileDir, const char* bFieldModel, const char* eFieldElems, const char* partNames, const char* satNames) {
-	SIM_API_EXCEP_CHECK( return new PreviousSimulation(fileDir, bFieldModel, constCharToStrVec(eFieldElems), constCharToStrVec(partNames), constCharToStrVec(satNames)) ); }
-
-
-//Particle functions
-DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir) {
-	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, constCharToStrVec(attrNames), mass, charge, numParts, posDims, velDims, normFactor, loadFileDir)); }
-
-
-//Simulation creation and deletion
-DLLEXPORT Simulation* createSimulationAPI(double dt, double simMin, double simMax, double ionT, double magT, const char* rootdir) {
-	SIM_API_EXCEP_CHECK(return new Simulation(dt, simMin, simMax, ionT, magT, rootdir)); }
+DLLEXPORT Simulation* loadCompletedSimDataAPI(const char* fileDir) {
+	SIM_API_EXCEP_CHECK( return new Simulation(fileDir) ); }
 
 DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir)
 {
-	SIM_API_EXCEP_CHECK(\
-	double simMin{ sim->getSimMin() };
-	double simMax{ sim->getSimMax() };
+	SIM_API_EXCEP_CHECK(
+	double simMin{ sim->simMin() };
+	double simMax{ sim->simMax() };
 
-	sim->setBFieldModel("DipoleBLUT", { 72.0 });
+	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
+	//sim->setBFieldModel("DipoleB", { 72.0 });
 	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
 	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
@@ -136,26 +96,67 @@ DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const cha
 
 DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery)
 {
-	SIM_API_EXCEP_CHECK( \
+	SIM_API_EXCEP_CHECK(
 	sim->initializeSimulation();
-	sim->copyDataToGPU();
 	sim->iterateSimulation(iterations, printEvery);
-	sim->copyDataToHost();
-	sim->freeGPUMemory();
-	sim->prepareResults(true);
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
-DLLEXPORT void terminateSimulationAPI(Simulation* simulation) {
-	delete simulation; }
 
+//Fields management
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
 	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, { arg1 })); }
+
+
+//Particle functions
+DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir) {
+	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, utils::string::charToStrVec(attrNames), mass, charge, numParts, posDims, velDims, normFactor, loadFileDir)); }
+
+
+//Satellite functions
+DLLEXPORT void createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name) {
+	SIM_API_EXCEP_CHECK(simulation->createTempSat(particleInd, altitude, upwardFacing, name)); }
+
+DLLEXPORT int  getNumberOfSatellitesAPI(Simulation* simulation) {
+	return (int)(simulation->getNumberOfSatellites()); }
+
+DLLEXPORT const double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int msmtInd, int attributeInd) {
+	SIM_API_EXCEP_CHECK(return simulation->getSatelliteData(satelliteInd).at(msmtInd).at(attributeInd).data()); }
+
+
+//CSV functions
+DLLEXPORT void writeCommonCSVAPI(Simulation* simulation)
+{
+	SIM_API_EXCEP_CHECK(
+		utils::write::CSV csvtmp("./elecoutput.csv");
+		std::vector<std::vector<double>> origData{ simulation->getParticleData(0, true) };
+		csvtmp.add(origData, { "vpara orig", "vperp orig", "s orig" });
+		csvtmp.addspace();
+		
+		std::vector<std::vector<double>> btmElecData{ simulation->getSatelliteData(0).at(0) };
+		csvtmp.add({ btmElecData.at(3), btmElecData.at(0), btmElecData.at(1), btmElecData.at(2) },
+			{ "t_esc btm", "vpara btm", "vperp btm", "s btm" });
+		csvtmp.addspace();
+
+		std::vector<std::vector<double>> topElecData{ simulation->getSatelliteData(1).at(0) };
+		csvtmp.add({ topElecData.at(3), topElecData.at(0), topElecData.at(1), topElecData.at(2) },
+			{ "t_esc top", "vpara top", "vperp top", "s top" });
+		csvtmp.addspace();
+
+		std::vector<std::vector<double>> energyPitch(2, std::vector<double>(origData.at(0).size()));
+		for (int elem = 0; elem < energyPitch.at(0).size(); elem++)
+		{
+			energyPitch.at(0).at(elem) = 0.5 * MASS_ELECTRON * (pow(origData.at(0).at(elem), 2) + pow(origData.at(1).at(elem), 2)) / JOULE_PER_EV;
+			energyPitch.at(1).at(elem) = atan2(abs(origData.at(1).at(elem)), -origData.at(0).at(elem)) * 180.0 / PI;
+		}
+		csvtmp.add(energyPitch, { "Energy (eV)", "Pitch Angle" });
+	);
+}
 
 #ifdef _DEBUG
 int main()
 {
-	SIM_API_EXCEP_CHECK( \
+	SIM_API_EXCEP_CHECK(
 	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, 2.5, 1000.0, "./out/") };
 	setupNormalSimulationAPI(sim, 3456000, "./../in/data");
 	runNormalSimulationAPI(sim, 25000, 500);
