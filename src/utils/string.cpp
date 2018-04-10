@@ -73,22 +73,21 @@ namespace utils
 			throw std::invalid_argument("utils::string::findAttrInd: cannot find attribute " + attr + " in string " + allAttrsStr);
 		}
 
-		DLLEXP_NOEXTC std::vector<std::string> charToStrVec(const char* str, const char delim)
+		DLLEXP_NOEXTC std::vector<std::string> charToStrVec(std::string str, const char delim)
 		{
-			std::string tmp{ str };
 			std::vector<std::string> charVec;
 
-			if (tmp == "")
+			if (str == "")
 				return charVec;
 
 			size_t loc{ 0 };
 			while (loc != std::string::npos)
 			{
-				loc = tmp.find(delim);
-				charVec.push_back(tmp.substr(0, loc));
-				tmp.erase(0, loc + 1);
-				while (tmp.at(0) == ' ')
-					tmp.erase(0, 1);
+				loc = str.find(delim);
+				charVec.push_back(str.substr(0, loc));
+				str.erase(0, loc + 1);
+				while (str.at(0) == ' ')
+					str.erase(0, 1);
 			}
 
 			return charVec;

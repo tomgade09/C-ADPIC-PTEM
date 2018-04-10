@@ -60,6 +60,9 @@
     <ClCompile Include="..\src\utils\write.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\utilsAPI.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
@@ -149,6 +152,9 @@
     <ClInclude Include="..\include\utils\write.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\utils\utilsAPI.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\__simulationvariables.py">
@@ -177,6 +183,9 @@
     </None>
     <None Include="..\python\SimulationClass\_Simulation.py">
       <Filter>Python Files\Simulation</Filter>
+    </None>
+    <None Include="..\python\scripts\createParticleDistribution.py">
+      <Filter>Python Files\Scripts</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

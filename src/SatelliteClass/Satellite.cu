@@ -128,7 +128,7 @@ std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros
 	{
 		for (int jjj = 0; jjj < data_copy.at(iii).size(); jjj++) //attrs
 			std::copy(data_copy.at(iii).at(jjj).begin(), data_copy.at(iii).at(jjj).end(), ret.at(jjj).begin() + offset);
-		offset += data_copy.at(iii).at(0).size();
+		offset += (int)data_copy.at(iii).at(0).size();
 	}
 
 	return ret;

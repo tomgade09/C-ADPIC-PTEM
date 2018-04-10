@@ -30,6 +30,7 @@
     <ClCompile Include="..\src\utils\string.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
     <ClCompile Include="..\src\utils\random.cpp" />
+    <ClCompile Include="..\src\utils\utilsAPI.cpp" />
     <ClCompile Include="..\src\utils\write.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -61,6 +62,7 @@
     <ClInclude Include="..\include\utils\loopmacros.h" />
     <ClInclude Include="..\include\utils\numerical.h" />
     <ClInclude Include="..\include\utils\random.h" />
+    <ClInclude Include="..\include\utils\utilsAPI.h" />
     <ClInclude Include="..\include\utils\write.h" />
   </ItemGroup>
   <ItemGroup>
@@ -74,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\FileIO\fileIO.py" />
+    <None Include="..\python\scripts\createParticleDistribution.py" />
     <None Include="..\python\scripts\loadPrevSimData.py" />
     <None Include="..\python\scripts\simFromInterpreter.py" />
     <None Include="..\python\simulation.py" />
