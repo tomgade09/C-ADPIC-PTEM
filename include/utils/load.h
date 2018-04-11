@@ -12,12 +12,13 @@ namespace utils
 		class DistributionFromDisk
 		{
 		private:
+			std::string name_m;
 			std::vector<std::string> attrNames_m;
 			std::vector<std::vector<double>> data_m;
 
 
 		public:
-			DistributionFromDisk(std::string folder, std::string partName, std::vector<std::string> attrNames) : attrNames_m{ attrNames }
+			DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames) : name_m{ name }, attrNames_m { attrNames }
 			{
 				int attrsize{ 0 };
 				for (int attr = 0; attr < attrNames.size(); attr++)
@@ -34,8 +35,10 @@ namespace utils
 			~DistributionFromDisk() {}
 
 			const std::vector<std::vector<double>>& data() { return data_m; }
+			const std::string& name() { return name_m; }
 			void print(int at) {
-				for (int iii = 0; iii < attrNames_m.size(); iii++) { std::cout << attrNames_m.at(iii) << ((iii != attrNames_m.size() - 1) ? ", " : ":"); }
+				std::cout << name_m << " ";
+				for (int iii = 0; iii < attrNames_m.size(); iii++) { std::cout << attrNames_m.at(iii) << ((iii != attrNames_m.size() - 1) ? ", " : ": "); }
 				for (int iii = 0; iii < data_m.size(); iii++) { std::cout << data_m.at(iii).at(at) << ((iii != data_m.size() - 1) ? ", " : ""); } std::cout << std::endl; }
 			void printdiff(DistributionFromDisk& other, int at);
 			void zeroes() { std::vector<int> tmp; zeroes(tmp, true); }

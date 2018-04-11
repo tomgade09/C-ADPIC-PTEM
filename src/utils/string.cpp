@@ -116,7 +116,7 @@ namespace utils
 
 		DLLEXP_NOEXTC void stringPadder(std::string& in, int totalStrLen, int indEraseFrom)
 		{
-			if (totalStrLen <= 0 || indEraseFrom <= 0)
+			if (totalStrLen <= 0 || indEraseFrom < 0)
 				return;
 
 			size_t txtlen = in.length();

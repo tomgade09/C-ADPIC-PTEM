@@ -86,6 +86,7 @@
     <None Include="..\python\SimulationClass\_Simulation.py" />
     <None Include="..\python\SimulationClass\__plotParticles.py" />
     <None Include="..\python\utils\createParticleDistribution.py" />
+    <None Include="..\python\utils\prepLoadDistribution.py" />
     <None Include="..\python\utils\utilsAPI.py" />
     <None Include="..\python\__simulationvariables.py" />
   </ItemGroup>

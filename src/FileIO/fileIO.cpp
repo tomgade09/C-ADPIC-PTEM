@@ -14,6 +14,8 @@ namespace fileIO
 		binFile.close();
 		std::cout << "fileIO::readDblBin: (unknown size): num elements determined from disk: " << length << std::endl;
 
+		arrayToReadInto.resize(length);
+
 		readDblBin(arrayToReadInto, filename, (long)length);
 	}
 

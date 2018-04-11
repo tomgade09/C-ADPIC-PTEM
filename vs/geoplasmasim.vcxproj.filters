@@ -196,6 +196,9 @@
     <None Include="..\python\utils\utilsAPI.py">
       <Filter>Python Files\utils</Filter>
     </None>
+    <None Include="..\python\utils\prepLoadDistribution.py">
+      <Filter>Python Files\utils</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\To-Do.txt" />

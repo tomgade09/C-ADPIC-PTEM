@@ -15,11 +15,11 @@ DLLEXPORT void generatePDAPI(utils::write::ParticleDistribution* pd, double s_io
 DLLEXPORT void writePDAPI(utils::write::ParticleDistribution* pd);
 
 //DistributionFromDisk functions
-DLLEXPORT utils::load::DistributionFromDisk* loadDistributionFromDiskAPI(const char* loadFolder, const char* attrNames, const char* particleName);
+DLLEXPORT utils::load::DistributionFromDisk* loadDistributionFromDiskAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName);
 DLLEXPORT void DistFromDiskPrintAPI(utils::load::DistributionFromDisk* dfd, int at);
 DLLEXPORT void DistFromDiskPrintDiffAPI(utils::load::DistributionFromDisk* dfd_this, utils::load::DistributionFromDisk* dfd_other, int at);
 DLLEXPORT void DistFromDiskZeroesAPI(utils::load::DistributionFromDisk* dfd);
 DLLEXPORT void DistFromDiskCompareAPI(utils::load::DistributionFromDisk* dfd_this, utils::load::DistributionFromDisk* dfd_other);
-DLLEXPORT void deleteDistFromDisk(utils::load::DistributionFromDisk* dfd);
+DLLEXPORT void deleteDistFromDiskAPI(utils::load::DistributionFromDisk* dfd);
 
 #endif /* UTILS_API_H */

@@ -11,14 +11,15 @@ namespace utils
 			{
 				std::cout << "DistributionFromDisk::printdiff: Warning: data from the two distributions does not have the same dimensionality. ";
 				std::cout << "Did you load up two distributions of different types? Using the smaller size." << std::endl;
-				datasize = (data_m.size() < other.data().size()) ? ((int)data_m.size()) : ((int)other.data().size());
+				datasize = ((data_m.size() < other.data().size()) ? ((int)data_m.size()) : ((int)other.data().size()));
 			}
 
 			std::vector<double> err(datasize);
 			for (int attr = 0; attr < datasize; attr++)
 			{
 				err.at(attr) = abs((data_m.at(attr).at(at) - other.data().at(attr).at(at)) / data_m.at(attr).at(at));
-				std::cout << attrNames_m.at(attr) << " (this, other, err): " << data_m.at(attr).at(at) << ", " << other.data().at(attr).at(at) << ", " << err.at(attr) << std::endl;
+				std::cout << attrNames_m.at(attr) << " (" << name_m << ", " << other.name() << ", err): ";
+				std::cout << data_m.at(attr).at(at) << ", " << other.data().at(attr).at(at) << ", " << err.at(attr) << std::endl;
 			}
 		}
 
@@ -30,10 +31,14 @@ namespace utils
 				for (auto part = (*attr).begin(); part < (*attr).end(); part++)
 					if ((*part) == 0.0) { zeroes.at(attr - data_m.begin())++; }
 			}
-
-			for (int zero = 0; zero < zeroes.size(); zero++)
-				std::cout << attrNames_m.at(zero) << " zeroes: " << zeroes.at(zero) << (zero != zeroes.size() - 1) ? ", " : "";
-			std::cout << std::endl;
+			
+			if (print)
+			{
+				std::cout << name_m << " ";
+				for (int zero = 0; zero < zeroes.size(); zero++)
+					std::cout << attrNames_m.at(zero) << " zeroes: " << zeroes.at(zero) << ((zero != zeroes.size() - 1) ? ", " : "");
+				std::cout << std::endl;
+			}
 		}
 
 		void DistributionFromDisk::compare(DistributionFromDisk& other)
@@ -87,7 +92,7 @@ namespace utils
 				}
 			}
 
-			std::cout << "================ Summary of differences: this, other (passed in) ================" << std::endl;
+			std::cout << "================ Summary of differences: name_m, " + other.name() + " (passed in) ================" << std::endl;
 			std::cout << "Number of zeroes in attributes:" << std::endl;
 			for (int attr = 0; attr < datasize; attr++)
 				std::cout << attrNames_m.at(attr) << ": " << zeroes_this.at(attr) << ", " << zeroes_other.at(attr) << std::endl;

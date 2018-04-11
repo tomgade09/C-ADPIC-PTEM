@@ -32,8 +32,8 @@ DLLEXPORT void writePDAPI(utils::write::ParticleDistribution* pd) {
 
 
 //DistributionFromDisk functions
-DLLEXPORT utils::load::DistributionFromDisk* loadDistributionFromDiskAPI(const char* loadFolder, const char* attrNames, const char* particleName) {
-	SIM_API_EXCEP_CHECK(return new utils::load::DistributionFromDisk(loadFolder, particleName, utils::string::charToStrVec(attrNames))); }
+DLLEXPORT utils::load::DistributionFromDisk* loadDistributionFromDiskAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName) {
+	SIM_API_EXCEP_CHECK(return new utils::load::DistributionFromDisk(name, loadFolder, particleName, utils::string::charToStrVec(attrNames))); }
 
 DLLEXPORT void DistFromDiskPrintAPI(utils::load::DistributionFromDisk* dfd, int at) {
 	SIM_API_EXCEP_CHECK(dfd->print(at)); }
@@ -47,5 +47,5 @@ DLLEXPORT void DistFromDiskZeroesAPI(utils::load::DistributionFromDisk* dfd) {
 DLLEXPORT void DistFromDiskCompareAPI(utils::load::DistributionFromDisk* dfd_this, utils::load::DistributionFromDisk* dfd_other) {
 	SIM_API_EXCEP_CHECK(dfd_this->compare(*dfd_other)); }
 
-DLLEXPORT void deleteDistFromDisk(utils::load::DistributionFromDisk* dfd) {
+DLLEXPORT void deleteDistFromDiskAPI(utils::load::DistributionFromDisk* dfd) {
 	delete dfd; }
