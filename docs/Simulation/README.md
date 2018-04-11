@@ -2,24 +2,26 @@
 
 
 ### What is?
-**```
+**
+```
 Simulation(double dt, double simMin, double simMax, std::string saveRootDir)
-```**
+```
+**
 Simulation is a container class that integrates functionality from: [Particle](./../Particle/README.md), [Satellite](./../Satellite/README.md), [BField](./../BField/README.md) derived models, [EField](./../EField/README.md) derived models, and [LogFile](./../LogFile/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
 
 *Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particle](Particle/README.md) refers to the class itself or an instance of the class which manages a large number of particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
 
 
 ### Public Member Functions
-**```
+```
 const std::vector<std::vector<double>>& Simulation::getParticleData(int partInd, bool originalData)
-```**
+```
 Return a const reference to a [Particle's](./../Particle/README.md) data array, whose index is specified by partInd.  Dimensions represent [attribute][particle].  The boolean "originalData" determines whether the original data array or current data array is returned.  See [Particle's readme](./../Particle/README.md) for more details about original vs current data.  From outside C++, accessed through `getPointerToParticleAttributeArrayAPI` [API function](./../API/README.md).
 
 
-**```
+```
 const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteData(int satInd)
-```**
+```
 Return a const reference to satInd index [Satellite's](./../Satellite/README.md) data array.  Dimensions represent [measurement][attribute][particle].  See [Satellite's readme](./../Satellite/README.md) for more info.  From outside C++, accessed through `getSatelliteDataPointersAPI` [API function](./../API/README.md).
 
 
