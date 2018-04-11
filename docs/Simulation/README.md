@@ -16,45 +16,54 @@ const std::vector<std::vector<double>>& Simulation::getParticleData(int partInd,
 ```
 Return a const reference to a [Particle's](./../Particle/README.md) data array, whose index is specified by partInd.  Dimensions represent [attribute][particle].  The boolean "originalData" determines whether the original data array or current data array is returned.  See [Particle's readme](./../Particle/README.md) for more details about original vs current data.  From outside C++, accessed through `getPointerToParticleAttributeArrayAPI` [API function](./../API/README.md).
 
+
 ```
 const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteData(int satInd)
 ```
 Return a const reference to satInd index [Satellite's](./../Satellite/README.md) data array.  Dimensions represent [measurement][attribute][particle].  See [Satellite's readme](./../Satellite/README.md) for more info.  From outside C++, accessed through `getSatelliteDataPointersAPI` [API function](./../API/README.md).
+
 
 ```
 void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir)
 ```
 Create a particle type with specified name, attributes, etc.  Attributes refer to position dimension name, velocity dimension name, or some other thing such as time, index, or other label.  These labels will be used to save/load data to/from disk.  Save/load format is "[name]_[attr].bin".  If loadFilesDir does not equal "", data is loaded from the specified folder.  Exception is thrown if files don't exist according to attributes and name specified.  From outside C++, accessed through `createParticleTypeAPI` [API function](./../API/README.md).
 
+
 ```
 void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
 ```
 Used to create a [Satellite](./../Satellite/README.md).  The actual instance is created immediately before iterating the simulation.  In this sim, altitude is in "s" - the distance along the field line, NOT "r" - the distance from the center of the Earth, or the tradition sense of altitude - the distance from the surface of the Earth.  From outside C++, accessed through `createSatelliteAPI` [API function](./../API/README.md).
+
 
 ```
 void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool save)
 ```
 Creates a [BField](./../BField/README.md) model, depending on the user's specification.  Currently available models for `name` are "DipoleB" and "DipoleBLUT".  See previous documentation link for more info on the various models.  From outside C++, accessed through `setBFieldModelAPI` [API function](./../API/README.md).
 
+
 ```
 void Simulation::addEFieldModel(std::string name, std::vector<std::vector<double>> args)
 ```
 Creates a [EField](./../EField/README.md) model, depending on the user's specification.  Currently available models for `name` are "QSPS" and "AlfvenLUT" (not quite complete yet).  See previous documentation link for more info on the various models.  No API function to access outside of C++ (yet :)).
+
 
 ```
 void Simulation::resetSimulation(bool fields)
 ```
 Destroys [Satellites](./../Satellite/README.md) and [Particles](./../Particle/README.md), as well as [BField](./../BField/README.md) model, and [EField](./../EField/README.md) model(s) if `fields` is `True`.  Used to reset the simulation without having to destroy the entire instance of this class and associated data.  This is useful when, for example, generating a backscatter distribution and rerunning to add to the prior data.
 
+
 ```
 void Simulation::initializeSimulation()
 ```
 Sets up simulation and prepares for iteration.  Converts TempSats to [Satellites](./../Satellite/README.md) (technically SatandParts).  Saves Simulation attributes, [Particles](./../Particle/README.md), [Satellites](./../Satellite/README.md), and [B](./../BField/README.md)/[E](./../EField/README.md) Field model data to disk.  From outside C++, accessed through `initializeSimulationAPI` [API function](./../API/README.md).
 
+
 ```
 void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 ```
 Iterate all particles in simulation through [B](./../BField/README.md)/[E](./../EField/README.md) Field models for specified number of iterations.  Simulation checks to see if any particles are left in simulation every checkDoneEvery iterations.  Also manages copying data to GPU at the start, converting vperp<>mu, and copying back to host once complete.  From outside C++, accessed through `iterateSimulationAPI` [API function](./../API/README.md).
+
 
 ```
 void Simulation::freeGPUMemory()
@@ -68,6 +77,7 @@ __global__ void computeKernel(double** currData_d, BField** bfield, EField** efi
 	const double simtime, const double dt, const double mass, const double charge, const double simMin, const double simMax, bool* simDone, const int iter, const int dstep_abort)
 ```
 Global kernel that manages the calculation of the equation of motion (through Fourth Order Runge Kutta), as well as returning early if the particle is outside simulation, and checking if all particles have escaped.  simMin/simMax refer to the min/max s boundaries; iter is the current iteration of loop; dstep_abort is how often to check if all particles have escaped the simulation.   All pointers are to on GPU data/class instances.
+
 
 ```
 __global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double mass, double* time, bool vperpToMu)
@@ -94,6 +104,7 @@ struct TempSat
 ```
 Stores data necessary to create a [Satellite](./../Satellite/README.md).  This is necessary because creating a [Satellite](./../Satellite/README.md) requires the associated particle to already be created.  This temporary data holder allows satellites to be specified first.  **This is created through the `Simulation::createTempSat` member function and `createSatelliteAPI` API function and will never need to be accessed directly.**
 
+
 ```
 protected:
 struct SatandPart
@@ -109,5 +120,6 @@ Stores smart pointers to [Satellite](./../Satellite/README.md) instance and asso
 
 
 **_Other protected data and functions not documented._**
+
 
 [Up a level](./../README.md)
