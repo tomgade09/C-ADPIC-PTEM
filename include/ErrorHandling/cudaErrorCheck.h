@@ -14,6 +14,7 @@
 #define CUDA_API_ERRCHK( err ) __cudaSafeCall( err, __FILE__, __LINE__ )
 #define CUDA_KERNEL_ERRCHK() __cudaCheckError( __FILE__, __LINE__ )
 #define CUDA_KERNEL_ERRCHK_WSYNC() __cudaCheckError( __FILE__, __LINE__, true )
+#define CUDA_KERNEL_ERRCHK_WABORT() __cudaCheckError( __FILE__, __LINE__, false, true )
 #define CUDA_KERNEL_ERRCHK_WSYNC_WABORT() __cudaCheckError( __FILE__, __LINE__, true, true )
 
 inline void __cudaSafeCall(cudaError err, const char* file, const int line)
