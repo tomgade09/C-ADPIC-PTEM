@@ -27,6 +27,7 @@
     <ClCompile Include="..\src\SimulationClass\previousSimulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\Simulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp" />
+    <ClCompile Include="..\src\utils\load.cpp" />
     <ClCompile Include="..\src\utils\string.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
     <ClCompile Include="..\src\utils\random.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="..\include\SatelliteClass\Satellite.h" />
     <ClInclude Include="..\include\SimulationClass\Simulation.h" />
     <ClInclude Include="..\include\SimulationClass\SimulationAPI.h" />
+    <ClInclude Include="..\include\utils\load.h" />
     <ClInclude Include="..\include\utils\string.h" />
     <ClInclude Include="..\include\utils\loopmacros.h" />
     <ClInclude Include="..\include\utils\numerical.h" />
@@ -76,7 +78,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\FileIO\fileIO.py" />
-    <None Include="..\python\scripts\createParticleDistribution.py" />
     <None Include="..\python\scripts\loadPrevSimData.py" />
     <None Include="..\python\scripts\simFromInterpreter.py" />
     <None Include="..\python\simulation.py" />
@@ -84,6 +85,8 @@
     <None Include="..\python\SimulationClass\Simulation.py" />
     <None Include="..\python\SimulationClass\_Simulation.py" />
     <None Include="..\python\SimulationClass\__plotParticles.py" />
+    <None Include="..\python\utils\createParticleDistribution.py" />
+    <None Include="..\python\utils\utilsAPI.py" />
     <None Include="..\python\__simulationvariables.py" />
   </ItemGroup>
   <ItemGroup>

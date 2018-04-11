@@ -96,8 +96,6 @@ namespace utils
 			}
 
 			data_m.at(2) = s;
-
-			std::cout << "First two vpara/vperp: " << data_m.at(0).at(0) << "/" << data_m.at(1).at(0) << "  " << data_m.at(0).at(1) << "/" << data_m.at(1).at(1) << std::endl;
 		}
 	} /* end namespace utils::write */
 } /* end namespace utils */

@@ -63,6 +63,9 @@
     <ClCompile Include="..\src\utils\utilsAPI.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\load.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
@@ -155,6 +158,9 @@
     <ClInclude Include="..\include\utils\utilsAPI.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\utils\load.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\__simulationvariables.py">
@@ -184,8 +190,11 @@
     <None Include="..\python\SimulationClass\_Simulation.py">
       <Filter>Python Files\Simulation</Filter>
     </None>
-    <None Include="..\python\scripts\createParticleDistribution.py">
-      <Filter>Python Files\Scripts</Filter>
+    <None Include="..\python\utils\createParticleDistribution.py">
+      <Filter>Python Files\utils</Filter>
+    </None>
+    <None Include="..\python\utils\utilsAPI.py">
+      <Filter>Python Files\utils</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -260,6 +269,9 @@
     </Filter>
     <Filter Include="Source Files\utils">
       <UniqueIdentifier>{6ee7cffb-7aa9-4938-ad52-b8ae24313940}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Python Files\utils">
+      <UniqueIdentifier>{4867c70b-910f-44e6-9722-5c6c9cc82b9f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

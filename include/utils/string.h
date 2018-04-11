@@ -17,7 +17,7 @@ namespace utils
 		DLLEXP_NOEXTC std::vector<std::string> charToStrVec(std::string str, const char delim = ',');
 		DLLEXP_NOEXTC std::vector<double> charToDblVec(const char* str, const char delim = ',');
 		DLLEXP_NOEXTC int sizeofStrVecFromFile(std::string fileName);
-		DLLEXP_NOEXTC void stringPadder(std::string& in, int totalStrLen, int indEraseFrom);
+		DLLEXP_NOEXTC void stringPadder(std::string& in, int totalStrLen, int indEraseFrom = 0);
 	}
 }
 

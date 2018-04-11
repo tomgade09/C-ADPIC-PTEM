@@ -26,7 +26,7 @@ namespace utils
 			return sum / calcMyMean.size();
 		}
 
-		DLLEXP_NOEXTC double calcStdDev(std::vector<double>& calcMyStdDev)
+		DLLEXP_NOEXTC double calcStdDev(const std::vector<double>& calcMyStdDev)
 		{
 			double stdDev{ 0 };
 			double mean{ calcMean(calcMyStdDev, false) };
