@@ -136,12 +136,12 @@ void Simulation::initializeSimulation()
 	initialized_m = true;
 }
 
-void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
+void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 {//conducts iterative calculations of data previously copied to GPU - runs the data through the computeKernel
 	if (!initialized_m)
 		throw SimFatalException("Simulation::iterateSimulation: sim not initialized with initializeSimulation()", __FILE__, __LINE__);
 	
-	printSimAttributes(numberOfIterations, itersBtwCouts);
+	printSimAttributes(numberOfIterations, checkDoneEvery);
 	
 	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 1
 	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
@@ -161,12 +161,12 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
 	{	
-		if (cudaloopind % itersBtwCouts == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in tnis iter (every itersBtwCouts iterations), set to true
+		if (cudaloopind % checkDoneEvery == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in tnis iter (every checkDoneEvery iterations), set to true
 
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{
 			computeKernel <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, EFieldModel_d,
-				simTime_m, dt_m, (*part)->mass(), (*part)->charge(), simMin_m, simMax_m, simDone_d, cudaloopind, itersBtwCouts); //kernel will set boolean to false if at least one particle is still in sim
+				simTime_m, dt_m, (*part)->mass(), (*part)->charge(), simMin_m, simMax_m, simDone_d, cudaloopind, checkDoneEvery); //kernel will set boolean to false if at least one particle is still in sim
 		}
 
 		CUDA_KERNEL_ERRCHK_WSYNC_WABORT(); //side effect: cudaDeviceSynchronize() needed for computeKernel to function properly, which this macro provides
@@ -176,7 +176,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int itersBtwCouts)
 		
 		cudaloopind++;
 		incTime();
-		if (cudaloopind % itersBtwCouts == 0)
+		if (cudaloopind % checkDoneEvery == 0)
 		{
 			std::stringstream out;
 			out << std::setw(std::to_string(numberOfIterations).size()) << cudaloopind;
