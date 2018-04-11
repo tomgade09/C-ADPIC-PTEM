@@ -32,7 +32,7 @@ Exactly the same as above, except the `SIM_API_EXCEP_CHECK` macro also includes 
 
 ### Macros
 ```
-**SIM_API_EXCEP_CHECK( /*YOUR CODE HERE*/ );**
+SIM_API_EXCEP_CHECK( /*YOUR CODE HERE*/ );
 ```
 Wrap code in this to catch `SimException` and `SimFatalException` as well as specifically `std::invalid_argument`, `std::out_of_range`, `std::logic_error`, `std::runtime_error`, and generally `std::exception` and print the `.what()` along with some other data to `cerr`.  Used in conjunction with capturing cerr can save this to a log file.
 
