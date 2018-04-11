@@ -2,11 +2,8 @@
 
 
 ### What is?
-**
-```
-Simulation(double dt, double simMin, double simMax, std::string saveRootDir)
-```
-**
+**`Simulation(double dt, double simMin, double simMax, std::string saveRootDir)`**
+
 Simulation is a container class that integrates functionality from: [Particle](./../Particle/README.md), [Satellite](./../Satellite/README.md), [BField](./../BField/README.md) derived models, [EField](./../EField/README.md) derived models, and [LogFile](./../LogFile/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
 
 *Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particle](Particle/README.md) refers to the class itself or an instance of the class which manages a large number of particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
