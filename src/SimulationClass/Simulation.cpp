@@ -35,7 +35,7 @@ void Simulation::createParticleType(std::string name, std::vector<std::string> a
 	particles_m.push_back(std::move(newPart));
 }
 
-void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, std::string name) //protected
+void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
 {//"Temp Sats" are necessary to ensure particles are created before their accompanying satellites
 	if (initialized_m)
 		throw std::runtime_error("Simulation::createTempSat: initializeSimulation has already been called, no satellite will be created of name " + name);

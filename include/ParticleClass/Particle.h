@@ -73,7 +73,8 @@ public:
 	virtual int getDimensionIndByName(std::string searchName);
 	virtual std::string getDimensionNameByInd(int searchIndx);
 
-	virtual void loadDataFromDisk(std::string folder, bool orig=true);
+	virtual void loadDataFromMem(std::vector<std::vector<double>> data, bool orig = true) { ((orig) ? origData_m = data : currData_m = data); numberOfParticles_m = ((orig) ? (int)origData_m.at(0).size() : (int)currData_m.at(0).size()); }
+	virtual void loadDataFromDisk(std::string folder, bool orig = true);
 	virtual void saveDataToDisk(std::string folder, bool orig);
 	virtual void generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass);
 	

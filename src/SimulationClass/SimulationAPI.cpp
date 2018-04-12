@@ -147,7 +147,7 @@ DLLEXPORT void writeCommonCSVAPI(Simulation* simulation)
 		for (int elem = 0; elem < energyPitch.at(0).size(); elem++)
 		{
 			energyPitch.at(0).at(elem) = 0.5 * MASS_ELECTRON * (pow(origData.at(0).at(elem), 2) + pow(origData.at(1).at(elem), 2)) / JOULE_PER_EV;
-			energyPitch.at(1).at(elem) = atan2(abs(origData.at(1).at(elem)), -origData.at(0).at(elem)) * 180.0 / PI;
+			energyPitch.at(1).at(elem) = atan2(abs(origData.at(1).at(elem)), -origData.at(0).at(elem)) / RADS_PER_DEG;
 		}
 		csvtmp.add(energyPitch, { "Energy (eV)", "Pitch Angle" });
 	);

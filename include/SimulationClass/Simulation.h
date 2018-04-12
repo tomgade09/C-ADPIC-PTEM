@@ -117,15 +117,15 @@ public:
 	std::string getParticleName(int partInd)       { return particles_m.at(partInd)->name(); }
 	std::string getSatelliteName(int satInd)       { return satellites_m.at(satInd)->satellite->name(); }
 
-	LogFile*    logPtr()                 { return logFile_m.get(); }
-	Particle*   particlePtr(int partInd) { return particles_m.at(partInd).get(); }
-	Satellite*  satellitePtr(int satInd) { return satellites_m.at(satInd)->satellite.get(); }
-	//BField*     BmodelPtr()              { return BFieldModel_m.get(); }
-	//EField*     EmodelPtr()              { return EFieldModel_m.get(); }
+	LogFile*    log()                 { return logFile_m.get(); }
+	Particle*   particle(int partInd) { return particles_m.at(partInd).get(); }
+	Satellite*  satellite(int satInd) { return satellites_m.at(satInd)->satellite.get(); }
+	//BField*     Bmodel()              { return BFieldModel_m.get(); }
+	//EField*     Emodel()              { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
-	const virtual VEC(VEC(double))&       getParticleData(int partInd, bool originalData); //would like to make these consts
-	const virtual VEC(VEC(VEC(double)))&  getSatelliteData(int satInd); //but issues occur with the API
+	const virtual VEC(VEC(double))&       getParticleData(int partInd, bool originalData);
+	const virtual VEC(VEC(VEC(double)))&  getSatelliteData(int satInd);
 	#undef VEC
 
 	///Forward decs for cpp file, or pure virtuals

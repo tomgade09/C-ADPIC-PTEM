@@ -13,13 +13,11 @@ void CDFFileClass::writeNewZVar(std::string varName, long cdftype, std::vector<i
 	std::vector<int> indicies(dimSizes.size(), 0);
 	int dimVar[]{ VARY, VARY };
 
-	//CDFstatus CDFcreatezVar(CDFid id, char* varName, long dataType, long numElements, long numDims, long dimSizes[], long recVariance, long dimVariances[], long* varNum)
-	//CDFstatus CDFhyperPutzVarData(CDFid id, long varNum, long recStart, long recCount, long recInterval, long indicies[], long counts[], long intervals[], void* buffer)
 	exitStatus_m = CDFcreatezVar(cdfid_m, varName.c_str(), cdftype, 1, (long)dimSizes.size(), dimSizes.data(), VARY, dimVar, &zVarIndicies_m.at(zVarIndex)); CDFCHKERR();
 	exitStatus_m = CDFhyperPutzVarData(cdfid_m, zVarIndicies_m.at(zVarIndex), 0, 1, 1, indicies.data(), dimSizes.data(), intervals.data(), arrayXD); CDFCHKERR();
 }
 
-void CDFFileClass::createGlobalAttr(std::string attrName, long cdftype, long datalen, void* data)
+void CDFFileClass::writeNewGlobalAttr(std::string attrName, long cdftype, long datalen, void* data)
 {
 	long attrIndex{ static_cast<long>(attrIndicies_m.size()) };
 	attrNameStrs_m.push_back(attrName);
@@ -29,7 +27,7 @@ void CDFFileClass::createGlobalAttr(std::string attrName, long cdftype, long dat
 	exitStatus_m = CDFputAttrgEntry(cdfid_m, attrIndicies_m.at(attrIndex), 0, cdftype, datalen, data); CDFCHKERR();
 }
 
-void CDFFileClass::createZVarAttr(long varNum, std::string attrName, long cdftype, long datalen, void* data)
+void CDFFileClass::writeNewZVarAttr(long varNum, std::string attrName, long cdftype, long datalen, void* data)
 {
 	long attrIndex{ static_cast<long>(attrIndicies_m.size()) };
 	attrNameStrs_m.push_back(attrName);
@@ -39,10 +37,10 @@ void CDFFileClass::createZVarAttr(long varNum, std::string attrName, long cdftyp
 	exitStatus_m = CDFputAttrzEntry(cdfid_m, attrIndicies_m.at(attrIndex), varNum, cdftype, datalen, data); CDFCHKERR();
 }
 
-void CDFFileClass::createZVarAttr(std::string varName, std::string attrName, long cdftype, long datalen, void* data)
+void CDFFileClass::writeNewZVarAttr(std::string varName, std::string attrName, long cdftype, long datalen, void* data)
 {
 	long varNum{ findzVarCDFIndexByName(varName) };
-	createZVarAttr(varNum, attrName, cdftype, datalen, data);
+	writeNewZVarAttr(varNum, attrName, cdftype, datalen, data);
 }
 
 long CDFFileClass::findzVarCDFIndexByName(std::string varName)

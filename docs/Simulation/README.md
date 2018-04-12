@@ -1,12 +1,27 @@
 # Simulation
 
 
+![Simulation Visual](./Simulation.jpg)
+
+
 ### What is?
 **`Simulation(double dt, double simMin, double simMax, std::string saveRootDir)`**
 
 Simulation is a container class that integrates functionality from: [Particle](./../Particle/README.md), [Satellite](./../Satellite/README.md), [BField](./../BField/README.md) derived models, [EField](./../EField/README.md) derived models, and [LogFile](./../LogFile/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
 
 *Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particle](Particle/README.md) refers to the class itself or an instance of the class which manages a large number of particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
+
+
+### Use
+Create a Simulation through the [API function](./../API/README.md) `createSimulationAPI` or with `std::make_unique<Simulation>(...)`.  `dt` is self-explanatory, `simMin` and `simMax` refer to the min and max limits of the simulation - if a particle is found outside this, it is ignored, and `saveRootDir` refers to the directory where you want data saved.  Data is saved in the following way (and relies on this folder structure existing prior to saving):
+```
+.
+|- _chars : Simulation characteristics in '.bin' and '.txt' files for later loading
+|- bins : stores binary '.bin' files containing various data
+|  |- particles_final : final particle data at the end of iteration
+|  |- particles_init : initial particle data before iterating
+|  ∟- satellites : compressed (zeroes removed) captured satellite data for later processing
+```
 
 
 ### Public Member Functions
@@ -47,6 +62,12 @@ Creates a [EField](./../EField/README.md) model, depending on the user's specifi
 
 
 ```
+virtual void saveDataToDisk()
+```
+Calls saveDataToDisk of [Particles](./Particle/README.md) and [Satellites](./Satellite/README.md).  Called automatically by `iterateSimulation` once iterations are complete.
+
+
+```
 void Simulation::resetSimulation(bool fields)
 ```
 Destroys [Satellites](./../Satellite/README.md) and [Particles](./../Particle/README.md), as well as [BField](./../BField/README.md) model, and [EField](./../EField/README.md) model(s) if `fields` is `True`.  Used to reset the simulation without having to destroy the entire instance of this class and associated data.  This is useful when, for example, generating a backscatter distribution and rerunning to add to the prior data.
@@ -68,6 +89,26 @@ Iterate all particles in simulation through [B](./../BField/README.md)/[E](./../
 void Simulation::freeGPUMemory()
 ```
 Call if freeing GPU memory is desired prior to destructors being called (classes all free their own GPU memory on destruction).  Keep in mind that once this happens, you won't be able to use on GPU memory for [Particles](./../Particle/README.md) and [Satellites](./../Satellite/README.md) unless you destroy them and create new ones.  At this time, there is no function to reallocate GPU memory from these classes once destroyed (it is automatically created upon initialization).  From outside c++, accessed through `freeGPUMemoryAPI` [API function](./../API/README.md).
+
+
+```
+double	    simtime(){ return simTime_m; }
+double	    dt()     { return dt_m; }
+double      simMin() { return simMin_m; }
+double      simMax() { return simMax_m; }
+size_t      getNumberOfParticleTypes()         { return particles_m.size(); }
+size_t      getNumberOfSatellites()            { return satellites_m.size(); }
+size_t      getNumberOfParticles(int partInd)  { return particles_m.at(partInd)->getNumberOfParticles(); }
+size_t      getNumberOfAttributes(int partInd) { return particles_m.at(partInd)->getNumberOfAttributes(); }
+std::string getParticleName(int partInd)       { return particles_m.at(partInd)->name(); }
+std::string getSatelliteName(int satInd)       { return satellites_m.at(satInd)->satellite->name(); }
+LogFile*    log()                 { return logFile_m.get(); }
+Particle*   particle(int partInd) { return particles_m.at(partInd).get(); }
+Satellite*  satellite(int satInd) { return satellites_m.at(satInd)->satellite.get(); }
+const virtual std::vector<std::vector<double>>&       getParticleData(int partInd, bool originalData);
+const virtual std::vector<std::vector<std::vector<double>>>&  getSatelliteData(int satInd);
+```
+Various access functions with self-explanatory return values.
 
 
 ### CUDA Kernels

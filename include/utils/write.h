@@ -44,13 +44,13 @@ namespace utils
 			std::string particleName_m;
 			std::vector<std::string> attrNames_m;
 
-			int numberParticles_m{ 0 };
 			double mass_m;
 
-			std::vector<std::vector<std::vector<double>>> ranges_m;
-			std::vector<std::vector<double>> energyPitch_m;
-			std::vector<std::vector<double>> data_m;
+			std::vector<std::vector<std::vector<double>>> ranges_m; //[energy || pitch][range index][min, max, step]
+			std::vector<std::vector<double>> energyPitch_m; //[energy || pitch][energy/pitch index]
+			std::vector<std::vector<double>> data_m; //[vpara || vperp || s (|| time || index)][particle index]
 
+			double EPAtoV(double E_eV, double PA_deg, bool vpara);
 			void write();
 
 
@@ -60,16 +60,21 @@ namespace utils
 			{
 				ranges_m = std::vector<std::vector<std::vector<double>>>(2);
 				energyPitch_m = std::vector<std::vector<double>>(2);
-				data_m = std::vector<std::vector<double>>(3);
+				data_m = std::vector<std::vector<double>>(attrNames_m.size());
 			}
 			~ParticleDistribution() { write(); }
 
+			const std::vector<std::vector<double>>& data() { return data_m; }
+			void setattr(std::vector<double>& attr, int ind) { if (ind >= attrNames_m.size()) { throw std::invalid_argument("ParticleDistribution::setattr: ind is higher than data_m.size() - 1"); }
+				data_m.at(ind) = attr; }
+
 			void addEnergyRange(int energyBins, double Emin, double Emax, bool logE = true);
 			void addPitchRange(int pitchBins, double PAmin, double PAmax, bool midBin = true);
+			void addSpecificParticle(int numParticles, double energy, double pitch, double s);
 			void generate(double s_ion, double s_mag);
 			void generate(std::vector<double>& s);
 
-			std::vector<std::vector<double>>& data() { return data_m; }
+			void clear();
 		};
 	}
 }

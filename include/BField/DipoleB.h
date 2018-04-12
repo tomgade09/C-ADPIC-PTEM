@@ -31,7 +31,7 @@ public:
 	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double ds = RADIUS_EARTH / 1000.0) :
 		BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
 	{
-		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * PI / 180.0), 2);
+		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * RADS_PER_DEG), 2);
 		L_norm_m = L_m / RADIUS_EARTH;
 		s_max_m = getSAtLambda(ILATDegrees_m);
 		modelName_m = "DipoleB";

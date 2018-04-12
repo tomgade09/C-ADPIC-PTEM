@@ -30,13 +30,20 @@ protected:
 	long findzVarCDFIndexByName(std::string varName);
 
 public:
-	CDFFileClass(std::string filename) : filename_m{ filename }
+	CDFFileClass(std::string filename, bool load=false) : filename_m{ filename }
 	{
 		char fn[1024];
 		for (int chr = 0; chr < filename_m.size() + 1; chr++)
 			fn[chr] = filename_m.c_str()[chr];
 		
-		exitStatus_m = CDFcreateCDF(fn, &cdfid_m); //file exists is -2013
+		if (load) //load file
+		{
+			exitStatus_m = CDFopenCDF(fn, &cdfid_m);
+			CDFCHKERR();
+			//reconstruct internal data in smart containers in memory at some point
+			return;
+		}
+		exitStatus_m = CDFcreateCDF(fn, &cdfid_m); //else, create file: file exists err code is -2013
 
 		while (exitStatus_m == -2013)
 		{
@@ -47,8 +54,9 @@ public:
 			for (int chr = 0; chr < filename_m.size() + 1; chr++)
 				fn[chr] = filename_m.c_str()[chr];
 			exitStatus_m = CDFcreateCDF(fn, &cdfid_m);
-			
 		}
+
+		CDFCHKERR();
 	}
 
 	~CDFFileClass()
@@ -57,9 +65,17 @@ public:
 	}
 
 	void writeNewZVar(std::string varName, long cdftype, std::vector<int> dimSizes, void* arrayXD);
-	void createGlobalAttr(std::string attrName, long cdftype, long datalen, void* data);
-	void createZVarAttr(long varNum,         std::string attrName, long cdftype, long datalen, void* data);
-	void createZVarAttr(std::string varName, std::string attrName, long cdftype, long datalen, void* data);
+	void writeNewGlobalAttr(std::string attrName, long cdftype, long datalen, void* data);
+	void writeNewZVarAttr(long varNum,         std::string attrName, long cdftype, long datalen, void* data);
+	void writeNewZVarAttr(std::string varName, std::string attrName, long cdftype, long datalen, void* data);
+	
+	//void* readGlobalAttr(); //read and return global attr
+	//void* readZVarAttr(); //read and return z var attr
+	//void* readZVar(); //read and return z variable - not sure how to handle unspecified number of dimensions
+	
+	//void modifyGlobalAttr();
+	//void modifyZVarAttr();
+	//void modifyZVar();
 };
 
 #endif /* !CDFFILE_H */

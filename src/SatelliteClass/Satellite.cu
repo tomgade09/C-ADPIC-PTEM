@@ -9,11 +9,11 @@
 
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries);
 
-__global__ void satelliteDetector(double** data_d, double** capture_d, double simtime, double dt, double altitude, bool upward)
+__global__ void satelliteDetector(const double** data_d, double** capture_d, double simtime, double dt, double altitude, bool upward)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 	
-	double* v_d; double* mu_d; double* s_d; double* simtime_d; double* index_d;
+	const double* v_d; const double* mu_d; const double* s_d; double* simtime_d; double* index_d;
 	double* detected_v_d; double* detected_mu_d; double* detected_s_d;
 	v_d = data_d[0]; mu_d = data_d[1]; s_d = data_d[2]; simtime_d = capture_d[3]; index_d = capture_d[4];
 	detected_v_d = capture_d[0]; detected_mu_d = capture_d[1]; detected_s_d = capture_d[2];
@@ -62,6 +62,8 @@ void Satellite::iterateDetector(double simtime, double dt, int blockSize)
 	if (numberOfParticles_m % blockSize != 0)
 		throw std::invalid_argument("Satellite::iterateDetector: numberOfParticles is not a whole multiple of blocksize, some particles will not be checked");
 	
+	if (dataReady_m) { dataReady_m = false; }
+
 	satelliteDetector <<< numberOfParticles_m / blockSize, blockSize >>> (particleData2D_d, satCaptrData2D_d, simtime, dt, altitude_m, upwardFacing_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 }
