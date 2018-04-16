@@ -70,7 +70,7 @@ namespace utils
 
 			void addEnergyRange(int energyBins, double Emin, double Emax, bool logE = true);
 			void addPitchRange(int pitchBins, double PAmin, double PAmax, bool midBin = true);
-			void addSpecificParticle(int numParticles, double energy, double pitch, double s);
+			void addSpecificParticle(int numParticles, double energy, double pitch, double s, int padmult = 0);
 			void generate(double s_ion, double s_mag);
 			void generate(std::vector<double>& s);
 

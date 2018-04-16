@@ -19,15 +19,23 @@ const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteDat
 
 
 //Class creation functions
-void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir)
+void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, std::string loadFilesDir, bool save)
 {
-	//some sort of debug message??  Necessary for daily use?
-	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Pos Dimensions: " + std::to_string(posDims) + ", Vel Dimensions: " + std::to_string(velDims) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
+	//guards: attrNames.size() == 0 is invalid_argument
+	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
 	
-	fileIO::writeAttrsToFiles({ mass, charge, (double)numParts, (double)posDims, (double)velDims, normFactor },
-		{ "mass", "charge", "numParts", "posDims", "velDims", "normFactor", "attrNames", attrNames.at(0), attrNames.at(1), attrNames.at(2), name }, "Particle_" + name, saveRootDir_m + "/_chars/");
+	if (save)
+	{
+		std::vector<std::string> attrLabels;
+		std::vector<std::string> attrNames;
+		for (int atr = 0; atr < attrNames.size(); atr++)
+			attrLabels.push_back("attrName");
+		attrLabels.push_back("loadFilesDir");
+		attrNames.push_back(loadFilesDir);
+		simAttr_m->addData("Particle", name, attrLabels, attrNames, { "mass", "charge", "numParts" }, { mass, charge, (double)numParts });
+	}
 
-	std::shared_ptr<Particle> newPart{ std::make_shared<Particle>(name, attrNames, mass, charge, numParts, posDims, velDims, normFactor) };
+	std::shared_ptr<Particle> newPart{ std::make_shared<Particle>(name, attrNames, mass, charge, numParts) };
 
 	if (loadFilesDir != "")
 		newPart->loadDataFromDisk(loadFilesDir);
@@ -45,7 +53,7 @@ void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, 
 	tempSats_m.push_back(std::move(std::make_unique<TempSat>(partInd, altitude, upwardFacing, name)));
 }
 
-void Simulation::createSatellite(TempSat* tmpsat) //protected
+void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
 {
 	int partInd{ tmpsat->particleInd };
 	double altitude{ tmpsat->altitude };
@@ -57,8 +65,10 @@ void Simulation::createSatellite(TempSat* tmpsat) //protected
 	if (particles_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
 		throw std::runtime_error("createSatellite: pointer to GPU data is a nullptr of particle " + particles_m.at(partInd)->name() + " - that's just asking for trouble");
 
-	fileIO::writeAttrsToFiles({ (double)partInd, altitude, (double)upwardFacing },
-		{ "partInd", "altitude", "upwardFacing", name }, "Satellite_" + name, saveRootDir_m + "/_chars/");
+	if (save) { simAttr_m->addData("Satellite", name, {}, {}, { "partInd", "altitude", "upwardFacing" }, { (double)partInd, altitude, (double)upwardFacing }); }
+
+	//fileIO::writeAttrsToFiles({ (double)partInd, altitude, (double)upwardFacing },
+		//{ "partInd", "altitude", "upwardFacing", name }, "Satellite_" + name, saveRootDir_m + "/_chars/");
 
 	logFile_m->writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particles_m.at(partInd)->name() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
@@ -74,8 +84,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 	if (args.empty())
 		throw std::invalid_argument("Simulation::setBFieldModel: no arguments passed in");
 
-	std::string attrsDir{ saveRootDir_m + "/_chars/" };
-	std::vector<std::string> names;
+	std::vector<std::string> attrNames;
 
 	if (name == "DipoleB")
 	{
@@ -90,7 +99,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		else
 			throw std::invalid_argument("setBFieldModel: wrong number of arguments specified for DipoleB: " + std::to_string(args.size()));
 
-		names = { "ILAT", "ds", "errTol" };
+		attrNames = { "ILAT", "ds", "errTol" };
 	}
 	else if (name == "DipoleBLUT")
 	{
@@ -99,7 +108,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		else
 			throw std::invalid_argument("setBFieldModel: wrong number of arguments specified for DipoleBLUT: " + std::to_string(args.size()));
 
-		names = { "ILAT", "ds", "numMsmts" };
+		attrNames = { "ILAT", "ds", "numMsmts" };
 	}
 	else if (name == "IGRF")
 	{
@@ -109,7 +118,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		args.resize(3);
 		args.at(1) = BFieldModel_m->getErrTol();
 		args.at(2) = BFieldModel_m->getds();
-		names = { "ILAT", "ds", "errTol" };
+		attrNames = { "ILAT", "ds", "errTol" };
 	}
 	else if (name == "InvRCubedB")
 	{
@@ -119,7 +128,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		args.resize(3);
 		args.at(1) = BFieldModel_m->getErrTol();
 		args.at(2) = BFieldModel_m->getds();
-		names = { "ILAT", "ds", "errTol" };
+		attrNames = { "ILAT", "ds", "errTol" };
 	}
 	else
 	{
@@ -128,22 +137,42 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		args.resize(3);
 		args.at(1) = BFieldModel_m->getErrTol();
 		args.at(2) = BFieldModel_m->getds();
-		names = { "ILAT", "ds", "errTol" };
+		attrNames = { "ILAT", "ds", "errTol" };
 	}
 
 	BFieldModel_d = BFieldModel_m->getPtrGPU();
-	if (save) { fileIO::writeAttrsToFiles(args, names, "BField_" + name, attrsDir); }
+	if (save) { simAttr_m->addData("BField", name, {}, {}, attrNames, args); }
+	//if (save) { fileIO::writeAttrsToFiles(args, names, "BField_" + name, attrsDir); }
 }
 
-void Simulation::addEFieldModel(std::string name, std::vector<std::vector<double>> args)
+void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool save)
 {
 	throw std::exception("addEFieldModel: need to code saving parameters");
 
 	if (EFieldModel_m == nullptr)
 		EFieldModel_m = std::make_unique<EField>();
 
+	std::vector<std::string> attrNames;
+
 	if (name == "QSPS") //need to check to make sure args is formed properly, as well as save to disk
-		EFieldModel_m->add(std::make_unique<QSPS>(args.at(0), args.at(1), args.at(2)));
+	{
+		if (args.size() % 3 != 0) { throw std::invalid_argument("Simulation::addEFieldModel: QSPS: Argument vector is improperly formed.  Proper format is: { altMin, altMax, mag(, altMin, altMax, mag...) }"); }
+		
+		std::vector<double> altMin;
+		std::vector<double> altMax;
+		std::vector<double> mag;
+
+		for (int entry = 0; entry < args.size() / 3; entry++)
+		{
+			altMin.push_back(args.at(3 * entry));
+			altMax.push_back(args.at(3 * entry + 1));
+			mag.push_back(args.at(3 * entry + 2));
+			attrNames.push_back("altMin");
+			attrNames.push_back("altMax");
+			attrNames.push_back("magnitude");
+		}
+		EFieldModel_m->add(std::make_unique<QSPS>(altMin, altMax, mag));
+	}
 	else if (name == "AlfvenLUT")
 	{
 		std::cout << "AlfvenLUT not implemented quite yet.  Returning." << std::endl;
@@ -154,6 +183,8 @@ void Simulation::addEFieldModel(std::string name, std::vector<std::vector<double
 		std::cout << "AlfvenCompute not implemented quite yet.  Returning." << std::endl;
 		return;
 	}
+
+	if (save) { simAttr_m->addData("EField", name, {}, {}, attrNames, args); }
 }
 
 
@@ -209,6 +240,12 @@ void Simulation::resetSimulation(bool fields)
 		EFieldModel_m.reset();
 	}
 }
+
+/*void Simulation::generateBackscatterParticleDists() //coming soon
+{
+	particles_m.clear();
+	particles_m.push_back(std::make_unique<Particle>(
+}*/
 
 void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts) //protected
 {

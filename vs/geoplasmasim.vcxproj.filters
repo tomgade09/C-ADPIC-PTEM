@@ -66,6 +66,9 @@
     <ClCompile Include="..\src\utils\load.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp">
+      <Filter>Source Files\SimAttributes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="..\include\utils\load.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SimAttributes\SimAttributes.h">
+      <Filter>Header Files\SimAttributes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -275,6 +281,12 @@
     </Filter>
     <Filter Include="Python Files\utils">
       <UniqueIdentifier>{4867c70b-910f-44e6-9722-5c6c9cc82b9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SimAttributes">
+      <UniqueIdentifier>{44059e51-f061-48eb-8602-b28f335fa151}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SimAttributes">
+      <UniqueIdentifier>{3a2e37d9-9e12-47e3-a7ec-78a4b77075f7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

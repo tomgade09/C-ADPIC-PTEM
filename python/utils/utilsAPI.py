@@ -11,6 +11,8 @@ simDLL.addPDPitchRangeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_do
 simDLL.addPDPitchRangeAPI.restype = None
 simDLL.generatePDAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
 simDLL.generatePDAPI.restype = None
+simDLL.padExtraPDAttrsAPI.argtypes = (ctypes.c_void_p,)
+simDLL.padExtraPDAttrsAPI.restype = None
 simDLL.writePDAPI.argtypes = (ctypes.c_void_p,)
 simDLL.writePDAPI.restype = None
 

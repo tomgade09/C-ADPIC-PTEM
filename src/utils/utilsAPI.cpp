@@ -27,6 +27,17 @@ DLLEXPORT void addPDPitchRangeAPI(utils::write::ParticleDistribution* pd, int pi
 DLLEXPORT void generatePDAPI(utils::write::ParticleDistribution* pd, double s_ion, double s_mag) {
 	SIM_API_EXCEP_CHECK(pd->generate(s_ion, s_mag)); }
 
+DLLEXPORT void padExtraPDAttrsAPI(utils::write::ParticleDistribution* pd)
+{
+	SIM_API_EXCEP_CHECK(
+		int attrssize{ (int)pd->data().size() };
+		int partsize{ (int)pd->data().at(0).size() };
+		std::vector<double> zeroes(partsize);
+		for (int iii = 0; iii < attrssize - 3; iii++)
+			pd->setattr(zeroes, 3 + iii);
+	);
+}
+
 DLLEXPORT void writePDAPI(utils::write::ParticleDistribution* pd) {
 	delete pd; }
 

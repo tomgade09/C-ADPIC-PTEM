@@ -58,7 +58,7 @@ public:
 	__device__ void setAltArray(double* altArray) { altitude_d = altArray; }
 	__device__ void setMagArray(double* magArray) { magnitude_d = magArray; }
 
-	__host__ virtual double getErrTol() { return 1e-10; }
+	__host__ virtual double getErrTol() { return 1.0e-10; }
 	__host__ virtual double getds() { return ds_gradB_m; }
 };
 

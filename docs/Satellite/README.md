@@ -1,4 +1,4 @@
-#Satellite
+# Satellite
 
 
 ![Satellite Ownership Model](./Ownership.jpg)
@@ -93,3 +93,6 @@ bool	upward() { return upwardFacing_m; }
 std::string name() { return name_m; }
 ```
 Various access functions that return exactly what they say.
+
+
+[Up a level](./../README.md)

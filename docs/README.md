@@ -1,16 +1,24 @@
+# geoplasmasim
+
+
+### What is?
+geoplasmasim (working title) is a simulation for generating test particle distributions as seen by a simulated satellite at a specified altitude under the influence of various B and E Field structures.
+
+
+### Documentation
 Click the links below to read about the various components of this software:
 
 [1. Simulation](Simulation/README.md) - Container class that contains equation of motion for particles, as well as a number of control functions, access functions, and other useful things.  Manages lifetime of all of the below classes.
 
-[2. API](API/README.md) - Mostly extern C-style API for interfacing through Python or other language.
+[2. BField](BField/README.md) - Abstract class for interfacing with various implementations of B Field models.
 
-[3. BField](BField/README.md) - Abstract class for interfacing with various implementations of B Field models.
+[3. EField](EField/README.md) - Abstract class for interfacing with various implementations of E Field models.  Can track numerous `EElem`s - E Field Elements.
 
-[4. EField](EField/README.md) - Abstract class for interfacing with various implementations of E Field models.  Can track numerous `EElem`s - E Field Elements.
+[4. Particle](Particle/README.md) - Class that manages particles by tracking arrays of attributes, specified upon creation.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
 
-[5. Particle](Particle/README.md) - Class that manages particles by tracking arrays of attributes, specified upon creation.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
+[5. Satellite](Satellite/README.md) - Class that tracks whether or not a particle has passed a certain altitude from above or below.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
 
-[6. Satellite](Satellite/README.md) - Class that tracks whether or not a particle has passed a certain altitude from above or below.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
+[6. API](API/README.md) - Mostly extern C-style API for interfacing through Python or other language.
 
 [7. FileIO](FileIO/README.md) - Namespaced functions that handle reading and writing various filetypes to/from disk.
 

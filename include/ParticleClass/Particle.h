@@ -21,12 +21,8 @@ protected:
 	std::vector<std::string> attributeNames_m;
 
 	long numberOfParticles_m;
-	int  numberOfPositionDims_m;
-	int  numberOfVelocityDims_m;
-
 	double mass_m;
 	double charge_m;
-	double normFactor_m;
 
 	std::string name_m;
 
@@ -36,24 +32,13 @@ protected:
 	bool dataOnGPU_m{ false };
 
 public:
-	Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor=1) :
-		name_m{ name }, attributeNames_m{ attributeNames }, mass_m{ mass }, charge_m{ charge }, numberOfParticles_m{ numParts }, numberOfPositionDims_m{ posDims },
-		numberOfVelocityDims_m{ velDims }, normFactor_m{ normFactor }
+	Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts) :
+		name_m{ name }, attributeNames_m{ attributeNames }, mass_m{ mass }, charge_m{ charge }, numberOfParticles_m{ numParts }
 	{
-		origData_m = std::vector<std::vector<double>>(posDims + velDims, std::vector<double>(numParts));
-		currData_m = std::vector<std::vector<double>>(posDims + velDims, std::vector<double>(numParts));
+		origData_m = std::vector<std::vector<double>>(attributeNames.size(), std::vector<double>(numParts));
+		currData_m = std::vector<std::vector<double>>(attributeNames.size(), std::vector<double>(numParts));
 
-		if (attributeNames.size() < numberOfVelocityDims_m + numberOfPositionDims_m)
-		{
-			std::cerr << "Particle::Particle: warning: not enough attribute names specified, generic names being generated" << std::endl;
-			for (int diff = 0; diff = numberOfVelocityDims_m + numberOfPositionDims_m - (int)(attributeNames.size()); diff++)
-				attributeNames_m.push_back(std::to_string(diff) + ".bin");
-		}
-
-		//#ifdef SOME_DEFINE_TO_INDICATE_COMPILE_WITH_CUDA
 		initializeGPU();
-		//copyDataToGPU(); //maybe??  Sometimes data is copied in after the fact...could set it that either a folder is specified in constructor or random particles are generated
-		//#endif
 	}
 	~Particle()
 	{ freeGPUMemory(); }
@@ -65,7 +50,7 @@ public:
 	double   mass() { return mass_m; }
 	double   charge() { return charge_m; }
 	long     getNumberOfParticles() { return numberOfParticles_m; }
-	int      getNumberOfAttributes() { return numberOfPositionDims_m + numberOfVelocityDims_m; }
+	int      getNumberOfAttributes() { return (int)attributeNames_m.size(); }
 	bool     getInitDataLoaded() { return initDataLoaded_m; }
 	double** getOrigDataGPUPtr() { return origData2D_d; }
 	double** getCurrDataGPUPtr() { return currData2D_d; }

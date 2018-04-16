@@ -9,25 +9,25 @@
 
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries);
 
-__global__ void satelliteDetector(const double** data_d, double** capture_d, double simtime, double dt, double altitude, bool upward)
+__global__ void satelliteDetector(double** data_d, double** capture_d, double simtime, double dt, double altitude, bool upward)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 	
-	const double* v_d; const double* mu_d; const double* s_d; double* simtime_d; double* index_d;
-	double* detected_v_d; double* detected_mu_d; double* detected_s_d;
-	v_d = data_d[0]; mu_d = data_d[1]; s_d = data_d[2]; simtime_d = capture_d[3]; index_d = capture_d[4];
-	detected_v_d = capture_d[0]; detected_mu_d = capture_d[1]; detected_s_d = capture_d[2];
+	const double* v_d{ data_d[0] }; const double* mu_d{ data_d[1] }; const double* s_d{ data_d[2] };
+	
+	double* detected_v_d{ capture_d[0] }; double* detected_mu_d{ capture_d[1] }; double* detected_s_d{ capture_d[2] };
+	double* detected_t_d{ capture_d[3] }; double* detected_ind_d{ capture_d[4] };
 
 	double s_minus_vdt{ s_d[thdInd] - v_d[thdInd] * dt };
 	
 	if (simtime == 0.0) //not sure I fully like this, but it works
 	{
-		simtime_d[thdInd] = -1.0;
-		index_d[thdInd] = -1.0;
+		detected_t_d[thdInd] = -1.0;
+		detected_ind_d[thdInd] = -1.0;
 	}
 
 	if (//if a particle is detected, the slot in array[thdInd] is filled and no further detection happens for that index
-		(simtime_d[thdInd] < -0.1) &&
+		(detected_t_d[thdInd] < -0.1) &&
 			( //no detected particle is in the data array at the thread's index already AND
 				//detector is facing down and particle crosses altitude in dt
 				((!upward) && (s_d[thdInd] >= altitude) && (s_minus_vdt < altitude))
@@ -40,8 +40,8 @@ __global__ void satelliteDetector(const double** data_d, double** capture_d, dou
 		detected_v_d[thdInd] = v_d[thdInd];
 		detected_mu_d[thdInd] = mu_d[thdInd];
 		detected_s_d[thdInd] = s_d[thdInd];
-		simtime_d[thdInd] = simtime;
-		index_d[thdInd] = (double)(thdInd);
+		detected_t_d[thdInd] = simtime;
+		detected_ind_d[thdInd] = (double)(thdInd);
 	}//particle not removed from sim
 }
 

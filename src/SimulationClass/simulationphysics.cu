@@ -72,13 +72,34 @@ __device__ double foRungeKuttaCUDA(const double y_0, const double h, const doubl
 	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns delta y, not dy / dt, not total y
 }
 
+__global__ void simActiveCheck(double** currData_d, bool* simDone, const double simMin, const double simMax, const double simtime)
+{
+	if (*simDone)
+	{
+		const double* s_d{ currData_d[2] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
+
+		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
+
+		if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
+			return;
+		else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
+			return;
+		//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
+		//{
+			//(*simDone) = false;
+			//return;
+		//}
+		else
+			(*simDone) = false;
+	}
+}
+
 __global__ void computeKernel(double** currData_d, BField** bfield, EField** efield,
-	const double simtime, const double dt, const double mass, const double charge, const double simMin, const double simMax, bool* simDone, const int iter, const int dstep_abort)
+	const double simtime, const double dt, const double mass, const double charge, const double simMin, const double simMax)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
-	double* v_d; double* mu_d; double* s_d; //double* t_incident_d;
-	v_d = currData_d[0]; mu_d = currData_d[1]; s_d = currData_d[2]; //t_incident_d = currData_d[3]; //to be implemented
+	double* v_d{ currData_d[0] }; const double* mu_d{ currData_d[1] }; double* s_d{ currData_d[2] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
 
 	//if (iter % dstep_abort == 0 && *simDone && t_incident_d[thdInd] > simtime) { *simDone = false; }
 
@@ -89,7 +110,7 @@ __global__ void computeKernel(double** currData_d, BField** bfield, EField** efi
 	//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
 		//return;
 
-	if (iter % dstep_abort == 0 && *simDone) { *simDone = false; }
+	//if (iter % dstep_abort == 0 && *simDone) { *simDone = false; }
 
 	//args array: [ps_0, mu, q, m, simtime]
 	const double args[]{ s_d[thdInd], mu_d[thdInd], charge, mass, simtime };
@@ -166,7 +187,11 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{
 			computeKernel <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, EFieldModel_d,
-				simTime_m, dt_m, (*part)->mass(), (*part)->charge(), simMin_m, simMax_m, simDone_d, cudaloopind, checkDoneEvery); //kernel will set boolean to false if at least one particle is still in sim
+				simTime_m, dt_m, (*part)->mass(), (*part)->charge(), simMin_m, simMax_m);
+			
+			//kernel will set boolean to false if at least one particle is still in sim
+			if (cudaloopind % checkDoneEvery == 0)
+				simActiveCheck <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), simDone_d, simMin_m, simMax_m, simTime_m);
 		}
 
 		CUDA_KERNEL_ERRCHK_WSYNC_WABORT(); //side effect: cudaDeviceSynchronize() needed for computeKernel to function properly, which this macro provides
@@ -208,6 +233,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->copyDataToHost());
 
 	saveReady_m = true;
+	saveDataToDisk();
 
 	std::cout << "Total sim time: "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;
 

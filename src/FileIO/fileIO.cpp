@@ -160,19 +160,4 @@ namespace fileIO
 
 		txt.close();
 	}
-
-	void writeAttrsToFiles(std::vector<double> attrs, std::vector<std::string> charNames, std::string className, std::string saveFolder)
-	{
-		FILE_RDWR_EXCEP_CHECK(writeDblBin(attrs, saveFolder + className + ".bin", (int)attrs.size()));
-
-		std::string charNamesStr{ "" };
-		for (int charNm = 0; charNm < charNames.size(); charNm++)
-		{
-			charNamesStr += charNames.at(charNm);
-			if (charNm != charNames.size() - 1)
-				charNamesStr += ",";
-		}
-
-		FILE_RDWR_EXCEP_CHECK(writeTxtFile(charNamesStr, saveFolder + className + ".txt", true));
-	}
 }

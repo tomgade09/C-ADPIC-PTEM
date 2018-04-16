@@ -18,10 +18,7 @@ def setupFolders(): #moving to C++ eventually
         os.makedirs(savedir + '/bins/particles_init')
         os.makedirs(savedir + '/bins/particles_final')
         os.makedirs(savedir + '/bins/satellites')
-        os.makedirs(savedir + '/graphs/allparticles')
         os.makedirs(savedir + '/graphs/EBfields')
-        os.makedirs(savedir + '/graphs/satellites')
-        os.makedirs(savedir + '/_chars')
     os.chdir(savedir)
 
     srcfile = PYROOTDIR + '/__simulationvariables.py' #change this

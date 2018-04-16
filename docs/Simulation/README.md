@@ -16,11 +16,12 @@ Simulation is a container class that integrates functionality from: [Particle](.
 Create a Simulation through the [API function](./../API/README.md) `createSimulationAPI` or with `std::make_unique<Simulation>(...)`.  `dt` is self-explanatory, `simMin` and `simMax` refer to the min and max limits of the simulation - if a particle is found outside this, it is ignored, and `saveRootDir` refers to the directory where you want data saved.  Data is saved in the following way (and relies on this folder structure existing prior to saving):
 ```
 .
-|- _chars : Simulation characteristics in '.bin' and '.txt' files for later loading
-|- bins : stores binary '.bin' files containing various data
-|  |- particles_final : final particle data at the end of iteration
-|  |- particles_init : initial particle data before iterating
-|  ∟- satellites : compressed (zeroes removed) captured satellite data for later processing
+├─ _chars : Simulation characteristics in '.bin' and '.txt' files for later loading
+├─ bins : stores binary '.bin' files containing various data
+│  ├─ particles_final : final particle data at the end of iteration
+│  ├─ particles_init : initial particle data before iterating
+│  └─ satellites : compressed (zeroes removed) captured satellite data for later processing
+└─ ...
 ```
 
 

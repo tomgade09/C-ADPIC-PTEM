@@ -42,7 +42,7 @@ DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int print
 DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1); //switch to comma delimited string of variables
 
 //Particle functions
-DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir = "");
+DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, const char* loadFileDir = "");
 
 //Satellite functions
 DLLEXPORT void    createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name);

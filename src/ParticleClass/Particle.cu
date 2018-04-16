@@ -92,7 +92,7 @@ void Particle::generateRandomParticles(const std::vector<double>& s, int startIn
 	LOOP_OVER_1D_ARRAY(2, CUDA_API_ERRCHK(cudaMemcpy(currData1D_d + iii * numberOfParticles_m + startInd, origData_m.at(iii).data() + startInd, length * sizeof(double), cudaMemcpyDeviceToHost)));
 	std::copy(s.begin(), s.end(), origData_m.at(2).begin() + startInd);
 
-	CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, sizeof(double) * (numberOfPositionDims_m + numberOfVelocityDims_m) * numberOfParticles_m));
+	CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
 
 	initDataLoaded_m = true;
 }
@@ -157,7 +157,7 @@ void Particle::clearGPUMemory()
 {
 	if (origData1D_d && currData1D_d)
 	{
-		CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, sizeof(double) * (numberOfPositionDims_m + numberOfVelocityDims_m) * numberOfParticles_m));
-		CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, sizeof(double) * (numberOfPositionDims_m + numberOfVelocityDims_m) * numberOfParticles_m));
+		CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
+		CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
 	}
 }

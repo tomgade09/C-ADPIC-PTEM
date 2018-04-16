@@ -23,7 +23,7 @@ namespace fileIO
 	void writeDblBin(const std::vector<double>& dataarray, std::string filename, long numelements, bool overwrite=true);
 	void write2DCSV(const std::vector<std::vector<double>>& dataarray, std::string filename, int numofentries, int numofcols, const char delim, bool overwrite=true, int precision=20);
 	void writeTxtFile(std::string textToWrite, std::string filename, bool overwrite=false);
-	void writeAttrsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string saveFolder);
+	//void writeAttrsToFiles(std::vector<double> chars, std::vector<std::string> charNames, std::string className, std::string saveFolder);
 }
 
 #endif

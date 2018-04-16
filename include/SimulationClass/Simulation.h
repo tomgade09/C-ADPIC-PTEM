@@ -12,6 +12,7 @@
 #include "FileIO\fileIO.h"
 #include "utils\loopmacros.h"
 #include "utils\numerical.h"
+#include "SimAttributes\SimAttributes.h"
 #include "ErrorHandling\simExceptionMacros.h"
 
 class Simulation
@@ -62,31 +63,32 @@ protected:
 	bool dataOnGPU_m  { false };
 	bool saveReady_m  { false };
 
-	//LogFile and Error Handling
+	//Attribute saving, LogFile and Error Handling
+	std::unique_ptr<SimAttributes> simAttr_m;
 	std::unique_ptr<LogFile> logFile_m;
-
-	//Protected functions
-	virtual void createSatellite(TempSat* tmpsat);
-	void incTime() { simTime_m += dt_m; }
-	virtual void printSimAttributes(int numberOfIterations, int itersBtwCouts);
-
 	std::streambuf* cerrBufBak{ std::cerr.rdbuf() };
 	std::ofstream   cerrLogOut;
 
+	//Protected functions
+	virtual void createSatellite(TempSat* tmpsat, bool save = true);
+	void incTime() { simTime_m += dt_m; }
+	virtual void printSimAttributes(int numberOfIterations, int itersBtwCouts);
+
 
 public:
-	Simulation(double dt, double simMin, double simMax, std::string saveRootDir):
-		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, saveRootDir_m { saveRootDir + "/" }
+	Simulation(double dt, double simMin, double simMax, std::string saveRootDir) :
+		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, saveRootDir_m{ saveRootDir + "/" },
+		simAttr_m{ std::make_unique<SimAttributes>("Simulation.attr") },
+		logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "simulation.log", 20) }
 	{
 		size_t free, total;
 		CUDA_API_ERRCHK(cudaMemGetInfo(&free, &total));
 		std::cout << "Pre-Initialize cudaMemGetInfo: free: " << free << ", total: " << total << std::endl;
 
-		logFile_m = std::make_unique<LogFile>(saveRootDir_m + "simulation.log", 20);
 		cerrLogOut.open(saveRootDir_m + "errors.log");
 		std::cerr.rdbuf(cerrLogOut.rdbuf()); //set cerr output to "errors.log"
 
-		fileIO::writeAttrsToFiles( { dt_m, simMin_m, simMax_m }, { "dt", "simMin", "simMax" }, "Simulation", saveRootDir_m + "/_chars/");
+		simAttr_m->addData("Simulation", "", {}, {}, { "dt", "simMin", "simMax" }, { dt_m, simMin_m, simMax_m });
 	}
 
 	Simulation(std::string prevSimDir); //for loading previous simulation data
@@ -120,8 +122,8 @@ public:
 	LogFile*    log()                 { return logFile_m.get(); }
 	Particle*   particle(int partInd) { return particles_m.at(partInd).get(); }
 	Satellite*  satellite(int satInd) { return satellites_m.at(satInd)->satellite.get(); }
-	//BField*     Bmodel()              { return BFieldModel_m.get(); }
-	//EField*     Emodel()              { return EFieldModel_m.get(); }
+	BField*     Bmodel()              { return BFieldModel_m.get(); }
+	EField*     Emodel()              { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
 	const virtual VEC(VEC(double))&       getParticleData(int partInd, bool originalData);
@@ -130,11 +132,11 @@ public:
 
 	///Forward decs for cpp file, or pure virtuals
 	//Class creation functions
-	virtual void   createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, std::string loadFilesDir = "");
+	virtual void   createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, std::string loadFilesDir = "", bool save = true);
 	virtual void   createTempSat(int partInd, double altitude, bool upwardFacing, std::string name);
 	virtual void   setBFieldModel(std::string name, std::vector<double> args, bool save = true);
 	virtual void   setBFieldModel(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
-	virtual void   addEFieldModel(std::string name, std::vector<std::vector<double>> args);
+	virtual void   addEFieldModel(std::string name, std::vector<double> args, bool save = true);
 	virtual void   addEFieldModel(std::unique_ptr<EElem> eelem) { EFieldModel_m->add(std::move(eelem)); }
 	
 	//vperp <-> mu

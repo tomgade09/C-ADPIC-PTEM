@@ -72,7 +72,7 @@ namespace utils
 				energyPitch_m.at(1).at(ang) = (midBin) ? (PAmax - (ang + 0.5) * binsize) : (PAmax - ang * binsize);
 		}
 
-		void ParticleDistribution::addSpecificParticle(int numParticles, double energy, double pitch, double s)
+		void ParticleDistribution::addSpecificParticle(int numParticles, double energy, double pitch, double s, int padmult)
 		{
 			if (ranges_m.at(0).size() != 0 || ranges_m.at(1).size() != 0)
 			{
@@ -88,6 +88,17 @@ namespace utils
 				data_m.at(0).push_back(vpara);
 				data_m.at(1).push_back(vperp);
 				data_m.at(2).push_back(s);
+			}
+
+			if (padmult != 0)
+			{//used to pad the number of values so length is even multiple of padmult (for CUDA execution - make a multiple of blocksize)
+				int padnum{ ((((int)data_m.at(0).size() / padmult) + 1) * padmult) - (int)data_m.at(0).size() };
+				for (int pad = 0; pad < padnum; pad++)
+				{
+					data_m.at(0).push_back(0);
+					data_m.at(1).push_back(0);
+					data_m.at(2).push_back(0);
+				}
 			}
 		}
 

@@ -29,7 +29,7 @@ DLLEXPORT const char* getSatelliteNameAPI(Simulation* simulation, int satInd) {
 	SIM_API_EXCEP_CHECK(return simulation->getSatelliteName(satInd).c_str()); }
 
 DLLEXPORT LogFile* getLogFilePointerAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(return simulation->logPtr()); }
+	SIM_API_EXCEP_CHECK(return simulation->log()); }
 
 
 //Pointer one liners
@@ -77,7 +77,7 @@ DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const cha
 	//sim->setBFieldModel("DipoleB", { 72.0 });
 	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
-	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
+	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 	//sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
 
 	sim->createTempSat(0, simMin * 0.999, true, "btmElec");
@@ -109,8 +109,8 @@ DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double 
 
 
 //Particle functions
-DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, int posDims, int velDims, double normFactor, const char* loadFileDir) {
-	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, utils::string::charToStrVec(attrNames), mass, charge, numParts, posDims, velDims, normFactor, loadFileDir)); }
+DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, const char* loadFileDir) {
+	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, utils::string::charToStrVec(attrNames), mass, charge, numParts, loadFileDir)); }
 
 
 //Satellite functions

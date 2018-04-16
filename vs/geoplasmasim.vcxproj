@@ -24,6 +24,7 @@
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\src\LogFile\LogFileAPI.cpp" />
     <ClCompile Include="..\src\ParticleClass\Particle.cpp" />
+    <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp" />
     <ClCompile Include="..\src\SimulationClass\previousSimulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\Simulation.cpp" />
     <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="..\include\ParticleClass\Particle.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\SatelliteClass\Satellite.h" />
+    <ClInclude Include="..\include\SimAttributes\SimAttributes.h" />
     <ClInclude Include="..\include\SimulationClass\Simulation.h" />
     <ClInclude Include="..\include\SimulationClass\SimulationAPI.h" />
     <ClInclude Include="..\include\utils\load.h" />

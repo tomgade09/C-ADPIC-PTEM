@@ -3,7 +3,7 @@
 void Particle::loadDataFromDisk(std::string folder, bool orig)
 {
 	FILE_RDWR_EXCEP_CHECK(
-		for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
+		for (int attrs = 0; attrs < attributeNames_m.size(); attrs++)
 			fileIO::readDblBin((orig ? origData_m.at(attrs) : currData_m.at(attrs)), folder + "/" + name_m + "_" + attributeNames_m.at(attrs) + ".bin", numberOfParticles_m);
 	);
 
@@ -13,7 +13,7 @@ void Particle::loadDataFromDisk(std::string folder, bool orig)
 void Particle::saveDataToDisk(std::string folder, bool orig)
 {
 	FILE_RDWR_EXCEP_CHECK(
-		for (int attrs = 0; attrs < numberOfVelocityDims_m + numberOfPositionDims_m; attrs++)
+		for (int attrs = 0; attrs < attributeNames_m.size(); attrs++)
 			fileIO::writeDblBin((orig ? origData_m.at(attrs) : currData_m.at(attrs)), folder + "/" + name_m + "_" + attributeNames_m.at(attrs) + ".bin", numberOfParticles_m);
 	);
 }

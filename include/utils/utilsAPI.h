@@ -12,6 +12,7 @@ DLLEXPORT utils::write::ParticleDistribution* createParticleDistributionAPI(cons
 DLLEXPORT void addPDEnergyRangeAPI(utils::write::ParticleDistribution* pd, int energyBins, double Emin, double Emax, bool logE = true);
 DLLEXPORT void addPDPitchRangeAPI(utils::write::ParticleDistribution* pd, int pitchBins, double PAmin, double PAmax, bool midBin = true);
 DLLEXPORT void generatePDAPI(utils::write::ParticleDistribution* pd, double s_ion, double s_mag);
+DLLEXPORT void padExtraPDAttrsAPI(utils::write::ParticleDistribution* pd);
 DLLEXPORT void writePDAPI(utils::write::ParticleDistribution* pd);
 
 //DistributionFromDisk functions
