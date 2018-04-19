@@ -80,17 +80,17 @@ __global__ void simActiveCheck(double** currData_d, bool* simDone, const double 
 
 		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
+		//if (t_escape_d[thdInd] >= 0.0) //particle has escaped the sim
+			//return; //this is the only thing to check once implemented
 		if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
-			return;
+			return; //with fuzzyIonosphere, need to remove this
 		else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
-			return;
-		//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
-		//{
-			//(*simDone) = false;
-			//return;
-		//}
+			return; //with t_escape, need to remove this - if particle has escaped up, but t_esc hasn't been set, data is incomplete - iterate another round to make sure that data is populated
 		else
 			(*simDone) = false;
+
+		//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
+			//(*simDone) = false;
 	}
 }
 
@@ -101,24 +101,38 @@ __global__ void computeKernel(double** currData_d, BField** bfield, EField** efi
 
 	double* v_d{ currData_d[0] }; const double* mu_d{ currData_d[1] }; double* s_d{ currData_d[2] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
 
-	//if (iter % dstep_abort == 0 && *simDone && t_incident_d[thdInd] > simtime) { *simDone = false; }
-
-	if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
-		return;
-	else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
-		return;
+	//if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime)
+		//return; //particle has escaped
 	//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
 		//return;
-
-	//if (iter % dstep_abort == 0 && *simDone) { *simDone = false; }
+	if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
+		return; //t_escape_d[thdInd] = simtime; return; //fuzzyIonosphere(); if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime) { return; }
+				//eventually build in "fuzzy boundary" - maybe eventually create new particle with initial characteristics on escape
+	else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
+		return; //t_escape_d[thdInd] = simtime; return; //maybe eventaully create new particle with initial characteristics on escape
 
 	//args array: [ps_0, mu, q, m, simtime]
 	const double args[]{ s_d[thdInd], mu_d[thdInd], charge, mass, simtime };
-
-	v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], dt, args, bfield, efield);
+	
+	//foRK (plus v0 in this case) gives v at the next time step (indicated vf in this note):
+	//for downgoing (as an example), due to the mirror force, vf will be lower than v0 as the mirror force is acting in the opposite direction as v
+	//along the path of the particle, ds, and so s will end up higher if we use ds = (vf * dt) than where it would realistically
+	//if we use the ds = (v0 * dt), s will be lower down than where it would end up really (due to the fact that the mirror force acting along ds
+	//will slow v down as the particle travels along ds), so I take the average of the two and it seems close enough vf = (v0 + (v0 + dv)) / 2 = v0 + dv/2
+	//hence the /2 factor below - FYI, this was checked by the particle's energy (steady state, no E Field) remaining the same throughout the simulation
+	v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], dt, args, bfield, efield) / 2;
 	s_d[thdInd] += v_d[thdInd] * dt;
 }
 
+/*
+__device__ void fuzzyIonosphere(double& s_d, const double s_esc_absolute, double& v_d, double& t_escape_d, const double simtime)
+{
+	if (v_d > 0.0) { return; } //or do we want upgoing to possibly collide???
+	if (someRandomGenerator >/<(=)/== someCondition || s_d <= s_esc_absolute)
+		t_escape_d = simtime;
+	t_escape_d = simtime;
+}
+*/
 
 //Simulation member functions
 void Simulation::initializeSimulation()
@@ -129,30 +143,14 @@ void Simulation::initializeSimulation()
 		throw SimFatalException("Simulation::initializeSimulation: no particles in simulation, sim cannot be initialized without particles", __FILE__, __LINE__);
 
 	if (EFieldModel_m == nullptr) //make sure an EField (even if empty) exists
-		EFieldModel_m = std::make_unique<EField>(); EFieldModel_d = EFieldModel_m->getPtrGPU();
+		EFieldModel_m = std::make_unique<EField>();
+	
+	EFieldModel_d = EFieldModel_m->getPtrGPU();
 
 	if (tempSats_m.size() > 0)
 	{ LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii).get())); } //create satellites
 	else
 		std::cerr << "Simulation::initializeSimulation: warning: no satellites created" << std::endl;
-
-	//save particle and satellite names to disk
-	std::string parts;
-	for (int part = 0; part < particles_m.size(); part++)
-	{
-		parts += particles_m.at(part)->name();
-		if (part != particles_m.size() - 1) { parts += ","; }
-	}
-	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(parts, saveRootDir_m + "/_chars/Particles.txt"));
-
-	std::string sats;
-	for (int sat = 0; sat < satellites_m.size(); sat++)
-	{
-		sats += satellites_m.at(sat)->satellite->name();
-		if (sat != satellites_m.size() - 1) { sats += ","; }
-	}
-	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(sats, saveRootDir_m + "/_chars/Satellites.txt"));
-
 
 	initialized_m = true;
 }
@@ -196,7 +194,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 
 		CUDA_KERNEL_ERRCHK_WSYNC_WABORT(); //side effect: cudaDeviceSynchronize() needed for computeKernel to function properly, which this macro provides
 
-		for (auto sat = satellites_m.begin(); sat < satellites_m.end(); sat++)
+		for (auto sat = satPartPairs_m.begin(); sat < satPartPairs_m.end(); sat++)
 			(*sat)->satellite->iterateDetector(simTime_m, dt_m, BLOCKSIZE);
 		
 		cudaloopind++;
@@ -224,13 +222,13 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		vperpMuConvert <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, (*part)->mass(), nullptr, false); //nullptr will need to be changed if B ever becomes time dependent, would require loop to record when it stops tracking the particle
 
-	for (auto sat = satellites_m.begin(); sat < satellites_m.end(); sat++)
+	for (auto sat = satPartPairs_m.begin(); sat < satPartPairs_m.end(); sat++)
 		vperpMuConvert <<< (*sat)->particle->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>>  ((*sat)->satellite->get2DDataGPUPtr(), BFieldModel_d, (*sat)->particle->mass(),
 		(*sat)->satellite->get1DDataGPUPtr() + 3 * (*sat)->particle->getNumberOfParticles(), false);
 
 	//Copy data back to host
-	LOOP_OVER_1D_ARRAY(particles_m.size(), particles_m.at(iii)->copyDataToHost());
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->copyDataToHost());
+	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->copyDataToHost());
+	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->copyDataToHost());
 
 	saveReady_m = true;
 	saveDataToDisk();
@@ -251,8 +249,8 @@ void Simulation::freeGPUMemory()
 
 	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
 
-	LOOP_OVER_1D_ARRAY(particles_m.size(), particles_m.at(iii)->freeGPUMemory());
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->freeGPUMemory());
+	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->freeGPUMemory());
+	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->freeGPUMemory());
 
 	dataOnGPU_m = false;
 	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");

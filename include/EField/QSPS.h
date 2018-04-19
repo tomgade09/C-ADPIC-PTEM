@@ -26,21 +26,24 @@ protected:
 	__host__ void deleteEnvironment();
 
 public:
-	#ifndef __CUDA_ARCH__ //host code
-	__host__ QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude) : EElem(), altMin_m{ altMin }, altMax_m{ altMax }, magnitude_m{ magnitude }
+	__host__ QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude) :
+		EElem(), numRegions_m{ (int)magnitude.size() }
 	{
-		if (magnitude_m.size() != altMin.size() || magnitude_m.size() != altMax.size())
+		if (magnitude.size() != altMin.size() || magnitude.size() != altMax.size())
 			throw std::invalid_argument("QSPS::QSPS: invalid parameters passed in magnitude, altMin, altMax: resolved vector lengths are not equal");
 		
-		numRegions_m = (int)magnitude_m.size();
+		#ifndef __CUDA_ARCH__ //host code
+		altMin_m = altMin;       //unfortunately this wrapping is necessary
+		altMax_m = altMax;       //as the vectors above also have to be wrapped
+		magnitude_m = magnitude; //in an ifndef/endif block so this will compile
 		modelName_m = "QSPS";
+		#endif /* !__CUDA_ARCH__ */
 
 		setupEnvironment();
 	}
-	#endif /* !__CUDA_ARCH__ */
 
 	__device__ QSPS(double* altMin, double* altMax, double* magnitude, int numRegions) :
-		EElem(), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions } { modelName_m = "QSPS"; }
+		EElem(), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions } {}
 
 	__host__ __device__ virtual ~QSPS()
 	{
@@ -50,6 +53,10 @@ public:
 	}
 
 	__host__ __device__ double getEFieldAtS(const double s, const double t);
+
+	__host__ const std::vector<double>& altMin();
+	__host__ const std::vector<double>& altMax();
+	__host__ const std::vector<double>& magnitude();
 };
 
 #endif /* !QSPS_EFIELD_H */

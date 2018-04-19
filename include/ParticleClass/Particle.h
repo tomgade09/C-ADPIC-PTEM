@@ -26,7 +26,7 @@ protected:
 
 	std::string name_m;
 
-	virtual void initializeGPU();
+	void initializeGPU();
 
 	bool initDataLoaded_m{ false };
 	bool dataOnGPU_m{ false };
@@ -55,18 +55,18 @@ public:
 	double** getOrigDataGPUPtr() { return origData2D_d; }
 	double** getCurrDataGPUPtr() { return currData2D_d; }
 
-	virtual int getDimensionIndByName(std::string searchName);
-	virtual std::string getDimensionNameByInd(int searchIndx);
+	int         getAttrIndByName(std::string searchName);
+	std::string getAttrNameByInd(int searchIndx);
 
-	virtual void loadDataFromMem(std::vector<std::vector<double>> data, bool orig = true) { ((orig) ? origData_m = data : currData_m = data); numberOfParticles_m = ((orig) ? (int)origData_m.at(0).size() : (int)currData_m.at(0).size()); }
-	virtual void loadDataFromDisk(std::string folder, bool orig = true);
-	virtual void saveDataToDisk(std::string folder, bool orig);
-	virtual void generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass);
+	void loadDataFromMem(std::vector<std::vector<double>> data, bool orig = true) { ((orig) ? origData_m = data : currData_m = data); numberOfParticles_m = ((orig) ? (int)origData_m.at(0).size() : (int)currData_m.at(0).size()); }
+	void loadDataFromDisk(std::string folder, bool orig = true);
+	void saveDataToDisk(std::string folder, bool orig);
+	void generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass);
 	
-	virtual void copyDataToGPU();
-	virtual void copyDataToHost();
-	virtual void freeGPUMemory();
-	virtual void clearGPUMemory();
+	void copyDataToGPU();
+	void copyDataToHost();
+	void freeGPUMemory();
+	void clearGPUMemory();
 };
 
 #endif

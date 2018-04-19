@@ -1,28 +1,21 @@
 TO-DO:
-DONE, NEEDS GOOD TEST - Finish class for loading previous sim data
-DONE, NEEDS GOOD TEST - Python interface for loading previous sim data
-DONE, NEEDS GOOD TEST - Maybe a LUT Grad B w/ linear interpolation
-DONE, NEEDS GOOD TEST - Move random particle generator to Particle class
-IN PROGRESS - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
-- Python interfaces for E Field and B Field models
-- Hijack clog and write to log file (easy, quick)
-
-???? - Python check returned data, fix print functions
+- Working Backscatter
+- Fix expansion code for satellite (endless loop if data is not sparse)
+ONGOING - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
+IN PROGRESS - Document things better
+MAYBE - Hijack clog and write to log file (easy, quick)
 - Alfven E generator (Dr. Lysak's code)
-- Python, maybe set num particles based on bin size
-WORKS IN C++, OFFLOAD TO PY - Fix sideways CSV Writing (python)
-
-MAYBE DONE?? - Fix log file time width oddity
-- Remove unnecessary includes/maybe all/most includes in headers
-- Better name
-- Document things better
-- CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
 - Cross platform compiling
+- CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
+- Remove unnecessary includes/maybe all/most includes in headers
+
+LOWER PRIORITY:
+DONE, NEEDS GOOD TEST - Move random particle generator to Particle class
+- RNG generates total energy and pitch angle
+- Fix log file time width oddity
+- Better name
 MAYBE - CPU Processing vs GPU, ability to compile on machines without CUDA libraries (through preprocessor defines and such)
 	       - Modularize CUDA code - only put explicitly cuda things in .cu files, separate rest to .cpp
-MAYBE, MAYBE NOT - RNG generates total energy and pitch angle
-NOT PLATFORM AGNOSTIC, HOLD OFF - IN PROGRESS - XLSX writing with xlnt library?
-NOT PLATFORM AGNOSTIC, HOLD OFF - Offload folder creation, changing folder to C++
 
 STUFF THAT IS DONE:
 DONE - Top at 4 Re
@@ -69,6 +62,10 @@ DONE - CDF file output
 DONE - Bin particles
 DONE - Weighted particles by maxwellian distribution
 DONE - Add post processing classes (backscatter class, photoelectrons, ionospheric scattering, maybe dist function stuff, class to handle EOM)
+DONE - Finish class for loading previous sim data
+DONE - Python interface for loading previous sim data
+DONE - LUT Grad B w/ linear interpolation
+DONE - Python interfaces for E Field and B Field models
 
 STUFF THAT IS DONE WITH CAVEATS:
 DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution
@@ -76,3 +73,6 @@ DONE, BUT FACTOR IN DENSITY? - Make distribution maxwellian
 DONE, CONSIDER OTHER INJECTION SCHEMES - More particles, e, p injected over simulation (bump up to a million?, 10000 particles injected every iteration/so many hundredths of second?)
 SOMEWHAT, RESULTS ARE REASONABLE - Validation with known values (possibly magnetic bottle) - Calculations checked against excel and are good
 DONE, ADD STRUCTURE WHERE NECESSARY IN THE FUTURE - Enforce calling certain functions after other required (saving csv/xlsx after the data is copied and formed)
+
+NOT PLATFORM AGNOSTIC, HOLD OFF - IN PROGRESS - XLSX writing with xlnt library?
+NOT PLATFORM AGNOSTIC, HOLD OFF - Offload folder creation, changing folder to C++

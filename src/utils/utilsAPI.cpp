@@ -46,6 +46,9 @@ DLLEXPORT void writePDAPI(utils::write::ParticleDistribution* pd) {
 DLLEXPORT utils::load::DistributionFromDisk* loadDistributionFromDiskAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName) {
 	SIM_API_EXCEP_CHECK(return new utils::load::DistributionFromDisk(name, loadFolder, particleName, utils::string::charToStrVec(attrNames))); }
 
+DLLEXPORT const double* DistFromDiskDataAPI(utils::load::DistributionFromDisk* dfd, int attrInd) {
+	SIM_API_EXCEP_CHECK(return dfd->data().at(attrInd).data()); }
+
 DLLEXPORT void DistFromDiskPrintAPI(utils::load::DistributionFromDisk* dfd, int at) {
 	SIM_API_EXCEP_CHECK(dfd->print(at)); }
 

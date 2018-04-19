@@ -7,7 +7,8 @@ __global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, 
 		DipoleBLUT* tmp_d = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
 		tmp_d->setAltArray(altArray);
 		tmp_d->setMagArray(magArray);
-		(*this_d) = tmp_d; );
+		(*this_d) = tmp_d;
+		);
 }
 
 __global__ void deleteEnvironmentGPU_DipoleBLUT(BField** this_d)
@@ -73,7 +74,7 @@ void DipoleBLUT::setupEnvironment()
 	else
 		blocksize = 1;
 
-	calcBarray_DipoleBLUT <<< numMsmts_m / blocksize, blocksize >>>(dip->getPtrGPU(), altitude_d, magnitude_d, simMin_m, ds_msmt_m);
+	calcBarray_DipoleBLUT <<< numMsmts_m / blocksize, blocksize >>> (dip->getPtrGPU(), altitude_d, magnitude_d, simMin_m, ds_msmt_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	setupEnvironmentGPU_DipoleBLUT <<< 1, 1 >>> (this_d, ILATDegrees_m, simMin_m, simMax_m, ds_gradB_m, numMsmts_m, altitude_d, magnitude_d);

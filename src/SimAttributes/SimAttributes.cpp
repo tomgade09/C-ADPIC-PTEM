@@ -14,8 +14,7 @@
 */
 
 #define VEC(x) std::vector<x> //to save lots of space
-#define STR std::string //to save lots of space
-void SimAttributes::addData(STR classname, STR name, VEC(STR) stringAttrLabels, VEC(STR) stringAttributes, VEC(STR) doubleAttrLabels, VEC(double) doubleAttributes)
+void SimAttributes::addData(std::string classname, std::string name, VEC(std::string) stringAttrLabels, VEC(std::string) stringAttributes, VEC(std::string) doubleAttrLabels, VEC(double) doubleAttributes)
 {
 	auto invalidCharChk = [](std::vector<std::string> vec) { for (auto str = vec.begin(); str < vec.end(); str++)
 		{ for (auto chr = (*str).begin(); chr < (*str).end(); chr++) { std::string tmp{ (*chr) };
@@ -35,11 +34,6 @@ void SimAttributes::addData(STR classname, STR name, VEC(STR) stringAttrLabels, 
 	if (classname == "BField" && BAD.names_m.size() != 0) { throw std::invalid_argument("SimAttributes::addData: BField has already been specified"); }
 
 	attrsData* adptr{ matchClassname(classname) };
-	
-	//if (stringAttrLabels.size() == 0) stringAttrLabels.push_back(""); //have to be at least size 1
-	//if (stringAttributes.size() == 0) stringAttributes.push_back("");
-	//if (doubleAttrLabels.size() == 0) doubleAttrLabels.push_back("");
-	//if (doubleAttributes.size() == 0) doubleAttributes.push_back(0);
 
 	adptr->names_m.push_back(name);
 	adptr->strLabels_m.push_back(stringAttrLabels);
@@ -53,20 +47,11 @@ std::string SimAttributes::generateString(attrsData& ad)
 	auto dblToExactStr = [](double d) { std::string dblstr; dblstr.resize(8);
 		for (int iii = 0; iii < 8; iii++) { dblstr[iii] = reinterpret_cast<char*>(&d)[iii]; } return dblstr; };
 
-	auto strVec1DToStr = [](VEC(STR)& strvec) {
+	auto strVec1DToStr = [](VEC(std::string)& strvec) {
 		std::string strout;
 		for (auto attr = strvec.begin(); attr < strvec.end(); attr++)
 			strout += (*attr) + ((attr != strvec.end() - 1) ? "," : "");
 		return strout; };
-
-	//if (EAD.names_m.size() == 0)
-	//{
-		//EAD.names_m.push_back("");
-		//EAD.strLabels_m.push_back({""});
-		//EAD.strAttrs_m.push_back({""});
-		//EAD.dblLabels_m.push_back({""});
-		//EAD.dblAttrs_m.push_back({0});
-	//}
 
 	#define ALLDATWRAP(x) std::string("<<<<") + x + std::string(">>>>")
 	#define CLASSWRAP(x) std::string("[[[[") + x + std::string("]]]]")
@@ -180,7 +165,6 @@ void SimAttributes::read()
 }
 
 #undef VEC
-#undef STR
 #undef ALLDATWRAP
 #undef CLASSWRAP
 #undef NAMEWRAP

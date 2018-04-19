@@ -11,35 +11,38 @@ const std::vector<std::vector<double>>& Simulation::getParticleData(int partInd,
 
 const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteData(int satInd)
 {
-	if (satInd > (satellites_m.size() - 1))
+	if (satInd > (satPartPairs_m.size() - 1))
 		throw std::out_of_range("Simulation::getSatelliteData: no satellite at the specifed index " + std::to_string(satInd));
 
-	return satellites_m.at(satInd)->satellite->data();
+	return satellite(satInd)->data();
 }
 
 
 //Class creation functions
-void Simulation::createParticleType(std::string name, std::vector<std::string> attrNames, double mass, double charge, long numParts, std::string loadFilesDir, bool save)
+void Simulation::createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir, bool save)
 {
-	//guards: attrNames.size() == 0 is invalid_argument
 	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
 	
+	std::vector<std::string> attrNames{ "vpara", "vperp", "s", "t_inc", "t_esc" };
+
 	if (save)
 	{
 		std::vector<std::string> attrLabels;
-		std::vector<std::string> attrNames;
 		for (int atr = 0; atr < attrNames.size(); atr++)
 			attrLabels.push_back("attrName");
 		attrLabels.push_back("loadFilesDir");
-		attrNames.push_back(loadFilesDir);
-		simAttr_m->addData("Particle", name, attrLabels, attrNames, { "mass", "charge", "numParts" }, { mass, charge, (double)numParts });
+		
+		std::vector<std::string> namesCopy{ attrNames };
+		namesCopy.push_back(loadFilesDir);
+		simAttr_m->addData("Particle", name, attrLabels, namesCopy, { "mass", "charge", "numParts" }, { mass, charge, (double)numParts });
 	}
 
-	std::shared_ptr<Particle> newPart{ std::make_shared<Particle>(name, attrNames, mass, charge, numParts) };
+	std::shared_ptr<Particle> newPart{ std::make_unique<Particle>(name, attrNames, mass, charge, numParts) };
 
 	if (loadFilesDir != "")
 		newPart->loadDataFromDisk(loadFilesDir);
 
+	newPart->getOrigData().at(4) = std::vector<double>(newPart->getNumberOfParticles(), -1.0); //sets t_esc to -1.0 - i.e. particles haven't escaped yet
 	particles_m.push_back(std::move(newPart));
 }
 
@@ -50,7 +53,7 @@ void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, 
 	if (partInd >= particles_m.size())
 		throw std::out_of_range("Simulation::createTempSat: no particle at the specifed index " + std::to_string(partInd));
 
-	tempSats_m.push_back(std::move(std::make_unique<TempSat>(partInd, altitude, upwardFacing, name)));
+	tempSats_m.push_back(std::make_unique<TempSat>(partInd, altitude, upwardFacing, name));
 }
 
 void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
@@ -67,20 +70,18 @@ void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
 
 	if (save) { simAttr_m->addData("Satellite", name, {}, {}, { "partInd", "altitude", "upwardFacing" }, { (double)partInd, altitude, (double)upwardFacing }); }
 
-	//fileIO::writeAttrsToFiles({ (double)partInd, altitude, (double)upwardFacing },
-		//{ "partInd", "altitude", "upwardFacing", name }, "Satellite_" + name, saveRootDir_m + "/_chars/");
-
 	logFile_m->writeLogFileEntry("Simulation::createSatellite: Created Satellite: " + name + ", Particle tracked: " + particles_m.at(partInd)->name() + ", Altitude: " + std::to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
-	std::shared_ptr<Particle> tmpPart{ particles_m.at(partInd) };
-	std::unique_ptr<Satellite> newSat{ std::make_unique<Satellite>(altitude, upwardFacing, tmpPart->getNumberOfAttributes(), tmpPart->getNumberOfParticles(), tmpPart->getCurrDataGPUPtr(), name) };
-	satellites_m.push_back(std::move(std::make_unique<SatandPart>(std::move(newSat), std::move(tmpPart))));
+	std::vector<std::string> attrNames{ "vpara", "vperp", "s", "time", "index" };
+	std::shared_ptr<Particle>  part{ particles_m.at(partInd) };
+	std::unique_ptr<Satellite> sat{ std::make_unique<Satellite>(name, attrNames, altitude, upwardFacing, part->getNumberOfParticles(), part->getCurrDataGPUPtr()) };
+	satPartPairs_m.push_back(std::make_unique<SatandPart>(std::move(sat), std::move(part)));
 }
 
 void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool save)
 {//add log file messages
 	if (BFieldModel_m)
-		throw std::invalid_argument("Simulation::setBFieldModel: trying to assign B Field Model when one is already assigned - existing: " + BFieldModel_m->getName() + ", attempted: " + name);
+		throw std::invalid_argument("Simulation::setBFieldModel: trying to assign B Field Model when one is already assigned - existing: " + BFieldModel_m->name() + ", attempted: " + name);
 	if (args.empty())
 		throw std::invalid_argument("Simulation::setBFieldModel: no arguments passed in");
 
@@ -91,8 +92,8 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		if (args.size() == 1)
 		{ //for defaults in constructor of DipoleB
 			BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
-			args.push_back(BFieldModel_m->getErrTol());
-			args.push_back(BFieldModel_m->getds());
+			args.push_back(((DipoleB*)BFieldModel_m.get())->getErrTol());
+			args.push_back(((DipoleB*)BFieldModel_m.get())->getds());
 		}
 		else if (args.size() == 3)
 			BFieldModel_m = std::make_unique<DipoleB>(args.at(0), args.at(1), args.at(2));
@@ -110,14 +111,14 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 
 		attrNames = { "ILAT", "ds", "numMsmts" };
 	}
-	else if (name == "IGRF")
+	/*else if (name == "IGRF")
 	{
 		//BFieldModel_m = std::make_unique<IGRFB>(args.at(0));
 		std::cout << "IGRF not implemented yet!! :D  Using DipoleB" << std::endl;
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
 		args.resize(3);
-		args.at(1) = BFieldModel_m->getErrTol();
-		args.at(2) = BFieldModel_m->getds();
+		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getErrTol();
+		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getds();
 		attrNames = { "ILAT", "ds", "errTol" };
 	}
 	else if (name == "InvRCubedB")
@@ -126,29 +127,26 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		std::cout << "InvRCubed not implemented yet!! :D  Using DipoleB" << std::endl;
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
 		args.resize(3);
-		args.at(1) = BFieldModel_m->getErrTol();
-		args.at(2) = BFieldModel_m->getds();
+		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getErrTol();
+		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getds();
 		attrNames = { "ILAT", "ds", "errTol" };
-	}
+	}*/
 	else
 	{
 		std::cout << "Not sure what model is being referenced.  Using DipoleB instead of " << name << std::endl;
 		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
 		args.resize(3);
-		args.at(1) = BFieldModel_m->getErrTol();
-		args.at(2) = BFieldModel_m->getds();
+		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getErrTol();
+		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getds();
 		attrNames = { "ILAT", "ds", "errTol" };
 	}
 
 	BFieldModel_d = BFieldModel_m->getPtrGPU();
 	if (save) { simAttr_m->addData("BField", name, {}, {}, attrNames, args); }
-	//if (save) { fileIO::writeAttrsToFiles(args, names, "BField_" + name, attrsDir); }
 }
 
 void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool save)
 {
-	throw std::exception("addEFieldModel: need to code saving parameters");
-
 	if (EFieldModel_m == nullptr)
 		EFieldModel_m = std::make_unique<EField>();
 
@@ -218,20 +216,22 @@ void Simulation::saveDataToDisk()
 	if (!initialized_m)
 		throw SimFatalException("Simulation::saveDataToDisk: simulation not initialized with initializeSimulation()", __FILE__, __LINE__);
 	if (!saveReady_m)
-		throw SimFatalException("Simulation::saveDataToDisk: simulation not iterated and/or copied to host with iterateSmiulation()", __FILE__, __LINE__);
+		throw std::runtime_error("Simulation::saveDataToDisk: simulation not iterated and/or copied to host with iterateSmiulation()");
 
-	LOOP_OVER_1D_ARRAY(particles_m.size(), particles_m.at(iii)->saveDataToDisk("./bins/particles_init/", true));
-	LOOP_OVER_1D_ARRAY(particles_m.size(), particles_m.at(iii)->saveDataToDisk("./bins/particles_final/", false));
-	LOOP_OVER_1D_ARRAY(satellites_m.size(), satellites_m.at(iii)->satellite->saveDataToDisk(saveRootDir_m + "/bins/satellites/", { "vpara", "vperp", "s", "time", "index" }));
+	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->saveDataToDisk(saveRootDir_m + "/bins/particles_init/", true));
+	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->saveDataToDisk(saveRootDir_m + "/bins/particles_final/", false));
+	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->saveDataToDisk(saveRootDir_m + "/bins/satellites/"));
+
+	simAttr_m = nullptr;
 
 	saveReady_m = false;
 }
 
 void Simulation::resetSimulation(bool fields)
 {
-	for (int iii = 0; iii < satellites_m.size(); iii++)
-		satellites_m.pop_back();
-	for (int iii = 0; iii < particles_m.size(); iii++)
+	while (satPartPairs_m.size() != 0)
+		satPartPairs_m.pop_back();
+	while (particles_m.size() != 0)
 		particles_m.pop_back();
 
 	if (fields)
@@ -252,16 +252,14 @@ void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts) /
 	//Sim Header (folder) printed from Python - move here eventually
 	std::cout << "Sim between:    " << simMin_m << "m - " << simMax_m << "m" << std::endl;
 	std::cout << "dt:             " << dt_m << "s" << std::endl;
-	std::cout << "BField Model:   " << BFieldModel_m->getName() << std::endl;
-	std::cout << "EField Elems:   " << ((EFieldModel_m == nullptr) ? ("") : (EFieldModel_m->getEElemsStr())) << std::endl;
-	std::cout << "Particles:      "; // << particles_m.at(0)->getName() << ": #: " << particles_m.at(0)->getNumberOfParticles() << ", loaded files?: " << (particles_m.at(0)->getInitDataLoaded() ? "true" : "false") << std::endl;
+	std::cout << "BField Model:   " << BFieldModel_m->name() << std::endl;
+	std::cout << "EField Elems:   " << EFieldModel_m->getEElemsStr() << std::endl;
+	std::cout << "Particles:      ";
 	for (int iii = 0; iii < particles_m.size(); iii++) {
-		std::cout << ((iii != 0) ? "                " : "") << particles_m.at(iii)->name() << ": #: " << particles_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particles_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl;
-	}
-	std::cout << "Satellites:     "; // << satellites_m.at(0)->satellite->getName() << ": alt: " << satellites_m.at(0)->satellite->getAltitude() << " m, upward?: " << (satellites_m.at(0)->satellite->getUpward() ? "true" : "false") << std::endl;
-	for (int iii = 0; iii < satellites_m.size(); iii++) {
-		std::cout << ((iii != 0) ? "                " : "") << satellites_m.at(iii)->satellite->name() << ": alt: " << satellites_m.at(iii)->satellite->altitude() << " m, upward?: " << (satellites_m.at(iii)->satellite->upward() ? "true" : "false") << std::endl;
-	}
+		std::cout << ((iii != 0) ? "                " : "") << particles_m.at(iii)->name() << ": #: " << particles_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particles_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl; }
+	std::cout << "Satellites:     ";
+	for (int iii = 0; iii < getNumberOfSatellites(); iii++) {
+		std::cout << ((iii != 0) ? "                " : "") << satellite(iii)->name() << ": alt: " << satellite(iii)->altitude() << " m, upward?: " << (satellite(iii)->upward() ? "true" : "false") << std::endl; }
 	std::cout << "Iterations:     " << numberOfIterations << std::endl;
 	std::cout << "Iters Btw Cout: " << itersBtwCouts << std::endl;
 	std::cout << "Time to setup:  "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;

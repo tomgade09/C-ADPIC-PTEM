@@ -20,6 +20,8 @@ class Simulation(_Simulation._SimulationCDLL):
         self.satPartInd_m = []
         self.nameSat_m = []
 
+        self.normalSim = False
+
         #Now code for init
         savedirBuf = ctypes.create_string_buffer(bytes(self.savedir_m, encoding='utf-8'))
         self.simulationptr = ctypes.c_void_p
@@ -42,6 +44,8 @@ class Simulation(_Simulation._SimulationCDLL):
         if self.numAttrs_m == []:
             self.getSimChars()
 
+        self.normalSim = True
+
     def runNormalSim(self, iterations, iterBtwCouts):
         if self.numAttrs_m == []:
             self.getSimChars()
@@ -53,6 +57,17 @@ class Simulation(_Simulation._SimulationCDLL):
     def writeCommonCSV(self):
         self.simDLL_m.writeCommonCSVAPI(self.simulationptr)
 
+
+    #Fields management
+    def setBFieldModel(name, doublesString):
+        name_c = ctypes.create_string_buffer(bytes(name, encoding='utf-8'))
+        doublesString_c = ctypes.create_string_buffer(bytes(doublesString, encoding='utf-8'))
+        self.simDLL_m.setBFieldModelAPI(self.simulationptr, name_c, doublesString_c)
+
+    def addEFieldModel(name, doublesString):
+        name_c = ctypes.create_string_buffer(bytes(name, encoding='utf-8'))
+        doublesString_c = ctypes.create_string_buffer(bytes(doublesString, encoding='utf-8'))
+        self.simDLL_m.addEFieldModelAPI(self.simulationptr, name_c, doublesString_c)
 
     ###Member functions for Simulation class
     #Particle, Satellite Mgmt

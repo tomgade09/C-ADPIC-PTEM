@@ -39,10 +39,11 @@ DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int print
 //build API functions for resetSimulation and saveDataToDisk
 
 //Fields management
-DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1); //switch to comma delimited string of variables
+DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString); //switch to comma delimited string of variables
+DLLEXPORT void addEFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString);
 
 //Particle functions
-DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, const char* loadFileDir = "");
+DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, double mass, double charge, long numParts, const char* loadFileDir = "");
 
 //Satellite functions
 DLLEXPORT void    createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name);

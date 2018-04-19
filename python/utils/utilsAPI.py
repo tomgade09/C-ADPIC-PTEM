@@ -19,6 +19,8 @@ simDLL.writePDAPI.restype = None
 #DistributionFromDisk functions
 simDLL.loadDistributionFromDiskAPI.argtypes = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p)
 simDLL.loadDistributionFromDiskAPI.restype = ctypes.c_void_p
+simDLL.DistFromDiskDataAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
+simDLL.DistFromDiskDataAPI.restype = ctypes.POINTER(ctypes.c_double)
 simDLL.DistFromDiskPrintAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
 simDLL.DistFromDiskPrintAPI.restype = None
 simDLL.DistFromDiskPrintDiffAPI.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int)

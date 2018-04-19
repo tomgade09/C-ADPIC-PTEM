@@ -17,6 +17,7 @@ DLLEXPORT void writePDAPI(utils::write::ParticleDistribution* pd);
 
 //DistributionFromDisk functions
 DLLEXPORT utils::load::DistributionFromDisk* loadDistributionFromDiskAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName);
+DLLEXPORT const double* DistFromDiskDataAPI(utils::load::DistributionFromDisk* dfd, int attrInd);
 DLLEXPORT void DistFromDiskPrintAPI(utils::load::DistributionFromDisk* dfd, int at);
 DLLEXPORT void DistFromDiskPrintDiffAPI(utils::load::DistributionFromDisk* dfd_this, utils::load::DistributionFromDisk* dfd_other, int at);
 DLLEXPORT void DistFromDiskZeroesAPI(utils::load::DistributionFromDisk* dfd);

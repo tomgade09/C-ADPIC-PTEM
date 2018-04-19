@@ -74,16 +74,12 @@ DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const cha
 	double simMax{ sim->simMax() };
 
 	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
-	//sim->setBFieldModel("DipoleB", { 72.0 });
 	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
 
-	sim->createParticleType("elec", { "vpara", "vperp", "s" }, MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
-	//sim->createParticleType("ions", { "vpara", "vperp", "s" }, MASS_PROTON,    1 * CHARGE_ELEM, numParts, 1, 2, RADIUS_EARTH, loadFileDir);
+	sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 
 	sim->createTempSat(0, simMin * 0.999, true, "btmElec");
-	//sim->createTempSat(1, simMin * 0.999, true, "btmIons");
 	sim->createTempSat(0, simMax * 1.001, false, "topElec");
-	//sim->createTempSat(1, simMax * 1.001, false, "topIons");
 
 	sim->createTempSat(0, 1014252.60176003, false, "1e6ElecDown"); //altitude = 1000km, s = what you see to the left
 	sim->createTempSat(0, 1014252.60176003, true, "1e6ElecUp");
@@ -104,13 +100,15 @@ DLLEXPORT void runNormalSimulationAPI(Simulation* sim, int iterations, int print
 
 
 //Fields management
-DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, double arg1) {
-	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, { arg1 })); }
+DLLEXPORT void setBFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString) {
+	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, utils::string::charToDblVec(doubleString))); }
 
+DLLEXPORT void addEFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString) {
+	SIM_API_EXCEP_CHECK(sim->addEFieldModel(modelName, utils::string::charToDblVec(doubleString))); }
 
 //Particle functions
-DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, const char* attrNames, double mass, double charge, long numParts, const char* loadFileDir) {
-	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, utils::string::charToStrVec(attrNames), mass, charge, numParts, loadFileDir)); }
+DLLEXPORT void createParticleTypeAPI(Simulation* simulation, const char* name, double mass, double charge, long numParts, const char* loadFileDir) {
+	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, mass, charge, numParts, loadFileDir)); }
 
 
 //Satellite functions
@@ -130,7 +128,7 @@ DLLEXPORT void writeCommonCSVAPI(Simulation* simulation)
 	SIM_API_EXCEP_CHECK(
 		utils::write::CSV csvtmp("./elecoutput.csv");
 		std::vector<std::vector<double>> origData{ simulation->getParticleData(0, true) };
-		csvtmp.add(origData, { "vpara orig", "vperp orig", "s orig" });
+		csvtmp.add({ origData.at(0), origData.at(1), origData.at(2) }, { "vpara orig", "vperp orig", "s orig" });
 		csvtmp.addspace();
 		
 		std::vector<std::vector<double>> btmElecData{ simulation->getSatelliteData(0).at(0) };

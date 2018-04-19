@@ -26,7 +26,7 @@ namespace utils
 					std::vector<double> read;
 					fileIO::readDblBin(read, folder + "/" + partName + "_" + attrNames.at(attr) + ".bin");
 					data_m.push_back(read);
-					if (attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
+					if (attrNames_m.at(attr).size() > attrsize) { attrsize = (int)attrNames_m.at(attr).size(); }
 				}
 
 				for (int attr = 0; attr < attrNames.size(); attr++)

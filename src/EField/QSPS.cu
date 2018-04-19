@@ -10,6 +10,12 @@ __global__ void deleteEnvironmentGPU_QSPS(EElem** qsps)
 	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_QSPS", delete (*qsps));
 }
 
+#ifndef __CUDA_ARCH__ //host code
+__host__ const std::vector<double>& QSPS::altMin() { return altMin_m; }
+__host__ const std::vector<double>& QSPS::altMax() { return altMax_m; }
+__host__ const std::vector<double>& QSPS::magnitude() { return magnitude_m; }
+#endif
+
 __host__ void QSPS::setupEnvironment()
 {
 	#ifndef __CUDA_ARCH__ //host code

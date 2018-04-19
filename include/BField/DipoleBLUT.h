@@ -38,9 +38,9 @@ public:
 		BField(), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }
 	{
 		ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
-		modelName_m = "DipoleBLUT";
 		
 		#ifndef __CUDA_ARCH__ //host code
+		modelName_m = "DipoleBLUT";
 		setupEnvironment();
 		#endif /* !__CUDA_ARCH__ */
 	}
@@ -52,14 +52,19 @@ public:
 		#endif /* !__CUDA_ARCH__ */
 	}
 
+	//for testing
+	double ILAT() { return ILATDegrees_m; }
+	double ds_msmt() { return ds_msmt_m; }
+	double ds_gradB() { return ds_gradB_m; }
+
 	__host__ __device__ virtual double getBFieldAtS(const double s, const double t);
 	__host__ __device__ virtual double getGradBAtS(const double s, const double t);
 
 	__device__ void setAltArray(double* altArray) { altitude_d = altArray; }
 	__device__ void setMagArray(double* magArray) { magnitude_d = magArray; }
 
-	__host__ virtual double getErrTol() { return 1.0e-10; }
-	__host__ virtual double getds() { return ds_gradB_m; }
+	__host__ double getErrTol() { return 1.0e-10; }
+	__host__ double getds()     { return ds_gradB_m; }
 };
 
 #endif /* !DIPOLEBLUT_BFIELD_H */

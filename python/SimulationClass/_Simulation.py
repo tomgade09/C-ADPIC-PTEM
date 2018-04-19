@@ -58,12 +58,14 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
 
 
         #Fields management
-        self.simDLL_m.setBFieldModelAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double)
+        self.simDLL_m.setBFieldModelAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
         self.simDLL_m.setBFieldModelAPI.restype = None
+        self.simDLL_m.addEFieldModelAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
+        self.simDLL_m.addEFieldModelAPI.restype = None
 
 
         #Particle Management
-        self.simDLL_m.createParticleTypeAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_long, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_char_p)
+        self.simDLL_m.createParticleTypeAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_long, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_char_p)
         self.simDLL_m.createParticleTypeAPI.restype = None
 
 

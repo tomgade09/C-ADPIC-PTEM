@@ -12,9 +12,9 @@ class DipoleB : public BField
 {
 protected:
 	//Field simulation constants
-	double L_m{ 0.0 }; //this will be populated with the L constant in the constructor
-	double L_norm_m{ 0.0 }; //same
-	double s_max_m{ 0.0 }; //same
+	double L_m{ 0.0 };      //
+	double L_norm_m{ 0.0 }; //
+	double s_max_m{ 0.0 };  //
 
 	//specified variables
 	double ILATDegrees_m{ 0.0 };
@@ -34,27 +34,33 @@ public:
 		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * RADS_PER_DEG), 2);
 		L_norm_m = L_m / RADIUS_EARTH;
 		s_max_m = getSAtLambda(ILATDegrees_m);
-		modelName_m = "DipoleB";
 
 		#ifndef __CUDA_ARCH__ //host code
+		modelName_m = "DipoleB";
 		setupEnvironment();
 		#endif /* !__CUDA_ARCH__ */
 	}
 
-	__host__ __device__ virtual ~DipoleB()
+	__host__ __device__ ~DipoleB()
 	{
 		#ifndef __CUDA_ARCH__ //host code
 		deleteEnvironment();
 		#endif /* !__CUDA_ARCH__ */
 	}
 
+	//for testing
+	double ILAT() { return ILATDegrees_m; }
+	double ds() { return ds_m; }
+	double L() { return L_m; }
+	double s_max() { return s_max_m; }
+
 	__host__ virtual void setds(double ds) { ds_m = ds; }
 
-	__host__ __device__ virtual double getBFieldAtS(const double s, const double t);
-	__host__ __device__ virtual double getGradBAtS (const double s, const double t);
+	__host__ __device__ double getBFieldAtS(const double s, const double t);
+	__host__ __device__ double getGradBAtS (const double s, const double t);
 
-	__host__ virtual double getErrTol() { return errorTolerance_m; }
-	__host__ virtual double getds() { return ds_m; }
+	__host__ double getErrTol() { return errorTolerance_m; }
+	__host__ double getds()     { return ds_m; }
 };
 
 #endif

@@ -43,6 +43,7 @@ __global__ void randomGenerator(double** currData, double vmean, double vsigma, 
 
 
 //Host code
+//the problem with below is that it's based on a certain attribute structure - this needs to be removed from the class and put somewhere else
 void Particle::generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass)
 {//not tested - give a good test
 	if (length != s.size()) { throw std::invalid_argument("Particle::generateRandomParticles: s.size is not equal to number of particles to generate - s.size: " + std::to_string(s.size()) + " length: " + std::to_string(length)); }

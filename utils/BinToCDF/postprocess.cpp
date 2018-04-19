@@ -135,7 +135,7 @@ namespace postprocess
 
 		vecDbl2D simfluxupward{ steady::simEnergyFlux(satdn, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate binned flux for downward facing detector data, upward flux
 		vecDbl2D simfluxdnward{ steady::simEnergyFlux(satup, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate binned flux for upward facing detector data
-		//vecDbl2D backscatflux { steady::bsEnergyFlux (init, satdn, bottom, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate backscatter flux
+		vecDbl2D backscatflux { steady::bsEnergyFlux (init, satdn, bottom, binAngles, binEnergies, maxwCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate backscatter flux
 		
 		#ifdef PPCOUTDBG
 		std::cout << "4. Calculate upward, downward, and backscatter fluxes per bin:" << std::endl;

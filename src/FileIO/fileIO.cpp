@@ -21,14 +21,12 @@ namespace fileIO
 
 	void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, long numOfDblsToRead)
 	{
+		if (arrayToReadInto.size() < numOfDblsToRead)
+			throw std::invalid_argument("fileIO::readDblBin: std::vector is not big enough to contain the data being read from file " + filename);
+
 		std::ifstream binFile{ filename, std::ios::binary };
 		if (!binFile.is_open())
 			throw std::invalid_argument("fileIO::readDblBin: could not open file " + filename + " for reading");
-		if (arrayToReadInto.size() < numOfDblsToRead)
-		{
-			binFile.close();
-			throw std::invalid_argument("fileIO::readDblBin: std::vector is not big enough to contain the data being read from file " + filename);
-		}
 		
 		binFile.seekg(0, binFile.end);
 		int length{ (int)(binFile.tellg()) };

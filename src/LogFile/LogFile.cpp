@@ -57,7 +57,7 @@ void LogFile::writeTimeDiffFromNow(int startTSind, std::string nowLabel)
 
 void LogFile::printTimeNowFromLastTS()
 {
-	std::cout << static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m.at(timeStructs_m.size()-1)->tp).count()) / 1000000;
+	std::cout << static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStructs_m.back()->tp).count()) / 1000000;
 }
 
 void LogFile::printTimeNowFromFirstTS()
