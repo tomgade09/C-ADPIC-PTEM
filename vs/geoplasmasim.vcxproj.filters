@@ -137,9 +137,6 @@
     <ClInclude Include="..\include\classAPI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\beElements.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\utils\loopmacros.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>

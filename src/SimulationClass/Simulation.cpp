@@ -1,5 +1,29 @@
 #include "SimulationClass\Simulation.h"
 
+#include "utils\loopmacros.h"
+#include "ErrorHandling\simExceptionMacros.h"
+
+Simulation::Simulation(double dt, double simMin, double simMax, std::string saveRootDir) :
+	dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, saveRootDir_m{ saveRootDir + "/" },
+	simAttr_m{ std::make_unique<SimAttributes>(saveRootDir + "/Simulation.attr") },
+	logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "simulation.log", 20) }
+{
+	cerrLogOut.open(saveRootDir_m + "errors.log");
+	std::cerr.rdbuf(cerrLogOut.rdbuf()); //set cerr output to "errors.log"
+
+	simAttr_m->addData("Simulation", "", {}, {}, { "dt", "simMin", "simMax" }, { dt_m, simMin_m, simMax_m });
+}
+
+Simulation::~Simulation()
+{
+	std::cerr.rdbuf(cerrBufBak); //restore cerr to normal
+
+	if (saveReady_m) { saveDataToDisk(); } //save data if it hasn't been done
+
+	logFile_m->writeTimeDiffFromNow(0, "End Simulation Destructor");
+}
+
+
 //Access functions
 const std::vector<std::vector<double>>& Simulation::getParticleData(int partInd, bool originalData)
 {
@@ -17,6 +41,25 @@ const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteDat
 	return satellite(satInd)->data();
 }
 
+Particle* Simulation::particle(std::string name)
+{
+	for (auto& part : particles_m)
+		if (part->name() == name)
+			return part.get();
+	throw std::invalid_argument("Simulation::particle: no particle of name " + name);
+}
+
+Satellite* Simulation::satellite(std::string name)
+{
+	for (auto& satPart : satPartPairs_m)
+		if (satPart->satellite->name() == name)
+			return satPart->satellite.get();
+	throw std::invalid_argument("Simulation::satellite: no satellite of name " + name);
+}
+
+//Fields
+double Simulation::getBFieldAtS(double s, double time) { return BFieldModel_m->getBFieldAtS(s, time); }
+double Simulation::getEFieldAtS(double s, double time) { return EFieldModel_m->getEFieldAtS(s, time); }
 
 //Class creation functions
 void Simulation::createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir, bool save)

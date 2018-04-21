@@ -7,7 +7,7 @@ MAYBE - Hijack clog and write to log file (easy, quick)
 - Alfven E generator (Dr. Lysak's code)
 - Cross platform compiling
 - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
-- Remove unnecessary includes/maybe all/most includes in headers
+- Custom logfile and particle exception catchers (instead of copy pasta from FileIO)
 
 LOWER PRIORITY:
 DONE, NEEDS GOOD TEST - Move random particle generator to Particle class
@@ -66,6 +66,7 @@ DONE - Finish class for loading previous sim data
 DONE - Python interface for loading previous sim data
 DONE - LUT Grad B w/ linear interpolation
 DONE - Python interfaces for E Field and B Field models
+DONE - Remove unnecessary includes/maybe all/most includes in headers
 
 STUFF THAT IS DONE WITH CAVEATS:
 DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution

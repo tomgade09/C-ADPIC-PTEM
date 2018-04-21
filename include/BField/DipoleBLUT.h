@@ -1,11 +1,8 @@
 #ifndef DIPOLEBLUT_BFIELD_H
 #define DIPOLEBLUT_BFIELD_H
 
-#include <cmath>
-#include <iostream>
-#include <memory>
 #include <vector>
-#include "BField\DipoleB.h"
+#include "BField\BField.h"
 #include "physicalconstants.h"
 
 class DipoleBLUT : public BField

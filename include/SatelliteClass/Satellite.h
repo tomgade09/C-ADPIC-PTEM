@@ -1,11 +1,8 @@
 #ifndef SATELLITE_H
 #define SATELLITE_H
+
 #include <vector>
-#include <iostream>
 #include <string>
-#include <algorithm>
-#include "FileIO\fileIO.h"
-#include "utils\loopmacros.h"
 
 class Satellite
 {

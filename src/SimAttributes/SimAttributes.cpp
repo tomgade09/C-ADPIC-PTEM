@@ -1,5 +1,10 @@
 #include "SimAttributes\SimAttributes.h"
 
+#include <iostream>
+
+#include "FileIO\fileIO.h"
+#include "utils\string.h"
+
 /*
 	Saving paradigm:
 	[[[[ ]]]] encapsulates classnames

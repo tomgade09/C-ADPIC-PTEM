@@ -4,8 +4,6 @@
 #include "dllexport.h"
 #include "utils\load.h"
 #include "utils\write.h"
-#include "utils\string.h"
-#include "ErrorHandling\simExceptionMacros.h"
 
 //ParticleDistribution functions
 DLLEXPORT utils::write::ParticleDistribution* createParticleDistributionAPI(const char* saveFolder, const char* attrNames, const char* particleName, double mass);

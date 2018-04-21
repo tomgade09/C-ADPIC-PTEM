@@ -1,5 +1,27 @@
-#include "LogFile\LogFile.h"
+#include <iostream>
 #include <iomanip>
+#include <sstream>
+
+#include "LogFile\LogFile.h"
+#include "FileIO\fileIO.h"
+#include "ErrorHandling\simExceptionMacros.h"
+
+//need a custom solution for this...
+//file read/write exception checking (probably should mostly wrap fileIO functions)
+#define FILE_RDWR_EXCEP_CHECK(x) \
+	try{ x; } \
+	catch(const std::invalid_argument& a) { std::cerr << __FILE__ << ":" << __LINE__ << " : " << "Invalid argument error: " << a.what() << ": continuing without loading file" << std::endl; std::cout << "FileIO exception: check log file for details" << std::endl; } \
+	catch(...)                            { throw; }
+
+
+LogFile::LogFile(std::string logFileName, int timeStructToReserve, bool overwrite) : logFileName_m{ logFileName }, overwrite_m{ overwrite }
+{
+	timeStructs_m.reserve(timeStructToReserve);
+	std::string logHeader{ "[  Time (ms)  ] : Log Message\n" }; //do I want to add the time, other attributes to file???
+	logHeader += "[ 0.000000000 ] : LogFile class created, file created on disk, first entry written, first time point recorded.\n";
+	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(logHeader, logFileName_m, overwrite_m));
+	createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
+}
 
 void LogFile::writeLogFileEntry(std::string logMessage)
 {//[Time (ms from start) - 19 chars tot, 15 chars for numbers] | Log Data - 20 chars | Log Message - unlimited chars

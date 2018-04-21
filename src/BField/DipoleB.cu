@@ -1,5 +1,9 @@
 #include "BField\DipoleB.h"
 
+#include "device_launch_parameters.h"
+#include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\cudaDeviceMacros.h"
+
 //setup CUDA kernels
 __global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, double errTol, double ds)
 {

@@ -1,5 +1,6 @@
 //STL includes
 #include <iterator> //for back_inserter
+#include <algorithm>
 
 //CUDA includes
 #include "cuda_runtime.h"
@@ -8,6 +9,7 @@
 
 //Project specific includes
 #include "SatelliteClass\Satellite.h"
+#include "FileIO\fileIO.h"
 #include "ErrorHandling\cudaErrorCheck.h"
 
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries);

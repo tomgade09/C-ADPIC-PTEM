@@ -1,7 +1,8 @@
 //Standard Library includes
 #include <string>
 #include <cmath>
-#include <time.h>
+#include <sstream>
+#include <iomanip>
 
 //CUDA includes
 #include "cuda_runtime.h"
@@ -10,6 +11,7 @@
 
 //Project specific includes
 #include "physicalconstants.h"
+#include "utils\loopmacros.h"
 #include "SimulationClass\Simulation.h"
 #include "ErrorHandling\cudaErrorCheck.h"
 #include "ErrorHandling\SimFatalException.h"

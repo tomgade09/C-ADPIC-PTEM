@@ -1,8 +1,6 @@
 #ifndef DIPOLEB_BFIELD_H
 #define DIPOLEB_BFIELD_H
 
-#include <cmath>
-#include <iostream>
 #include "BField\BField.h"
 #include "physicalconstants.h"
 
@@ -12,9 +10,9 @@ class DipoleB : public BField
 {
 protected:
 	//Field simulation constants
-	double L_m{ 0.0 };      //
-	double L_norm_m{ 0.0 }; //
-	double s_max_m{ 0.0 };  //
+	double L_m{ 0.0 };
+	double L_norm_m{ 0.0 };
+	double s_max_m{ 0.0 };
 
 	//specified variables
 	double ILATDegrees_m{ 0.0 };

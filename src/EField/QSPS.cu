@@ -1,5 +1,9 @@
 #include "EField\QSPS.h"
 
+#include "device_launch_parameters.h"
+#include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\cudaDeviceMacros.h"
+
 __global__ void setupEnvironmentGPU_QSPS(EElem** qsps, double* altMin, double* altMax, double* magnitude, int numRegions)
 {
 	ZEROTH_THREAD_ONLY("setupEnvironmentGPU_QSPS", (*qsps) = new QSPS(altMin, altMax, magnitude, numRegions)); //this overloaded constructor is only compiled in the case where __CUDA_ARCH__ is defined
@@ -15,6 +19,29 @@ __host__ const std::vector<double>& QSPS::altMin() { return altMin_m; }
 __host__ const std::vector<double>& QSPS::altMax() { return altMax_m; }
 __host__ const std::vector<double>& QSPS::magnitude() { return magnitude_m; }
 #endif
+
+__host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude) :
+	EElem(), numRegions_m{ (int)magnitude.size() }
+{
+	if (magnitude.size() != altMin.size() || magnitude.size() != altMax.size())
+		throw std::invalid_argument("QSPS::QSPS: invalid parameters passed in magnitude, altMin, altMax: resolved vector lengths are not equal");
+
+	#ifndef __CUDA_ARCH__ //host code
+	altMin_m = altMin;       //unfortunately this wrapping is necessary
+	altMax_m = altMax;       //as the vectors above also have to be wrapped
+	magnitude_m = magnitude; //in an ifndef/endif block so this will compile
+	modelName_m = "QSPS";
+	#endif /* !__CUDA_ARCH__ */
+
+	setupEnvironment();
+}
+
+__host__ __device__ QSPS::~QSPS()
+{
+	#ifndef __CUDA_ARCH__ //host code
+	deleteEnvironment();
+	#endif /* !__CUDA_ARCH__ */
+}
 
 __host__ void QSPS::setupEnvironment()
 {

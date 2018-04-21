@@ -1,4 +1,11 @@
 #include "BField\DipoleBLUT.h"
+#include "BField\DipoleB.h"
+
+#include <memory>
+
+#include "device_launch_parameters.h"
+#include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\cudaDeviceMacros.h"
 
 //setup CUDA kernels
 __global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)

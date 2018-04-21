@@ -1,5 +1,9 @@
 #include "SimulationClass\SimulationAPI.h"
 
+#include "utils\write.h"
+#include "utils\string.h"
+#include "ErrorHandling\simExceptionMacros.h"
+
 ///One liner functions
 DLLEXPORT double getSimulationTimeAPI(Simulation* simulation) {
 	return simulation->simtime(); }
@@ -74,15 +78,15 @@ DLLEXPORT void setupNormalSimulationAPI(Simulation* sim, int numParts, const cha
 	double simMax{ sim->simMax() };
 
 	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
-	//sim->addEFieldModel("QSPS", { 0.0 }, "3185500.0,6185500.0,6556500.0,9556500.0", "0.02,0.04");
+	//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 
 	sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 
 	sim->createTempSat(0, simMin * 0.999, true, "btmElec");
 	sim->createTempSat(0, simMax * 1.001, false, "topElec");
 
-	sim->createTempSat(0, 1014252.60176003, false, "1e6ElecDown"); //altitude = 1000km, s = what you see to the left
-	sim->createTempSat(0, 1014252.60176003, true, "1e6ElecUp");
+	//sim->createTempSat(0, 1014252.60176003, false, "1e6ElecDown"); //altitude = 1000km, s = what you see to the left
+	//sim->createTempSat(0, 1014252.60176003, true, "1e6ElecUp");
 	sim->createTempSat(0, 3049829.25570638, false, "3e6ElecDown"); //altitude = 3000km
 	sim->createTempSat(0, 3049829.25570638, true, "3e6ElecUp");
 	sim->createTempSat(0, 4071307.04106411, false, "4e6ElecDown");   //altitude = 4000km
@@ -155,9 +159,9 @@ DLLEXPORT void writeCommonCSVAPI(Simulation* simulation)
 int main()
 {
 	SIM_API_EXCEP_CHECK(
-	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, 2.5, 1000.0, "./out/") };
-	setupNormalSimulationAPI(sim, 3456000, "./../in/data");
-	runNormalSimulationAPI(sim, 25000, 500);
+	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, "./out/") };
+	setupNormalSimulationAPI(sim, 3456000, "./../_in/data");
+	runNormalSimulationAPI(sim, 2500, 500);
 
 	terminateSimulationAPI(sim);
 	); /* SIM_API_EXCEP_CHECK() */

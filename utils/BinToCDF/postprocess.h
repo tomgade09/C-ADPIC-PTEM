@@ -1,45 +1,73 @@
 #ifndef POSTPROCESS_H
 #define POSTPROCESS_H
 
-//#define PPCOUTDBG
-//#define PPCOUTDBG_VERBOSE
-
 #include <vector>
-#include "FileIO\fileIO.h"
-#include "utils\numerical.h"
 
 #define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
 
-typedef std::vector<std::vector<double>> vecDbl2D;
+typedef std::vector<std::vector<double>> dblVec2D;
 
 namespace postprocess
 {
-	vecDbl2D steadyFlux(std::string datarootfolder, std::vector<double> pitchBin_Min_Max, int pitchBinNum, std::vector<double> logEBin_Min_Max, int logEBinNum,
-		std::vector<double> ionMaxwellian_kT_dEflux, std::vector<double> magMaxwellian_kT_dEflux, double mass, int particlecount, std::vector<double>& binAnglesOut, std::vector<double>& binEnergiesOut);
-	//vecDbl2D timedepFlux();
+	struct ParticleData
+	{
+		std::vector<double> vpara;
+		std::vector<double> vperp;
+		std::vector<double> energy;
+		std::vector<double> pitch;
+		std::vector<double> t_esc;
+		std::vector<double> s_pos;
+
+		ParticleData() {} //empty constructor for making an empty ParticleData
+		ParticleData(const std::vector<double>& v_para, const std::vector<double>& v_perp, double mass);
+		void free();
+	};
+
+	struct PPData
+	{
+		double s_ion;
+		double s_mag;
+
+		//postprocessing bins
+		const std::vector<double> energyBins;
+		const std::vector<double> pitchBins;
+
+		//particle data
+		std::vector<double> maxCounts; //maxwellian weights - "number of particles represented by the particle at same index"
+		ParticleData initial;          //initial particle data
+		ParticleData bottom;           //data on particles that escape out the bottom
+		ParticleData upward;           //data on particles that are upgoing at satellite
+		ParticleData dnward;           //data on particles that are downgoing at satellite
+
+		PPData(double simMin, double simMax, std::vector<double> EBins, std::vector<double> PABins, std::vector<double> maxwellian, ParticleData init, ParticleData btm, ParticleData up, ParticleData dn);
+	};
+
+	struct MaxwellianData
+	{
+		std::vector<double> ionEPeak; //ionospheric source peak energy of maxwellian
+		std::vector<double> iondEMag;  //ionospheric source magnitude of peak
+
+		std::vector<double> magEPeak; //same for magnetosphere
+		std::vector<double> magdEMag;  //basically x, y axes (top, bottom) of a maxwellian graph
+		void push_back_ion(double peak, double magnitude);
+		void push_back_mag(double peak, double magnitude);
+	};
+
+	dblVec2D steadyFlux(PPData ppdata);
 
 	namespace steady
 	{
-		vecDbl2D simEnergyFlux(const vecDbl2D& particleData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts, double mass, double charge, double BatXSection);
-		vecDbl2D bsEnergyFlux(const vecDbl2D& initialData, const vecDbl2D& satData, const vecDbl2D& escapeData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts, double mass, double charge, double BatXSection);
+		dblVec2D simEnergyFlux(const ParticleData& sat, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& numWt, double BatXSection);
+		dblVec2D bsEnergyFlux(const dblVec2D& initialData, const dblVec2D& satData, const dblVec2D& escapeData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts, double mass, double charge, double BatXSection);
 	}
 
-	namespace timedep
+	namespace maxwellian
 	{
-		vecDbl2D simEnergyFlux();
-		vecDbl2D bsEnergyFlux();
-	}
-
-	namespace numerical
-	{
-		void vToEPitch(const std::vector<double>& vpara, const std::vector<double>& vperp, double mass, std::vector<double>& particlePitches, std::vector<double>& particleEnergies);
-		std::vector<double> generatePitchBins(double pitchMin, double pitchMax, int numBins);
-		std::vector<double> generateLogSpacedEnergyBins(double logEmidBinMin, double logEmidBinMax, int numBins);
-		void splitIonMagEngs(const std::vector<double>& s_init, const std::vector<double>& E_init, std::vector<double>& ionsphE, std::vector<double>& magsphE);
-		std::vector<double> maxwellianCounts(const std::vector<double>& initEnergies, double sigma_kT, double dEflux_kT);
-		vecDbl2D countInBinsWeighted(const std::vector<double>& particlePitches, const std::vector<double>& particleEnergies, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts);
-		void countsToEFlux(vecDbl2D& energyData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, double mass, double charge, double BatXSection);
-		void divBinsByCosPitch(vecDbl2D& data, std::vector<double> binAnglesDegrees);
+		double counts(double E, double binWidth_E, double sigma_kT, double dEflux_kT, double binWidth_kT);
+		std::vector<double> formCountsVector(ParticleData& init, MaxwellianData& maxData, double s_ion, double s_mag, double dlogE_part);
+		dblVec2D countInBinsWeighted(const std::vector<double>& particlePitches, const std::vector<double>& particleEnergies, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts);
+		void countsToEFlux(dblVec2D& energyData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, double mass, double charge, double BatXSection);
+		void divBinsByCosPitch(dblVec2D& data, std::vector<double> binAnglesDegrees);
 	}
 
 	namespace backscat
@@ -47,12 +75,7 @@ namespace postprocess
 		double F_flux(double evalE, double incidentE, double incidentCnt, double prim_logm, double prim_logb, double scnd_logm, double scnd_logb);
 		double integralF_flux(double lower, double upper, double incidentE, double prim_fact, double prim_logb, double scnd_fact, double scnd_logb);
 		std::vector<double> sumIntegralsOfNumFluxFcnsPerBin(const std::vector<double>& binCounts, const std::vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb);
-		vecDbl2D matchIonBSToSatAndCount(const vecDbl2D& bsEFluxBins, const vecDbl2D& initialData, const vecDbl2D& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies);
-	}
-
-	namespace utils
-	{
-		void loadvFromDisk(std::string savefolder, std::string filePrefix, int count, std::vector<double>& vpara, std::vector<double>& vperp);
+		dblVec2D matchIonBSToSatAndCount(const dblVec2D& bsEFluxBins, const dblVec2D& initialData, const dblVec2D& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies);
 	}
 }
 

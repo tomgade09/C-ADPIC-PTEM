@@ -1,5 +1,7 @@
 #include "utils\random.h"
 
+#include <random>
+
 namespace utils
 {
 	namespace random

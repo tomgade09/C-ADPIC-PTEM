@@ -1,13 +1,10 @@
 #ifndef BFIELD_H
 #define BFIELD_H
 
-//CUDA includes
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "cuda_profiler_api.h"
+#include <string>
 
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\cudaDeviceMacros.h"
+//CUDA includes
+#include "host_defines.h"
 
 class BField
 {

@@ -1,5 +1,12 @@
 #include "EField\EField.h"
 
+#include <sstream>
+
+//CUDA includes
+#include "device_launch_parameters.h"
+#include "ErrorHandling\cudaErrorCheck.h"
+#include "ErrorHandling\cudaDeviceMacros.h"
+
 //device global kernels
 __global__ void setupEnvironmentGPU_EField(EField** efield, EElem*** eelems)
 {
@@ -34,6 +41,15 @@ __global__ void increaseCapacity_EField(EField** efield, EElem*** newArray, int 
 
 
 //EField functions
+#ifndef __CUDA_ARCH__ //host code
+__host__ std::string EField::getEElemsStr()
+{
+	std::stringstream out;
+	for (auto& elem : Eelems_m) { out << elem->name() << ", "; }
+	return out.str();
+}
+#endif /* !__CUDA_ARCH__ */
+
 void EField::setupEnvironment()
 {
 	CUDA_API_ERRCHK(cudaMalloc((void **)&this_d, sizeof(EField**)));              //allocate memory for EField**

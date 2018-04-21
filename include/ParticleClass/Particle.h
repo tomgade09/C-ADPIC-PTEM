@@ -3,9 +3,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
-#include "FileIO\fileIO.h"
-#include "utils\loopmacros.h"
 
 class Particle
 {

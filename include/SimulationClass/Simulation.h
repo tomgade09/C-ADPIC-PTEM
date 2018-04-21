@@ -2,18 +2,16 @@
 #define SIMULATIONCLASS_H
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <memory> //smart pointers
+
 #include "BField\allBModels.h"
 #include "EField\allEModels.h"
 #include "ParticleClass\Particle.h"
 #include "SatelliteClass\Satellite.h"
 #include "LogFile\LogFile.h"
-#include "FileIO\fileIO.h"
-#include "utils\loopmacros.h"
-#include "utils\numerical.h"
 #include "SimAttributes\SimAttributes.h"
-#include "ErrorHandling\simExceptionMacros.h"
 
 class Simulation
 {
@@ -75,27 +73,9 @@ protected:
 
 
 public:
-	Simulation(double dt, double simMin, double simMax, std::string saveRootDir) :
-		dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, saveRootDir_m{ saveRootDir + "/" },
-		simAttr_m{ std::make_unique<SimAttributes>(saveRootDir + "/Simulation.attr") },
-		logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "simulation.log", 20) }
-	{
-		cerrLogOut.open(saveRootDir_m + "errors.log");
-		std::cerr.rdbuf(cerrLogOut.rdbuf()); //set cerr output to "errors.log"
-
-		simAttr_m->addData("Simulation", "", {}, {}, { "dt", "simMin", "simMax" }, { dt_m, simMin_m, simMax_m });
-	}
-
-	Simulation(std::string prevSimDir, bool expand); //for loading previous simulation data
-
-	virtual ~Simulation()
-	{
-		std::cerr.rdbuf(cerrBufBak); //restore cerr to normal
-
-		if (saveReady_m) { saveDataToDisk(); } //save data if it hasn't been done
-
-		logFile_m->writeTimeDiffFromNow(0, "End Simulation Destructor");
-	}//Generally, when I'm done with this class, I'm done with the whole program, so the memory is returned anyway, but still good to get in the habit of returning memory
+	Simulation(double dt, double simMin, double simMax, std::string saveRootDir);
+	Simulation(std::string prevSimDir); //for loading previous simulation data
+	virtual ~Simulation();
 
 	///One liner functions (usually access)
 	double	    simtime(){ return simTime_m; }
@@ -112,9 +92,9 @@ public:
 
 	LogFile*    log()                       { return logFile_m.get(); }
 	Particle*   particle(int partInd)       { return particles_m.at(partInd).get(); }
-	Particle*   particle(std::string name)  { return nullptr; } //search for name, return particle
+	Particle*   particle(std::string name);  //search for name, return particle
 	Satellite*  satellite(int satInd)       { return satPartPairs_m.at(satInd)->satellite.get(); }
-	Satellite*  satellite(std::string name) { return nullptr; } //search for name, return satellite
+	Satellite*  satellite(std::string name); //search for name, return satellite
 	BField*     Bmodel()                    { return BFieldModel_m.get(); }
 	EField*     Emodel()                    { return EFieldModel_m.get(); }
 
@@ -143,8 +123,8 @@ public:
 	virtual void resetSimulation(bool fields=false);
 
 	//Fields
-	virtual double getBFieldAtS(double s, double time) { return BFieldModel_m->getBFieldAtS(s, time); } //need to throw if called too early?
-	virtual double getEFieldAtS(double s, double time) { return EFieldModel_m->getEFieldAtS(s, time); }
+	virtual double getBFieldAtS(double s, double time);
+	virtual double getEFieldAtS(double s, double time);
 
 	//Simulation management functions
 	virtual void initializeSimulation();

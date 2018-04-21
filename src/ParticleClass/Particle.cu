@@ -1,3 +1,5 @@
+#include <ctime>
+
 //CUDA includes
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
@@ -9,6 +11,7 @@
 
 #include "ParticleClass\Particle.h"
 #include "physicalconstants.h"
+#include "utils\loopmacros.h"
 
 //Device code (kernels)
 __global__ void setup2DArray(double* array1D, double** array2D, int cols, int entries)
@@ -72,7 +75,7 @@ void Particle::generateRandomParticles(const std::vector<double>& s, int startIn
 	CUDA_API_ERRCHK(cudaMalloc((void **)&curandRNGStates_d, numRNGstates * sizeof(curandStateMRG32k3a))); //Array of 65536 random number generator states
 	
 	//Prepare curand states for random number generation
-	long long seed = time(NULL);
+	long long seed = std::time(nullptr);
 	initCurand <<< numRNGstates / 128, 128 >>> (curandRNGStates_d, seed);
 	CUDA_KERNEL_ERRCHK();
 

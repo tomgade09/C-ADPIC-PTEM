@@ -36,7 +36,6 @@
     <ClCompile Include="..\src\utils\write.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\beElements.h" />
     <ClInclude Include="..\include\BField\allBModels.h" />
     <ClInclude Include="..\include\BField\BField.h" />
     <ClInclude Include="..\include\BField\DipoleB.h" />

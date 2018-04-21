@@ -1,5 +1,10 @@
 #include "utils\write.h"
 
+#include <iostream>
+#include <fstream>
+
+#include "FileIO\fileIO.h"
+
 namespace utils
 {
 	namespace write

@@ -1,6 +1,8 @@
 #include "SimulationClass\Simulation.h"
 
-Simulation::Simulation(std::string prevSimDir, bool expand) : saveRootDir_m{ prevSimDir }, simAttr_m{ std::make_unique<SimAttributes>(prevSimDir + '/' + "Simulation.attr", true) },
+#include "utils\string.h"
+
+Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, simAttr_m{ std::make_unique<SimAttributes>(prevSimDir + '/' + "Simulation.attr", true) },
 	logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "reload.log", 20) }
 {
 	//Load Simulation attributes
@@ -42,6 +44,6 @@ Simulation::Simulation(std::string prevSimDir, bool expand) : saveRootDir_m{ pre
 			simAttr_m->satAD.names_m.at(sat)
 		)};
 		createSatellite(tmpsat.get(), false);
-		satellite(getNumberOfSatellites() - 1)->loadDataFromDisk(saveRootDir_m + "/bins/satellites/", expand);
+		satellite(getNumberOfSatellites() - 1)->loadDataFromDisk(saveRootDir_m + "/bins/satellites/", true);
 	}
 }

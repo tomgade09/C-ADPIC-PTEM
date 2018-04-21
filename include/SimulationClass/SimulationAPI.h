@@ -1,11 +1,8 @@
 #ifndef SIMULATIONAPI_H
 #define SIMULATIONAPI_H
 
-#include <iostream>
 #include "dllexport.h"
 #include "SimulationClass\Simulation.h"
-#include "utils\write.h"
-#include "ErrorHandling\simExceptionMacros.h"
 
 ///One liner functions
 DLLEXPORT double      getSimulationTimeAPI(Simulation* simulation);

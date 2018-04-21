@@ -1,7 +1,9 @@
 #ifndef UTILS_WRITE_H
 #define UTILS_WRITE_H
 
-#include "FileIO\fileIO.h"
+#include <vector>
+#include <string>
+
 #include "physicalconstants.h"
 
 namespace utils

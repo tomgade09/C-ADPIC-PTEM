@@ -1,13 +1,10 @@
 #ifndef LOGFILE_H
 #define LOGFILE_H
 
-#include <chrono>
 #include <string>
 #include <vector>
-#include <iomanip>
 #include <memory>
-#include "FileIO\fileIO.h"
-#include "ErrorHandling\simExceptionMacros.h"
+#include <chrono>
 
 struct timeStruct
 {
@@ -26,14 +23,7 @@ private:
 	std::vector<std::unique_ptr<timeStruct>> timeStructs_m;
 
 public:
-	LogFile(std::string logFileName, int timeStructToReserve, bool overwrite=false) : logFileName_m{ logFileName }, overwrite_m{ overwrite }
-	{ 
-		timeStructs_m.reserve(timeStructToReserve);
-		std::string logHeader{ "[  Time (ms)  ] : Log Message\n" }; //do I want to add the time, other attributes to file???
-		logHeader += "[ 0.000000000 ] : LogFile class created, file created on disk, first entry written, first time point recorded.\n";
-		FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(logHeader, logFileName_m, overwrite_m));
-		createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
-	}
+	LogFile(std::string logFileName, int timeStructToReserve, bool overwrite = false);
 
 	~LogFile() {}
 

@@ -4,15 +4,15 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <sstream>
 
 //CUDA includes
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "cuda_profiler_api.h"
+#include "host_defines.h"
+//#include "cuda_runtime.h"
+//#include "device_launch_parameters.h"
+//#include "cuda_profiler_api.h"
 
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\cudaDeviceMacros.h"
+//#include "ErrorHandling\cudaErrorCheck.h"
+//#include "ErrorHandling\cudaDeviceMacros.h"
 
 class EElem //inherit from this class
 {
@@ -87,12 +87,7 @@ public:
 	
 	__host__ EElem*      element(int ind);
 	#ifndef __CUDA_ARCH__ //host code
-	__host__ std::string getEElemsStr()
-	{
-		std::stringstream out;
-		for (auto& elem : Eelems_m) { out << elem->name() << ", "; }
-		return out.str();
-	}
+	__host__ std::string getEElemsStr();
 	#endif /* !__CUDA_ARCH__ */
 };
 
