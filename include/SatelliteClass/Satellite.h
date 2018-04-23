@@ -15,8 +15,8 @@ protected:
 	long numberOfParticles_m;
 
 	std::vector<std::vector<std::vector<double>>> data_m; //[measurement][attribute][particle]
-	double*  satCaptrData1D_d{ nullptr }; //flattened satellite capture data
-	double** satCaptrData2D_d{ nullptr }; //2D satellite capture data
+	double*  satCaptrData1D_d{ nullptr }; //flattened satellite capture data on GPU
+	double** satCaptrData2D_d{ nullptr }; //2D satellite capture data on GPU
 	double** particleData2D_d{ nullptr };
 	
 	std::vector<std::string> attrNames_m;

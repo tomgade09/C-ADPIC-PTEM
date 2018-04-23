@@ -28,6 +28,7 @@ Create a Simulation through the [API function](./../API/README.md) `createSimula
 └─ ...
 ```
 
+
 ### Constructors
 ---
 ```
@@ -270,7 +271,7 @@ None
 
 
 #### Side-Effects:
-Calls saveDataToDisk of [Particles](./Particle/README.md) and [Satellites](./Satellite/README.md) managed by Simulation.  This implies that all the side-effects of those functions are incurred.  In addition, [SimAttributes](./../SimAttributes/README.md) is destroyed (hence, saving the associated attributes file to disk), and means that no further classes can be saved to disk in this Simulation instance.  This function is called automatically by `iterateSimulation` once iterations are complete.
+Calls saveDataToDisk of [Particles](./../Particle/README.md) and [Satellites](./../Satellite/README.md) managed by Simulation.  This implies that all the side-effects of those functions are incurred.  In addition, [SimAttributes](./../SimAttributes/README.md) is destroyed (hence, saving the associated attributes file to disk), and means that no further classes can be saved to disk in this Simulation instance.  This function is called automatically by `iterateSimulation` once iterations are complete.
 
 
 ---
