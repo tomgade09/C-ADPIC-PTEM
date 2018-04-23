@@ -99,28 +99,25 @@ public:
 	EField*     Emodel()                    { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
-	const virtual VEC(VEC(double))&      getParticleData(int partInd, bool originalData);
-	const virtual VEC(VEC(VEC(double)))& getSatelliteData(int satInd);
+	virtual const VEC(VEC(double))&      getParticleData(int partInd, bool originalData);
+	virtual const VEC(VEC(VEC(double)))& getSatelliteData(int satInd);
 	#undef VEC
 
 	///Forward decs for cpp file, or pure virtuals
 	//Class creation functions
 	virtual void createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir = "", bool save = true);
+	virtual void createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name);
 	virtual void createTempSat(int partInd, double altitude, bool upwardFacing, std::string name);
 	virtual void setBFieldModel(std::string name, std::vector<double> args, bool save = true);
 	virtual void setBFieldModel(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 	virtual void addEFieldModel(std::string name, std::vector<double> args, bool save = true);
-	virtual void addEFieldModel(std::unique_ptr<EElem> eelem) { EFieldModel_m->add(std::move(eelem)); }
+	virtual void addEFieldModel(std::unique_ptr<EElem> eelemptr) { EFieldModel_m->add(std::move(eelemptr)); }
 	
 	//vperp <-> mu
-	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, double mass);
-	virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, std::vector<double>& t, double mass);
-	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass);
-	virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass);
-	
-	//Other utilities
-	virtual void saveDataToDisk();
-	virtual void resetSimulation(bool fields=false);
+	//virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, double mass);
+	//virtual void convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, std::vector<double>& t, double mass);
+	//virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, double mass);
+	//virtual void convertMuToVPerp(std::vector<double>& mu, std::vector<double>& s, std::vector<double>& t, double mass);
 
 	//Fields
 	virtual double getBFieldAtS(double s, double time);
@@ -129,6 +126,8 @@ public:
 	//Simulation management functions
 	virtual void initializeSimulation();
 	virtual void iterateSimulation(int numberOfIterations, int itersBtwCouts);
+	virtual void saveDataToDisk();
 	virtual void freeGPUMemory();
+	virtual void resetSimulation(bool fields = false);
 };//end class
 #endif //end header guard

@@ -23,13 +23,13 @@ constexpr int  BLOCKSIZE{ 256 }; //Number of threads per block - this is most ef
 //Commonly used values
 extern const int SIMCHARSIZE{ 3 * sizeof(double) };
 
-__global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double mass, double* time, bool vperpToMu)
-{//dataToConvert[0] = vpara, [1] = vperp, [2] = s
+__global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double mass, bool vperpToMu)
+{//dataToConvert[0] = vpara, [1] = vperp, [2] = s, [3] = t_incident, [4] = t_escape
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
-	double B_s{ (*bfield)->getBFieldAtS(dataToConvert[2][thdInd], ((time != nullptr) ? time[thdInd] : 0.0)) };
 	
 	if (dataToConvert[1][thdInd] != 0.0)
 	{
+		double B_s{ (*bfield)->getBFieldAtS(dataToConvert[2][thdInd], dataToConvert[4][thdInd]) };
 		if (vperpToMu)
 			dataToConvert[1][thdInd] = 0.5 * mass * dataToConvert[1][thdInd] * dataToConvert[1][thdInd] / B_s;
 		else
@@ -38,7 +38,7 @@ __global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double m
 }
 
 __device__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args, BField** bfield, EField** efield) //made to pass into 1D Fourth Order Runge Kutta code
-{//args array: [ps_0, mu, q, m, simtime]
+{//args array: [s_0, mu, q, m, simtime]
 	double F_lor, F_mir, stmp;
 	stmp = args[0] + vs_RK * t_RK; //ps_0 + vs_RK * t_RK
 	
@@ -52,20 +52,20 @@ __device__ double accel1dCUDA(const double vs_RK, const double t_RK, const doubl
 }//returns an acceleration in the parallel direction to the B Field
 
 __device__ double foRungeKuttaCUDA(const double y_0, const double h, const double* funcArg, BField** bfield, EField** efield)
-{	// funcArg requirements: [t_RK = 0, y_0, ...] where t_RK = {0, h/2, h}, initial t_RK should be 0, this func will take care of the rest
+{
 	// dy / dt = f(t, y), y(t_0) = y_0
-	// remaining funcArg elements are whatever you need in your callback function passed in
-	// args array: [t_RKiter, vs, mu, q, m, ps_0, simtime, dt, omega E, const E]
+	// funcArgs are whatever you need to pass to the equation
+	// args array: [s_0, mu, q, m, simtime]
 	double k1, k2, k3, k4; double y{ y_0 }; double t_RK{ 0.0 };
 
-	k1 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k1 = f(t_n, y_n), units of dy / dt
+	k1 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k1 = f(t_n, y_n), returns units of dy / dt
 	
 	t_RK = h / 2;
 	y = y_0 + k1 * t_RK;
-	k2 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k2 = f(t_n + h/2, y_n + h/2 k1)
+	k2 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k2 = f(t_n + h/2, y_n + h/2 * k1)
 
 	y = y_0 + k2 * t_RK;
-	k3 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k3 = f(t_n + h/2, y_n + h/2 k2)
+	k3 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k3 = f(t_n + h/2, y_n + h/2 * k2)
 
 	t_RK = h;
 	y = y_0 + k3 * t_RK;
@@ -74,8 +74,12 @@ __device__ double foRungeKuttaCUDA(const double y_0, const double h, const doubl
 	return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns delta y, not dy / dt, not total y
 }
 
-__global__ void simActiveCheck(double** currData_d, bool* simDone, const double simMin, const double simMax, const double simtime)
+__global__ void simActiveCheck(double** currData_d, bool* simDone, const double simtime)
 {
+	//Answers the question: Are there no particles left in the simulation?
+	//stores the value to simDone, which is defaulted to true, and flipped to false
+	//only if t_escape is less than zero for at least one particle
+	//(in that case, the sim is not completely done iterating)
 	if (*simDone)
 	{
 		const double* t_escape_d{ currData_d[4] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
@@ -90,22 +94,22 @@ __global__ void simActiveCheck(double** currData_d, bool* simDone, const double 
 }
 
 __global__ void computeKernel(double** currData_d, BField** bfield, EField** efield,
-	const double simtime, const double dt, const double mass, const double charge, const double simMin, const double simMax)
+	const double simtime, const double dt, const double mass, const double charge, const double simmin, const double simmax)
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
 	double* v_d{ currData_d[0] }; const double* mu_d{ currData_d[1] }; double* s_d{ currData_d[2] }; const double* t_incident_d{ currData_d[3] }; double* t_escape_d{ currData_d[4] };
 
-	if (t_escape_d[thdInd] >= 0.0) //particle has escaped
+	if (t_escape_d[thdInd] >= 0.0) //particle has escaped, t_escape is >= 0 iff it has both entered and is outside the sim boundaries
 		return;
 	else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
 		return;
-	else if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
+	else if (s_d[thdInd] < simmin * 0.999) //particle is out of sim to the bottom and t_escape not set yet
 	{//eventually build in "fuzzy boundary" - maybe eventually create new particle with initial characteristics on escape
 		t_escape_d[thdInd] = simtime;
-		return;
-	}//fuzzyIonosphere(); if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime) { return; }
-	else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
+		return;                      //fuzzyIonosphere(); if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime) { return; }
+	}
+	else if (s_d[thdInd] > simmax * 1.001) //particle is out of sim to the top and t_escape not set yet
 	{//maybe eventaully create new particle with initial characteristics on escape
 		t_escape_d[thdInd] = simtime;
 		return;
@@ -162,7 +166,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	
 	printSimAttributes(numberOfIterations, checkDoneEvery);
 	
-	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations)); //index 1
+	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations));
 	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
 
 	//Copy data to device
@@ -235,8 +239,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 
 	std::cout << "Total sim time: "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;
 
-	logFile_m->createTimeStruct("End Iterate " + std::to_string(numberOfIterations)); //index 2
-	//logFile_m->writeTimeDiffFromNow(1, "End Iterate " + std::to_string(numberOfIterations));
+	logFile_m->createTimeStruct("End Iterate " + std::to_string(numberOfIterations));
 	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }
 

@@ -8,6 +8,11 @@ MAYBE - Hijack clog and write to log file (easy, quick)
 - Cross platform compiling
 - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
 - Custom logfile and particle exception catchers (instead of copy pasta from FileIO)
+- Write tests that can be executed cross-platform
+	- Sample distributions (maybe 100 particles or something) under different BField / EField models
+	- DipoleLUT vs Dipole
+	- Save simulation to disk, load, compare
+
 
 LOWER PRIORITY:
 DONE, NEEDS GOOD TEST - Move random particle generator to Particle class

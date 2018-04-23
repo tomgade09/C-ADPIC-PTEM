@@ -64,6 +64,9 @@ double Simulation::getEFieldAtS(double s, double time) { return EFieldModel_m->g
 //Class creation functions
 void Simulation::createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir, bool save)
 {
+	if (simAttr_m == nullptr)
+		save = false;
+
 	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
 	
 	std::vector<std::string> attrNames{ "vpara", "vperp", "s", "t_inc", "t_esc" };
@@ -89,6 +92,19 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 	particles_m.push_back(std::move(newPart));
 }
 
+void Simulation::createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name)
+{
+	for (int partInd = 0; partInd < particles_m.size(); partInd++)
+	{
+		if (particle(partInd)->name() == partName)
+		{
+			createTempSat(partInd, altitude, upwardFacing, name);
+			return;
+		}
+	}
+	throw std::invalid_argument("Simulation::createTempSat: no particle of name " + name);
+}
+
 void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
 {//"Temp Sats" are necessary to ensure particles are created before their accompanying satellites
 	if (initialized_m)
@@ -110,6 +126,8 @@ void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
 		throw std::out_of_range("createSatellite: no particle at the specifed index " + std::to_string(partInd));
 	if (particles_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
 		throw std::runtime_error("createSatellite: pointer to GPU data is a nullptr of particle " + particles_m.at(partInd)->name() + " - that's just asking for trouble");
+	if (simAttr_m == nullptr)
+		save = false;
 
 	if (save) { simAttr_m->addData("Satellite", name, {}, {}, { "partInd", "altitude", "upwardFacing" }, { (double)partInd, altitude, (double)upwardFacing }); }
 
@@ -127,6 +145,8 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		throw std::invalid_argument("Simulation::setBFieldModel: trying to assign B Field Model when one is already assigned - existing: " + BFieldModel_m->name() + ", attempted: " + name);
 	if (args.empty())
 		throw std::invalid_argument("Simulation::setBFieldModel: no arguments passed in");
+	if (simAttr_m == nullptr)
+		save = false;
 
 	std::vector<std::string> attrNames;
 
@@ -192,6 +212,8 @@ void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool
 {
 	if (EFieldModel_m == nullptr)
 		EFieldModel_m = std::make_unique<EField>();
+	if (simAttr_m == nullptr)
+		save = false;
 
 	std::vector<std::string> attrNames;
 
@@ -230,7 +252,7 @@ void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool
 
 
 //vperp <-> mu
-void Simulation::convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, std::vector<double>& t, double mass)
+/*void Simulation::convertVPerpToMu(std::vector<double>& vperp, std::vector<double>& s, std::vector<double>& t, double mass)
 {
 	LOOP_OVER_1D_ARRAY(vperp.size(), vperp.at(iii) = 0.5 * mass * vperp.at(iii) * vperp.at(iii) / BFieldModel_m->getBFieldAtS(s.at(iii), t.at(iii)));
 }
@@ -250,7 +272,7 @@ void Simulation::convertMuToVPerp(std::vector<double>& mu, std::vector<double>& 
 {
 	std::vector<double> t((int)mu.size()); //creates vector of zeroes
 	convertMuToVPerp(mu, s, t, mass);
-}
+}*/
 
 
 //Other utilities
@@ -266,7 +288,6 @@ void Simulation::saveDataToDisk()
 	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->saveDataToDisk(saveRootDir_m + "/bins/satellites/"));
 
 	simAttr_m = nullptr;
-
 	saveReady_m = false;
 }
 
