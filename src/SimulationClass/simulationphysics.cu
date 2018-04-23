@@ -78,21 +78,14 @@ __global__ void simActiveCheck(double** currData_d, bool* simDone, const double 
 {
 	if (*simDone)
 	{
-		const double* s_d{ currData_d[2] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
+		const double* t_escape_d{ currData_d[4] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
 
 		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
-		//if (t_escape_d[thdInd] >= 0.0) //particle has escaped the sim
-			//return; //this is the only thing to check once implemented
-		if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
-			return; //with fuzzyIonosphere, need to remove this
-		else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
-			return; //with t_escape, need to remove this - if particle has escaped up, but t_esc hasn't been set, data is incomplete - iterate another round to make sure that data is populated
+		if (t_escape_d[thdInd] >= 0.0) //particle has escaped the sim
+			return;
 		else
 			(*simDone) = false;
-
-		//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
-			//(*simDone) = false;
 	}
 }
 
@@ -101,17 +94,22 @@ __global__ void computeKernel(double** currData_d, BField** bfield, EField** efi
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
-	double* v_d{ currData_d[0] }; const double* mu_d{ currData_d[1] }; double* s_d{ currData_d[2] }; //const double* t_incident_d{ currData_d[3] }; //to be implemented
+	double* v_d{ currData_d[0] }; const double* mu_d{ currData_d[1] }; double* s_d{ currData_d[2] }; const double* t_incident_d{ currData_d[3] }; double* t_escape_d{ currData_d[4] };
 
-	//if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime)
-		//return; //particle has escaped
-	//else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
-		//return;
-	if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
-		return; //t_escape_d[thdInd] = simtime; return; //fuzzyIonosphere(); if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime) { return; }
-				//eventually build in "fuzzy boundary" - maybe eventually create new particle with initial characteristics on escape
+	if (t_escape_d[thdInd] >= 0.0) //particle has escaped
+		return;
+	else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
+		return;
+	else if (s_d[thdInd] < simMin * 0.999) //out of sim to the bottom
+	{//eventually build in "fuzzy boundary" - maybe eventually create new particle with initial characteristics on escape
+		t_escape_d[thdInd] = simtime;
+		return;
+	}//fuzzyIonosphere(); if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime) { return; }
 	else if (s_d[thdInd] > simMax * 1.001) //out of sim to the top
-		return; //t_escape_d[thdInd] = simtime; return; //maybe eventaully create new particle with initial characteristics on escape
+	{//maybe eventaully create new particle with initial characteristics on escape
+		t_escape_d[thdInd] = simtime;
+		return;
+	}
 
 	//args array: [ps_0, mu, q, m, simtime]
 	const double args[]{ s_d[thdInd], mu_d[thdInd], charge, mass, simtime };
