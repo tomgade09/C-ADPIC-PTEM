@@ -3,16 +3,17 @@
 
 #include <string>
 #include <vector>
-#include "dllexport.h"
+#include "dlldefines.h"
 
 namespace utils
 {
 	namespace string
 	{
-		DLLEXP_NOEXTC int findAttrInd(std::string attr, std::vector<std::string> allAttrs);
-		DLLEXP_NOEXTC std::vector<std::string> charToStrVec(std::string str, const char delim = ',');
-		DLLEXP_NOEXTC std::vector<double> charToDblVec(std::string str, const char delim = ',');
-		DLLEXP_NOEXTC void stringPadder(std::string& in, int totalStrLen, int indEraseFrom = 0);
+		DLLEXP int findAttrInd(std::string attr, std::vector<std::string> allAttrs);
+		DLLEXP std::vector<std::string> strToStrVec(std::string str, const char delim = ',');
+		DLLEXP std::string strVecToStr(std::vector<std::string> strVec, const char delim = ',');
+		DLLEXP std::vector<double> strToDblVec(std::string str, const char delim = ',');
+		DLLEXP void stringPadder(std::string& in, int totalStrLen, int indEraseFrom = 0);
 	}
 }
 

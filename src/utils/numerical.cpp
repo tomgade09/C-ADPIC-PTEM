@@ -4,7 +4,7 @@ namespace utils
 {
 	namespace numerical
 	{
-		DLLEXP_NOEXTC void v2DtoEPitch(const std::vector<double>& vpara, const std::vector<double>& vperp, double mass, std::vector<double>& energies_eV, std::vector<double>& pitches_deg)
+		DLLEXP void v2DtoEPitch(const std::vector<double>& vpara, const std::vector<double>& vperp, double mass, std::vector<double>& energies_eV, std::vector<double>& pitches_deg)
 		{
 			if (vpara.size() != vperp.size())
 				throw std::invalid_argument("utils::numerical::v2DtoEPitch: input vectors vpara and vperp are not the same size: " + std::to_string(vpara.size()) + ", " + std::to_string(vperp.size()));
@@ -29,7 +29,7 @@ namespace utils
 			}
 		}
 
-		DLLEXP_NOEXTC void EPitchTov2D(const std::vector<double>& energies_eV, const std::vector<double>& pitches_deg, double mass, std::vector<double>& vpara, std::vector<double>& vperp)
+		DLLEXP void EPitchTov2D(const std::vector<double>& energies_eV, const std::vector<double>& pitches_deg, double mass, std::vector<double>& vpara, std::vector<double>& vperp)
 		{
 			if (energies_eV.size() != pitches_deg.size())
 				throw std::invalid_argument("utils::numerical::EPitchTov2D: input vectors vpara and vperp are not the same size: " + std::to_string(vpara.size()) + ", " + std::to_string(vperp.size()));
@@ -54,7 +54,7 @@ namespace utils
 			}
 		}
 
-		DLLEXP_NOEXTC std::vector<double> generateSpacedValues(double min, double max, int number, bool logSpaced, bool endInclusive)
+		DLLEXP std::vector<double> generateSpacedValues(double min, double max, int number, bool logSpaced, bool endInclusive)
 		{
 			/*
 				**Note** if logSpaced is true, min and max have to be log(min) and log(max),
@@ -82,7 +82,7 @@ namespace utils
 			return ret;
 		}
 
-		DLLEXP_NOEXTC void normalize(std::vector<double>& normalizeMe, double normFactor, bool inverse) //inverse defaults to false
+		DLLEXP void normalize(std::vector<double>& normalizeMe, double normFactor, bool inverse) //inverse defaults to false
 		{
 			if (normFactor == 1.0)
 				return;
@@ -91,7 +91,7 @@ namespace utils
 				elem *= (inverse ? (normFactor) : (1 / normFactor));
 		}
 
-		DLLEXP_NOEXTC double calcMean(const std::vector<double>& calcMyMean, bool absValue) //absValue defaults to false
+		DLLEXP double calcMean(const std::vector<double>& calcMyMean, bool absValue) //absValue defaults to false
 		{
 			double sum{ 0 };
 			for (int iii = 0; iii < calcMyMean.size(); iii++)
@@ -104,7 +104,7 @@ namespace utils
 			return sum / calcMyMean.size();
 		}
 
-		DLLEXP_NOEXTC double calcStdDev(const std::vector<double>& calcMyStdDev)
+		DLLEXP double calcStdDev(const std::vector<double>& calcMyStdDev)
 		{
 			double stdDev{ 0 };
 			double mean{ calcMean(calcMyStdDev, false) };
@@ -116,7 +116,7 @@ namespace utils
 			return stdDev;
 		}
 
-		DLLEXP_NOEXTC void coutMinMaxErr(const std::vector<double>& basevals, const std::vector<double>& testvals, std::string label, bool skipzeroes) //label defaults to "", skipzeroes to true
+		DLLEXP void coutMinMaxErr(const std::vector<double>& basevals, const std::vector<double>& testvals, std::string label, bool skipzeroes) //label defaults to "", skipzeroes to true
 		{
 			if (basevals.size() != testvals.size())
 				throw std::invalid_argument("coutMinMaxErr: vectors are not the same size");
@@ -135,7 +135,7 @@ namespace utils
 			std::cout << label << " min err: " << minerr << ", max err: " << maxerr << std::endl;
 		}
 
-		DLLEXP_NOEXTC void coutNumAboveErrEps(const std::vector<double>& basevals, const std::vector<double>& testvals, double errEps, std::string label, bool skipzeroes) //label defaults to "", skipzeroes to true
+		DLLEXP void coutNumAboveErrEps(const std::vector<double>& basevals, const std::vector<double>& testvals, double errEps, std::string label, bool skipzeroes) //label defaults to "", skipzeroes to true
 		{
 			if (basevals.size() != testvals.size())
 				throw std::invalid_argument("coutNumAboveEps: vectors are not the same size");

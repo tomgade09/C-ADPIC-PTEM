@@ -3,9 +3,6 @@
 
 #include "EField\EField.h"
 
-//class QSPS;
-//__global__ void deleteEnvironmentGPU_QSPS(EElem** qsps);
-
 class QSPS : public EElem
 {
 protected:
@@ -21,8 +18,8 @@ protected:
 	double* altMax_d;
 	double* magnitude_d;
 
-	__host__ void setupEnvironment();
-	__host__ void deleteEnvironment();
+	__host__ void setupEnvironment()  override;
+	__host__ void deleteEnvironment() override;
 
 public:
 	__host__ QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude);
@@ -30,13 +27,13 @@ public:
 	__device__ QSPS(double* altMin, double* altMax, double* magnitude, int numRegions) :
 		EElem(), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions } {}
 
-	__host__ __device__ virtual ~QSPS();
+	__host__ __device__ ~QSPS();
 
-	__host__ __device__ double getEFieldAtS(const double s, const double t);
+	__host__ __device__ double getEFieldAtS(const double s, const double t) const override;
 
-	__host__ const std::vector<double>& altMin();
-	__host__ const std::vector<double>& altMax();
-	__host__ const std::vector<double>& magnitude();
+	__host__ const std::vector<double>& altMin() const;
+	__host__ const std::vector<double>& altMax() const;
+	__host__ const std::vector<double>& magnitude() const;
 };
 
 #endif /* !QSPS_EFIELD_H */

@@ -32,7 +32,7 @@ __global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double*
 	magnitude[thdInd] = (*dipole)->getBFieldAtS(s, 0.0);
 }
 
-__host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double simtime)
+__host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double simtime) const
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
 	int startInd{ 0 };
 	if (s < simMin_m)
@@ -50,7 +50,7 @@ __host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double
 	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ __device__ double DipoleBLUT::getGradBAtS(const double s, const double simtime)
+__host__ __device__ double DipoleBLUT::getGradBAtS(const double s, const double simtime) const
 {
 	return (getBFieldAtS(s + ds_gradB_m, simtime) - getBFieldAtS(s - ds_gradB_m, simtime)) / (2 * ds_gradB_m);
 }

@@ -4,15 +4,6 @@
     <CudaCompile Include="..\src\BField\DipoleB.cu">
       <Filter>Source Files\BField</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\src\ParticleClass\Particle.cu">
-      <Filter>Source Files\Particle</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\src\SatelliteClass\Satellite.cu">
-      <Filter>Source Files\Satellite</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\src\SimulationClass\simulationphysics.cu">
-      <Filter>Source Files\Simulation</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\src\EField\EField.cu">
       <Filter>Source Files\EField</Filter>
     </CudaCompile>
@@ -22,25 +13,19 @@
     <CudaCompile Include="..\src\BField\DipoleBLUT.cu">
       <Filter>Source Files\BField</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\Particle\Particle.cu">
+      <Filter>Source Files\Particle</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\Satellite\Satellite.cu">
+      <Filter>Source Files\Satellite</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\Simulation\simulationphysics.cu">
+      <Filter>Source Files\Simulation</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\FileIO\fileIO.cpp">
-      <Filter>Source Files\FileIO</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\LogFile\LogFile.cpp">
       <Filter>Source Files\LogFile</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\LogFile\LogFileAPI.cpp">
-      <Filter>Source Files\LogFile</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\SimulationClass\Simulation.cpp">
-      <Filter>Source Files\Simulation</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp">
-      <Filter>Source Files\Simulation</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\classAPI.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\utils\numerical.cpp">
       <Filter>Source Files\utils</Filter>
@@ -51,23 +36,38 @@
     <ClCompile Include="..\src\utils\string.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SimulationClass\previousSimulation.cpp">
-      <Filter>Source Files\Simulation</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ParticleClass\Particle.cpp">
-      <Filter>Source Files\Particle</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\utils\write.cpp">
-      <Filter>Source Files\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\utils\utilsAPI.cpp">
-      <Filter>Source Files\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\utils\load.cpp">
-      <Filter>Source Files\utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp">
       <Filter>Source Files\SimAttributes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\API\LogFileAPI.cpp">
+      <Filter>Source Files\API</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\API\SimulationAPI.cpp">
+      <Filter>Source Files\API</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Particle\Particle.cpp">
+      <Filter>Source Files\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Simulation\previousSimulation.cpp">
+      <Filter>Source Files\Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Simulation\Simulation.cpp">
+      <Filter>Source Files\Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\fileIO.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\API\utilsAPI.cpp">
+      <Filter>Source Files\API</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\readIOclasses.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\writeIOclasses.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\API\classAPI.cpp">
+      <Filter>Source Files\API</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,26 +80,8 @@
     <ClInclude Include="..\include\BField\DipoleB.h">
       <Filter>Header Files\BField</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\SimulationClass\Simulation.h">
-      <Filter>Header Files\Simulation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\SimulationClass\SimulationAPI.h">
-      <Filter>Header Files\Simulation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FileIO\fileIO.h">
-      <Filter>Header Files\FileIO</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\LogFile\LogFile.h">
       <Filter>Header Files\LogFile</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\LogFile\LogFileAPI.h">
-      <Filter>Header Files\LogFile</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\SatelliteClass\Satellite.h">
-      <Filter>Header Files\Satellite</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\ParticleClass\Particle.h">
-      <Filter>Header Files\Particle</Filter>
     </ClInclude>
     <ClInclude Include="..\include\EField\EField.h">
       <Filter>Header Files\EField</Filter>
@@ -116,12 +98,6 @@
     <ClInclude Include="..\include\ErrorHandling\SimFatalException.h">
       <Filter>Header Files\ErrorHandling</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\dllexport.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FileIO\fileIOAPI.h">
-      <Filter>Header Files\FileIO</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\EField\QSPS.h">
       <Filter>Header Files\EField</Filter>
     </ClInclude>
@@ -133,9 +109,6 @@
     </ClInclude>
     <ClInclude Include="..\include\BField\DipoleBLUT.h">
       <Filter>Header Files\BField</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\classAPI.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\utils\loopmacros.h">
       <Filter>Header Files\utils</Filter>
@@ -152,17 +125,44 @@
     <ClInclude Include="..\include\ErrorHandling\cudaDeviceMacros.h">
       <Filter>Header Files\ErrorHandling</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\write.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\utils\utilsAPI.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\utils\load.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\SimAttributes\SimAttributes.h">
       <Filter>Header Files\SimAttributes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dlldefines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\API\LogFileAPI.h">
+      <Filter>Header Files\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\API\SimulationAPI.h">
+      <Filter>Header Files\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Particle\Particle.h">
+      <Filter>Header Files\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Satellite\Satellite.h">
+      <Filter>Header Files\Satellite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Simulation\Simulation.h">
+      <Filter>Header Files\Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\fileIO.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\API\utilsAPI.h">
+      <Filter>Header Files\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\readIOclasses.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\writeIOclasses.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\API\classAPI.h">
+      <Filter>Header Files\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\equalityOperators.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -219,9 +219,6 @@
     <Filter Include="Header Files\BField">
       <UniqueIdentifier>{ba659dad-a628-4300-924e-e492427f860d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\FileIO">
-      <UniqueIdentifier>{d77afa6d-5635-4d4d-9d71-467f1407e6cd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\LogFile">
       <UniqueIdentifier>{cf1f2022-4a66-4e24-8c8e-2c7bb92d6264}</UniqueIdentifier>
     </Filter>
@@ -239,9 +236,6 @@
     </Filter>
     <Filter Include="Source Files\EField">
       <UniqueIdentifier>{0fdaec53-8f12-47b3-b3ed-858680093151}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\FileIO">
-      <UniqueIdentifier>{bd321946-5252-4cff-b3ab-4d7072e850a8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\LogFile">
       <UniqueIdentifier>{6d5cdd2f-af6b-4d89-9818-df241cdb4ea2}</UniqueIdentifier>
@@ -284,6 +278,12 @@
     </Filter>
     <Filter Include="Source Files\SimAttributes">
       <UniqueIdentifier>{3a2e37d9-9e12-47e3-a7ec-78a4b77075f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\API">
+      <UniqueIdentifier>{378b2f1b-b363-4fb8-8b0b-c76bcede227b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\API">
+      <UniqueIdentifier>{9b515100-4d51-4a52-8fac-9b41a9a694d4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

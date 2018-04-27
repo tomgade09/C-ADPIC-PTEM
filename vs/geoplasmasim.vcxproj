@@ -19,63 +19,63 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\classAPI.cpp" />
-    <ClCompile Include="..\src\FileIO\fileIO.cpp" />
+    <ClCompile Include="..\src\API\classAPI.cpp" />
+    <ClCompile Include="..\src\API\LogFileAPI.cpp" />
+    <ClCompile Include="..\src\API\SimulationAPI.cpp" />
+    <ClCompile Include="..\src\API\utilsAPI.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
-    <ClCompile Include="..\src\LogFile\LogFileAPI.cpp" />
-    <ClCompile Include="..\src\ParticleClass\Particle.cpp" />
+    <ClCompile Include="..\src\Particle\Particle.cpp" />
     <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp" />
-    <ClCompile Include="..\src\SimulationClass\previousSimulation.cpp" />
-    <ClCompile Include="..\src\SimulationClass\Simulation.cpp" />
-    <ClCompile Include="..\src\SimulationClass\SimulationAPI.cpp" />
-    <ClCompile Include="..\src\utils\load.cpp" />
+    <ClCompile Include="..\src\Simulation\previousSimulation.cpp" />
+    <ClCompile Include="..\src\Simulation\Simulation.cpp" />
+    <ClCompile Include="..\src\utils\fileIO.cpp" />
+    <ClCompile Include="..\src\utils\readIOclasses.cpp" />
     <ClCompile Include="..\src\utils\string.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
     <ClCompile Include="..\src\utils\random.cpp" />
-    <ClCompile Include="..\src\utils\utilsAPI.cpp" />
-    <ClCompile Include="..\src\utils\write.cpp" />
+    <ClCompile Include="..\src\utils\writeIOclasses.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\API\classAPI.h" />
+    <ClInclude Include="..\include\API\LogFileAPI.h" />
+    <ClInclude Include="..\include\API\SimulationAPI.h" />
+    <ClInclude Include="..\include\API\utilsAPI.h" />
     <ClInclude Include="..\include\BField\allBModels.h" />
     <ClInclude Include="..\include\BField\BField.h" />
     <ClInclude Include="..\include\BField\DipoleB.h" />
     <ClInclude Include="..\include\BField\DipoleBLUT.h" />
-    <ClInclude Include="..\include\classAPI.h" />
-    <ClInclude Include="..\include\dllexport.h" />
+    <ClInclude Include="..\include\dlldefines.h" />
     <ClInclude Include="..\include\EField\allEModels.h" />
     <ClInclude Include="..\include\EField\EField.h" />
     <ClInclude Include="..\include\EField\QSPS.h" />
+    <ClInclude Include="..\include\equalityOperators.h" />
     <ClInclude Include="..\include\ErrorHandling\cudaDeviceMacros.h" />
     <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h" />
     <ClInclude Include="..\include\ErrorHandling\SimException.h" />
     <ClInclude Include="..\include\ErrorHandling\simExceptionMacros.h" />
     <ClInclude Include="..\include\ErrorHandling\SimFatalException.h" />
-    <ClInclude Include="..\include\FileIO\fileIO.h" />
-    <ClInclude Include="..\include\FileIO\fileIOAPI.h" />
     <ClInclude Include="..\include\LogFile\LogFile.h" />
-    <ClInclude Include="..\include\LogFile\LogFileAPI.h" />
-    <ClInclude Include="..\include\ParticleClass\Particle.h" />
+    <ClInclude Include="..\include\Particle\Particle.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
-    <ClInclude Include="..\include\SatelliteClass\Satellite.h" />
+    <ClInclude Include="..\include\Satellite\Satellite.h" />
     <ClInclude Include="..\include\SimAttributes\SimAttributes.h" />
-    <ClInclude Include="..\include\SimulationClass\Simulation.h" />
-    <ClInclude Include="..\include\SimulationClass\SimulationAPI.h" />
-    <ClInclude Include="..\include\utils\load.h" />
+    <ClInclude Include="..\include\Simulation\Simulation.h" />
+    <ClInclude Include="..\include\utils\fileIO.h" />
+    <ClInclude Include="..\include\utils\readIOclasses.h" />
     <ClInclude Include="..\include\utils\string.h" />
     <ClInclude Include="..\include\utils\loopmacros.h" />
     <ClInclude Include="..\include\utils\numerical.h" />
     <ClInclude Include="..\include\utils\random.h" />
-    <ClInclude Include="..\include\utils\utilsAPI.h" />
-    <ClInclude Include="..\include\utils\write.h" />
+    <ClInclude Include="..\include\utils\writeIOclasses.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\BField\DipoleB.cu" />
     <CudaCompile Include="..\src\BField\DipoleBLUT.cu" />
     <CudaCompile Include="..\src\EField\EField.cu" />
     <CudaCompile Include="..\src\EField\QSPS.cu" />
-    <CudaCompile Include="..\src\ParticleClass\Particle.cu" />
-    <CudaCompile Include="..\src\SatelliteClass\Satellite.cu" />
-    <CudaCompile Include="..\src\SimulationClass\simulationphysics.cu" />
+    <CudaCompile Include="..\src\Particle\Particle.cu" />
+    <CudaCompile Include="..\src\Satellite\Satellite.cu" />
+    <CudaCompile Include="..\src\Simulation\simulationphysics.cu" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\FileIO\fileIO.py" />
@@ -151,7 +151,7 @@
     <OutDir>$(SolutionDir)..\lib\</OutDir>
     <TargetName>$(ProjectName)_d</TargetName>
     <CodeAnalysisRuleSet>C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -160,28 +160,28 @@
     <OutDir>$(SolutionDir)..\lib\</OutDir>
     <TargetName>$(ProjectName)_d</TargetName>
     <CodeAnalysisRuleSet>C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>C:\Users\Tom\src\geoplasmasim\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\lib\</OutDir>
     <CodeAnalysisRuleSet>C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>C:\Users\Tom\src\geoplasmasim\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\lib\</OutDir>
     <CodeAnalysisRuleSet>C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -205,7 +205,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -230,9 +230,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DLLFILE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -258,9 +258,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DLLFILE;WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

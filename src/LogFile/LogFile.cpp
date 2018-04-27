@@ -3,8 +3,10 @@
 #include <sstream>
 
 #include "LogFile\LogFile.h"
-#include "FileIO\fileIO.h"
+#include "utils\fileIO.h"
 #include "ErrorHandling\simExceptionMacros.h"
+
+using utils::fileIO::writeTxtFile;
 
 //need a custom solution for this...
 //file read/write exception checking (probably should mostly wrap fileIO functions)
@@ -19,7 +21,7 @@ LogFile::LogFile(std::string logFileName, int timeStructToReserve, bool overwrit
 	timeStructs_m.reserve(timeStructToReserve);
 	std::string logHeader{ "[  Time (ms)  ] : Log Message\n" }; //do I want to add the time, other attributes to file???
 	logHeader += "[ 0.000000000 ] : LogFile class created, file created on disk, first entry written, first time point recorded.\n";
-	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(logHeader, logFileName_m, overwrite_m));
+	FILE_RDWR_EXCEP_CHECK(writeTxtFile(logHeader, logFileName_m, overwrite_m));
 	createTimeStruct("Initial time point (in LogFile Constructor)"); //index 0 of timeStructs_m
 }
 
@@ -34,7 +36,7 @@ void LogFile::writeLogFileEntry(std::string logMessage)
 		ssstr.erase(std::ios::end);
 	writeTxt = "[ " + ssstr + " ] : " + logMessage + "\n"; //time
 
-	FILE_RDWR_EXCEP_CHECK(fileIO::writeTxtFile(writeTxt, logFileName_m));
+	FILE_RDWR_EXCEP_CHECK(writeTxtFile(writeTxt, logFileName_m));
 }
 
 void LogFile::createTimeStruct(std::string label)

@@ -16,7 +16,7 @@ __global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)
 }
 
 //B Field related kernels
-__host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees)///FIX TO GIVE S FROM RE NOT EQUATOR!!!!!!!!!!!AA!!!1111!1!!111!
+__host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees) const
 {
 	//double x{ asinh(sqrt(3.0) * sinpi(lambdaDegrees / 180.0)) };
 	double sinh_x{ sqrt(3.0) * sinpi(lambdaDegrees / 180.0) };
@@ -25,7 +25,7 @@ __host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees)///F
 	return (0.5 * L_m / sqrt(3.0)) * (x + 0.25 * (exp(2.0*x)-exp(-2.0*x))); /* L */ //0.25 * (exp(2*x)-exp(-2*x)) == sinh(x) * cosh(x) and is faster
 }
 
-__host__ __device__ double DipoleB::getLambdaAtS(const double s)
+__host__ __device__ double DipoleB::getLambdaAtS(const double s) const
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
 	double lambda_tmp{ (-ILATDegrees_m / s_max_m) * s + ILATDegrees_m }; //-ILAT / s_max * s + ILAT
 	double s_tmp{ s_max_m - getSAtLambda(lambda_tmp) };
@@ -60,7 +60,7 @@ __host__ __device__ double DipoleB::getLambdaAtS(const double s)
 	return lambda_tmp;
 }
 
-__host__ __device__ double DipoleB::getBFieldAtS(const double s, const double simtime)
+__host__ __device__ double DipoleB::getBFieldAtS(const double s, const double simtime) const
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
 	double lambda_deg{ getLambdaAtS(s) };
 	double rnorm{ L_norm_m * cospi(lambda_deg / 180.0) * cospi(lambda_deg / 180.0) };
@@ -68,7 +68,7 @@ __host__ __device__ double DipoleB::getBFieldAtS(const double s, const double si
 	return -B0 / (rnorm * rnorm * rnorm) * sqrt(1.0 + 3 * sinpi(lambda_deg / 180.0) * sinpi(lambda_deg / 180.0));
 }
 
-__host__ __device__ double DipoleB::getGradBAtS(const double s, const double simtime)
+__host__ __device__ double DipoleB::getGradBAtS(const double s, const double simtime) const
 {
 	return (getBFieldAtS(s + ds_m, simtime) - getBFieldAtS(s - ds_m, simtime)) / (2 * ds_m);
 }

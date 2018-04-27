@@ -255,7 +255,7 @@ None
 
 
 #### Side-Effects:
-Iterate all particles in Simulation through [B](./../BField/README.md)/[E](./../EField/README.md) Field models for specified number of iterations, modifying position and velocity until the particle escapes or until `numberOfIterations` has elapsed. Runs [Satellite](./../Satellite/README.md) detection kernel for each specified [Satellite](./../Satellite/README.md) at each time step.  Also manages copying data to GPU at the start, converting vperp<>mu on both ends (vperp->mu before, mu->vperp after), and copying back to host (from GPU) once complete.
+Iterate all particles in Simulation through [B](./../BField/README.md)/[E](./../EField/README.md) Field models for specified number of iterations, modifying position and velocity until the particle escapes or until `numberOfIterations` has elapsed. Runs [Satellite](./../Satellite/README.md) detection kernel for each specified [Satellite](./../Satellite/README.md) at each time step.  Also manages copying data to GPU at the start, converting vperp<>mu on both ends (vperp->mu before, mu->vperp after), and copying back to host (from GPU) once complete.  `simTime_m` is also reset to zero.
 
 
 ---

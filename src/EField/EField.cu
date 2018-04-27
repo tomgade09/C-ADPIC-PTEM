@@ -7,6 +7,22 @@
 #include "ErrorHandling\cudaErrorCheck.h"
 #include "ErrorHandling\cudaDeviceMacros.h"
 
+
+__host__ __device__ EField::EField()
+{
+	#ifndef __CUDA_ARCH__ //host code
+	setupEnvironment();
+	#endif /* !__CUDA_ARCH__ */
+}
+
+__host__ __device__ EField::~EField()
+{
+	#ifndef __CUDA_ARCH__ //host code
+	deleteEnvironment();
+	#endif /* !__CUDA_ARCH__ */
+}
+
+
 //device global kernels
 __global__ void setupEnvironmentGPU_EField(EField** efield, EElem*** eelems)
 {
@@ -41,14 +57,12 @@ __global__ void increaseCapacity_EField(EField** efield, EElem*** newArray, int 
 
 
 //EField functions
-#ifndef __CUDA_ARCH__ //host code
-__host__ std::string EField::getEElemsStr()
+__host__ std::string EField::getEElemsStr() const
 {
 	std::stringstream out;
-	for (auto& elem : Eelems_m) { out << elem->name() << ", "; }
+	for (int elem = 0; elem < size_d; elem++) { out << element(elem)->name() << ", "; }
 	return out.str();
 }
-#endif /* !__CUDA_ARCH__ */
 
 void EField::setupEnvironment()
 {
@@ -70,7 +84,10 @@ void EField::deleteEnvironment()
 }
 
 #ifndef __CUDA_ARCH__ //host code
-__host__ EElem* EField::element(int ind) { return Eelems_m.at(ind).get(); }
+__host__ EElem* EField::element(int ind) const
+{
+	return Eelems_m.at(ind).get();
+}
 
 __host__ void EField::add(std::unique_ptr<EElem> eelem)
 {
@@ -104,7 +121,7 @@ __device__ void EField::add(EElem** newElem)
 	size_d++;
 }
 
-__host__ __device__ double EField::getEFieldAtS(const double s, const double t)
+__host__ __device__ double EField::getEFieldAtS(const double s, const double t) const
 {
 	double ret{ 0.0 };
 
@@ -113,7 +130,7 @@ __host__ __device__ double EField::getEFieldAtS(const double s, const double t)
 		ret += elem->getEFieldAtS(s, t);
 	#else //device code
 	for (int elem = 0; elem < size_d; elem++) //c-style array of EElem*'s
-		ret += (*(Eelems_d[elem]))->getEFieldAtS(s, t); //add some sort of check to see if it's a nullptr??
+		ret += (*(Eelems_d[elem]))->getEFieldAtS(s, t);
 	#endif /* !__CUDA_ARCH__ */
 
 	return ret;

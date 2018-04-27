@@ -15,9 +15,20 @@ __global__ void deleteEnvironmentGPU_QSPS(EElem** qsps)
 }
 
 #ifndef __CUDA_ARCH__ //host code
-__host__ const std::vector<double>& QSPS::altMin() { return altMin_m; }
-__host__ const std::vector<double>& QSPS::altMax() { return altMax_m; }
-__host__ const std::vector<double>& QSPS::magnitude() { return magnitude_m; }
+__host__ const std::vector<double>& QSPS::altMin() const
+{
+	return altMin_m;
+}
+
+__host__ const std::vector<double>& QSPS::altMax() const 
+{
+	return altMax_m;
+}
+
+__host__ const std::vector<double>& QSPS::magnitude() const 
+{
+	return magnitude_m;
+}
 #endif
 
 __host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude) :
@@ -70,7 +81,7 @@ __host__ void QSPS::deleteEnvironment()
 	CUDA_API_ERRCHK(cudaFree(magnitude_d));
 }
 
-__host__ __device__ double QSPS::getEFieldAtS(const double s, const double t)
+__host__ __device__ double QSPS::getEFieldAtS(const double s, const double t) const
 {
 	#ifndef __CUDA_ARCH__ //host code
 	for (int ind = 0; ind < magnitude_m.size(); ind++)

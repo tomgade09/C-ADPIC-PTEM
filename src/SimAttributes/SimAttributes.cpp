@@ -2,8 +2,12 @@
 
 #include <iostream>
 
-#include "FileIO\fileIO.h"
+#include "utils\fileIO.h"
 #include "utils\string.h"
+
+using utils::fileIO::writeTxtFile;
+using utils::fileIO::readTxtFile;
+using utils::string::strToStrVec;
 
 /*
 	Saving paradigm:
@@ -92,12 +96,12 @@ void SimAttributes::write()
 	saveString_m += generateString(partAD);
 	saveString_m += generateString(satAD);
 
-	fileIO::writeTxtFile(saveString_m, filename_m, true);
+	writeTxtFile(saveString_m, filename_m, true);
 }
 
 void SimAttributes::read()
 {
-	fileIO::readTxtFile(saveString_m, filename_m);
+	readTxtFile(saveString_m, filename_m);
 	
 	//Liberal use of lambda functions
 	auto findCutString = [](std::string between, std::string& findstr, bool erase = true) {
@@ -115,9 +119,9 @@ void SimAttributes::read()
 	auto entrToAtrVec = [&](std::vector<std::string>& entryStrings) { std::vector<std::vector<std::vector<std::string>>> ret(5);
 		for (auto entr = entryStrings.begin(); entr < entryStrings.end(); entr++) {
 			ret.at(0).push_back( { findCutString(NAMEWRAP(""), (*entr)) } ); //name
-			ret.at(1).push_back( utils::string::charToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //strLabels
-			ret.at(2).push_back( utils::string::charToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //strAttrs
-			ret.at(3).push_back( utils::string::charToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //dblLabels
+			ret.at(1).push_back( strToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //strLabels
+			ret.at(2).push_back( strToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //strAttrs
+			ret.at(3).push_back( strToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //dblLabels
 			ret.at(4).push_back( { findCutString(ATTRSWRAP(""), (*entr)) } ); //double string - don't want to search for ',' in case that's in the double string
 			
 			std::cout << (*entr) << std::endl;

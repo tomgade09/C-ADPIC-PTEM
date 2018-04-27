@@ -20,10 +20,10 @@ protected:
 	double errorTolerance_m{ 0.0 };
 
 	//protected functions
-	__host__ virtual    void   setupEnvironment();
-	__host__ virtual    void   deleteEnvironment();
-	__host__ __device__ double getSAtLambda(const double lambdaDegrees);
-	__host__ __device__ double getLambdaAtS(const double s);
+	__host__ virtual    void   setupEnvironment() override;
+	__host__ virtual    void   deleteEnvironment() override;
+	__host__ __device__ double getSAtLambda(const double lambdaDegrees) const;
+	__host__ __device__ double getLambdaAtS(const double s) const;
 
 public:
 	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double ds = RADIUS_EARTH / 1000.0) :
@@ -47,18 +47,18 @@ public:
 	}
 
 	//for testing
-	double ILAT() { return ILATDegrees_m; }
-	double ds() { return ds_m; }
-	double L() { return L_m; }
-	double s_max() { return s_max_m; }
+	double ILAT()  const { return ILATDegrees_m; }
+	double ds()    const { return ds_m; }
+	double L()     const { return L_m; }
+	double s_max() const { return s_max_m; }
 
 	__host__ virtual void setds(double ds) { ds_m = ds; }
 
-	__host__ __device__ double getBFieldAtS(const double s, const double t);
-	__host__ __device__ double getGradBAtS (const double s, const double t);
+	__host__ __device__ double getBFieldAtS(const double s, const double t) const override;
+	__host__ __device__ double getGradBAtS (const double s, const double t) const override;
 
-	__host__ double getErrTol() { return errorTolerance_m; }
-	__host__ double getds()     { return ds_m; }
+	__host__ double getErrTol() const { return errorTolerance_m; }
+	__host__ double getds()     const { return ds_m; }
 };
 
 #endif

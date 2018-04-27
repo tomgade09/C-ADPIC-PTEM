@@ -27,8 +27,8 @@ protected:
 	int     numMsmts_m{ 0 };
 
 	//protected functions
-	__host__ virtual void setupEnvironment();
-	__host__ virtual void deleteEnvironment();
+	__host__ virtual void setupEnvironment() override;
+	__host__ virtual void deleteEnvironment() override;
 
 public:
 	__host__ __device__ DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements) :
@@ -54,14 +54,14 @@ public:
 	double ds_msmt() { return ds_msmt_m; }
 	double ds_gradB() { return ds_gradB_m; }
 
-	__host__ __device__ virtual double getBFieldAtS(const double s, const double t);
-	__host__ __device__ virtual double getGradBAtS(const double s, const double t);
+	__host__ __device__ double getBFieldAtS(const double s, const double t) const override;
+	__host__ __device__ double getGradBAtS(const double s, const double t) const override;
 
 	__device__ void setAltArray(double* altArray) { altitude_d = altArray; }
 	__device__ void setMagArray(double* magArray) { magnitude_d = magArray; }
 
-	__host__ double getErrTol() { return 1.0e-10; }
-	__host__ double getds()     { return ds_gradB_m; }
+	__host__ double getErrTol() const { return 1.0e-10; }
+	__host__ double getds()     const { return ds_gradB_m; }
 };
 
 #endif /* !DIPOLEBLUT_BFIELD_H */

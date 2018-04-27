@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{ec41a130-1414-458a-b524-105f266c738c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{9c41845e-99a0-4f9a-a598-92dba1a19913}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gpsfiles">
+      <UniqueIdentifier>{c358e2e5-f3f7-4c63-9e29-44c63709b089}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\testmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Particle\Particle.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\writeIOclasses.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\testHelperUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\src\memoryManagement.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\EField\EField.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Particle\Particle.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\testHelperUtils.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\accuracy.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\EField\QSPS.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\testHelperUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\memoryManagement.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

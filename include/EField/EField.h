@@ -7,12 +7,9 @@
 
 //CUDA includes
 #include "host_defines.h"
-//#include "cuda_runtime.h"
-//#include "device_launch_parameters.h"
-//#include "cuda_profiler_api.h"
 
-//#include "ErrorHandling\cudaErrorCheck.h"
-//#include "ErrorHandling\cudaDeviceMacros.h"
+//Project includes
+#include "dlldefines.h"
 
 class EElem //inherit from this class
 {
@@ -33,15 +30,15 @@ protected:
 public:
 	__host__ __device__ virtual ~EElem() {}
 
-	__host__ __device__ virtual double getEFieldAtS(const double s, const double t) = 0;
+	__host__ __device__ virtual double getEFieldAtS(const double s, const double t) const = 0;
 
-	__host__ virtual std::string name() { return modelName_m; }
-	__host__ virtual EElem** getPtrGPU() { return this_d; }
+	__host__ virtual std::string name()  const { return modelName_m; }
+	__host__ virtual EElem** getPtrGPU() const { return this_d; }
 };
 
-class EField
+class EField final //not meant to be inherited from
 {
-private: //not meant to be inherited from
+private:
 	EField** this_d{ nullptr }; //pointer to EField instance on GPU
 	
 	#ifndef __CUDA_ARCH__ //host code - need this since there is no CUDA device version of vectors
@@ -59,36 +56,23 @@ private: //not meant to be inherited from
 	__host__ void deleteEnvironment();
 
 public:
-	__host__ __device__ EField()
-	{
-		#ifndef __CUDA_ARCH__ //host code
-		setupEnvironment();
-		#endif /* !__CUDA_ARCH__ */
-	}
-	
-	__host__ __device__ ~EField()
-	{
-		#ifndef __CUDA_ARCH__ //host code
-		deleteEnvironment();
-		#endif /* !__CUDA_ARCH__ */
-	}
+	__host__ __device__ EField();
+	__host__ __device__ ~EField();
 
 	__host__   void add(std::unique_ptr<EElem> elem);
 	__device__ void add(EElem** elem);
 
-	__device__ int      capacity()                 { return capacity_d; }
+	__host__ __device__ int      capacity()  const { return capacity_d; }
+	__host__ __device__ int      size()      const { return size_d; }
 	__device__ void     capacity(int cap)          { capacity_d = cap; }
-	__device__ int      size()                     { return size_d; }
-	__device__ EElem*** elemArray()                { return Eelems_d; }
+	__device__ EElem*** elemArray()          const { return Eelems_d; }
 	__device__ void     elemArray(EElem*** eelems) { Eelems_d = eelems; }
 	
-	__host__ __device__ double   getEFieldAtS(const double s, const double t);
-	__host__            EField** getPtrGPU() { return this_d; }
+	__host__ __device__ double   getEFieldAtS(const double s, const double t) const;
+	__host__            EField** getPtrGPU() const { return this_d; }
 	
-	__host__ EElem*      element(int ind);
-	#ifndef __CUDA_ARCH__ //host code
-	__host__ std::string getEElemsStr();
-	#endif /* !__CUDA_ARCH__ */
+	__host__ EElem*      element(int ind) const;
+	__host__ std::string getEElemsStr() const;
 };
 
 #endif /* EFIELD_H */
