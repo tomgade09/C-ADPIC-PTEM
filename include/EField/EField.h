@@ -29,6 +29,8 @@ protected:
 
 public:
 	__host__ __device__ virtual ~EElem() {}
+	__host__ __device__ EElem(const EElem&) = delete;
+	__host__ __device__ EElem& operator=(const EElem&) = delete;
 
 	__host__ __device__ virtual double getEFieldAtS(const double s, const double t) const = 0;
 
@@ -58,6 +60,8 @@ private:
 public:
 	__host__ __device__ EField();
 	__host__ __device__ ~EField();
+	__host__ __device__ EField(const EField&) = delete;
+	__host__ __device__ EField& operator=(const EField&) = delete;
 
 	__host__   void add(std::unique_ptr<EElem> elem);
 	__device__ void add(EElem** elem);

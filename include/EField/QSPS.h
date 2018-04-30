@@ -23,11 +23,10 @@ protected:
 
 public:
 	__host__ QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude);
-
-	__device__ QSPS(double* altMin, double* altMax, double* magnitude, int numRegions) :
-		EElem(), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions } {}
-
+	__device__ QSPS(double* altMin, double* altMax, double* magnitude, int numRegions);
 	__host__ __device__ ~QSPS();
+	__host__ __device__ QSPS(const QSPS&) = delete;
+	__host__ __device__ QSPS& operator=(const QSPS&) = delete;
 
 	__host__ __device__ double getEFieldAtS(const double s, const double t) const override;
 

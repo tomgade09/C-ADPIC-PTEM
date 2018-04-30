@@ -33,6 +33,8 @@ protected:
 public:
 	Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts);
 	~Particle();
+	Particle(const Particle&) = delete;
+	Particle& operator=(const Particle&) = delete;
 
 	const std::vector<std::vector<double>>& data(bool orig) const { return ((orig) ? origData_m : currData_m); }
 	std::vector<double>& dataAttr(bool orig, int attr) { return ((orig) ? origData_m.at(attr) : currData_m.at(attr)); }

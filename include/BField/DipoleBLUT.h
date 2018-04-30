@@ -31,23 +31,10 @@ protected:
 	__host__ virtual void deleteEnvironment() override;
 
 public:
-	__host__ __device__ DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements) :
-		BField(), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }
-	{
-		ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
-		
-		#ifndef __CUDA_ARCH__ //host code
-		modelName_m = "DipoleBLUT";
-		setupEnvironment();
-		#endif /* !__CUDA_ARCH__ */
-	}
-
-	__host__ __device__ virtual ~DipoleBLUT()
-	{
-		#ifndef __CUDA_ARCH__ //host code
-		deleteEnvironment();
-		#endif /* !__CUDA_ARCH__ */
-	}
+	__host__ __device__ DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements);
+	__host__ __device__ ~DipoleBLUT();
+	__host__ __device__ DipoleBLUT(const DipoleBLUT&) = delete;
+	__host__ __device__ DipoleBLUT& operator=(const DipoleBLUT&) = delete;
 
 	//for testing
 	double ILAT() { return ILATDegrees_m; }

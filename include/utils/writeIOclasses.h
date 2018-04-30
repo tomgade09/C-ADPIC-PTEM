@@ -54,6 +54,8 @@ namespace utils
 		public: //generate is dependent on vpara, vperp, and s being the first three attributes - if not, this will have to be modified
 			ParticleDistribution(std::string saveFolder = "./", std::vector<std::string> attrNames = { "vpara", "vperp", "s", "t_inc", "t_esc" }, std::string particleName = "elec", double mass = MASS_ELECTRON, std::vector<double> padvals = { 0.0, 0.0, 0.0, 0.0, -1.0});
 			~ParticleDistribution(); //writes on destruction
+			ParticleDistribution(const ParticleDistribution&) = delete;
+			ParticleDistribution& operator=(const ParticleDistribution&) = delete;
 
 			const std::vector<std::vector<double>>& data() const { return data_m; }
 			void setattr(std::vector<double>& attr, int ind);

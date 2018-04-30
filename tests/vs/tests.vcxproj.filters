@@ -8,32 +8,53 @@
       <UniqueIdentifier>{9c41845e-99a0-4f9a-a598-92dba1a19913}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\gpsfiles">
-      <UniqueIdentifier>{c358e2e5-f3f7-4c63-9e29-44c63709b089}</UniqueIdentifier>
+      <UniqueIdentifier>{b41f9069-cd32-429c-990e-423f736ab1ee}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\testmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\testHelperUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\LogFile\LogFile.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Particle\Particle.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\SimAttributes\SimAttributes.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Simulation\previousSimulation.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Simulation\Simulation.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\fileIO.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\numerical.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\random.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\readIOclasses.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\string.cpp">
       <Filter>Source Files\gpsfiles</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\utils\writeIOclasses.cpp">
       <Filter>Source Files\gpsfiles</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\testHelperUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\memoryManagement.cu">
       <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\EField\EField.cu">
-      <Filter>Source Files\gpsfiles</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\Particle\Particle.cu">
-      <Filter>Source Files\gpsfiles</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\testHelperUtils.cu">
       <Filter>Source Files</Filter>
@@ -41,7 +62,25 @@
     <CudaCompile Include="..\src\accuracy.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\..\src\BField\DipoleB.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\BField\DipoleBLUT.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\EField\EField.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
     <CudaCompile Include="..\..\src\EField\QSPS.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Particle\Particle.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Satellite\Satellite.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Simulation\simulationphysics.cu">
       <Filter>Source Files\gpsfiles</Filter>
     </CudaCompile>
   </ItemGroup>

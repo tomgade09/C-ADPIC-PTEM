@@ -31,13 +31,32 @@ __global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double*
 	altitude[thdInd] = s;
 	magnitude[thdInd] = (*dipole)->getBFieldAtS(s, 0.0);
 }
+//end
+
+__host__ __device__ DipoleBLUT::DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements) :
+	BField(), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }
+{
+	ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
+
+	#ifndef __CUDA_ARCH__ //host code
+	modelName_m = "DipoleBLUT";
+	setupEnvironment();
+	#endif /* !__CUDA_ARCH__ */
+}
+
+__host__ __device__ DipoleBLUT::~DipoleBLUT()
+{
+	#ifndef __CUDA_ARCH__ //host code
+	deleteEnvironment();
+	#endif /* !__CUDA_ARCH__ */
+}
 
 __host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double simtime) const
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
 	int startInd{ 0 };
-	if (s < simMin_m)
+	if (s <= simMin_m)
 		startInd = 0;
-	else if (s > simMax_m)
+	else if (s >= simMax_m)
 		startInd = numMsmts_m - 2; //if s is above simMax, we interpolate based on the highest indicies ([numMsmts - 2] to [numMsmts - 1])
 	else
 		startInd = (int)((s - simMin_m) / ds_msmt_m); //c-style cast to int basically == floor()

@@ -28,6 +28,9 @@ protected:
 public:
 	__host__ __device__ virtual ~BField() {};
 
+	__host__ __device__ BField(const BField&) = delete;
+	__host__ __device__ BField& operator=(const BField&) = delete;
+
 	__host__ __device__ virtual double getBFieldAtS(const double s, const double t) const = 0;
 	__host__ __device__ virtual double getGradBAtS (const double s, const double t) const = 0;
 

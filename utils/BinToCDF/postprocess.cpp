@@ -5,6 +5,7 @@
 
 namespace postprocess
 {
+	//struct defines
 	ParticleData::ParticleData(const std::vector<double>& v_para, const std::vector<double>& v_perp, double mass) //auto calculate E, Pitch
 		{ utils::numerical::v2DtoEPitch(v_para, v_perp, mass, energy, pitch); } //vpara, vperp not even assigned - assumed they aren't needed outside of calculating E, pitch
 
@@ -24,23 +25,22 @@ namespace postprocess
 		t_esc.shrink_to_fit();
 		s_pos.shrink_to_fit();
 	}
-
-	PPData::PPData(double sion, double smag, std::vector<double> EBins, std::vector<double> PABins, std::vector<double> maxwellian, ParticleData init, ParticleData btm, ParticleData up, ParticleData dn) :
-		s_ion{ sion }, s_mag{ smag }, energyBins{ EBins }, pitchBins{ PABins }, maxCounts{ maxwellian }, initial{ init }, bottom{ btm }, upward{ up }, dnward{ dn } {}
 	
+	MaxwellianData::MaxwellianData(double sion, double smag, double dlogE) : s_ion{ sion }, s_mag{ smag }, dlogE_dist{ dlogE } {}
+
 	void MaxwellianData::push_back_ion(double peak, double magnitude) { ionEPeak.push_back(peak); iondEMag.push_back(magnitude); }
 	void MaxwellianData::push_back_mag(double peak, double magnitude) { magEPeak.push_back(peak); magdEMag.push_back(magnitude); }
+	
+	PPData::PPData(double sion, double smag, std::vector<double> EBins, std::vector<double> PABins, MaxwellianData maxData, ParticleData init, ParticleData btm, ParticleData up, ParticleData dn) :
+		s_ion{ sion }, s_mag{ smag }, energyBins{ EBins }, pitchBins{ PABins }, initial{ init }, bottom{ btm }, upward{ up }, dnward{ dn }
+	{
+		maxCounts = maxwellian::formCountsVector(initial, dnward, maxData);
+	}
+	//end struct defines
+
 
 	dblVec2D steadyFlux(PPData ppdata)
 	{
-		for (int iii = 0; iii < ppdata.initial.pitch.size(); iii++) //why this???!!?!?!
-		{
-			if (ppdata.initial.s_pos.at(iii) < ppdata.s_ion) //ionospheric source
-				ppdata.maxCounts.at(iii) *= -cos(ppdata.initial.pitch.at(iii) * RADS_PER_DEG);
-			else //magnetospheric source
-				ppdata.maxCounts.at(iii) *= 1.0 / cos(ppdata.dnward.pitch.at(iii) * RADS_PER_DEG); //satup...is this right?
-		}
-
 		dblVec2D simfluxupward{ steady::simEnergyFlux(ppdata.dnward, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts, -1.3597036e-5) }; //calculate binned flux for downward facing detector data, upward flux
 		dblVec2D simfluxdnward{ steady::simEnergyFlux(ppdata.upward, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts, -1.3597036e-5) }; //calculate binned flux for upward facing detector data
 		//dblVec2D backscatflux { steady::bsEnergyFlux (ppdata.initial, ppdata.dnward, ppdata.bottom, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts, 9.10938356e-31, -1.6021766209e-19, -1.3597036e-5) }; //calculate backscatter flux
@@ -116,16 +116,23 @@ namespace postprocess
 			return (binWidth_E * exp(-E / sigma_kT)) / E * (dEflux_kT / (exp(-1.0) * binWidth_kT));
 		}
 
-		std::vector<double> formCountsVector(ParticleData& init, MaxwellianData& maxData, double s_ion, double s_mag, double dlogE_dist)
+		std::vector<double> formCountsVector(const ParticleData& init, const ParticleData& dnward, const MaxwellianData& maxData)
 		{
 			std::vector<double> max(init.energy.size());
 			
-			auto maxwrapper = [&dlogE_dist, &maxData](double E, double Epeak, double PkMag, bool zero) {
-				if (zero) return 0.0;
-				else return maxwellian::counts(E,
-					pow(10, log10(E) + 0.5 * dlogE_dist) - pow(10, log10(E) - 0.5 * dlogE_dist), //bin width at E, according to specified dlogE
-					Epeak, PkMag,
-					pow(10, log10(E) + 0.5 * 4.0 / 47.0) - pow(10, log10(E) - 0.5 * 4.0 / 47.0)); }; //bin width at kT, according to satellite bins
+			double s_ion{ maxData.s_ion };
+			double s_mag{ maxData.s_mag };
+			double dlogE_dist{ maxData.dlogE_dist };
+
+			auto maxwrapper = [&dlogE_dist, &maxData](double E, double Epeak, double PkMag, bool zero)
+			{
+				if (zero)
+					return 0.0;
+				else
+					return maxwellian::counts(E,
+						pow(10, log10(E) + 0.5 * dlogE_dist) - pow(10, log10(E) - 0.5 * dlogE_dist), //bin width at E, according to specified dlogE
+						Epeak, PkMag,
+						pow(10, log10(E) + 0.5 * 4.0 / 47.0) - pow(10, log10(E) - 0.5 * 4.0 / 47.0)); }; //bin width at kT, according to satellite bins
 
 			std::vector<double> maxtmp;
 			for (int entr = 0; entr < maxData.ionEPeak.size(); entr++) //iterate over ionospheric maxwellian specifications
@@ -133,7 +140,7 @@ namespace postprocess
 				auto ioncnt = [&](double E, double s) { return maxwrapper(E, maxData.ionEPeak.at(entr), maxData.iondEMag.at(entr), (s > s_ion * 1.001)); };
 
 				std::transform(init.energy.begin(), init.energy.end(), init.s_pos.begin(), std::back_inserter(maxtmp), ioncnt); //generate maxwellian count if ionospheric particle
-				std::transform(maxtmp.begin(), maxtmp.end(), max.begin(), max.begin(), [&](double x, double y) { return x + y; }); //add final vector and the tmp vector together
+				std::transform(maxtmp.begin(), maxtmp.end(), max.begin(), max.begin(), [](double x, double y) { return x + y; }); //add final vector and the tmp vector together
 				maxtmp.clear();
 			}
 
@@ -146,6 +153,14 @@ namespace postprocess
 				maxtmp.clear();
 			}
 
+			for (int iii = 0; iii < init.pitch.size(); iii++) //isotropize counts -> 3D
+			{
+				if (init.s_pos.at(iii) < maxData.s_ion) //ionospheric source
+					max.at(iii) *= -cos(init.pitch.at(iii) * RADS_PER_DEG);
+				else //magnetospheric source
+					max.at(iii) *= 1.0 / cos(dnward.pitch.at(iii) * RADS_PER_DEG); //satup...is this right?
+			}
+
 			return max;
 		}
 
@@ -153,8 +168,8 @@ namespace postprocess
 		{
 			dblVec2D ret(binAngles.size(), std::vector<double>(binEnergies.size()));
 
-			double logEMinBinMid{ log10(binEnergies.at(0)) };
-			double dlogE{ log10(binEnergies.at(1)) - logEMinBinMid };
+			double logMinEBinMid{ log10(binEnergies.at(0)) };
+			double dlogE{ log10(binEnergies.at(1)) - logMinEBinMid };
 			double dangle{ binAngles.at(1) - binAngles.at(0) };
 			
 			int endedEarly{ 0 };
@@ -167,10 +182,10 @@ namespace postprocess
 				
 				{
 					int angbin{ (int)(partPitch / dangle) }; //this should give the bin index
-					int engbin{ (int)((log10(partEnerg) - logEMinBinMid) / dlogE) }; //ditto
+					int engbin{ (int)((log10(partEnerg) - logMinEBinMid) / dlogE) }; //ditto
 
-					if (partEnerg >= pow(10, (engbin - 0.5) * dlogE + logEMinBinMid) &&
-						partEnerg <  pow(10, (engbin + 0.5) * dlogE + logEMinBinMid) &&
+					if (partEnerg >= pow(10, (engbin - 0.5) * dlogE + logMinEBinMid) &&
+						partEnerg <  pow(10, (engbin + 0.5) * dlogE + logMinEBinMid) &&
 						partPitch >= engbin * dangle &&
 						partPitch <  (engbin + 1) * dangle)
 					{
@@ -189,8 +204,8 @@ namespace postprocess
 
 					for (int ebin = 0; ebin < binEnergies.size(); ebin++)
 					{
-						double emin{ pow(10, (ebin - 0.5) * dlogE + logEMinBinMid) }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
-						double emax{ pow(10, (ebin + 0.5) * dlogE + logEMinBinMid) };
+						double emin{ pow(10, (ebin - 0.5) * dlogE + logMinEBinMid) }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
+						double emax{ pow(10, (ebin + 0.5) * dlogE + logMinEBinMid) };
 
 						if ((partPitch >= angmin) && (partPitch < angmax) &&
 							(partEnerg >= emin)   && (partEnerg < emax))

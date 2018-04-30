@@ -5,7 +5,7 @@
 #include "testHelperUtils.h"
 #include "memoryManagement.cuh"
 #include "Simulation\Simulation.h" //includes for all other classes in this header
-#include "API\classAPI.h"
+#include "utils\fileIO.h"
 #include "utils\string.h"
 
 using utils::fileIO::ParticleDistribution;
@@ -45,37 +45,40 @@ namespace test
 	bool memLeakGPU()
 	{
 		std::vector<devMemMsmt> msmts;
-		auto getMem = [&](std::string label) { msmts.push_back(devMemMsmt(label)); checkGPUMemory(msmts.back().free, msmts.back().total); };
-		devMemMsmt init{ "init" };
-		checkGPUMemory(init.free, init.total);
-		checkGPUMemory(init.free, init.total);
+		auto getMem = [&](std::string label)
+		{
+			msmts.push_back(devMemMsmt(label));
+			checkGPUMemory(msmts.back().free, msmts.back().total);
+		};
 
-		measure<fieldshell<BField>, double>(getMem, "BField", 1.0);
+		measure<fieldshell<BField>, double>(getMem, "init", 1.0); //take an initial measurement
+		measure<fieldshell<BField>, double>(getMem, "BField", 1.0); //run BField again, to make sure no leaks
 		measure<fieldshell<EElem>, double>(getMem, "EElem", 3.0);
-		measure<DipoleB>(getMem, "DipoleB", API::BField_::createDipoleB(72.0));
-		measure<DipoleBLUT>(getMem, "DipoleBLUT", API::BField_::createDipoleBLUT(72.0, 1.0e6, 2.0e7, 600.0, 1000000));
-		measure<EField>(getMem, "EField", API::EField_::create());
-		measure<QSPS>(getMem, "QSPS", API::EField_::createQSPS({ 1.0e6 }, { 1.0e7 }, { 0.02 }));
-		measure<Particle>(getMem, "Particle", API::Particle_::create("elec", { "vpara", "vperp", "s", "t_inc", "t_esc" }, 9.109e-31, -1.6e-19, 3456000));
-		measure<Satellite>(getMem, "Satellite", API::Satellite_::create("4e6ElecDn", std::vector<std::string>{"vpara", "vperp", "s", "time", "index"}, 4.0e6, false, 3456000, nullptr));
-		
-		size_t free_baseline{ init.free };
+		measure<DipoleB>(getMem, "DipoleB", std::make_unique<DipoleB>(72.0));
+		measure<DipoleBLUT>(getMem, "DipoleBLUT", std::make_unique<DipoleBLUT>(72.0, 1.0e6, 2.0e7, 600.0, 1000000));
+		measure<EField>(getMem, "EField", std::make_unique<EField>());
+		measure<QSPS>(getMem, "QSPS", std::make_unique<QSPS>(std::vector<double>{ 1.0e6 }, std::vector<double>{ 1.0e7 }, std::vector<double>{ 0.02 }));
+		measure<Particle>(getMem, "Particle", std::make_unique<Particle>("elec", std::vector<std::string>{ "vpara", "vperp", "s", "t_inc", "t_esc" }, 9.109e-31, -1.6e-19, 3456000));
+		measure<Satellite>(getMem, "Satellite", std::make_unique<Satellite>("4e6ElecDn", std::vector<std::string>{"vpara", "vperp", "s", "time", "index"}, 4.0e6, false, 3456000, nullptr));
 
-		auto compareSize = [&](devMemMsmt compare) { bool eq{ compare.free == free_baseline };
+		size_t free_baseline{ msmts.front().free };
+		auto compareSize = [&free_baseline](const devMemMsmt& compare)
+		{ 
+			bool eq{ compare.free == free_baseline };
 			TEST_RESULTS("GPU Memory Leak Test: " + compare.label, eq);
 			free_baseline = compare.free;
-			return eq; };
+			return eq;
+		};
 
 		#ifdef TESTS_VERBOSE
 		std::cout << "GPU Memory: Free/Total:\n";
-		std::cout << init.free << " / " << init.total << ": " << init.label << "\n";
 		for (auto& msmt : msmts)
 			std::cout << msmt.free << " / " << msmt.total << ": " << msmt.label << "\n";
 		#endif
 
 		bool pass{ true };
 		for (auto& msmt : msmts)
-			pass = compareSize(msmt) && pass;
+			pass = compareSize(msmt) && pass; //I want this to execute everytime (and thus cout), so I put && pass at the end
 
 		return pass;
 	}
@@ -95,10 +98,13 @@ namespace test
 
 	bool simAttributeSaving(int runs)
 	{
+		///SETUP
+		//grab cout, throw away output so it doesn't print to screen
 		std::streambuf* coutbak{ std::cout.rdbuf() };
 		std::stringstream throwaway; //temporary stringstream to capture anything written to cout
 		std::cout.rdbuf(throwaway.rdbuf());
 
+		//write particle distributions to "./out/" directory
 		std::unique_ptr<ParticleDistribution> elec{ std::make_unique<ParticleDistribution>("./out/", std::vector<std::string>{ "vpara", "vperp", "s", "t_inc", "t_esc" }, "elec") };
 		elec->addEnergyRange(256, 0.5, 4.5);
 		elec->addPitchRange(256, 0.0, 180.0);
@@ -110,7 +116,8 @@ namespace test
 		elec->generate(101322.378940846, 19881647.2473464);
 		elec = nullptr; //write previous distribution
 
-		std::unique_ptr<Simulation> sim{ API::Simulation_::create(0.001, 101322.378940846, 19881647.2473464, "./out/") };
+		//setup and iterate new simulation
+		std::unique_ptr<Simulation> sim{ std::make_unique<Simulation>(0.001, 101322.378940846, 19881647.2473464, "./out/") };
 
 		int numParts{ 256 * 256 };
 		TEST_EXCEP_CHECK(
@@ -132,9 +139,13 @@ namespace test
 			sim->iterateSimulation(runs, 500);
 		);
 
-		std::unique_ptr<Simulation> simld{ API::Simulation_::load("./out/") };
+		//load simulation characteristics into new sim
+		std::unique_ptr<Simulation> simld{ std::make_unique<Simulation>("./out/") };
 
-		std::cout.rdbuf(coutbak);
+		std::cout.rdbuf(coutbak); //set cout buffer back to original (so it prints to terminal again)
+		///END SETUP
+
+		bool pass{ true };
 
 		if (*sim == *simld)
 		{
@@ -143,6 +154,7 @@ namespace test
 		else
 		{
 			TEST_RESULTS("Simulation create, save, load", false);
+			pass = false;
 			#ifdef TESTS_VERBOSE
 			checkPrintEqual<double>("dt", sim->dt(), simld->dt());
 			checkPrintEqual<double>("s_min", sim->simMin(), simld->simMin());
@@ -161,6 +173,7 @@ namespace test
 			else
 			{
 				TEST_RESULTS("Particle " + sim->particle(part)->name() + " create, save, load", false);
+				pass = false;
 				#ifdef TESTS_VERBOSE
 				Particle* og{ sim->particle(part) };
 				Particle* ld{ simld->particle(part) };
@@ -189,6 +202,7 @@ namespace test
 			else
 			{
 				TEST_RESULTS("Satellite " + sim->satellite(sat)->name() + " create, save, load", false);
+				pass = false;
 				#ifdef TESTS_VERBOSE
 				Satellite* og{ sim->satellite(sat) };
 				Satellite* ld{ simld->satellite(sat) };
@@ -208,6 +222,7 @@ namespace test
 		else
 		{
 			TEST_RESULTS("BField " + sim->Bmodel()->name() + " create, save, load", false);
+			pass = false;
 			#ifdef TESTS_VERBOSE
 			checkPrintEqual("name", sim->Bmodel()->name(), simld->Bmodel()->name());
 			#endif
@@ -220,9 +235,12 @@ namespace test
 		else
 		{
 			TEST_RESULTS("EField [" + sim->Emodel()->getEElemsStr() + "] create, save, load", false);
+			pass = false;
 			#ifdef TESTS_VERBOSE
 			checkPrintEqual("names", sim->Emodel()->getEElemsStr(), simld->Emodel()->getEElemsStr());
 			#endif
 		}
+
+		return pass;
 	}
 }

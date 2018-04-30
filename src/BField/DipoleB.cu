@@ -15,6 +15,26 @@ __global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)
 	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleB", delete (*dipoleb));
 }
 
+__host__ __device__ DipoleB::DipoleB(double ILATDegrees, double errorTolerance, double ds) :
+	BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
+{
+	L_m = RADIUS_EARTH / pow(cos(ILATDegrees * RADS_PER_DEG), 2);
+	L_norm_m = L_m / RADIUS_EARTH;
+	s_max_m = getSAtLambda(ILATDegrees_m);
+
+#ifndef __CUDA_ARCH__ //host code
+	modelName_m = "DipoleB";
+	setupEnvironment();
+#endif /* !__CUDA_ARCH__ */
+}
+
+__host__ __device__ DipoleB::~DipoleB()
+{
+	#ifndef __CUDA_ARCH__ //host code
+	deleteEnvironment();
+	#endif /* !__CUDA_ARCH__ */
+}
+
 //B Field related kernels
 __host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees) const
 {

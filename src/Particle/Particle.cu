@@ -121,8 +121,8 @@ void Particle::initializeGPU()
 	size_t memSize{ numberOfParticles_m * (getNumberOfAttributes()) * sizeof(double) };
 	CUDA_API_ERRCHK(cudaMalloc((void **)&origData1D_d, memSize));
 	CUDA_API_ERRCHK(cudaMalloc((void **)&currData1D_d, memSize));
-	CUDA_API_ERRCHK(cudaMalloc((void **)&origData2D_d, getNumberOfAttributes() * sizeof(double)));
-	CUDA_API_ERRCHK(cudaMalloc((void **)&currData2D_d, getNumberOfAttributes() * sizeof(double)));
+	CUDA_API_ERRCHK(cudaMalloc((void **)&origData2D_d, getNumberOfAttributes() * sizeof(double*)));
+	CUDA_API_ERRCHK(cudaMalloc((void **)&currData2D_d, getNumberOfAttributes() * sizeof(double*)));
 
 	CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, memSize));
 	CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, memSize));

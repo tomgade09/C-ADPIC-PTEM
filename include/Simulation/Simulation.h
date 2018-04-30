@@ -79,6 +79,9 @@ public:
 	Simulation(std::string prevSimDir); //for loading previous simulation data
 	virtual ~Simulation();
 
+	Simulation(const Simulation&) = delete;
+	Simulation& operator=(const Simulation&) = delete;
+
 	///One liner functions (usually access)
 	double	    simtime() const { return simTime_m; }
 	double	    dt()      const { return dt_m; }
@@ -97,8 +100,8 @@ public:
 	Particle*   particle(std::string name)  const;  //search for name, return particle
 	Satellite*  satellite(int satInd)       const { return satPartPairs_m.at(satInd)->satellite.get(); }
 	Satellite*  satellite(std::string name) const; //search for name, return satellite
-	BField*     Bmodel() const                    { return BFieldModel_m.get(); }
-	EField*     Emodel() const                    { return EFieldModel_m.get(); }
+	BField*     Bmodel()                    const { return BFieldModel_m.get(); }
+	EField*     Emodel()                    const { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
 	virtual const VEC(VEC(double))&      getParticleData(int partInd, bool originalData);
@@ -113,7 +116,7 @@ public:
 	virtual void setBFieldModel(std::string name, std::vector<double> args, bool save = true);
 	virtual void setBFieldModel(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 	virtual void addEFieldModel(std::string name, std::vector<double> args, bool save = true);
-	virtual void addEFieldModel(std::unique_ptr<EElem> eelemptr) { EFieldModel_m->add(std::move(eelemptr)); }
+	//virtual void addEFieldModel(std::unique_ptr<EElem> eelemptr) { EFieldModel_m->add(std::move(eelemptr)); }
 	
 
 	//Fields

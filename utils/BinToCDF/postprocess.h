@@ -23,6 +23,24 @@ namespace postprocess
 		void free();
 	};
 
+	struct MaxwellianData
+	{
+		double s_ion;
+		double s_mag;
+		double dlogE_dist;
+
+		std::vector<double> ionEPeak; //ionospheric source peak energy of maxwellian
+		std::vector<double> iondEMag; //ionospheric source magnitude of peak
+
+		std::vector<double> magEPeak; //same for magnetosphere
+		std::vector<double> magdEMag; //basically x, y axes (top, bottom) of a maxwellian graph
+		
+		MaxwellianData(double sion, double smag, double dlogE);
+
+		void push_back_ion(double peak, double magnitude);
+		void push_back_mag(double peak, double magnitude);
+	};
+
 	struct PPData
 	{
 		double s_ion;
@@ -39,18 +57,7 @@ namespace postprocess
 		ParticleData upward;           //data on particles that are upgoing at satellite
 		ParticleData dnward;           //data on particles that are downgoing at satellite
 
-		PPData(double simMin, double simMax, std::vector<double> EBins, std::vector<double> PABins, std::vector<double> maxwellian, ParticleData init, ParticleData btm, ParticleData up, ParticleData dn);
-	};
-
-	struct MaxwellianData
-	{
-		std::vector<double> ionEPeak; //ionospheric source peak energy of maxwellian
-		std::vector<double> iondEMag;  //ionospheric source magnitude of peak
-
-		std::vector<double> magEPeak; //same for magnetosphere
-		std::vector<double> magdEMag;  //basically x, y axes (top, bottom) of a maxwellian graph
-		void push_back_ion(double peak, double magnitude);
-		void push_back_mag(double peak, double magnitude);
+		PPData(double simMin, double simMax, std::vector<double> EBins, std::vector<double> PABins, MaxwellianData maxData, ParticleData init, ParticleData btm, ParticleData up, ParticleData dn);
 	};
 
 	dblVec2D steadyFlux(PPData ppdata);
@@ -64,7 +71,7 @@ namespace postprocess
 	namespace maxwellian
 	{
 		double counts(double E, double binWidth_E, double sigma_kT, double dEflux_kT, double binWidth_kT);
-		std::vector<double> formCountsVector(ParticleData& init, MaxwellianData& maxData, double s_ion, double s_mag, double dlogE_part);
+		std::vector<double> formCountsVector(const ParticleData& init, const ParticleData& dnward, const MaxwellianData& maxData);
 		dblVec2D countInBinsWeighted(const std::vector<double>& particlePitches, const std::vector<double>& particleEnergies, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts);
 		void countsToEFlux(dblVec2D& energyData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, double mass, double charge, double BatXSection);
 		void divBinsByCosPitch(dblVec2D& data, std::vector<double> binAnglesDegrees);

@@ -57,3 +57,6 @@ bin/
 lib/
 _*/
 # utils/BinToCDF/
+
+# Exceptions
+!tests/data/*.bin

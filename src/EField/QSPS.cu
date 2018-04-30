@@ -47,6 +47,12 @@ __host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std:
 	setupEnvironment();
 }
 
+__device__ QSPS::QSPS(double* altMin, double* altMax, double* magnitude, int numRegions) :
+	EElem(), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions }
+{
+
+}
+
 __host__ __device__ QSPS::~QSPS()
 {
 	#ifndef __CUDA_ARCH__ //host code

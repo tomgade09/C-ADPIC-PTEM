@@ -15,6 +15,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include "test.h"
 
@@ -30,6 +31,24 @@ namespace test
 	
 	//CUDA functions (in .cu file)
 	void checkGPUMemory(size_t& free, size_t& total);
+
+	inline bool fuzzyEq(const std::vector<double>& x, const std::vector<double>& y)
+	{
+		if (x.size() != y.size()) return false;
+
+		auto yiter = y.begin();
+		for (auto xiter = x.begin(); xiter != x.end(); xiter++, yiter++)
+			if (abs((*xiter - *yiter) / *xiter) > FLT_EPSILON)
+				return false;
+
+		return true;
+	};
+
+	inline void printVec(const std::vector<double>& x)
+	{
+		for (auto xx = x.begin(); xx != x.end(); xx++)
+			std::cout << *xx << ((xx != x.end() - 1) ? ", " : "\n");
+	}
 }
 
 #endif /* !TEST_HELPERUTILS_H */

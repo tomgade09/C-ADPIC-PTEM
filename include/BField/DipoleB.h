@@ -26,25 +26,10 @@ protected:
 	__host__ __device__ double getLambdaAtS(const double s) const;
 
 public:
-	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double ds = RADIUS_EARTH / 1000.0) :
-		BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
-	{
-		L_m = RADIUS_EARTH / pow(cos(ILATDegrees * RADS_PER_DEG), 2);
-		L_norm_m = L_m / RADIUS_EARTH;
-		s_max_m = getSAtLambda(ILATDegrees_m);
-
-		#ifndef __CUDA_ARCH__ //host code
-		modelName_m = "DipoleB";
-		setupEnvironment();
-		#endif /* !__CUDA_ARCH__ */
-	}
-
-	__host__ __device__ ~DipoleB()
-	{
-		#ifndef __CUDA_ARCH__ //host code
-		deleteEnvironment();
-		#endif /* !__CUDA_ARCH__ */
-	}
+	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double ds = RADIUS_EARTH / 1000.0);
+	__host__ __device__ ~DipoleB();
+	__host__ __device__ DipoleB(const DipoleB&) = delete;
+	__host__ __device__ DipoleB& operator=(const DipoleB&) = delete;
 
 	//for testing
 	double ILAT()  const { return ILATDegrees_m; }

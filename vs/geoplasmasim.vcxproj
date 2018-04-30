@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\API\classAPI.cpp" />
     <ClCompile Include="..\src\API\LogFileAPI.cpp" />
     <ClCompile Include="..\src\API\SimulationAPI.cpp" />
     <ClCompile Include="..\src\API\utilsAPI.cpp" />
@@ -36,7 +35,6 @@
     <ClCompile Include="..\src\utils\writeIOclasses.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\API\classAPI.h" />
     <ClInclude Include="..\include\API\LogFileAPI.h" />
     <ClInclude Include="..\include\API\SimulationAPI.h" />
     <ClInclude Include="..\include\API\utilsAPI.h" />
