@@ -4,7 +4,7 @@
 ![Simulation Visual](./Simulation.jpg)
 
 
-### What is?
+### What is it?
 ---
 **`Simulation(double dt, double simMin, double simMax, std::string saveRootDir)`**
 
@@ -167,7 +167,7 @@ void setBFieldModel(std::unique_ptr<BField> bfieldptr)
 #### Input:
 `name` - name of [BField](./../BField/README.md) model; see docs for more info on the available models
 
-`args` - vector of arguments to create specified model; must have the appropriate number of arguments to instantiate a class of specified B model type
+`args` - vector of arguments to create specified model; must have the appropriate number of arguments to instantiate a class of specified B model type; see docs above for more info on the model required arguments
 
 `save` - specifies whether the data from the B model is added to the savefile; defaults to true and is best to leave this alone
 

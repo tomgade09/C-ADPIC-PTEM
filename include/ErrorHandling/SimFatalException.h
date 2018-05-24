@@ -1,7 +1,7 @@
 #ifndef SIMFATALEXCEPTION_H
 #define SIMFATALEXCEPTION_H
 
-#include "ErrorHandling\SimException.h"
+#include "ErrorHandling/SimException.h"
 
 //for signalling exit()
 

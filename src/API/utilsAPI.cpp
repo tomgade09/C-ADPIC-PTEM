@@ -1,7 +1,7 @@
-#include "API\utilsAPI.h"
+#include "API/utilsAPI.h"
 
-#include "utils\string.h"
-#include "ErrorHandling\simExceptionMacros.h"
+#include "utils/string.h"
+#include "ErrorHandling/simExceptionMacros.h"
 
 using utils::string::strToStrVec;
 

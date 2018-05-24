@@ -1,11 +1,11 @@
-#include "BField\DipoleBLUT.h"
-#include "BField\DipoleB.h"
+#include "BField/DipoleBLUT.h"
+#include "BField/DipoleB.h"
 
 #include <memory>
 
 #include "device_launch_parameters.h"
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\cudaDeviceMacros.h"
+#include "ErrorHandling/cudaErrorCheck.h"
+#include "ErrorHandling/cudaDeviceMacros.h"
 
 //setup CUDA kernels
 __global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)
@@ -20,7 +20,7 @@ __global__ void setupEnvironmentGPU_DipoleBLUT(BField** this_d, double ILATDeg, 
 
 __global__ void deleteEnvironmentGPU_DipoleBLUT(BField** this_d)
 {
-	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleBLUT", delete (*this_d));
+	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleBLUT", delete ((DipoleBLUT*)(*this_d)));
 }
 
 __global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double* magnitude, double simMin, double ds)
@@ -34,12 +34,11 @@ __global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double*
 //end
 
 __host__ __device__ DipoleBLUT::DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements) :
-	BField(), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }
+	BField("DipoleBLUT"), ILATDegrees_m{ ILATDegrees }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }
 {
 	ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
 
 	#ifndef __CUDA_ARCH__ //host code
-	modelName_m = "DipoleBLUT";
 	setupEnvironment();
 	#endif /* !__CUDA_ARCH__ */
 }
@@ -63,7 +62,7 @@ __host__ __device__ double DipoleBLUT::getBFieldAtS(const double s, const double
 
 	// deltaB_bin / deltas_bin^3 * (s'(dist up from altBin)) + B@altBin
 	#ifndef __CUDA_ARCH__ //host code
-	return (s - altitude_m[startInd]) * (magnitude_m[startInd + 1] - magnitude_m[startInd]) / ds_msmt_m + magnitude_m[startInd]; //B = ms + b(0)
+	return (s - altitude_m.at(startInd)) * (magnitude_m.at(startInd + 1) - magnitude_m.at(startInd)) / ds_msmt_m + magnitude_m.at(startInd); //B = ms + b(0)
 	#else
 	return (s - altitude_d[startInd]) * (magnitude_d[startInd + 1] - magnitude_d[startInd]) / ds_msmt_m + magnitude_d[startInd]; //B = ms + b(0)
 	#endif /* !__CUDA_ARCH__ */

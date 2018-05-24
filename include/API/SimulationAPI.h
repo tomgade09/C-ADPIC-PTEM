@@ -2,7 +2,7 @@
 #define SIMULATIONAPI_H
 
 #include "dlldefines.h"
-#include "Simulation\Simulation.h"
+#include "Simulation/Simulation.h"
 
 ///One liner functions
 DLLEXP_EXTC double      getSimulationTimeAPI(Simulation* simulation);

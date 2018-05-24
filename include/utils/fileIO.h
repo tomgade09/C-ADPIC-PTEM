@@ -5,8 +5,8 @@
 #include <string>
 
 #include "dlldefines.h"
-#include "utils\readIOclasses.h"
-#include "utils\writeIOclasses.h"
+#include "utils/readIOclasses.h"
+#include "utils/writeIOclasses.h"
 
 namespace utils
 {

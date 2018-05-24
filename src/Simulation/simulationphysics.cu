@@ -11,10 +11,10 @@
 
 //Project specific includes
 #include "physicalconstants.h"
-#include "utils\loopmacros.h"
-#include "Simulation\Simulation.h"
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\SimFatalException.h"
+#include "utils/loopmacros.h"
+#include "Simulation/Simulation.h"
+#include "ErrorHandling/cudaErrorCheck.h"
+#include "ErrorHandling/SimFatalException.h"
 
 //CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
 // For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime

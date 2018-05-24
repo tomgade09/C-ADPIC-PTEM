@@ -1,7 +1,7 @@
 #ifndef DIPOLEB_BFIELD_H
 #define DIPOLEB_BFIELD_H
 
-#include "BField\BField.h"
+#include "BField/BField.h"
 #include "physicalconstants.h"
 
 constexpr double B0{ 3.12e-5 }; //won't change from sim to sim
@@ -20,8 +20,8 @@ protected:
 	double errorTolerance_m{ 0.0 };
 
 	//protected functions
-	__host__ virtual    void   setupEnvironment() override;
-	__host__ virtual    void   deleteEnvironment() override;
+	__host__            void   setupEnvironment() override;
+	__host__            void   deleteEnvironment() override;
 	__host__ __device__ double getSAtLambda(const double lambdaDegrees) const;
 	__host__ __device__ double getLambdaAtS(const double s) const;
 
@@ -37,7 +37,7 @@ public:
 	double L()     const { return L_m; }
 	double s_max() const { return s_max_m; }
 
-	__host__ virtual void setds(double ds) { ds_m = ds; }
+	__host__            void setds(double ds) { ds_m = ds; }
 
 	__host__ __device__ double getBFieldAtS(const double s, const double t) const override;
 	__host__ __device__ double getGradBAtS (const double s, const double t) const override;

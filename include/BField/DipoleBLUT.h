@@ -2,7 +2,7 @@
 #define DIPOLEBLUT_BFIELD_H
 
 #include <vector>
-#include "BField\BField.h"
+#include "BField/BField.h"
 #include "physicalconstants.h"
 
 class DipoleBLUT : public BField
@@ -27,8 +27,8 @@ protected:
 	int     numMsmts_m{ 0 };
 
 	//protected functions
-	__host__ virtual void setupEnvironment() override;
-	__host__ virtual void deleteEnvironment() override;
+	__host__ void setupEnvironment() override;
+	__host__ void deleteEnvironment() override;
 
 public:
 	__host__ __device__ DipoleBLUT(double ILATDegrees, double simMin, double simMax, double ds_gradB, int numberOfMeasurements);

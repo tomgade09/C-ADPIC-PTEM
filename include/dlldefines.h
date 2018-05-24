@@ -5,9 +5,11 @@
 #ifdef DLLFILE //DLLFILE is defined for GPS, not TESTS
 #define DLLEXP_EXTC extern "C" __declspec(dllexport) //for python use of the library
 #define DLLEXP __declspec(dllexport)
+#define DLLCLEXP __declspec(dllexport)
 #else
-#define DLLEXP_EXTC //extern "C" __declspec(dllimport)
-#define DLLEXP //__declspec(dllimport)
+#define DLLEXP_EXTC
+#define DLLEXP
+#define DLLCLEXP __declspec(dllimport)
 #endif /* DLLFILE */
 
 #endif /* !DLLIMPEXP_DEFINES_H */

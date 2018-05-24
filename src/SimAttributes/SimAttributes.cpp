@@ -1,9 +1,9 @@
-#include "SimAttributes\SimAttributes.h"
+#include "SimAttributes/SimAttributes.h"
 
 #include <iostream>
 
-#include "utils\fileIO.h"
-#include "utils\string.h"
+#include "utils/fileIO.h"
+#include "utils/string.h"
 
 using utils::fileIO::writeTxtFile;
 using utils::fileIO::readTxtFile;

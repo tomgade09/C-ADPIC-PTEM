@@ -1,4 +1,4 @@
-#include "API\LogFileAPI.h"
+#include "API/LogFileAPI.h"
 
 DLLEXP_EXTC void writeLogFileEntryAPI(LogFile* log, const char* logMessage) {
 	log->writeLogFileEntry(logMessage); }

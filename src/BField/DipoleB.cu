@@ -1,8 +1,8 @@
-#include "BField\DipoleB.h"
+#include "BField/DipoleB.h"
 
 #include "device_launch_parameters.h"
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\cudaDeviceMacros.h"
+#include "ErrorHandling/cudaErrorCheck.h"
+#include "ErrorHandling/cudaDeviceMacros.h"
 
 //setup CUDA kernels
 __global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, double errTol, double ds)
@@ -12,20 +12,19 @@ __global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, dou
 
 __global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)
 {
-	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleB", delete (*dipoleb));
+	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleB", delete ((DipoleB*)(*dipoleb)));
 }
 
 __host__ __device__ DipoleB::DipoleB(double ILATDegrees, double errorTolerance, double ds) :
-	BField(), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
+	BField("DipoleB"), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
 {
 	L_m = RADIUS_EARTH / pow(cos(ILATDegrees * RADS_PER_DEG), 2);
 	L_norm_m = L_m / RADIUS_EARTH;
 	s_max_m = getSAtLambda(ILATDegrees_m);
 
-#ifndef __CUDA_ARCH__ //host code
-	modelName_m = "DipoleB";
+	#ifndef __CUDA_ARCH__ //host code
 	setupEnvironment();
-#endif /* !__CUDA_ARCH__ */
+	#endif /* !__CUDA_ARCH__ */
 }
 
 __host__ __device__ DipoleB::~DipoleB()
@@ -46,13 +45,13 @@ __host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees) con
 }
 
 __host__ __device__ double DipoleB::getLambdaAtS(const double s) const
-{// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
+{
 	double lambda_tmp{ (-ILATDegrees_m / s_max_m) * s + ILATDegrees_m }; //-ILAT / s_max * s + ILAT
 	double s_tmp{ s_max_m - getSAtLambda(lambda_tmp) };
 	double dlambda{ 1.0 };
 	bool   over{ 0 };
 
-	while (abs((s_tmp - s) / s) > errorTolerance_m) //errorTolerance
+	while (abs((s_tmp - s) / s) > errorTolerance_m)
 	{
 		while (1)
 		{
@@ -72,7 +71,7 @@ __host__ __device__ double DipoleB::getLambdaAtS(const double s) const
 					break;
 			}
 		}
-		if (dlambda < errorTolerance_m / 100.0) //errorTolerance
+		if (dlambda < errorTolerance_m / 100.0)
 			break;
 		dlambda /= 5.0; //through trial and error, this reduces the number of calculations usually (compared with 2, 2.5, 3, 4, 10)
 	}

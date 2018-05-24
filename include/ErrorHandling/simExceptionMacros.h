@@ -1,7 +1,7 @@
 #ifndef SIMEXCEPHANDLER_H
 #define SIMEXCEPHANDLER_H
 
-#include "ErrorHandling\SimFatalException.h"
+#include "ErrorHandling/SimFatalException.h"
 #include <iostream>
 
 //exception checking for API functions

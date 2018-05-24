@@ -7,12 +7,12 @@
 #include <memory> //smart pointers
 
 #include "dlldefines.h"
-#include "BField\allBModels.h"
-#include "EField\allEModels.h"
-#include "Particle\Particle.h"
-#include "Satellite\Satellite.h"
-#include "LogFile\LogFile.h"
-#include "SimAttributes\SimAttributes.h"
+#include "BField/allBModels.h"
+#include "EField/allEModels.h"
+#include "Particle/Particle.h"
+#include "Satellite/Satellite.h"
+#include "LogFile/LogFile.h"
+#include "SimAttributes/SimAttributes.h"
 
 class Simulation
 {

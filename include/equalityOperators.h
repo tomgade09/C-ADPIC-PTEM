@@ -1,7 +1,7 @@
 #ifndef EQUALITYOPERATORS_H
 #define EQUALITYOPERATORS_H
 
-#include "Simulation\Simulation.h"
+#include "Simulation/Simulation.h"
 
 inline bool operator==(const Simulation& x, const Simulation& y)
 {

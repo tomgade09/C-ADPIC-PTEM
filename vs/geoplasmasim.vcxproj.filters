@@ -45,9 +45,6 @@
     <ClCompile Include="..\src\API\SimulationAPI.cpp">
       <Filter>Source Files\API</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Particle\Particle.cpp">
-      <Filter>Source Files\Particle</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Simulation\previousSimulation.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
@@ -64,6 +61,9 @@
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="..\src\utils\writeIOclasses.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\postprocess.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -158,6 +158,12 @@
     <ClInclude Include="..\include\equalityOperators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\utils\postprocess.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\silenceStreamMacros.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\__simulationvariables.py">
@@ -195,6 +201,27 @@
     </None>
     <None Include="..\python\utils\prepLoadDistribution.py">
       <Filter>Python Files\utils</Filter>
+    </None>
+    <None Include="..\docs\README.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="..\docs\Simulation\README.md">
+      <Filter>Documentation\Simulation</Filter>
+    </None>
+    <None Include="..\docs\Satellite\README.md">
+      <Filter>Documentation\Satellite</Filter>
+    </None>
+    <None Include="..\docs\ErrorHandling\README.md">
+      <Filter>Documentation\ErrorHandling</Filter>
+    </None>
+    <None Include="..\docs\BField\README.md">
+      <Filter>Documentation\BField</Filter>
+    </None>
+    <None Include="..\docs\EField\README.md">
+      <Filter>Documentation\EField</Filter>
+    </None>
+    <None Include="..\docs\Particle\README.md">
+      <Filter>Documentation\Particle</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -279,5 +306,58 @@
     <Filter Include="Source Files\API">
       <UniqueIdentifier>{9b515100-4d51-4a52-8fac-9b41a9a694d4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{c30b78ab-dd62-4828-952e-976326a71c46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\API">
+      <UniqueIdentifier>{039274ad-dc12-4330-87d7-8771025698a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\BField">
+      <UniqueIdentifier>{021b8966-86a9-4e77-b311-9e9758cc3920}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\EField">
+      <UniqueIdentifier>{867f9727-895e-467c-8248-4af560a0e299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\ErrorHandling">
+      <UniqueIdentifier>{29fc995d-07f0-41ce-82ee-ab736fcfb362}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Examples">
+      <UniqueIdentifier>{06fb6f66-73b5-4643-a676-69425dce363f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\LogFile">
+      <UniqueIdentifier>{9983e1b8-28c0-47c9-b2ec-1cf18fcec318}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Particle">
+      <UniqueIdentifier>{17ef3db8-a974-44ea-a3b3-1df7534570f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Satellite">
+      <UniqueIdentifier>{e7e19a3b-61d3-4fc8-adda-f94ead151877}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\SimAttributes">
+      <UniqueIdentifier>{a6633b87-a85c-4dc5-9a3e-792af0d92831}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Simulation">
+      <UniqueIdentifier>{84df892f-3276-4d98-8f10-471d168a955d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\utils">
+      <UniqueIdentifier>{a83d7d31-1543-4a79-b77b-76915accceac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\docs\Simulation\Simulation.jpg">
+      <Filter>Documentation\Simulation</Filter>
+    </Image>
+    <Image Include="..\docs\Satellite\Ownership.jpg">
+      <Filter>Documentation\Satellite</Filter>
+    </Image>
+    <Image Include="..\docs\BField\Ownership.jpg">
+      <Filter>Documentation\BField</Filter>
+    </Image>
+    <Image Include="..\docs\EField\Ownership.jpg">
+      <Filter>Documentation\EField</Filter>
+    </Image>
+    <Image Include="..\docs\Particle\Particle.jpg">
+      <Filter>Documentation\Particle</Filter>
+    </Image>
   </ItemGroup>
 </Project>

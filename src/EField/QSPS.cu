@@ -1,8 +1,8 @@
-#include "EField\QSPS.h"
+#include "EField/QSPS.h"
 
 #include "device_launch_parameters.h"
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\cudaDeviceMacros.h"
+#include "ErrorHandling/cudaErrorCheck.h"
+#include "ErrorHandling/cudaDeviceMacros.h"
 
 __global__ void setupEnvironmentGPU_QSPS(EElem** qsps, double* altMin, double* altMax, double* magnitude, int numRegions)
 {
@@ -11,7 +11,7 @@ __global__ void setupEnvironmentGPU_QSPS(EElem** qsps, double* altMin, double* a
 
 __global__ void deleteEnvironmentGPU_QSPS(EElem** qsps)
 {
-	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_QSPS", delete (*qsps));
+	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_QSPS", delete ((QSPS*)(*qsps)));
 }
 
 #ifndef __CUDA_ARCH__ //host code
@@ -32,7 +32,7 @@ __host__ const std::vector<double>& QSPS::magnitude() const
 #endif
 
 __host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude) :
-	EElem(), numRegions_m{ (int)magnitude.size() }
+	EElem("QSPS"), numRegions_m{ (int)magnitude.size() }
 {
 	if (magnitude.size() != altMin.size() || magnitude.size() != altMax.size())
 		throw std::invalid_argument("QSPS::QSPS: invalid parameters passed in magnitude, altMin, altMax: resolved vector lengths are not equal");
@@ -48,7 +48,7 @@ __host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std:
 }
 
 __device__ QSPS::QSPS(double* altMin, double* altMax, double* magnitude, int numRegions) :
-	EElem(), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions }
+	EElem("QSPS"), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions }
 {
 
 }

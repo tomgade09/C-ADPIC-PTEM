@@ -23,11 +23,11 @@
     <ClCompile Include="..\src\API\SimulationAPI.cpp" />
     <ClCompile Include="..\src\API\utilsAPI.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
-    <ClCompile Include="..\src\Particle\Particle.cpp" />
     <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp" />
     <ClCompile Include="..\src\Simulation\previousSimulation.cpp" />
     <ClCompile Include="..\src\Simulation\Simulation.cpp" />
     <ClCompile Include="..\src\utils\fileIO.cpp" />
+    <ClCompile Include="..\src\utils\postprocess.cpp" />
     <ClCompile Include="..\src\utils\readIOclasses.cpp" />
     <ClCompile Include="..\src\utils\string.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
@@ -59,7 +59,9 @@
     <ClInclude Include="..\include\SimAttributes\SimAttributes.h" />
     <ClInclude Include="..\include\Simulation\Simulation.h" />
     <ClInclude Include="..\include\utils\fileIO.h" />
+    <ClInclude Include="..\include\utils\postprocess.h" />
     <ClInclude Include="..\include\utils\readIOclasses.h" />
+    <ClInclude Include="..\include\utils\silenceStreamMacros.h" />
     <ClInclude Include="..\include\utils\string.h" />
     <ClInclude Include="..\include\utils\loopmacros.h" />
     <ClInclude Include="..\include\utils\numerical.h" />
@@ -76,6 +78,13 @@
     <CudaCompile Include="..\src\Simulation\simulationphysics.cu" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\docs\BField\README.md" />
+    <None Include="..\docs\EField\README.md" />
+    <None Include="..\docs\ErrorHandling\README.md" />
+    <None Include="..\docs\Particle\README.md" />
+    <None Include="..\docs\README.md" />
+    <None Include="..\docs\Satellite\README.md" />
+    <None Include="..\docs\Simulation\README.md" />
     <None Include="..\python\FileIO\fileIO.py" />
     <None Include="..\python\scripts\loadPrevSimData.py" />
     <None Include="..\python\scripts\simFromInterpreter.py" />
@@ -91,6 +100,13 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\To-Do.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\docs\BField\Ownership.jpg" />
+    <Image Include="..\docs\EField\Ownership.jpg" />
+    <Image Include="..\docs\Particle\Particle.jpg" />
+    <Image Include="..\docs\Satellite\Ownership.jpg" />
+    <Image Include="..\docs\Simulation\Simulation.jpg" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}</ProjectGuid>

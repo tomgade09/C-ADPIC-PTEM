@@ -16,16 +16,12 @@ class EElem //inherit from this class
 protected:
 	EElem** this_d{ nullptr }; //not really used on device
 	
-	#ifndef __CUDA_ARCH__ //host code
-	std::string modelName_m;
-	#else //device code
-	const char* modelName_m; //placeholder so code will compile...not actually used
-	#endif /* !__CUDA_ARCH__ */
+	const char* modelName_m;
 
 	__host__ virtual void setupEnvironment() = 0; //define this function in derived classes to assign a pointer to that function's B Field code to the location indicated by BFieldFcnPtr_d and gradBFcnPtr_d
 	__host__ virtual void deleteEnvironment() = 0;
 
-	__host__ __device__ EElem() {}
+	__host__ __device__ EElem(const char* modelName) : modelName_m{ modelName } {}
 
 public:
 	__host__ __device__ virtual ~EElem() {}

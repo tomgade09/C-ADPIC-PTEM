@@ -1,7 +1,7 @@
-#include "utils\readIOclasses.h"
-#include "utils\fileIO.h"
-#include "utils\string.h"
-#include "utils\numerical.h"
+#include "utils/readIOclasses.h"
+#include "utils/fileIO.h"
+#include "utils/string.h"
+#include "utils/numerical.h"
 
 #include <iostream>
 

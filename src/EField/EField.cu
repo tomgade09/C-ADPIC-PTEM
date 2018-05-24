@@ -1,11 +1,11 @@
-#include "EField\EField.h"
+#include "EField/EField.h"
 
 #include <sstream>
 
 //CUDA includes
 #include "device_launch_parameters.h"
-#include "ErrorHandling\cudaErrorCheck.h"
-#include "ErrorHandling\cudaDeviceMacros.h"
+#include "ErrorHandling/cudaErrorCheck.h"
+#include "ErrorHandling/cudaDeviceMacros.h"
 
 
 __host__ __device__ EField::EField()

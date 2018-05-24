@@ -1,6 +1,6 @@
-#include "Simulation\Simulation.h"
+#include "Simulation/Simulation.h"
 
-#include "utils\string.h"
+#include "utils/string.h"
 
 using utils::string::findAttrInd;
 

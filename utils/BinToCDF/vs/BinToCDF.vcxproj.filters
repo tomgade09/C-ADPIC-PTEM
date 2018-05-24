@@ -2,35 +2,67 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <UniqueIdentifier>{1d5900f1-1f51-4b48-b8ba-bd8a1ed71e31}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <UniqueIdentifier>{cc6d495b-586d-473b-a303-199aedb724b1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Source Files\gpsfiles">
+      <UniqueIdentifier>{454c2c50-320b-4a93-bf7f-d32e74caeb34}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\postprocess.cpp">
+    <ClInclude Include="..\src\CDFFileClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\ErrorHandling\simExceptionMacros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\CDFFileClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\main.cpp">
+    <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\CDFFileClass.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\..\src\LogFile\LogFile.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\Particle\Particle.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\SimAttributes\SimAttributes.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\Simulation\previousSimulation.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\Simulation\Simulation.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\postprocess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CDFFileClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <CudaCompile Include="..\..\..\src\BField\DipoleB.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\..\src\BField\DipoleBLUT.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\..\src\EField\EField.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\..\src\EField\QSPS.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\..\src\Particle\Particle.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\..\src\Satellite\Satellite.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\..\src\Simulation\simulationphysics.cu">
+      <Filter>Source Files\gpsfiles</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

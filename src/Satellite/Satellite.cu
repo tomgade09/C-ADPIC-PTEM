@@ -8,9 +8,9 @@
 #include "cuda_profiler_api.h"
 
 //Project specific includes
-#include "Satellite\Satellite.h"
-#include "utils\fileIO.h"
-#include "ErrorHandling\cudaErrorCheck.h"
+#include "Satellite/Satellite.h"
+#include "utils/fileIO.h"
+#include "ErrorHandling/cudaErrorCheck.h"
 
 using utils::fileIO::writeDblBin;
 using utils::fileIO::readDblBin;

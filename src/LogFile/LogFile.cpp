@@ -2,9 +2,9 @@
 #include <iomanip>
 #include <sstream>
 
-#include "LogFile\LogFile.h"
-#include "utils\fileIO.h"
-#include "ErrorHandling\simExceptionMacros.h"
+#include "LogFile/LogFile.h"
+#include "utils/fileIO.h"
+#include "ErrorHandling/simExceptionMacros.h"
 
 using utils::fileIO::writeTxtFile;
 

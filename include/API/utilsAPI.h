@@ -2,7 +2,7 @@
 #define UTILS_API_H
 
 #include "dlldefines.h"
-#include "utils\fileIO.h"
+#include "utils/fileIO.h"
 
 typedef utils::fileIO::ParticleDistribution PD;
 typedef utils::fileIO::DistributionFromDisk DFD;

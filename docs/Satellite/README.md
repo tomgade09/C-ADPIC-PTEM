@@ -4,7 +4,7 @@
 ![Satellite Ownership Model](./Ownership.jpg)
 
 
-### What is?
+### What is it?
 ---
 **`Satellite(double altitude, bool upwardFacing, int numberOfAttributes, long numberOfParticles, double** partDataGPUPtr, std::string name = "Satellite")`**
 

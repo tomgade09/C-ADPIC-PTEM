@@ -2,12 +2,19 @@
 # Set variables related to the simulation here
 
 import os, inspect
+from sys import platform
 
 #Directories
 PYROOTDIR = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 ROOTDIR = os.path.abspath(PYROOTDIR + './../')
 LIBDIR = os.path.abspath(ROOTDIR + './lib/')
-DLLLOCATION = os.path.abspath(LIBDIR + './geoplasmasim.dll')
+
+if platform == "win32":
+    DLLLOCATION = os.path.abspath(LIBDIR + './geoplasmasim.dll')
+elif platform == "linux" or platform == "linux2":
+    DLLLOCATION = os.path.abspath(LIBDIR + './geoplasmasim.so')
+elif platform == "darwin":
+    DLLLOCATION = os.path.abspath(LIBDIR + './geoplasmasim.dylib') #not tested, but probably would work through makefile
 
 #Physical Constants
 RADIUS_EARTH = 6.3712e6

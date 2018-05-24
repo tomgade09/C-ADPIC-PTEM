@@ -4,9 +4,9 @@
 #include "equalityOperators.h"
 #include "testHelperUtils.h"
 #include "memoryManagement.cuh"
-#include "Simulation\Simulation.h" //includes for all other classes in this header
-#include "utils\fileIO.h"
-#include "utils\string.h"
+#include "Simulation/Simulation.h" //includes for all other classes in this header
+#include "utils/fileIO.h"
+#include "utils/string.h"
 
 using utils::fileIO::ParticleDistribution;
 using utils::string::strVecToStr;
@@ -51,9 +51,9 @@ namespace test
 			checkGPUMemory(msmts.back().free, msmts.back().total);
 		};
 
-		measure<fieldshell<BField>, double>(getMem, "init", 1.0); //take an initial measurement
-		measure<fieldshell<BField>, double>(getMem, "BField", 1.0); //run BField again, to make sure no leaks
-		measure<fieldshell<EElem>, double>(getMem, "EElem", 3.0);
+		measure<fieldshell<BField>, const char*, double>(getMem, "init", "Bfs", 1.0); //take an initial measurement
+		measure<fieldshell<BField>, const char*, double>(getMem, "BField", "Bfs", 1.0); //run BField again, to make sure no leaks
+		measure<fieldshell<EElem>, const char*, double>(getMem, "EElem", "Efs", 3.0);
 		measure<DipoleB>(getMem, "DipoleB", std::make_unique<DipoleB>(72.0));
 		measure<DipoleBLUT>(getMem, "DipoleBLUT", std::make_unique<DipoleBLUT>(72.0, 1.0e6, 2.0e7, 600.0, 1000000));
 		measure<EField>(getMem, "EField", std::make_unique<EField>());

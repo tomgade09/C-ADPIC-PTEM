@@ -2,8 +2,8 @@
 #define TESTS_MEMORYMANAGEMENT_H
 
 #include "device_launch_parameters.h"
-#include "ErrorHandling\cudaErrorCheck.h" //includes cuda runtime header
-#include "ErrorHandling\cudaDeviceMacros.h"
+#include "ErrorHandling/cudaErrorCheck.h" //includes cuda runtime header
+#include "ErrorHandling/cudaDeviceMacros.h"
 
 namespace test
 {
@@ -11,9 +11,9 @@ namespace test
 	class fieldshell;
 
 	template <typename BASE>
-	__global__ void makeFSGPU(BASE** this_d, double val)
+	__global__ void makeFSGPU(BASE** this_d, const char* name, double val)
 	{
-		ZEROTH_THREAD_ONLY("makeFSGPU", (*this_d) = new fieldshell<BASE>(val));
+		ZEROTH_THREAD_ONLY("makeFSGPU", (*this_d) = new fieldshell<BASE>(name, val));
 	}
 
 	template <typename BASE>
@@ -29,7 +29,7 @@ namespace test
 		__host__ void setupEnvironment() override
 		{
 			CUDA_API_ERRCHK(cudaMalloc((void **)&this_d, sizeof(BASE**)));
-			makeFSGPU<BASE><<< 1, 1 >>>(this_d, val_m); //won't compile...need to fix eventually
+			makeFSGPU<BASE><<< 1, 1 >>>(this_d, name_m, val_m); //won't compile...need to fix eventually
 		}// for now, just won't instantiate a fieldshell class
 		__host__ void deleteEnvironment() override
 		{
@@ -37,9 +37,10 @@ namespace test
 			CUDA_API_ERRCHK(cudaFree(this_d));
 		}
 		double val_m;
+		const char* name_m;
 
 	public:
-		__host__ __device__ fieldshell<BASE>(double val)
+		__host__ __device__ fieldshell<BASE>(const char* name, double val) : BASE(name), name_m{ name }
 		{
 			#ifndef __CUDA_ARCH__ //host code
 			setupEnvironment();

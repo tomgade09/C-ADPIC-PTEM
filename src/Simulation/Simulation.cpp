@@ -1,7 +1,7 @@
-#include "Simulation\Simulation.h"
+#include "Simulation/Simulation.h"
 
-#include "utils\loopmacros.h"
-#include "ErrorHandling\simExceptionMacros.h"
+#include "utils/loopmacros.h"
+#include "ErrorHandling/simExceptionMacros.h"
 
 Simulation::Simulation(double dt, double simMin, double simMax, std::string saveRootDir) :
 	dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, saveRootDir_m{ saveRootDir + "/" },

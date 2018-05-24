@@ -1,10 +1,10 @@
 #include "test.h"
 #include "testHelperUtils.h"
-#include "utils\fileIO.h"
-#include "BField\DipoleB.h"
-#include "BField\DipoleBLUT.h"
-#include "EField\QSPS.h"
-#include "ErrorHandling\cudaErrorCheck.h"
+#include "utils/fileIO.h"
+#include "BField/DipoleB.h"
+#include "BField/DipoleBLUT.h"
+#include "EField/QSPS.h"
+#include "ErrorHandling/cudaErrorCheck.h"
 #include "device_launch_parameters.h"
 
 #include <vector>

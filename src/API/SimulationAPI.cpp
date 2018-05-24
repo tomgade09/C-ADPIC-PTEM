@@ -1,8 +1,8 @@
-#include "API\SimulationAPI.h"
+#include "API/SimulationAPI.h"
 
-#include "utils\writeIOclasses.h"
-#include "utils\string.h"
-#include "ErrorHandling\simExceptionMacros.h"
+#include "utils/writeIOclasses.h"
+#include "utils/string.h"
+#include "ErrorHandling/simExceptionMacros.h"
 
 using utils::fileIO::CSV;
 using utils::string::strToDblVec;
@@ -164,7 +164,8 @@ int main()
 	SIM_API_EXCEP_CHECK(
 	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, "./out/") };
 	setupNormalSimulationAPI(sim, 3456000, "./../_in/data");
-	runNormalSimulationAPI(sim, 2500, 500);
+	sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
+	runNormalSimulationAPI(sim, 500, 50);
 
 	terminateSimulationAPI(sim);
 	); /* SIM_API_EXCEP_CHECK() */
