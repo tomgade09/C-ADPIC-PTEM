@@ -13,6 +13,9 @@
 *.dylib
 *.dll
 
+# Python Compiled Files
+*.pyc
+
 # Fortran module files
 *.mod
 *.smod
@@ -46,6 +49,7 @@
 *.snip
 *.bin
 *.log
+addrules
 
 # Project-specific folders
 build/
@@ -53,6 +57,7 @@ Debug/
 Release/
 x64/
 .vs/
+.vscode/
 bin/
 lib/
 _*/

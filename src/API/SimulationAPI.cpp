@@ -4,6 +4,8 @@
 #include "utils/string.h"
 #include "ErrorHandling/simExceptionMacros.h"
 
+#include <cmath>
+
 using utils::fileIO::CSV;
 using utils::string::strToDblVec;
 

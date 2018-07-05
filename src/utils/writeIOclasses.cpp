@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 namespace utils
 {
@@ -16,12 +17,12 @@ namespace utils
 				printf("CSV::write: data_m empty, nothing to write to disk\n");
 				return;
 			}
-			
+
 			std::ofstream file(filename_m, std::ios::trunc);
 			for (int iii = 0; iii < labels_m.size(); iii++)
 				file << labels_m.at(iii) << ((iii != labels_m.size() - 1) ? "," : "\n");
 			file.close();
-			
+
 			fileIO::write2DCSV(data_m, filename_m, (int)data_m.at(0).size(), (int)data_m.size(), ',', false);
 			data_m.clear();
 		}
@@ -132,7 +133,7 @@ namespace utils
 
 			double binsize{ (Emax - Emin) / (energyBins - 1) };
 			ranges_m.at(0).push_back({ Emin, Emax, binsize });
-			
+
 			for (int eng = 0; eng < energyBins; eng++)
 				energyPitch_m.at(0).at(eng) = (logE) ? pow(10, eng * binsize + Emin) : (Emin + eng * binsize);
 		}
@@ -140,7 +141,7 @@ namespace utils
 		void ParticleDistribution::addPitchRange(int pitchBins, double PAmin, double PAmax, bool midBin) //midBin defaults to true
 		{
 			energyPitch_m.at(1).resize(energyPitch_m.at(1).size() + pitchBins);
-			
+
 			double binsize{ (midBin) ? ((PAmax - PAmin) / pitchBins) : ((PAmax - PAmin) / (pitchBins - 1)) };
 			ranges_m.at(1).push_back({ PAmin, PAmax, binsize });
 

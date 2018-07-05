@@ -76,7 +76,7 @@ std::string SimAttributes::generateString(attrsData& ad)
 		ret += ATTRSWRAP(strVec1DToStr(ad.strLabels_m.at(entry)));
 		ret += ATTRSWRAP(strVec1DToStr(ad.strAttrs_m.at(entry)));
 		ret += ATTRSWRAP(strVec1DToStr(ad.dblLabels_m.at(entry)));
-		
+
 		std::string tmp;
 		for (auto dbl = ad.dblAttrs_m.at(entry).begin(); dbl < ad.dblAttrs_m.at(entry).end(); dbl++)
 			tmp += DBLSTRWRAP(dblToExactStr(*dbl)) + ((dbl != ad.dblAttrs_m.at(entry).end() - 1) ? "," : "");
@@ -102,28 +102,36 @@ void SimAttributes::write()
 void SimAttributes::read()
 {
 	readTxtFile(saveString_m, filename_m);
-	
+
 	//Liberal use of lambda functions
 	auto findCutString = [](std::string between, std::string& findstr, bool erase = true) {
-		std::string front{ between.substr(0,between.size() / 2) }; std::string back{ between.substr(between.size() / 2, between.size() / 2) };
-		auto beg{ findstr.find(front) + front.size() }; auto end{ findstr.find(back) + back.size() };
+		std::string frt{ between.substr(0,between.size() / 2) };
+		std::string bck { between.substr(between.size() / 2, between.size() / 2) };
+		size_t beg{ findstr.find(frt) + frt.size() };
+		size_t end{ findstr.find(bck) + bck.size() };
 		if (end - beg == 0) { return std::string(""); }
-		std::string ret{ findstr.substr(beg, end - between.size()) }; if (erase) { findstr.erase(0, end); } return ret; };
-
-	auto splitEntries = [](std::string splitchars, std::string& findstr) { std::vector<std::string> ret;
-		while (findstr.find(splitchars) != std::string::npos)
-			{ ret.push_back(findstr.substr(0, findstr.find(splitchars))); findstr.erase(0, findstr.find(splitchars) + 4); }
-		ret.push_back(findstr); findstr.clear();
+		std::string ret{ findstr.substr(beg, end - between.size()) };
+		if (erase) { findstr.erase(0, end); }
 		return ret; };
 
-	auto entrToAtrVec = [&](std::vector<std::string>& entryStrings) { std::vector<std::vector<std::vector<std::string>>> ret(5);
+	auto splitEntries = [](std::string splitchars, std::string& findstr) {
+	    std::vector<std::string> ret;
+		while (findstr.find(splitchars) != std::string::npos) {
+			ret.push_back(findstr.substr(0, findstr.find(splitchars)));
+			findstr.erase(0, findstr.find(splitchars) + 4); }
+		ret.push_back(findstr);
+		findstr.clear();
+		return ret; };
+
+	auto entrToAtrVec = [&](std::vector<std::string> entryStrings) {
+	    std::vector<std::vector<std::vector<std::string>>> ret(5);
 		for (auto entr = entryStrings.begin(); entr < entryStrings.end(); entr++) {
 			ret.at(0).push_back( { findCutString(NAMEWRAP(""), (*entr)) } ); //name
 			ret.at(1).push_back( strToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //strLabels
 			ret.at(2).push_back( strToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //strAttrs
 			ret.at(3).push_back( strToStrVec(findCutString(ATTRSWRAP(""), (*entr)), ',') ); //dblLabels
 			ret.at(4).push_back( { findCutString(ATTRSWRAP(""), (*entr)) } ); //double string - don't want to search for ',' in case that's in the double string
-			
+
 			std::cout << (*entr) << std::endl;
 		}
 		return ret; };

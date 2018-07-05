@@ -1,8 +1,8 @@
 #ifndef SIMULATIONCLASSEXTENSIONS_H
 #define SIMULATIONCLASSEXTENSIONS_H
 
-#include "EField\EField.h"
-#include "FileIO\fileIO.h"
+#include "EField/EField.h"
+#include "utils/fileIO.h"
 #include "physicalconstants.h"
 
 class AlfvenLUT : public EElem

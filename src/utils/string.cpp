@@ -1,4 +1,5 @@
 #include "utils/string.h"
+#include <stdexcept>
 
 namespace utils
 {
@@ -44,7 +45,7 @@ namespace utils
 			std::string ret;
 			for (auto& str : strVec)
 				ret += str + ((str != strVec.back()) ? std::string{ delim } : "");
-			
+
 			return ret;
 		}
 

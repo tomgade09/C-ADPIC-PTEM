@@ -1,4 +1,5 @@
 #include "utils/numerical.h"
+#include <cmath>
 
 namespace utils
 {
