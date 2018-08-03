@@ -28,6 +28,7 @@
     <ClCompile Include="..\src\Simulation\Simulation.cpp" />
     <ClCompile Include="..\src\utils\fileIO.cpp" />
     <ClCompile Include="..\src\utils\postprocess.cpp" />
+    <ClCompile Include="..\src\utils\PPHelperClasses.cpp" />
     <ClCompile Include="..\src\utils\readIOclasses.cpp" />
     <ClCompile Include="..\src\utils\string.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
@@ -60,6 +61,7 @@
     <ClInclude Include="..\include\Simulation\Simulation.h" />
     <ClInclude Include="..\include\utils\fileIO.h" />
     <ClInclude Include="..\include\utils\postprocess.h" />
+    <ClInclude Include="..\include\utils\PPHelperClasses.h" />
     <ClInclude Include="..\include\utils\readIOclasses.h" />
     <ClInclude Include="..\include\utils\silenceStreamMacros.h" />
     <ClInclude Include="..\include\utils\string.h" />
@@ -293,6 +295,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
       <AdditionalOptions>-gencode=arch=compute_50,code=\"sm_50,compute_50\" %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <FastMath>false</FastMath>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

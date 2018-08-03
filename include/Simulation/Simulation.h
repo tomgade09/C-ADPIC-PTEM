@@ -17,7 +17,7 @@
 class Simulation
 {
 protected:
-	//Structs that fill various functions	
+	//Structs that fill various roles	
 	struct TempSat
 	{//Struct that holds data to create satellite - allows satellites to be created before particles through API
 		int particleInd;
@@ -117,6 +117,7 @@ public:
 	virtual void setBFieldModel(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 	virtual void addEFieldModel(std::string name, std::vector<double> args, bool save = true);
 	//virtual void addEFieldModel(std::unique_ptr<EElem> eelemptr) { EFieldModel_m->add(std::move(eelemptr)); }
+	//virtual void clearEFieldModels(){ EFieldModel_m = std::make_unique<EField>(); }
 	
 
 	//Fields
@@ -126,6 +127,7 @@ public:
 
 	//Simulation management functions
 	virtual void initializeSimulation();
+	virtual void __iterateSimCPU(int numberOfIterations, int checkDoneEvery);
 	virtual void iterateSimulation(int numberOfIterations, int itersBtwCouts);
 	virtual void saveDataToDisk();
 	virtual void freeGPUMemory();

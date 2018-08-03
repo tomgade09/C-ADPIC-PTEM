@@ -61,6 +61,9 @@ DLLEXP_EXTC Simulation* createSimulationAPI(double dt, double simMin, double sim
 DLLEXP_EXTC void initializeSimulationAPI(Simulation* simulation) {
 	SIM_API_EXCEP_CHECK(simulation->initializeSimulation()); }
 
+DLLEXP_EXTC void __iterateSimCPUAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts) {
+	SIM_API_EXCEP_CHECK(simulation->__iterateSimCPU(numberOfIterations, itersBtwCouts)); }
+
 DLLEXP_EXTC void iterateSimulationAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts) {
 	SIM_API_EXCEP_CHECK(simulation->iterateSimulation(numberOfIterations, itersBtwCouts)); }
 
@@ -83,6 +86,7 @@ DLLEXP_EXTC void setupNormalSimulationAPI(Simulation* sim, int numParts, const c
 	double simMax{ sim->simMax() };
 
 	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
+	//sim->setBFieldModel("DipoleB", { 72.0 });
 	//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 
 	sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
@@ -104,6 +108,20 @@ DLLEXP_EXTC void runNormalSimulationAPI(Simulation* sim, int iterations, int pri
 	SIM_API_EXCEP_CHECK(
 	sim->initializeSimulation();
 	sim->iterateSimulation(iterations, printEvery);
+	); /* SIM_API_EXCEP_CHECK() */
+}
+
+DLLEXP_EXTC void runSingleElectronAPI(Simulation* sim, double vpara, double vperp, double s, double t_inc, int iterations, int printEvery)
+{
+	SIM_API_EXCEP_CHECK(
+	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
+	sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, 1, "", false);
+	std::vector<std::vector<double>> attrs{ std::vector<std::vector<double>>({ {vpara}, {vperp}, {s}, {0.0}, {t_inc} }) };
+	sim->particle("elec")->loadDataFromMem(attrs, true);
+	sim->particle("elec")->loadDataFromMem(attrs, false);
+	sim->createTempSat(0, sim->simMin() * 0.999, true, "btmElec");
+	sim->initializeSimulation();
+	sim->__iterateSimCPU(iterations, printEvery);
 	); /* SIM_API_EXCEP_CHECK() */
 }
 

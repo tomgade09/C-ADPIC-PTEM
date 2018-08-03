@@ -46,6 +46,6 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, si
 			simAttr_m->satAD.names_m.at(sat)
 		)};
 		createSatellite(tmpsat.get(), false);
-		satellite(getNumberOfSatellites() - 1)->loadDataFromDisk(saveRootDir_m + "/bins/satellites/", true);
+		satellite(getNumberOfSatellites() - 1)->loadDataFromDisk(saveRootDir_m + "/bins/satellites/");
 	}
 }

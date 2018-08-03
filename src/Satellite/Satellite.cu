@@ -77,7 +77,7 @@ void Satellite::iterateDetector(double simtime, double dt, int blockSize)
 }
 
 void Satellite::copyDataToHost()
-{// data_m array: [v_para, mu, z, time, partindex][particle number]
+{// data_m array: [v_para, mu, s, time, partindex][particle number]
 	dataAllocateNewMsmtVector();
 	
 	for (int satattr = 0; satattr < getNumberOfAttributes(); satattr++)
@@ -112,7 +112,7 @@ std::vector<std::vector<double>> Satellite::getConsolidatedData(bool removeZeros
 
 	if (removeZeros)
 	{
-		for (auto& msmt : data_copy) //msmts (vector<vector<double>) reference
+		for (auto& msmt : data_copy) //msmts (vector<vector<double>>) reference
 		{
 			std::vector<double> timeTmp{ msmt.at(3) }; //make a copy, because array will iterate over index 3 (removing -1.0) before iterating over index 4 (not removing anything)
 
@@ -141,16 +141,27 @@ void Satellite::saveDataToDisk(std::string folder) //move B and mass to getConso
 		writeDblBin(results.at(attr), folder + name_m + "_" + attrNames_m.at(attr) + ".bin", (int)results.at(attr).size());
 }
 
-void Satellite::loadDataFromDisk(std::string folder, bool expand)
+void Satellite::loadDataFromDisk(std::string folder)
 { //WILL HAVE TO REMOVE EXPANDING PORTION - IMPLEMENTATION DEFINED, NOT GENERIC
 	std::vector<std::vector<double>> load(attrNames_m.size());
 
 	for (int attr = 0; attr < attrNames_m.size(); attr++)
 		readDblBin(load.at(attr), folder + name_m + "_" + attrNames_m.at(attr) + ".bin");
 
-	if (!expand) { data_m.push_back(load); }
+	bool expand;
+	if (load.at(0).size() == numberOfParticles_m)
+		expand = false;
+	else if (load.at(0).size() < numberOfParticles_m)
+		expand = true;
+	else
+		throw std::logic_error("Satellite::loadDataFromDisk: number of particles loaded from disk is greater than specified numberOfParticles_m.  "
+			+ std::string("That means that the wrong data was loaded or wrong number of particles was specified.  Not loading data."));
 
-	if (expand) //encapsulate code in if block, allows me to turn code off if I don't want during testing
+	if (!expand)
+	{
+		data_m.push_back(load);
+	}
+	else
 	{
 		double prevInd{ -1.0 };
 		for (auto index = load.at(4).begin(); index != load.at(4).end(); index++)

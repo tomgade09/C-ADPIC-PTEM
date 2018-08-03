@@ -120,7 +120,7 @@ namespace utils
 			write();
 		}
 
-		void ParticleDistribution::setattr(std::vector<double>& attr, int ind)
+		void ParticleDistribution::setattr(std::vector<double>& attr, unsigned int ind)
 		{
 			if (ind >= attrNames_m.size())
 				throw std::invalid_argument("ParticleDistribution::setattr: ind is higher than data_m.size() - 1");

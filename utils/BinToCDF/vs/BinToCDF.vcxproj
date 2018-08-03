@@ -15,22 +15,8 @@
     <ClInclude Include="..\src\CDFFileClass.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\LogFile\LogFile.cpp" />
-    <ClCompile Include="..\..\..\src\Particle\Particle.cpp" />
-    <ClCompile Include="..\..\..\src\SimAttributes\SimAttributes.cpp" />
-    <ClCompile Include="..\..\..\src\Simulation\previousSimulation.cpp" />
-    <ClCompile Include="..\..\..\src\Simulation\Simulation.cpp" />
     <ClCompile Include="..\src\CDFFileClass.cpp" />
     <ClCompile Include="..\src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="..\..\..\src\BField\DipoleB.cu" />
-    <CudaCompile Include="..\..\..\src\BField\DipoleBLUT.cu" />
-    <CudaCompile Include="..\..\..\src\EField\EField.cu" />
-    <CudaCompile Include="..\..\..\src\EField\QSPS.cu" />
-    <CudaCompile Include="..\..\..\src\Particle\Particle.cu" />
-    <CudaCompile Include="..\..\..\src\Satellite\Satellite.cu" />
-    <CudaCompile Include="..\..\..\src\Simulation\simulationphysics.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C7D51C0B-C768-41A4-A860-23E98EF0C5C2}</ProjectGuid>

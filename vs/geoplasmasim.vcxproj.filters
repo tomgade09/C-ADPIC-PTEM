@@ -51,20 +51,23 @@
     <ClCompile Include="..\src\Simulation\Simulation.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\fileIO.cpp">
-      <Filter>Source Files\utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\API\utilsAPI.cpp">
       <Filter>Source Files\API</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\postprocess.cpp">
+      <Filter>Source Files\utils\Post-Process</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\utils\readIOclasses.cpp">
-      <Filter>Source Files\utils</Filter>
+      <Filter>Source Files\utils\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\fileIO.cpp">
+      <Filter>Source Files\utils\IO</Filter>
     </ClCompile>
     <ClCompile Include="..\src\utils\writeIOclasses.cpp">
-      <Filter>Source Files\utils</Filter>
+      <Filter>Source Files\utils\IO</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\postprocess.cpp">
-      <Filter>Source Files\utils</Filter>
+    <ClCompile Include="..\src\utils\PPHelperClasses.cpp">
+      <Filter>Source Files\utils\Post-Process</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,9 +110,6 @@
     <ClInclude Include="..\include\BField\DipoleBLUT.h">
       <Filter>Header Files\BField</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\loopmacros.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\utils\numerical.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
@@ -143,26 +143,32 @@
     <ClInclude Include="..\include\Simulation\Simulation.h">
       <Filter>Header Files\Simulation</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\fileIO.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\API\utilsAPI.h">
       <Filter>Header Files\API</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\utils\readIOclasses.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\utils\writeIOclasses.h">
-      <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\include\equalityOperators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\utils\fileIO.h">
+      <Filter>Header Files\utils\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\writeIOclasses.h">
+      <Filter>Header Files\utils\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\readIOclasses.h">
+      <Filter>Header Files\utils\IO</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\utils\postprocess.h">
-      <Filter>Header Files\utils</Filter>
+      <Filter>Header Files\utils\Post-Process</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\PPHelperClasses.h">
+      <Filter>Header Files\utils\Post-Process</Filter>
     </ClInclude>
     <ClInclude Include="..\include\utils\silenceStreamMacros.h">
-      <Filter>Header Files\utils</Filter>
+      <Filter>Header Files\utils\Macros</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\loopmacros.h">
+      <Filter>Header Files\utils\Macros</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -341,6 +347,21 @@
     </Filter>
     <Filter Include="Documentation\utils">
       <UniqueIdentifier>{a83d7d31-1543-4a79-b77b-76915accceac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils\IO">
+      <UniqueIdentifier>{a08eb9bf-ee6d-47fe-936f-e6fed7e0cb6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils\Post-Process">
+      <UniqueIdentifier>{ab12224d-26d3-4d7b-b54b-5c13e9bf73ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils\Macros">
+      <UniqueIdentifier>{dbb49a59-887a-4a30-af2e-2ff4298c2883}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utils\IO">
+      <UniqueIdentifier>{5b674949-5f2f-490e-894a-84d3b0cce31d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utils\Post-Process">
+      <UniqueIdentifier>{dc8d6857-238b-44a4-87e5-d2a921411459}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

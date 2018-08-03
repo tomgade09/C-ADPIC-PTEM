@@ -58,7 +58,8 @@ namespace utils
 			ParticleDistribution& operator=(const ParticleDistribution&) = delete;
 
 			const std::vector<std::vector<double>>& data() const { return data_m; }
-			void setattr(std::vector<double>& attr, int ind);
+			const std::vector<std::vector<std::vector<double>>>& ranges() const { if (ranges_m.at(0).size() == 0 || ranges_m.at(1).size() == 0) throw std::logic_error("ParticleDistribution::ranges(): one or both ranges (PA, E) not specified"); return ranges_m; }
+			void setattr(std::vector<double>& attr, unsigned int ind);
 			void addEnergyRange(int energyBins, double Emin, double Emax, bool logE = true);
 			void addPitchRange(int pitchBins, double PAmin, double PAmax, bool midBin = true);
 			void addSpecificParticle(int numParticles, double energy, double pitch, double s, int padmult = 0);

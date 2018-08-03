@@ -40,7 +40,7 @@ public:
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 	virtual void freeGPUMemory();
 	virtual void saveDataToDisk(std::string folder);
-	virtual void loadDataFromDisk(std::string folder, bool expand);
+	virtual void loadDataFromDisk(std::string folder);
 
 	//Access functions
 	std::string name()     const { return name_m; }
