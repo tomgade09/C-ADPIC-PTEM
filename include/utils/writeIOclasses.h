@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "dlldefines.h"
 #include "physicalconstants.h"
