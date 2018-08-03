@@ -41,6 +41,8 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.createSimulationAPI.restype = ctypes.c_void_p
         self.simDLL_m.initializeSimulationAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.initializeSimulationAPI.restype = None
+        #self.simDLL_m.__iterateSimCPUAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        #self.simDLL_m.__iterateSimCPUAPI.restype = None
         self.simDLL_m.iterateSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.iterateSimulationAPI.restype = None
         self.simDLL_m.freeGPUMemoryAPI.argtypes = (ctypes.c_void_p,)
@@ -55,6 +57,8 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.setupNormalSimulationAPI.restype = None
         self.simDLL_m.runNormalSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.runNormalSimulationAPI.restype = None
+        self.simDLL_m.runSingleElectronAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.runSingleElectronAPI.restype = None
 
 
         #Fields management
