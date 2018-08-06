@@ -2,7 +2,7 @@
 CC         := g++
 NVCC       := nvcc
 CXXFLAGS   := -std=c++17 -fPIC -pedantic -O2
-NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_50,code=\"sm_50,compute_50\" -x cu -m64 -cudart static -Xcompiler "-fPIC" -Xlinker "-shared"
+NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_30,code=\"sm_30,compute_30\" -x cu -m64 -cudart static -Xcompiler "-fPIC" -Xlinker "-shared"
 
 # Build-essential directories and defines
 CUDAINC    := /usr/local/cuda/include
