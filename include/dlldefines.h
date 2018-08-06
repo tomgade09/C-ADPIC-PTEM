@@ -19,6 +19,11 @@
 #define FLT_EPSILON 1.192092896e-7F
 #endif /* _WIN32 */
 
-
+using std::log10;
+using std::pow;
+using std::exp;
+using std::sqrt;
+using std::sin;
+using std::cos;
 
 #endif /* !DLLIMPEXP_DEFINES_H */
