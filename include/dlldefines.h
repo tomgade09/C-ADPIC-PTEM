@@ -19,6 +19,7 @@
 #define FLT_EPSILON 1.192092896e-7F
 #endif /* _WIN32 */
 
+#include <cmath>
 using std::log10;
 using std::pow;
 using std::exp;
