@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iterator>
 
+
 #include "utils/postprocess.h"
 #include "utils/numerical.h"
 #include "utils/silenceStreamMacros.h"
@@ -36,6 +37,11 @@ namespace postprocess
 
 	//Maxwellian
 	Maxwellian::Maxwellian(double dlogEdist) : dlogE_dist{ dlogEdist } {}
+
+	using std::log10;
+	using std::pow;
+	using std::exp;
+	using std::sin;
 
 	void Maxwellian::push_back_ion(double E_peak, double dE_magnitude, int partsAtE)
 	{
