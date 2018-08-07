@@ -31,8 +31,8 @@ def simulationRunMain():
     print("================  SIMULATION ", dtg, " ================")
 
     sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM)
-    sim.setupNormalSim(NUMPARTICLES)
-    finalDat, origDat, satDat = sim.runNormalSim(NUMITER, 500)
+    sim.setupExampleSim(NUMPARTICLES)
+    finalDat, origDat, satDat = sim.runExampleSim(NUMITER, 500)
     #sim.writeCommonCSV()
 
     fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)

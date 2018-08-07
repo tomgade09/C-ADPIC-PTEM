@@ -31,8 +31,8 @@ DLLEXP_EXTC void iterateSimulationAPI(Simulation* simulation, int numberOfIterat
 DLLEXP_EXTC void freeGPUMemoryAPI(Simulation* simulation);
 DLLEXP_EXTC void terminateSimulationAPI(Simulation* simulation);
 DLLEXP_EXTC Simulation* loadCompletedSimDataAPI(const char* fileDir);
-DLLEXP_EXTC void setupNormalSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir);
-DLLEXP_EXTC void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery);
+DLLEXP_EXTC void setupExampleSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir);
+DLLEXP_EXTC void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery);
 DLLEXP_EXTC void runSingleElectronAPI(Simulation* sim, double vpara, double vperp, double s, double t_inc, int iterations, int printEvery);
 
 //build API functions for resetSimulation and saveDataToDisk

@@ -13,13 +13,13 @@
 #define DLLCLEXP __declspec(dllimport)
 #endif /* DLLFILE */
 #else /* !_WIN32 */
-#define DLLEXP_EXTC
+#define DLLEXP_EXTC extern "C"
 #define DLLEXP
 #define DLLCLEXP
 #define FLT_EPSILON 1.192092896e-7F
 #endif /* _WIN32 */
 
-#include <cmath>
+#include <cmath> //include and using necessary for linux
 using std::log10;
 using std::pow;
 using std::exp;

@@ -79,7 +79,7 @@ DLLEXP_EXTC void terminateSimulationAPI(Simulation* simulation) {
 DLLEXP_EXTC Simulation* loadCompletedSimDataAPI(const char* fileDir) {
 	SIM_API_EXCEP_CHECK( return new Simulation(fileDir) ); }
 
-DLLEXP_EXTC void setupNormalSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir)
+DLLEXP_EXTC void setupExampleSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir)
 {
 	SIM_API_EXCEP_CHECK(
 	double simMin{ sim->simMin() };
@@ -98,12 +98,12 @@ DLLEXP_EXTC void setupNormalSimulationAPI(Simulation* sim, int numParts, const c
 	//sim->createTempSat(0, 1014252.60176003, true, "1e6ElecUp");
 	sim->createTempSat(0, 3049829.25570638, false, "3e6ElecDown"); //altitude = 3000km
 	sim->createTempSat(0, 3049829.25570638, true, "3e6ElecUp");
-	sim->createTempSat(0, 4071307.04106411, false, "4e6ElecDown");   //altitude = 4000km
+	sim->createTempSat(0, 4071307.04106411, false, "4e6ElecDown"); //altitude = 4000km
 	sim->createTempSat(0, 4071307.04106411, true, "4e6ElecUp");
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
-DLLEXP_EXTC void runNormalSimulationAPI(Simulation* sim, int iterations, int printEvery)
+DLLEXP_EXTC void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery)
 {
 	SIM_API_EXCEP_CHECK(
 	sim->initializeSimulation();
@@ -183,9 +183,9 @@ int main()
 {
 	SIM_API_EXCEP_CHECK(
 	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, "./out/") };
-	setupNormalSimulationAPI(sim, 3456000, "./../_in/data");
+	setupExampleSimulationAPI(sim, 3456000, "./../_in/data");
 	sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
-	runNormalSimulationAPI(sim, 500, 50);
+	runExampleSimulationAPI(sim, 500, 50);
 
 	terminateSimulationAPI(sim);
 	); /* SIM_API_EXCEP_CHECK() */

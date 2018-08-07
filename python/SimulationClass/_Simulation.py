@@ -53,10 +53,10 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.loadCompletedSimDataAPI.argtypes = (ctypes.c_char_p,)
         self.simDLL_m.loadCompletedSimDataAPI.restype = None
 
-        self.simDLL_m.setupNormalSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
-        self.simDLL_m.setupNormalSimulationAPI.restype = None
-        self.simDLL_m.runNormalSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
-        self.simDLL_m.runNormalSimulationAPI.restype = None
+        self.simDLL_m.setupExampleSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
+        self.simDLL_m.setupExampleSimulationAPI.restype = None
+        self.simDLL_m.runExampleSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.runExampleSimulationAPI.restype = None
         self.simDLL_m.runSingleElectronAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.runSingleElectronAPI.restype = None
 

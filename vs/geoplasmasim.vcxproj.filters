@@ -363,6 +363,9 @@
     <Filter Include="Source Files\utils\Post-Process">
       <UniqueIdentifier>{dc8d6857-238b-44a4-87e5-d2a921411459}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Python Files\examples">
+      <UniqueIdentifier>{ad8e9691-1bbf-4511-b99b-be83a59f24f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\docs\Simulation\Simulation.jpg">

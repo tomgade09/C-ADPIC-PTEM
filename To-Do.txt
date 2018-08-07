@@ -1,12 +1,9 @@
 TO-DO:
 - Working Backscatter
-- Fix expansion code for satellite (endless loop if data is not sparse)
 ONGOING - Testing user error cases, removing error messages by functions not touched by users, intentionally try to break
 IN PROGRESS - Document things better
 MAYBE - Hijack clog and write to log file (easy, quick)
 - Alfven E generator (Dr. Lysak's code)
-- Cross platform compiling
-- CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)
 - Custom logfile and particle exception catchers (instead of copy pasta from FileIO)
 - Write tests that can be executed cross-platform
 	- Sample distributions (maybe 100 particles or something) under different BField / EField models
@@ -72,6 +69,8 @@ DONE - Python interface for loading previous sim data
 DONE - LUT Grad B w/ linear interpolation
 DONE - Python interfaces for E Field and B Field models
 DONE - Remove unnecessary includes/maybe all/most includes in headers
+DONE - Fix expansion code for satellite (endless loop if data is not sparse)
+DONE - Cross platform compiling
 
 STUFF THAT IS DONE WITH CAVEATS:
 DONE, NEEDS BETTER PHYSICS - Particles out top are lost completely (done), out bottom - scattering probability, distribution
@@ -82,3 +81,4 @@ DONE, ADD STRUCTURE WHERE NECESSARY IN THE FUTURE - Enforce calling certain func
 
 NOT PLATFORM AGNOSTIC, HOLD OFF - IN PROGRESS - XLSX writing with xlnt library?
 NOT PLATFORM AGNOSTIC, HOLD OFF - Offload folder creation, changing folder to C++
+MAYBE NOT - CMakeLists if possible with CUDA (including compile options - 5.0, cuda pic)

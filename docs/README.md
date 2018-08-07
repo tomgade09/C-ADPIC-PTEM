@@ -8,6 +8,8 @@ geoplasmasim (working title) is a simulation for generating test particle distri
 ### Documentation
 Click the links below to read about the various components of this software:
 
+[0. Python](Python/README.md) - Python class that allows easy calling of the C API functions from an interactive interpreter, if desired.  Start here if you want the no-frills description of the easiest use of the library.
+
 [1. Simulation](Simulation/README.md) - Container class that contains equation of motion for particles, as well as a number of control functions, access functions, and other useful things.  Manages lifetime of all of the below classes.
 
 [2. BField](BField/README.md) - Abstract class for interfacing with various implementations of B Field models.
