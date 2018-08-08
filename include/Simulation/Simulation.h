@@ -94,6 +94,7 @@ public:
 	int         getNumberOfAttributes(int partInd) const { return (int)particles_m.at(partInd)->getNumberOfAttributes(); }
 	std::string getParticleName(int partInd)       const { return particles_m.at(partInd)->name(); }
 	std::string getSatelliteName(int satInd)       const { return satPartPairs_m.at(satInd)->satellite->name(); }
+	int         getPartIndOfSat(int satInd)        const { return tempSats_m.at(satInd)->particleInd; }
 
 	LogFile*    log()                       const { return logFile_m.get(); }
 	Particle*   particle(int partInd)       const { return particles_m.at(partInd).get(); }

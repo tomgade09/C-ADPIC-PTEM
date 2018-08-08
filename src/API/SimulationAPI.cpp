@@ -9,77 +9,32 @@
 using utils::fileIO::CSV;
 using utils::string::strToDblVec;
 
-///One liner functions
-DLLEXP_EXTC double getSimulationTimeAPI(Simulation* simulation) {
-	return simulation->simtime(); }
+//Simulation Management Functions
+DLLEXP_EXTC Sim* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir) {
+	SIM_API_EXCEP_CHECK(return new Sim(dt, simMin, simMax, rootdir)); }
 
-DLLEXP_EXTC double getDtAPI(Simulation* simulation) {
-	return simulation->dt(); }
+DLLEXP_EXTC Sim* loadCompletedSimDataAPI(const char* fileDir) {
+	SIM_API_EXCEP_CHECK(return new Sim(fileDir)); }
 
-DLLEXP_EXTC double getSimMinAPI(Simulation* simulation) {
-	return simulation->simMin(); }
+DLLEXP_EXTC void initializeSimulationAPI(Sim* sim) {
+	SIM_API_EXCEP_CHECK(sim->initializeSimulation()); }
 
-DLLEXP_EXTC double getSimMaxAPI(Simulation* simulation) {
-	return simulation->simMax(); }
+DLLEXP_EXTC void iterateSimCPUAPI(Sim* sim, int numberOfIterations, int itersBtwCouts) {
+	SIM_API_EXCEP_CHECK(sim->__iterateSimCPU(numberOfIterations, itersBtwCouts)); }
 
-DLLEXP_EXTC int getNumberOfParticleTypesAPI(Simulation* simulation) {
-	return (int)(simulation->getNumberOfParticleTypes()); }
+DLLEXP_EXTC void iterateSimulationAPI(Sim* sim, int numberOfIterations, int itersBtwCouts) {
+	SIM_API_EXCEP_CHECK(sim->iterateSimulation(numberOfIterations, itersBtwCouts)); }
 
-DLLEXP_EXTC int getNumberOfParticlesAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(return (int)(simulation->getNumberOfParticles(partInd))); }
+DLLEXP_EXTC void freeGPUMemoryAPI(Sim* sim) {
+	SIM_API_EXCEP_CHECK(sim->freeGPUMemory()); }
 
-DLLEXP_EXTC int getNumberOfAttributesAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(return (int)(simulation->getNumberOfAttributes(partInd))); }
+DLLEXP_EXTC void saveDataToDiskAPI(Sim* sim) {
+	SIM_API_EXCEP_CHECK(sim->saveDataToDisk()); }
 
-DLLEXP_EXTC const char* getParticleNameAPI(Simulation* simulation, int partInd) {
-	SIM_API_EXCEP_CHECK(return simulation->getParticleName(partInd).c_str()); }
+DLLEXP_EXTC void terminateSimulationAPI(Sim* sim) {
+	SIM_API_EXCEP_CHECK(delete sim); }
 
-DLLEXP_EXTC const char* getSatelliteNameAPI(Simulation* simulation, int satInd) {
-	SIM_API_EXCEP_CHECK(return simulation->getSatelliteName(satInd).c_str()); }
-
-DLLEXP_EXTC LogFile* getLogFilePointerAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(return simulation->log()); }
-
-
-//Pointer one liners
-DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData) {
-	SIM_API_EXCEP_CHECK(return simulation->getParticleData(partIndex, originalData).at(attrIndex).data()); }
-
-
-//Field tools
-DLLEXP_EXTC double getBFieldAtSAPI(Simulation* simulation, double s, double time) {
-	return simulation->getBFieldAtS(s, time); }
-
-DLLEXP_EXTC double getEFieldAtSAPI(Simulation* simulation, double s, double time) {
-	return simulation->getEFieldAtS(s, time); }
-
-
-//Simulation Management Function Wrappers
-DLLEXP_EXTC Simulation* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir) {
-	SIM_API_EXCEP_CHECK(return new Simulation(dt, simMin, simMax, rootdir)); }
-
-DLLEXP_EXTC void initializeSimulationAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(simulation->initializeSimulation()); }
-
-DLLEXP_EXTC void __iterateSimCPUAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts) {
-	SIM_API_EXCEP_CHECK(simulation->__iterateSimCPU(numberOfIterations, itersBtwCouts)); }
-
-DLLEXP_EXTC void iterateSimulationAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts) {
-	SIM_API_EXCEP_CHECK(simulation->iterateSimulation(numberOfIterations, itersBtwCouts)); }
-
-DLLEXP_EXTC void freeGPUMemoryAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(simulation->freeGPUMemory()); }
-
-DLLEXP_EXTC void saveDataToDiskAPI(Simulation* simulation) {
-	SIM_API_EXCEP_CHECK(simulation->saveDataToDisk()); }
-
-DLLEXP_EXTC void terminateSimulationAPI(Simulation* simulation) {
-	delete simulation; }
-
-DLLEXP_EXTC Simulation* loadCompletedSimDataAPI(const char* fileDir) {
-	SIM_API_EXCEP_CHECK( return new Simulation(fileDir) ); }
-
-DLLEXP_EXTC void setupExampleSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir)
+DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* loadFileDir)
 {
 	SIM_API_EXCEP_CHECK(
 	double simMin{ sim->simMin() };
@@ -93,9 +48,6 @@ DLLEXP_EXTC void setupExampleSimulationAPI(Simulation* sim, int numParts, const 
 
 	sim->createTempSat(0, simMin * 0.999, true, "btmElec");
 	sim->createTempSat(0, simMax * 1.001, false, "topElec");
-
-	//sim->createTempSat(0, 1014252.60176003, false, "1e6ElecDown"); //altitude = 1000km, s = what you see to the left
-	//sim->createTempSat(0, 1014252.60176003, true, "1e6ElecUp");
 	sim->createTempSat(0, 3049829.25570638, false, "3e6ElecDown"); //altitude = 3000km
 	sim->createTempSat(0, 3049829.25570638, true, "3e6ElecUp");
 	sim->createTempSat(0, 4071307.04106411, false, "4e6ElecDown"); //altitude = 4000km
@@ -103,67 +55,99 @@ DLLEXP_EXTC void setupExampleSimulationAPI(Simulation* sim, int numParts, const 
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
-DLLEXP_EXTC void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery)
-{
+DLLEXP_EXTC void setupSingleElectronAPI(Sim* sim, double vpara, double vperp, double s, double t_inc)
+{ //check that satellites and B/E fields have been created here??
 	SIM_API_EXCEP_CHECK(
-	sim->initializeSimulation();
-	sim->iterateSimulation(iterations, printEvery);
-	); /* SIM_API_EXCEP_CHECK() */
-}
-
-DLLEXP_EXTC void runSingleElectronAPI(Simulation* sim, double vpara, double vperp, double s, double t_inc, int iterations, int printEvery)
-{
-	SIM_API_EXCEP_CHECK(
-	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
-	sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, 1, "", false);
-	std::vector<std::vector<double>> attrs{ std::vector<std::vector<double>>({ {vpara}, {vperp}, {s}, {0.0}, {t_inc} }) };
+	std::vector<std::vector<double>> attrs{ std::vector<std::vector<double>>({ { vpara },{ vperp },{ s },{ 0.0 },{ t_inc } }) };
 	sim->particle("elec")->loadDataFromMem(attrs, true);
 	sim->particle("elec")->loadDataFromMem(attrs, false);
-	sim->createTempSat(0, sim->simMin() * 0.999, true, "btmElec");
-	sim->initializeSimulation();
-	sim->__iterateSimCPU(iterations, printEvery);
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
 
-//Fields management
-DLLEXP_EXTC void setBFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString) {
+//Field Management Functions
+DLLEXP_EXTC void setBFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString) {
 	SIM_API_EXCEP_CHECK(sim->setBFieldModel(modelName, strToDblVec(doubleString))); }
 
-DLLEXP_EXTC void addEFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString) {
+DLLEXP_EXTC void addEFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString) {
 	SIM_API_EXCEP_CHECK(sim->addEFieldModel(modelName, strToDblVec(doubleString))); }
 
-//Particle functions
-DLLEXP_EXTC void createParticleTypeAPI(Simulation* simulation, const char* name, double mass, double charge, long numParts, const char* loadFileDir) {
-	SIM_API_EXCEP_CHECK(simulation->createParticleType(name, mass, charge, numParts, loadFileDir)); }
+DLLEXP_EXTC double getBFieldAtSAPI(Sim* sim, double s, double time) {
+	return sim->getBFieldAtS(s, time); }
+
+DLLEXP_EXTC double getEFieldAtSAPI(Sim* sim, double s, double time) {
+	return sim->getEFieldAtS(s, time); }
 
 
-//Satellite functions
-DLLEXP_EXTC void createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name) {
-	SIM_API_EXCEP_CHECK(simulation->createTempSat(particleInd, altitude, upwardFacing, name)); }
+//Particle Management Functions
+DLLEXP_EXTC void createParticleTypeAPI(Sim* sim, const char* name, double mass, double charge, long numParts, const char* loadFileDir) {
+	SIM_API_EXCEP_CHECK(sim->createParticleType(name, mass, charge, numParts, loadFileDir)); }
 
-DLLEXP_EXTC int  getNumberOfSatellitesAPI(Simulation* simulation) {
-	return (int)(simulation->getNumberOfSatellites()); }
 
-DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int msmtInd, int attributeInd) {
-	SIM_API_EXCEP_CHECK(return simulation->getSatelliteData(satelliteInd).at(msmtInd).at(attributeInd).data()); }
+//Satellite Management Functions
+DLLEXP_EXTC void createSatelliteAPI(Sim* sim, int particleInd, double altitude, bool upwardFacing, const char* name) {
+	SIM_API_EXCEP_CHECK(sim->createTempSat(particleInd, altitude, upwardFacing, name)); }
+
+DLLEXP_EXTC int  getNumberOfSatellitesAPI(Sim* sim) {
+	return (int)(sim->getNumberOfSatellites()); }
+
+DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd) {
+	SIM_API_EXCEP_CHECK(return sim->getSatelliteData(satelliteInd).at(msmtInd).at(attributeInd).data()); }
+
+DLLEXP_EXTC int getPartIndOfSatAPI(Sim* sim, int satelliteInd) {
+	SIM_API_EXCEP_CHECK(return sim->getPartIndOfSat(satelliteInd)); }
+
+
+//Access Functions
+DLLEXP_EXTC double getSimTimeAPI(Sim* sim) {
+	return sim->simtime(); }
+
+DLLEXP_EXTC double getDtAPI(Sim* sim) {
+	return sim->dt(); }
+
+DLLEXP_EXTC double getSimMinAPI(Sim* sim) {
+	return sim->simMin(); }
+
+DLLEXP_EXTC double getSimMaxAPI(Sim* sim) {
+	return sim->simMax(); }
+
+DLLEXP_EXTC int getNumberOfParticleTypesAPI(Sim* sim) {
+	return (int)(sim->getNumberOfParticleTypes()); }
+
+DLLEXP_EXTC int getNumberOfParticlesAPI(Sim* sim, int partInd) {
+	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticles(partInd))); }
+
+DLLEXP_EXTC int getNumberOfAttributesAPI(Sim* sim, int partInd) {
+	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfAttributes(partInd))); }
+
+DLLEXP_EXTC const char* getParticleNameAPI(Sim* sim, int partInd) {
+	SIM_API_EXCEP_CHECK(return sim->getParticleName(partInd).c_str()); }
+
+DLLEXP_EXTC const char* getSatelliteNameAPI(Sim* sim, int satInd) {
+	SIM_API_EXCEP_CHECK(return sim->getSatelliteName(satInd).c_str()); }
+
+DLLEXP_EXTC LogFile* getLogFilePointerAPI(Sim* sim) {
+	SIM_API_EXCEP_CHECK(return sim->log()); }
+
+DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData) {
+	SIM_API_EXCEP_CHECK(return sim->getParticleData(partIndex, originalData).at(attrIndex).data()); }
 
 
 //CSV functions
-DLLEXP_EXTC void writeCommonCSVAPI(Simulation* simulation)
+DLLEXP_EXTC void writeCommonCSVAPI(Sim* sim)
 {
 	SIM_API_EXCEP_CHECK(
 		CSV csvtmp("./elecoutput.csv");
-		std::vector<std::vector<double>> origData{ simulation->getParticleData(0, true) };
+		std::vector<std::vector<double>> origData{ sim->getParticleData(0, true) };
 		csvtmp.add({ origData.at(0), origData.at(1), origData.at(2) }, { "vpara orig", "vperp orig", "s orig" });
 		csvtmp.addspace();
 		
-		std::vector<std::vector<double>> btmElecData{ simulation->getSatelliteData(0).at(0) };
+		std::vector<std::vector<double>> btmElecData{ sim->getSatelliteData(0).at(0) };
 		csvtmp.add({ btmElecData.at(3), btmElecData.at(0), btmElecData.at(1), btmElecData.at(2) },
 			{ "t_esc btm", "vpara btm", "vperp btm", "s btm" });
 		csvtmp.addspace();
 
-		std::vector<std::vector<double>> topElecData{ simulation->getSatelliteData(1).at(0) };
+		std::vector<std::vector<double>> topElecData{ sim->getSatelliteData(1).at(0) };
 		csvtmp.add({ topElecData.at(3), topElecData.at(0), topElecData.at(1), topElecData.at(2) },
 			{ "t_esc top", "vpara top", "vperp top", "s top" });
 		csvtmp.addspace();
@@ -182,7 +166,7 @@ DLLEXP_EXTC void writeCommonCSVAPI(Simulation* simulation)
 int main()
 {
 	SIM_API_EXCEP_CHECK(
-	Simulation* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, "./out/") };
+	Sim* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, "./out/") };
 	setupExampleSimulationAPI(sim, 3456000, "./../_in/data");
 	sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 	runExampleSimulationAPI(sim, 500, 50);

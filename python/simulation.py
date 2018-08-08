@@ -1,30 +1,14 @@
 import time, csv
-import os, sys, shutil
+import os, sys
 
+# Current Directory
 from __simulationvariables import *
+from __setup import *
 
+# ./SimulationClass Directory
 sys.path.append(os.path.normpath(PYROOTDIR + '/SimulationClass/'))
-
 from Simulation import *
 from __plotParticles import *
-
-#Setting up folders, changing directory
-def setupFolders(): #moving to C++ eventually
-    os.chdir(PYROOTDIR)
-    dtg = time.strftime("%y%m%d") + "_" + time.strftime("%H.%M.%S")
-    savedir = os.path.abspath(ROOTDIR + '/_dataout' + '/' + dtg)
-    if (not(os.path.isdir(savedir))):
-        os.makedirs(savedir)
-        os.makedirs(savedir + '/bins/particles_init')
-        os.makedirs(savedir + '/bins/particles_final')
-        os.makedirs(savedir + '/bins/satellites')
-        os.makedirs(savedir + '/graphs/EBfields')
-    os.chdir(savedir)
-
-    srcfile = PYROOTDIR + '/__simulationvariables.py' #change this
-    shutil.copy(srcfile, './')
-
-    return savedir, dtg
 
 def simulationRunMain():
     savedir, dtg = setupFolders()
@@ -32,10 +16,9 @@ def simulationRunMain():
 
     sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM)
     sim.setupExampleSim(NUMPARTICLES)
-    finalDat, origDat, satDat = sim.runExampleSim(NUMITER, 500)
-    #sim.writeCommonCSV()
+    sim.run(NUMITER, 500)
 
-    fields = sim.fieldsAtAllZ(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
+    fields = sim.getFieldsAtAllS(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
     for iii in range(len(fields[2])):
         fields[2][iii] /= RADIUS_EARTH #Normalizes location where field is measured (makes graph reading easier)
     for iii in range(len(fields[0])):
@@ -47,8 +30,6 @@ def simulationRunMain():
 
     sim.logWriteEntry('Python: Done plotting data.  Terminating simulation.')
 
-    sim.terminateSimulation()
-
     return
 
 
@@ -56,7 +37,7 @@ if __name__ == '__main__':
     simulationRunMain()
 
 if __name__ != '__main__':
-    print("Functions available in simulation.py:")
+    print("Functions available:")
     print()
     print("setupFolders(): Sets up folders according to default structure.  Changes dir to the data root folder (/PROJECTROOT/distgraphs/DATE_TIME).  Returns dllLocation, savedir, rootdir, DATE_TIME string")
     print()

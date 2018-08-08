@@ -4,52 +4,55 @@
 #include "dlldefines.h"
 #include "Simulation/Simulation.h"
 
-///One liner functions
-DLLEXP_EXTC double      getSimulationTimeAPI(Simulation* simulation);
-DLLEXP_EXTC double      getDtAPI(Simulation* simulation);
-DLLEXP_EXTC double      getSimMinAPI(Simulation* simulation);
-DLLEXP_EXTC double      getSimMaxAPI(Simulation* simulation);
-DLLEXP_EXTC int         getNumberOfParticleTypesAPI(Simulation* simulation);
-DLLEXP_EXTC int         getNumberOfParticlesAPI(Simulation* simulation, int partInd);
-DLLEXP_EXTC int         getNumberOfAttributesAPI(Simulation* simulation, int partInd);
-DLLEXP_EXTC const char* getParticleNameAPI(Simulation* simulation, int partInd);
-DLLEXP_EXTC const char* getSatelliteNameAPI(Simulation* simulation, int satInd);
-DLLEXP_EXTC LogFile*    getLogFilePointerAPI(Simulation* simulation);
+typedef Simulation Sim;
 
-//Pointer one liners
-DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData);
+//Simulation Management Functions
+DLLEXP_EXTC Sim* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir);
+DLLEXP_EXTC Sim* loadCompletedSimDataAPI(const char* fileDir);
+DLLEXP_EXTC void initializeSimulationAPI(Sim* sim);
+DLLEXP_EXTC void iterateSimCPUAPI(Sim* sim, int numberOfIterations, int itersBtwCouts);
+DLLEXP_EXTC void iterateSimulationAPI(Sim* sim, int numberOfIterations, int itersBtwCouts);
+DLLEXP_EXTC void freeGPUMemoryAPI(Sim* sim);
+DLLEXP_EXTC void saveDataToDiskAPI(Sim* sim);
+DLLEXP_EXTC void terminateSimulationAPI(Sim* sim);
+DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* loadFileDir);
+DLLEXP_EXTC void setupSingleElectronAPI(Sim* sim, double vpara, double vperp, double s, double t_inc);
+//build API function for resetSimulation
 
-//Field tools
-DLLEXP_EXTC double getBFieldAtSAPI(Simulation* simulation, double s, double time);
-DLLEXP_EXTC double getEFieldAtSAPI(Simulation* simulation, double s, double time);
 
-//Simulation Management Function Wrappers
-DLLEXP_EXTC Simulation* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir);
-DLLEXP_EXTC void initializeSimulationAPI(Simulation* simulation);
-DLLEXP_EXTC void __iterateSimCPUAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts);
-DLLEXP_EXTC void iterateSimulationAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts);
-DLLEXP_EXTC void freeGPUMemoryAPI(Simulation* simulation);
-DLLEXP_EXTC void terminateSimulationAPI(Simulation* simulation);
-DLLEXP_EXTC Simulation* loadCompletedSimDataAPI(const char* fileDir);
-DLLEXP_EXTC void setupExampleSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir);
-DLLEXP_EXTC void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery);
-DLLEXP_EXTC void runSingleElectronAPI(Simulation* sim, double vpara, double vperp, double s, double t_inc, int iterations, int printEvery);
+//Field Management Functions
+DLLEXP_EXTC double getBFieldAtSAPI(Sim* sim, double s, double time);
+DLLEXP_EXTC double getEFieldAtSAPI(Sim* sim, double s, double time);
+DLLEXP_EXTC void   setBFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString); //switch to comma delimited string of variables
+DLLEXP_EXTC void   addEFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString);
 
-//build API functions for resetSimulation and saveDataToDisk
 
-//Fields management
-DLLEXP_EXTC void setBFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString); //switch to comma delimited string of variables
-DLLEXP_EXTC void addEFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString);
+//Particle Management Functions
+DLLEXP_EXTC void createParticleTypeAPI(Sim* sim, const char* name, double mass, double charge, long numParts, const char* loadFileDir = "");
 
-//Particle functions
-DLLEXP_EXTC void createParticleTypeAPI(Simulation* simulation, const char* name, double mass, double charge, long numParts, const char* loadFileDir = "");
 
-//Satellite functions
-DLLEXP_EXTC void    createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name);
-DLLEXP_EXTC int     getNumberOfSatellitesAPI(Simulation* simulation);
-DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int msmtInd, int attributeInd);
+//Satellite Management Functions
+DLLEXP_EXTC void          createSatelliteAPI(Sim* sim, int particleInd, double altitude, bool upwardFacing, const char* name);
+DLLEXP_EXTC int           getNumberOfSatellitesAPI(Sim* sim);
+DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd);
+DLLEXP_EXTC int           getPartIndOfSatAPI(Sim* sim, int satelliteInd);
 
-//CSV functions
-DLLEXP_EXTC void writeCommonCSVAPI(Simulation* simulation);
+
+//Access Functions
+DLLEXP_EXTC double        getSimTimeAPI(Sim* sim);
+DLLEXP_EXTC double        getDtAPI(Sim* sim);
+DLLEXP_EXTC double        getSimMinAPI(Sim* sim);
+DLLEXP_EXTC double        getSimMaxAPI(Sim* sim);
+DLLEXP_EXTC int           getNumberOfParticleTypesAPI(Sim* sim);
+DLLEXP_EXTC int           getNumberOfParticlesAPI(Sim* sim, int partInd);
+DLLEXP_EXTC int           getNumberOfAttributesAPI(Sim* sim, int partInd);
+DLLEXP_EXTC const char*   getParticleNameAPI(Sim* sim, int partInd);
+DLLEXP_EXTC const char*   getSatelliteNameAPI(Sim* sim, int satInd);
+DLLEXP_EXTC LogFile*      getLogFilePointerAPI(Sim* sim);
+DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData);
+
+
+//CSV Functions
+DLLEXP_EXTC void writeCommonCSVAPI(Sim* sim);
 
 #endif//end if for header guard

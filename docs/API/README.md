@@ -20,49 +20,48 @@ Generally speaking, API functions take in a pointer to an instance of a C++ clas
 
 ### Simulation API Functions
 ```
-//Access Functions
-double      getSimulationTimeAPI(Simulation* simulation);
-double      getDtAPI(Simulation* simulation);
-double      getSimMinAPI(Simulation* simulation);
-double      getSimMaxAPI(Simulation* simulation);
-int         getNumberOfParticleTypesAPI(Simulation* simulation);
-int         getNumberOfParticlesAPI(Simulation* simulation, int partInd);
-int         getNumberOfAttributesAPI(Simulation* simulation, int partInd);
-const char* getParticleNameAPI(Simulation* simulation, int partInd);
-const char* getSatelliteNameAPI(Simulation* simulation, int satInd);
-LogFile*    getLogFilePointerAPI(Simulation* simulation);
-const double* getPointerToParticleAttributeArrayAPI(Simulation* simulation, int partIndex, int attrIndex, bool originalData);
-
-//Field Calculation
-double getBFieldAtSAPI(Simulation* simulation, double s, double time);
-double getEFieldAtSAPI(Simulation* simulation, double s, double time);
-
 //Simulation Management Functions
-Simulation* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir);
-void initializeSimulationAPI(Simulation* simulation);
-void __iterateSimCPUAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts);
-void iterateSimulationAPI(Simulation* simulation, int numberOfIterations, int itersBtwCouts);
-void freeGPUMemoryAPI(Simulation* simulation);
-void terminateSimulationAPI(Simulation* simulation);
-Simulation* loadCompletedSimDataAPI(const char* fileDir);
-void setupExampleSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir);
-void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery);
-void runSingleElectronAPI(Simulation* sim, double vpara, double vperp, double s, double t_inc, int iterations, int printEvery);
+Sim* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir);
+Sim* loadCompletedSimDataAPI(const char* fileDir);
+void initializeSimulationAPI(Sim* sim);
+void __iterateSimCPUAPI(Sim* sim, int numberOfIterations, int itersBtwCouts);
+void iterateSimulationAPI(Sim* sim, int numberOfIterations, int itersBtwCouts);
+void freeGPUMemoryAPI(Sim* sim);
+void saveDataToDiskAPI(Sim* sim);
+void terminateSimulationAPI(Sim* sim);
+void setupExampleSimulationAPI(Sim* sim, int numParts, const char* loadFileDir);
+void setupSingleElectronAPI(Sim* sim, double vpara, double vperp, double s, double t_inc);
 
-//Fields Management
-void setBFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString); //switch to comma delimited string of variables
-void addEFieldModelAPI(Simulation* sim, const char* modelName, const char* doubleString);
+//Field Management Functions
+double getBFieldAtSAPI(Sim* sim, double s, double time);
+double getEFieldAtSAPI(Sim* sim, double s, double time);
+void   setBFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString); //switch to comma delimited string of variables
+void   addEFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString);
 
-//Particle Management
-void createParticleTypeAPI(Simulation* simulation, const char* name, double mass, double charge, long numParts, const char* loadFileDir = "");
+//Particle Management Functions
+void createParticleTypeAPI(Sim* sim, const char* name, double mass, double charge, long numParts, const char* loadFileDir = "");
 
-//Satellite Management
-void    createSatelliteAPI(Simulation* simulation, int particleInd, double altitude, bool upwardFacing, const char* name);
-int     getNumberOfSatellitesAPI(Simulation* simulation);
-const double* getSatelliteDataPointersAPI(Simulation* simulation, int satelliteInd, int msmtInd, int attributeInd);
+//Satellite Management Functions
+void          createSatelliteAPI(Sim* sim, int particleInd, double altitude, bool upwardFacing, const char* name);
+int           getNumberOfSatellitesAPI(Sim* sim);
+const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd);
+int           getPartIndOfSatAPI(Sim* sim, int satelliteInd);
 
-//CSV Writing
-void writeCommonCSVAPI(Simulation* simulation);
+//Access Functions
+double        getSimTimeAPI(Sim* sim);
+double        getDtAPI(Sim* sim);
+double        getSimMinAPI(Sim* sim);
+double        getSimMaxAPI(Sim* sim);
+int           getNumberOfParticleTypesAPI(Sim* sim);
+int           getNumberOfParticlesAPI(Sim* sim, int partInd);
+int           getNumberOfAttributesAPI(Sim* sim, int partInd);
+const char*   getParticleNameAPI(Sim* sim, int partInd);
+const char*   getSatelliteNameAPI(Sim* sim, int satInd);
+LogFile*      getLogFilePointerAPI(Sim* sim);
+const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData);
+
+//CSV Functions
+void writeCommonCSVAPI(Sim* sim);
 ```
 
 *Note: this section refers in general to most of the functions in the above list.  Select functions that are worthy of further documentation will be listed immediately below this section.*
@@ -85,7 +84,6 @@ See documentation of [Simulation](./../Simulation/README.md) member functions fo
 ---
 ```
 void setupExampleSimulationAPI(Simulation* sim, int numParts, const char* loadFileDir);
-void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery);
 ```
 #### Inputs:
 `sim` - described above
@@ -93,10 +91,6 @@ void runExampleSimulationAPI(Simulation* sim, int iterations, int printEvery);
 `numParts` - number of particles that Particle will contain
 
 `loadFileDir` - where particle data will be loaded from.  *Note: name of data files must be preceded by "elec", as this is what the particle will be called.*
-
-`iterations` - how many iterations to run the sim for
-
-`printEvery` - how often to print a status report on the simulation.  Also checks whether all particles have escaped while printing.  A lower number here will lead to more printed status updates, and check whether all particles have escaped more often, incurring a slight performance penalty.  When in doubt, go with 500 or 1000.
 
 
 #### Outputs:
