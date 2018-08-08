@@ -67,7 +67,7 @@ class Simulation(_Simulation._SimulationCDLL):
             self.__getSimChars()
 
         self.simDLL_m.initializeSimulationAPI(self.cppSimPtr_m)
-        self.simDLL_m.__iterateSimCPUAPI(self.cppSimPtr_m, iterations, iterBtwCouts)
+        self.simDLL_m.iterateSimCPUAPI(self.cppSimPtr_m, iterations, iterBtwCouts)
 
         if (pullData):  #Returns final particle data, original particle data, satellite data
             self.finalData_m = self.getFinalDataAllParticles()
@@ -140,7 +140,7 @@ class Simulation(_Simulation._SimulationCDLL):
 
     def __iterateSimCPU(self, numberOfIterations, itersBtwCouts):
         print("Number Of Iterations: ", numberOfIterations)
-        self.simDLL_m.__iterateSimCPUAPI(self.cppSimPtr_m, numberOfIterations, itersBtwCouts)
+        self.simDLL_m.iterateSimCPUAPI(self.cppSimPtr_m, numberOfIterations, itersBtwCouts)
 
     def __iterateSimulation(self, numberOfIterations, itersBtwCouts):
         print("Number Of Iterations: ", numberOfIterations)
