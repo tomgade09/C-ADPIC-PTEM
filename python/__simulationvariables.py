@@ -6,7 +6,7 @@ from sys import platform
 
 #Directories
 PYROOTDIR = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
-ROOTDIR = os.path.abspath(PYROOTDIR + './../')
+ROOTDIR = os.path.abspath(PYROOTDIR + '/../')
 LIBDIR = os.path.abspath(ROOTDIR + '/lib/')
 
 if platform == "win32":
@@ -35,7 +35,7 @@ NUMITER = 75000
 #Distribution Quantities
 #RANDOM = True
 LOADDIST = True
-DISTINFOLDER = os.path.abspath(ROOTDIR + './_in/data/')
+DISTINFOLDER = os.path.abspath(ROOTDIR + '/_in/data/')
 
 NUMPARTICLES = 3456000 #172800 #115200
 INITIAL_T_ION_EV = 2.5
@@ -55,4 +55,4 @@ ILAT = 72.0
 
 #Alfven E LUT
 ALFVENLUTCSV = ""
-#LUTDATAFILE = os.path.abspath(ROOTDIR + './_in/ez.out')
+#LUTDATAFILE = os.path.abspath(ROOTDIR + '/_in/ez.out')
