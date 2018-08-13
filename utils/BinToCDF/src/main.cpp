@@ -13,7 +13,7 @@ constexpr int CDFNEBINS       { 48 };
 constexpr int CDFNANGLEBINS   { 18 };
 constexpr double NFLUXIONRATIO{ 90.0 / 90.0 }; //numerator (90) is normal range (0-90), denominator is the range of the distribution
 constexpr double NFLUXMAGRATIO{ 16.0 / 90.0 }; //so here, the distribution is from 16 degrees to zero (not 90 to 0), meaning the dist has more particles per angle
-const std::string SIMDATADIR  { "./../_dataout/180716_14.09.22/" };
+//const std::string SIMDATADIR  { "./../_dataout/180716_14.09.22/" };
 const std::string PARTNAME    { "elec" };
 const std::string BTMSATNM    { "btmElec" };
 const std::string UPGSATNM    { "4e6ElecDown" }; //"Down" is downward facing detector (so upgoing), not downgoing particles
@@ -25,8 +25,15 @@ using postprocess::ParticleData;
 using postprocess::Maxwellian;
 using utils::numerical::generateSpacedValues;
 
-int main()
+int main(int argc, char* argv[])
 {
+	if (argc != 2)
+	{
+		std::cout << "\nBinToCDF Usage:\n" << "\tBinToCDF.exe datadir\n" << "\n\tdatadir:\tThe directory where the data to process resides.\nExiting.\n";
+		exit(1);
+	}
+	std::string simdatadir{ argv[1] };
+	
 	auto printVec = [](const std::vector<double>& x, int start = 0, int end = 0, int intvl = 1)
 	{ //lambda which prints values from a vector
 		if (end == 0) end = (int)x.size();
@@ -46,12 +53,7 @@ int main()
 	maxwellian.magModFactor = NFLUXMAGRATIO; // * magcm2Ratio //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
 	PPData ppdata{ maxwellian, generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true),
-		SIMDATADIR, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
-
-	//printVec(ppdata.maxCounts, 0, 96);
-	//std::cout << "\n\n";
-	//printVec(ppdata.maxCounts, 1728000, 1728096);
-	//std::cout << "\n\n";
+		simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
 
 	std::vector<std::vector<double>> fluxData;
 	SIM_API_EXCEP_CHECK(fluxData = postprocess::steadyFlux(ppdata));

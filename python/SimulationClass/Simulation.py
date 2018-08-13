@@ -62,7 +62,7 @@ class Simulation(_Simulation._SimulationCDLL):
         
         return
     
-    def __runCPU(self, iterations, iterBtwCouts, pullData=False):
+    def runCPU(self, iterations, iterBtwCouts, pullData=False):
         if self.numAttrs_m == []:
             self.__getSimChars()
 

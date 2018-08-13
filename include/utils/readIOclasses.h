@@ -16,10 +16,11 @@ namespace utils
 			std::string name_m;
 			std::vector<std::string> attrNames_m;
 			std::vector<std::vector<double>> data_m;
+			double mass_m;
 
 
 		public:
-			DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames);
+			DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames, double mass);
 			~DistributionFromDisk() {}
 
 			const std::vector<std::vector<double>>& data() const { return data_m; }

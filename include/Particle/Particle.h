@@ -36,9 +36,10 @@ public:
 	Particle(const Particle&) = delete;
 	Particle& operator=(const Particle&) = delete;
 
-	const std::vector<std::vector<double>>& data(bool orig) const { return ((orig) ? origData_m : currData_m); }
-	std::vector<double>& dataAttr(bool orig, int attr) { return ((orig) ? origData_m.at(attr) : currData_m.at(attr)); }
-	const std::vector<std::string>& attrNames() const { return attributeNames_m; }
+	std::vector<std::vector<double>>&       __data(bool orig) { return ((orig) ? origData_m : currData_m); } //returns a non-const version of data
+	const std::vector<std::vector<double>>& data(bool orig) const { return ((orig) ? origData_m : currData_m); } //returns a const version of data
+	std::vector<double>&                    dataAttr(bool orig, int attr) { return ((orig) ? origData_m.at(attr) : currData_m.at(attr)); }
+	const std::vector<std::string>&         attrNames() const { return attributeNames_m; }
 	std::string name()    const { return name_m; }
 	double      mass()    const { return mass_m; }
 	double      charge()  const { return charge_m; }

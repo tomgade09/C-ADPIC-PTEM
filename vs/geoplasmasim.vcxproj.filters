@@ -205,9 +205,6 @@
     <None Include="..\python\utils\utilsAPI.py">
       <Filter>Python Files\utils</Filter>
     </None>
-    <None Include="..\python\utils\prepLoadDistribution.py">
-      <Filter>Python Files\utils</Filter>
-    </None>
     <None Include="..\docs\README.md">
       <Filter>Documentation</Filter>
     </None>
@@ -228,6 +225,12 @@
     </None>
     <None Include="..\docs\Particle\README.md">
       <Filter>Documentation\Particle</Filter>
+    </None>
+    <None Include="..\python\__setup.py">
+      <Filter>Python Files</Filter>
+    </None>
+    <None Include="..\python\utils\loadDistributions.py">
+      <Filter>Python Files\utils</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

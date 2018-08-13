@@ -52,12 +52,12 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\lib\include;$(SolutionDir)..\..\..\include;$(SolutionDir)..\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lib;$(SolutionDir)..\..\..\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\..\lib</OutDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)..\lib\include;$(SolutionDir)..\..\..\include;$(SolutionDir)..\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lib;$(SolutionDir)..\..\..\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\..\lib</OutDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

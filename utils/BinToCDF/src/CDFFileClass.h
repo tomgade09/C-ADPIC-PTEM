@@ -5,9 +5,7 @@
 #include <string>
 #include <vector>
 
-#define WIN32 //for cdf
 #include "cdf.h"
-#undef WIN32
 
 #define CDFCHKERR() { if (exitStatus_m != CDF_OK) { CDFgetStatusText(exitStatus_m, errTxt_m); std::cout << "Something went wrong: " << exitStatus_m << ":" << errTxt_m << " : " << __FILE__ << ":" << __LINE__ << std::endl; } }
 

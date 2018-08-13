@@ -9,7 +9,8 @@ namespace utils
 {
 	namespace fileIO
 	{
-		DistributionFromDisk::DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames) : name_m{ name }, attrNames_m{ attrNames }
+		DistributionFromDisk::DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames, double mass) : 
+			name_m{ name }, attrNames_m{ attrNames }, mass_m{ mass }
 		{
 			int attrsize{ 0 };
 			for (int attr = 0; attr < attrNames.size(); attr++)
@@ -32,6 +33,11 @@ namespace utils
 			for (int iii = 0; iii < data_m.size(); iii++)
 				std::cout << data_m.at(iii).at(at) << ((iii != data_m.size() - 1) ? ", " : "");
 			std::cout << std::endl;
+
+			std::vector<double> E{ { 0.0 } };
+			std::vector<double> Pitch{ { 0.0 } };
+			numerical::v2DtoEPitch({ data_m.at(0).at(at) }, { data_m.at(1).at(at) }, mass_m, E, Pitch);
+			std::cout << "E, Pitch: " << E.at(0) << ", " << Pitch.at(0) << "\n";
 		}
 
 		void DistributionFromDisk::printdiff(DistributionFromDisk& other, int at) const

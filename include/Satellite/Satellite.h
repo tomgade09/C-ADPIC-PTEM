@@ -47,6 +47,7 @@ public:
 	double      altitude() const { return altitude_m; }
 	bool	    upward()   const { return upwardFacing_m; }
 	std::vector<std::vector<double>> getConsolidatedData(bool removeZeros);
+	std::vector<std::vector<std::vector<double>>>&       __data() { return data_m; }
 	const std::vector<std::vector<std::vector<double>>>& data() const { return data_m; }
 	double** get2DDataGPUPtr() const { return satCaptrData2D_d; }
 	double*  get1DDataGPUPtr() const { return satCaptrData1D_d; }

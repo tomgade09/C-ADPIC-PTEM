@@ -127,30 +127,43 @@ namespace utils
 			data_m.at(ind) = attr;
 		}
 
-		void ParticleDistribution::addEnergyRange(int energyBins, double Emin, double Emax, bool logE) //logE defaults to true
+		void ParticleDistribution::setattr(std::vector<double>& attr, std::string name)
 		{
-			energyPitch_m.at(0).resize(energyPitch_m.at(0).size() + energyBins);
+			for (unsigned int name_ind = 0; name_ind < attrNames_m.size(); name_ind++)
+				if (name == attrNames_m.at(name_ind)) { setattr(attr, name_ind); return; }
 
-			double binsize{ (Emax - Emin) / (energyBins - 1) };
-			ranges_m.at(0).push_back({ Emin, Emax, binsize });
-
-			for (int eng = 0; eng < energyBins; eng++)
-				energyPitch_m.at(0).at(eng) = (logE) ? pow(10, eng * binsize + Emin) : (Emin + eng * binsize);
+			throw std::logic_error("ParticleDistribution::setattr: no attribute named " + name);
 		}
 
-		void ParticleDistribution::addPitchRange(int pitchBins, double PAmin, double PAmax, bool midBin) //midBin defaults to true
+		void ParticleDistribution::addEnergyRange(unsigned int energyBins, double E_start, double E_end, bool logE) //logE defaults to true
 		{
-			energyPitch_m.at(1).resize(energyPitch_m.at(1).size() + pitchBins);
+			int bins{ (int)energyBins };
+			int oldsize{ (int)energyPitch_m.at(0).size() };
+			energyPitch_m.at(0).resize(oldsize + bins);
 
-			double binsize{ (midBin) ? ((PAmax - PAmin) / pitchBins) : ((PAmax - PAmin) / (pitchBins - 1)) };
-			ranges_m.at(1).push_back({ PAmin, PAmax, binsize });
+			double binsize{ (E_end - E_start) / (bins - 1) };
+			ranges_m.at(0).push_back({ E_start, E_end, binsize });
 
-			for (int ang = 0; ang < pitchBins; ang++)
-				energyPitch_m.at(1).at(ang) = (midBin) ? (PAmax - (ang + 0.5) * binsize) : (PAmax - ang * binsize);
+			for (int eng = 0; eng < bins; eng++) //starts at E_start and increments to E_end
+				energyPitch_m.at(0).at(oldsize + eng) = (logE) ? pow(10, E_start + eng * binsize) : (E_start + eng * binsize);
 		}
 
-		void ParticleDistribution::addSpecificParticle(int numParticles, double energy, double pitch, double s, int padmult)
+		void ParticleDistribution::addPitchRange(unsigned int pitchBins, double PA_start, double PA_end, bool midBin) //midBin defaults to true
 		{
+			int bins{ (int)pitchBins };
+			int oldsize{ (int)energyPitch_m.at(1).size() };
+			energyPitch_m.at(1).resize(oldsize + bins);
+
+			double binsize{ (midBin) ? ((PA_end - PA_start) / bins) : ((PA_end - PA_start) / (bins - 1)) };
+			ranges_m.at(1).push_back({ PA_start, PA_end, binsize });
+
+			for (int ang = 0; ang < bins; ang++) //starts at PA_start and increments to PA_end
+				energyPitch_m.at(1).at(oldsize + ang) = (midBin) ? (PA_start + (ang + 0.5) * binsize) : (PA_start + ang * binsize);
+		}
+
+		void ParticleDistribution::addSpecificParticle(unsigned int numParticles, double energy, double pitch, double s, int padmult)
+		{
+			int numPart{ (int)numParticles };
 			if (ranges_m.at(0).size() != 0 || ranges_m.at(1).size() != 0)
 			{
 				std::cout << "ParticleDistribution::addSpecificParticle: At least one of { energy, pitch } has at least one range specified.  addSpecificParticle is not (for now) compatible with specifying ranges.  Clearing existing ranges." << std::endl;
@@ -161,15 +174,15 @@ namespace utils
 			double vperp{ EPAtoV(energy, pitch, false) };
 
 			int finalsize{ (padmult != 0) ?
-				((((int)data_m.at(0).size() + numParticles) / padmult) + 1) * padmult : //calculate the nearest larger binsize that is a multiple of padmult
-				(int)data_m.at(0).size() + numParticles //if not padding, just calculate current size + number to add
+				((((int)data_m.at(0).size() + numPart) / padmult) + 1) * padmult : //calculate the nearest larger binsize that is a multiple of padmult
+				(int)data_m.at(0).size() + numPart //if not padding, just calculate current size + number to add
 			};
-			int padnum{ finalsize - ((int)data_m.at(0).size() + numParticles) }; //how many placeholders do we have to add to get to the above size? - 0 if not padding, something else if padding
+			int padnum{ finalsize - ((int)data_m.at(0).size() + numPart) }; //how many placeholders do we have to add to get to the above size? - 0 if not padding, something else if padding
 
 			for (auto& attr : data_m)
 				attr.reserve(finalsize);
 
-			for (int part = 0; part < numParticles; part++)
+			for (int part = 0; part < numPart; part++)
 			{
 				data_m.at(0).push_back(vpara);
 				data_m.at(1).push_back(vperp);

@@ -20,7 +20,7 @@ namespace utils
 			throw std::invalid_argument("utils::string::findAttrInd: cannot find attribute " + attr + " in string " + allAttrsStr);
 		}
 
-		DLLEXP std::vector<std::string> strToStrVec(std::string str, const char delim)
+		DLLEXP std::vector<std::string> strToStrVec(std::string str, const char delim) //delim defaults to ','
 		{
 			std::vector<std::string> strVec;
 
@@ -40,7 +40,7 @@ namespace utils
 			return strVec;
 		}
 
-		DLLEXP std::string strVecToStr(std::vector<std::string> strVec, const char delim)
+		DLLEXP std::string strVecToStr(std::vector<std::string> strVec, const char delim) //delim defaults to ','
 		{
 			std::string ret;
 			for (auto& str : strVec)
@@ -49,7 +49,7 @@ namespace utils
 			return ret;
 		}
 
-		DLLEXP std::vector<double> strToDblVec(std::string str, const char delim)
+		DLLEXP std::vector<double> strToDblVec(std::string str, const char delim) //delim defaults to ','
 		{
 			std::vector<std::string> strVec{ strToStrVec(str, delim) };
 			std::vector<double> ret;
@@ -63,7 +63,7 @@ namespace utils
 			return ret;
 		}
 
-		DLLEXP void stringPadder(std::string& in, int totalStrLen, int indEraseFrom)
+		DLLEXP void stringPadder(std::string& in, int totalStrLen, int indEraseFrom) //indEraseFrom defaults to 0
 		{
 			if (totalStrLen <= 0 || indEraseFrom < 0)
 				return;
