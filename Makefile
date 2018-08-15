@@ -1,7 +1,7 @@
 # Compiler binaries and settings
 CC         := g++
 NVCC       := nvcc
-CXXFLAGS   := -std=c++17 -fPIC -pedantic -O2
+CXXFLAGS   := -std=c++17 -fPIC -pedantic -O2 -fopenmp
 NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_30,code=\"sm_30,compute_30\" -x cu -m64 -cudart static -Xcompiler "-fPIC" -Xlinker "-shared"
 
 # Build-essential directories and defines
