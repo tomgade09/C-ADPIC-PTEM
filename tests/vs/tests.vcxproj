@@ -81,12 +81,12 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\tests\include;$(SolutionDir)..\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\lib</OutDir>
+    <OutDir>$(SolutionDir)..\lib\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)..\tests\include;$(SolutionDir)..\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\lib</OutDir>
+    <OutDir>$(SolutionDir)..\lib\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -21,30 +21,33 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 {
 	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 	
-	const double* v_d{ data_d[0] }; const double* mu_d{ data_d[1] }; const double* s_d{ data_d[2] };
-	
-	double* detected_v_d{ capture_d[0] }; double* detected_mu_d{ capture_d[1] }; double* detected_s_d{ capture_d[2] };
-	double* detected_t_d{ capture_d[3] }; double* detected_ind_d{ capture_d[4] };
-
-	double s_minus_vdt{ s_d[thdInd] - v_d[thdInd] * dt };
+	double* detected_t_d{ capture_d[3] };    //do this first before creating a bunch of pointers
 	
 	if (simtime == 0.0) //not sure I fully like this, but it works
 	{
+		double* detected_ind_d{ capture_d[4] };
 		detected_t_d[thdInd] = -1.0;
 		detected_ind_d[thdInd] = -1.0;
 	}
+	
+	//guard to prevent unnecessary variable creation, if condition checks
+	if (detected_t_d[thdInd] > -0.1) return; //if the slot in detected_t[thdInd] is filled (gt or equal to 0), return
 
-	if (//if a particle is detected, the slot in array[thdInd] is filled and no further detection happens for that index
-		(detected_t_d[thdInd] < -0.1) &&
-			( //no detected particle is in the data array at the thread's index already AND
-				//detector is facing down and particle crosses altitude in dt
-				((!upward) && (s_d[thdInd] >= altitude) && (s_minus_vdt < altitude))
-					|| //OR
-				//detector is facing up and particle crosses altitude in dt
-				((upward) && (s_d[thdInd] <= altitude) && (s_minus_vdt > altitude))
-			)
-		)
+	const double* v_d{ data_d[0] };
+	const double* s_d{ data_d[2] };
+	double s_minus_vdt{ s_d[thdInd] - v_d[thdInd] * dt };
+
+	if (//no detected particle is in the data array at the thread's index already AND
+		((!upward) && (s_d[thdInd] >= altitude) && (s_minus_vdt < altitude)) //detector is facing down and particle crosses altitude in dt
+		  || //OR
+		(( upward) && (s_d[thdInd] <= altitude) && (s_minus_vdt > altitude)) //detector is facing up and particle crosses altitude in dt
+	   )
 	{
+		const double* mu_d{ data_d[1] };
+
+		double* detected_v_d{ capture_d[0] }; double* detected_mu_d{ capture_d[1] };
+		double* detected_s_d{ capture_d[2] }; double* detected_ind_d{ capture_d[4] };
+
 		detected_v_d[thdInd] = v_d[thdInd];
 		detected_mu_d[thdInd] = mu_d[thdInd];
 		detected_s_d[thdInd] = s_d[thdInd];

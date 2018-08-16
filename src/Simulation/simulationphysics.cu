@@ -112,7 +112,9 @@ namespace physics
 	{
 		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 
-		double* v_d{ currData_d[0] }; const double* mu_d{ currData_d[1] }; double* s_d{ currData_d[2] }; const double* t_incident_d{ currData_d[3] }; double* t_escape_d{ currData_d[4] };
+		double* s_d{ currData_d[2] };
+		const double* t_incident_d{ currData_d[3] };
+		double* t_escape_d{ currData_d[4] };
 
 		if (t_escape_d[thdInd] >= 0.0) //particle has escaped, t_escape is >= 0 iff it has both entered and is outside the sim boundaries
 			return;
@@ -128,6 +130,9 @@ namespace physics
 			t_escape_d[thdInd] = simtime;
 			return;
 		}
+
+		double* v_d{ currData_d[0] }; //these aren't needed if any of the above conditions is true
+		const double* mu_d{ currData_d[1] };
 
 		//args array: [ps_0, mu, q, m, simtime]
 		const double args[]{ s_d[thdInd], mu_d[thdInd], charge, mass, simtime };

@@ -98,7 +98,7 @@ public:
 
 	LogFile*    log()                       const { return logFile_m.get(); }
 	Particle*   particle(int partInd)       const { return particles_m.at(partInd).get(); }
-	Particle*   particle(std::string name)  const;  //search for name, return particle
+	Particle*   particle(std::string name)  const; //search for name, return particle
 	Satellite*  satellite(int satInd)       const { return satPartPairs_m.at(satInd)->satellite.get(); }
 	Satellite*  satellite(std::string name) const; //search for name, return satellite
 	BField*     Bmodel()                    const { return BFieldModel_m.get(); }
