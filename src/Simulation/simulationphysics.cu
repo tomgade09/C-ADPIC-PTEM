@@ -16,11 +16,6 @@
 #include "ErrorHandling/cudaErrorCheck.h"
 #include "ErrorHandling/SimFatalException.h"
 
-//OpenMP Test
-#include <omp.h>
-#include <thread>
-//OpenMP Test
-
 //CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
 // For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime
 constexpr int  BLOCKSIZE{ 256 }; //Number of threads per block - this is most efficient at a multiple of 128 (256 seems to work well), although 250 has been used with slightly less performance

@@ -26,6 +26,7 @@ protected:
 
 	virtual void initializeGPU();
 	virtual void dataAllocateNewMsmtVector() { data_m.push_back(std::vector<std::vector<double>>(attrNames_m.size(), std::vector<double>(numberOfParticles_m))); }
+	virtual void satelliteDetectorCPU(const std::vector<std::vector<double>>& partdata, double simtime, double dt);
 
 public:
 	Satellite(std::string name, std::vector<std::string> attributeNames, double altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr):
@@ -37,6 +38,7 @@ public:
 	Satellite& operator=(const Satellite&) = delete;
 	
 	virtual void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
+	virtual void iterateDetectorCPU(const std::vector<std::vector<double>>& partdata, double simtime, double dt);
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 	virtual void freeGPUMemory();
 	virtual void saveDataToDisk(std::string folder);

@@ -11,6 +11,7 @@
 #include "Satellite/Satellite.h"
 #include "utils/fileIO.h"
 #include "ErrorHandling/cudaErrorCheck.h"
+#include "ErrorHandling/simExceptionMacros.h"
 
 using utils::fileIO::writeDblBin;
 using utils::fileIO::readDblBin;
@@ -41,7 +42,7 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 				((!upward) && (s_d[thdInd] >= altitude) && (s_minus_vdt < altitude))
 					|| //OR
 				//detector is facing up and particle crosses altitude in dt
-				((upward) && (s_d[thdInd] <= altitude) && (s_minus_vdt > altitude))
+				(( upward) && (s_d[thdInd] <= altitude) && (s_minus_vdt > altitude))
 			)
 		)
 	{
@@ -63,6 +64,15 @@ void Satellite::initializeGPU()
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	dataOnGPU_m = true;
+}
+
+void Satellite::iterateDetectorCPU(const std::vector<std::vector<double>>& partdata, double simtime, double dt) //eventually take a reference to partdata into Satellite??
+{
+	if (simtime == 0.0 && data_m.size() != 0) data_m.clear(); //if data exists, clear it - temporary work around...
+	if (simtime == 0.0 && data_m.size() == 0) dataAllocateNewMsmtVector(); //temporary, if called after 0.0s, this still needs to happen
+	if (simtime == 0.0 && !dataReady_m) dataReady_m = true;
+
+	SIM_API_EXCEP_CHECK(satelliteDetectorCPU(partdata, simtime, dt));
 }
 
 void Satellite::iterateDetector(double simtime, double dt, int blockSize)

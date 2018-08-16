@@ -11,10 +11,9 @@
 #include "ErrorHandling/cudaErrorCheck.h"
 #include "ErrorHandling/SimFatalException.h"
 
-//OpenMP Test
+//OpenMP
 #include <omp.h>
 #include <thread>
-//OpenMP Test
 
 //forward decls
 namespace physics
@@ -33,6 +32,10 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 		(*part)->loadDataFromMem((*part)->data(true), false); //copies orig data to curr - normally this happens from CPU->GPU->CPU, but we aren't using the GPU here
 
 		std::vector<std::vector<double>>& data{ (*part)->__data(false) };
+		
+		omp_set_num_threads(std::thread::hardware_concurrency());
+
+		#pragma omp parallel for
 		for (int ind = 0; ind < (*part)->getNumberOfParticles(); ind++)
 		{//convert vperp to mu in Particle memory
 			vperpMuConvert(data.at(0).at(ind), &data.at(1).at(ind), data.at(2).at(ind), data.at(4).at(ind), BFieldModel_m.get(), (*part)->mass(), true);
@@ -43,14 +46,11 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
 	{
-		//if (cudaloopind % checkDoneEvery == 0) { done = true; }
+		if (cudaloopind % checkDoneEvery == 0) { done = true; }
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{
 			std::vector<std::vector<double>>& data{ (*part)->__data(false) }; //get a reference to the particle's curr data array
 
-			//OpenMP Test
-			omp_set_num_threads(std::thread::hardware_concurrency());
-			
 			#pragma omp parallel for
 			for (int ind = 0; ind < (*part)->getNumberOfParticles(); ind++)
 			{
@@ -63,10 +63,10 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 					//OpenMP 2.0 (max supported version by VS, but very old) doesn't support done = false; as a legit expression following #pragma omp atomic
 				}
 			}
-			//OpenMP Test
 		}
 
-		//iterate Satellites here (need a host-side detector)
+		for (auto& sat : satPartPairs_m)
+			(*sat).satellite->iterateDetectorCPU((*sat).particle->data(false), simTime_m, dt_m);
 
 		if (cudaloopind % checkDoneEvery == 0)
 		{

@@ -72,6 +72,9 @@
     <ClCompile Include="..\src\Simulation\iterateSimCPU.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Satellite\Satellite.cpp">
+      <Filter>Source Files\Satellite</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
