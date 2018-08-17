@@ -76,7 +76,7 @@ namespace postprocess
 
 		auto genCounts = [&](const std::vector<double>& EPeak, const std::vector<double>& dEMag, std::function<bool(double)> zero)
 		{ //iterates over particles and specified Peak/Magnitude values (ionospheric or magnetospheric) and adds values to "max" (after "maxtmp")
-			for (int entr = 0; entr < EPeak.size(); entr++) //iterate over ionospheric maxwellian specifications
+			for (unsigned int entr = 0; entr < EPeak.size(); entr++) //iterate over ionospheric maxwellian specifications
 			{
 				auto getCount = [&](double E, double s) { return count_E(E, EPeak.at(entr), dEMag.at(entr), zero(s)); };
 
@@ -125,7 +125,7 @@ namespace postprocess
 
 		maxCounts = maxwellian.counts(initial, s_ion, s_mag);
 		std::cout << "PPData::PPData - multiplying counts by -cos(PA_src) for ion source, 1/cos(PA_sat) for mag source\n";
-		for (int iii = 0; iii < maxCounts.size(); iii++) //isotropize counts -> 3D
+		for (unsigned int iii = 0; iii < maxCounts.size(); iii++) //isotropize counts -> 3D
 		{
 			if (initial.s_pos.at(iii) < s_ion * 1.001) //ionospheric source
 				maxCounts.at(iii) *= -cos(initial.pitch.at(iii) * RADS_PER_DEG);

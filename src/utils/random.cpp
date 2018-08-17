@@ -1,6 +1,7 @@
 #include "utils/random.h"
 
 #include <random>
+#include <omp.h>
 
 namespace utils
 {
@@ -13,7 +14,8 @@ namespace utils
 
 			std::normal_distribution<> data_nd(mean, sigma);
 
-			for (int iii = 0; iii < arrayOut.size(); iii++)
+			#pragma omp parallel for
+			for (unsigned int iii = 0; iii < arrayOut.size(); iii++)
 				arrayOut.at(iii) = data_nd(mtgen);
 		}
 	}
