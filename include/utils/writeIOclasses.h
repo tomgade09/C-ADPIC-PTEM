@@ -38,8 +38,8 @@ namespace utils
 		{
 		private:
 			std::string saveFolder_m;
-			std::string particleName_m;
 			std::vector<std::string> attrNames_m;
+			std::string particleName_m;
 
 			double mass_m;
 
@@ -64,7 +64,7 @@ namespace utils
 			void setattr(std::vector<double>& attr, std::string name);
 			void addEnergyRange(unsigned int energyBins, double E_start, double E_end, bool logE = true);
 			void addPitchRange(unsigned int pitchBins, double PA_start, double PA_end, bool midBin = true);
-			void addSpecificParticle(unsigned int numParticles, double energy, double pitch, double s, int padmult = 0);
+			void addSpecificParticle(unsigned int numParticles, double energy, double pitch, double s, unsigned int padmult = 0);
 			void generate(double s_ion, double s_mag);
 			void generate(std::vector<double>& s);
 			void clear();

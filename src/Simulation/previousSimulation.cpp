@@ -20,11 +20,11 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, si
 	setBFieldModel(simAttr_m->BAD.names_m.at(0), simAttr_m->BAD.dblAttrs_m.at(0), false);
 
 	//Load EField Model
-	for (int entry = 0; entry < (int)simAttr_m->EAD.names_m.size(); entry++)
+	for (unsigned int entry = 0; entry < simAttr_m->EAD.names_m.size(); entry++)
 		addEFieldModel(simAttr_m->EAD.names_m.at(entry), simAttr_m->EAD.dblAttrs_m.at(entry), false);
 
 	//Load Particles
-	for (int part = 0; part < simAttr_m->partAD.names_m.size(); part++)
+	for (unsigned int part = 0; part < simAttr_m->partAD.names_m.size(); part++)
 	{
 		createParticleType(
 			simAttr_m->partAD.names_m.at(part),
@@ -37,7 +37,7 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, si
 	}
 	
 	//Load Satellites
-	for (int sat = 0; sat < simAttr_m->satAD.names_m.size(); sat++)
+	for (unsigned int sat = 0; sat < simAttr_m->satAD.names_m.size(); sat++)
 	{
 		std::unique_ptr<TempSat> tmpsat{ std::make_unique<TempSat>(
 			(int)(simAttr_m->satAD.dblAttrs_m.at(sat).at(findAttrInd("partInd", simAttr_m->satAD.dblLabels_m.at(sat)))),

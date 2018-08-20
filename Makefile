@@ -1,8 +1,8 @@
 # Compiler binaries and settings
 CC         := g++
 NVCC       := nvcc
-CXXFLAGS   := -std=c++17 -fPIC -pedantic -O2
-NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_30,code=\"sm_30,compute_30\" -x cu -m64 -cudart static -Xcompiler "-fPIC" -Xlinker "-shared"
+CXXFLAGS   := -std=c++17 -fPIC -pedantic -O2 -fopenmp -Wall -Wno-unused-variable
+NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_30,code=\"sm_30,compute_30\" -x cu -m64 -cudart static -Xcompiler "-fPIC" -Xlinker "-shared -fopenmp"
 
 # Build-essential directories and defines
 CUDAINC    := /usr/local/cuda/include
@@ -22,12 +22,18 @@ CUOBJECTS  := $(patsubst $(SRC)/%.cu,$(BUILD)/%.obj,$(CUSOURCES))
 
 #Default rule
 $(TARGET): $(OBJECTS) $(CUOBJECTS)
-	$(NVCC) -shared -lcudadevrt -o $(TARGET) $(OBJECTS) $(CUOBJECTS)
+	$(NVCC) -shared -lcudadevrt -Xcompiler "-fopenmp" -Xlinker "-fopenmp" -o $(TARGET) $(OBJECTS) $(CUOBJECTS)
 
 
 # File rules
 $(BUILD)/Simulation/Simulation.o: $(SRC)/Simulation/Simulation.cpp
 	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/Simulation/Simulation.cpp -o $(BUILD)/Simulation/Simulation.o
+
+$(BUILD)/Simulation/iterateSimCPU.o: $(SRC)/Simulation/iterateSimCPU.cpp
+	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/Simulation/iterateSimCPU.cpp -o $(BUILD)/Simulation/iterateSimCPU.o
+
+$(BUILD)/Satellite/Satellite.o: $(SRC)/Satellite/Satellite.cpp
+	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/Satellite/Satellite.cpp -o $(BUILD)/Satellite/Satellite.o
 
 $(BUILD)/Simulation/previousSimulation.o: $(SRC)/Simulation/previousSimulation.cpp
 	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/Simulation/previousSimulation.cpp -o $(BUILD)/Simulation/previousSimulation.o

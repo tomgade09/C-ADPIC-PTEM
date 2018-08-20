@@ -19,7 +19,7 @@ namespace utils
 			}
 
 			std::ofstream file(filename_m, std::ios::trunc);
-			for (int iii = 0; iii < labels_m.size(); iii++)
+			for (unsigned int iii = 0; iii < labels_m.size(); iii++)
 				file << labels_m.at(iii) << ((iii != labels_m.size() - 1) ? "," : "\n");
 			file.close();
 
@@ -99,8 +99,8 @@ namespace utils
 				std::cout << saveFolder_m + "/" + particleName_m + "_" + attrNm + ".bin" << std::endl;
 			std::cout << "[" << data_m.size() << "] x [" << data_m.at(0).size() << "]" << std::endl;
 
-			for (int attr = 0; attr < data_m.size(); attr++)
-				fileIO::writeDblBin(data_m.at(attr), saveFolder_m + "/" + particleName_m + "_" + attrNames_m.at(attr) + ".bin", (int)data_m.at(0).size());
+			for (unsigned int attr = 0; attr < data_m.size(); attr++)
+				fileIO::writeDblBin(data_m.at(attr), saveFolder_m + "/" + particleName_m + "_" + attrNames_m.at(attr) + ".bin", data_m.at(0).size());
 
 			clear();
 			data_m = std::vector<std::vector<double>>(3);
@@ -161,9 +161,8 @@ namespace utils
 				energyPitch_m.at(1).at(oldsize + ang) = (midBin) ? (PA_start + (ang + 0.5) * binsize) : (PA_start + ang * binsize);
 		}
 
-		void ParticleDistribution::addSpecificParticle(unsigned int numParticles, double energy, double pitch, double s, int padmult)
+		void ParticleDistribution::addSpecificParticle(unsigned int numParticles, double energy, double pitch, double s, unsigned int padmult)
 		{
-			int numPart{ (int)numParticles };
 			if (ranges_m.at(0).size() != 0 || ranges_m.at(1).size() != 0)
 			{
 				std::cout << "ParticleDistribution::addSpecificParticle: At least one of { energy, pitch } has at least one range specified.  addSpecificParticle is not (for now) compatible with specifying ranges.  Clearing existing ranges." << std::endl;
@@ -173,29 +172,29 @@ namespace utils
 			double vpara{ EPAtoV(energy, pitch, true ) };
 			double vperp{ EPAtoV(energy, pitch, false) };
 
-			int finalsize{ (padmult != 0) ?
-				((((int)data_m.at(0).size() + numPart) / padmult) + 1) * padmult : //calculate the nearest larger binsize that is a multiple of padmult
-				(int)data_m.at(0).size() + numPart //if not padding, just calculate current size + number to add
+			unsigned int finalsize{ (padmult != 0) ?
+				((((unsigned int)data_m.at(0).size() + numParticles) / padmult) + 1) * padmult : //calculate the nearest larger binsize that is a multiple of padmult
+				(unsigned int)data_m.at(0).size() + numParticles //if not padding, just calculate current size + number to add
 			};
-			int padnum{ finalsize - ((int)data_m.at(0).size() + numPart) }; //how many placeholders do we have to add to get to the above size? - 0 if not padding, something else if padding
+			unsigned int padnum{ finalsize - ((unsigned int)data_m.at(0).size() + numParticles) }; //how many placeholders do we have to add to get to the above size? - 0 if not padding, something else if padding
 
 			for (auto& attr : data_m)
 				attr.reserve(finalsize);
 
-			for (int part = 0; part < numPart; part++)
+			for (unsigned int part = 0; part < numParticles; part++)
 			{
 				data_m.at(0).push_back(vpara);
 				data_m.at(1).push_back(vperp);
 				data_m.at(2).push_back(s);
 
-				for (int otherattr = 3; otherattr < data_m.size(); otherattr++)
+				for (unsigned int otherattr = 3; otherattr < data_m.size(); otherattr++)
 					data_m.at(otherattr).push_back(padvals_m.at(otherattr)); //pad the remaining attributes
 			}
 
 			if (padmult != 0)
 			{//used to pad the number of values so length is even multiple of padmult (for CUDA execution - make a multiple of blocksize)
-				for (int attr = 0; attr < data_m.size(); attr++)
-					for (int pad = 0; pad < padnum; pad++)
+				for (unsigned int attr = 0; attr < data_m.size(); attr++)
+					for (unsigned int pad = 0; pad < padnum; pad++)
 						data_m.at(attr).push_back(padvals_m.at(attr));
 			}
 		}
@@ -206,7 +205,7 @@ namespace utils
 
 			for (auto& pitch : energyPitch_m.at(1))
 				for (auto& energy : energyPitch_m.at(0))
-					s.push_back(pitch <= 90 ? s_mag : s_ion);
+					s.push_back(pitch <= 90.0 ? s_mag : s_ion);
 
 			generate(s);
 		}
@@ -220,13 +219,13 @@ namespace utils
 			}
 
 			std::cout << "Energy Bins (min, max : bin size): ";
-			for (int eng = 0; eng < ranges_m.at(0).size(); eng++)
+			for (unsigned int eng = 0; eng < ranges_m.at(0).size(); eng++)
 				std::cout << ((eng > 0) ? "                                   " : "") << ranges_m.at(0).at(eng).at(0) << ", " << ranges_m.at(0).at(eng).at(1) << " : " << ranges_m.at(0).at(eng).at(2) << std::endl;
 			std::cout << "Pitch Bins (min, max : bin size): ";
-			for (int ang = 0; ang < ranges_m.at(1).size(); ang++)
+			for (unsigned int ang = 0; ang < ranges_m.at(1).size(); ang++)
 				std::cout << ((ang > 0) ? "                                  " : "") << ranges_m.at(1).at(ang).at(0) << ", " << ranges_m.at(1).at(ang).at(1) << " : " << ranges_m.at(1).at(ang).at(2) << std::endl;
 
-			int finalsize{ (int)(energyPitch_m.at(0).size() * energyPitch_m.at(1).size() + data_m.at(0).size()) }; //energy bins * pitch bins + any other particles currently specified = total
+			unsigned int finalsize{ ((unsigned int)energyPitch_m.at(0).size() * (unsigned int)energyPitch_m.at(1).size() + (unsigned int)data_m.at(0).size()) }; //energy bins * pitch bins + any other particles currently specified = total
 
 			for (auto& attr : data_m)
 				attr.reserve(finalsize); //prevents multiple resize/deep copy operations
@@ -238,7 +237,7 @@ namespace utils
 					data_m.at(0).push_back(EPAtoV(energy, pitch, true ));
 					data_m.at(1).push_back(EPAtoV(energy, pitch, false));
 
-					for (int otherattr = 3; otherattr < data_m.size(); otherattr++)
+					for (unsigned int otherattr = 3; otherattr < data_m.size(); otherattr++)
 						data_m.at(otherattr).push_back(padvals_m.at(otherattr)); //pad the remaining attributes
 				}
 			}

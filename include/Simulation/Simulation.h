@@ -20,12 +20,12 @@ protected:
 	//Structs that fill various roles	
 	struct TempSat
 	{//Struct that holds data to create satellite - allows satellites to be created before particles through API
-		int particleInd;
+		unsigned int particleInd;
 		double altitude;
 		bool upwardFacing;
 		std::string name;
 
-		TempSat(int partInd, double alt, bool upward, std::string nameStr) :
+		TempSat(unsigned int partInd, double alt, bool upward, std::string nameStr) :
 			particleInd{ partInd }, altitude{ alt }, upwardFacing{ upward }, name{ nameStr } {}
 	};
 
@@ -40,11 +40,11 @@ protected:
 
 
 	//Simulation Characteristics
-	std::string  saveRootDir_m;
-	double       simTime_m{ 0.0 };
 	double       dt_m;
 	double       simMin_m;
 	double       simMax_m;
+	std::string  saveRootDir_m;
+	double       simTime_m{ 0.0 };
 
 	//Simulation-specific classes tracked by Simulation
 	std::vector<std::shared_ptr<Particle>>   particles_m;
@@ -105,15 +105,15 @@ public:
 	EField*     Emodel()                    const { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
-	virtual const VEC(VEC(double))&      getParticleData(int partInd, bool originalData);
-	virtual const VEC(VEC(VEC(double)))& getSatelliteData(int satInd);
+	virtual const VEC(VEC(double))&      getParticleData(unsigned int partInd, bool originalData);
+	virtual const VEC(VEC(VEC(double)))& getSatelliteData(unsigned int satInd);
 	#undef VEC
 
 	///Forward decs for cpp file, or pure virtuals
 	//Class creation functions
 	virtual void createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir = "", bool save = true);
 	virtual void createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name);
-	virtual void createTempSat(int partInd, double altitude, bool upwardFacing, std::string name);
+	virtual void createTempSat(unsigned int partInd, double altitude, bool upwardFacing, std::string name);
 	virtual void setBFieldModel(std::string name, std::vector<double> args, bool save = true);
 	virtual void setBFieldModel(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 	virtual void addEFieldModel(std::string name, std::vector<double> args, bool save = true);

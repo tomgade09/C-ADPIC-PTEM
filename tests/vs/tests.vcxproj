@@ -14,6 +14,7 @@
     <ClCompile Include="..\..\src\LogFile\LogFile.cpp" />
     <ClCompile Include="..\..\src\Particle\Particle.cpp" />
     <ClCompile Include="..\..\src\SimAttributes\SimAttributes.cpp" />
+    <ClCompile Include="..\..\src\Simulation\iterateSimCPU.cpp" />
     <ClCompile Include="..\..\src\Simulation\previousSimulation.cpp" />
     <ClCompile Include="..\..\src\Simulation\Simulation.cpp" />
     <ClCompile Include="..\..\src\utils\fileIO.cpp" />

@@ -32,7 +32,7 @@ void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts) /
 	std::cout << "BField Model:   " << BFieldModel_m->name() << std::endl;
 	std::cout << "EField Elems:   " << EFieldModel_m->getEElemsStr() << std::endl;
 	std::cout << "Particles:      ";
-	for (int iii = 0; iii < particles_m.size(); iii++) {
+	for (unsigned int iii = 0; iii < particles_m.size(); iii++) {
 		std::cout << ((iii != 0) ? "                " : "") << particles_m.at(iii)->name() << ": #: " << particles_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particles_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl;
 	}
 	std::cout << "Satellites:     ";
@@ -47,14 +47,14 @@ void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts) /
 
 
 //Access functions
-const std::vector<std::vector<double>>& Simulation::getParticleData(int partInd, bool originalData)
+const std::vector<std::vector<double>>& Simulation::getParticleData(unsigned int partInd, bool originalData)
 {
 	if (partInd > (particles_m.size() - 1))
 		throw std::out_of_range("Simulation::getParticleData: no particle at the specifed index " + std::to_string(partInd));
 	return ((originalData) ? (particles_m.at(partInd)->data(true)) : (particles_m.at(partInd)->data(false)));
 }
 
-const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteData(int satInd)
+const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteData(unsigned int satInd)
 {
 	if (satInd > (satPartPairs_m.size() - 1))
 		throw std::out_of_range("Simulation::getSatelliteData: no satellite at the specifed index " + std::to_string(satInd));
@@ -94,7 +94,7 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 	if (save)
 	{
 		std::vector<std::string> attrLabels;
-		for (int atr = 0; atr < attrNames.size(); atr++)
+		for (unsigned int atr = 0; atr < attrNames.size(); atr++)
 			attrLabels.push_back("attrName");
 		attrLabels.push_back("loadFilesDir");
 		
@@ -114,7 +114,7 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 
 void Simulation::createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name)
 {
-	for (int partInd = 0; partInd < particles_m.size(); partInd++)
+	for (unsigned int partInd = 0; partInd < particles_m.size(); partInd++)
 	{
 		if (particle(partInd)->name() == partName)
 		{
@@ -125,7 +125,7 @@ void Simulation::createTempSat(std::string partName, double altitude, bool upwar
 	throw std::invalid_argument("Simulation::createTempSat: no particle of name " + name);
 }
 
-void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
+void Simulation::createTempSat(unsigned int partInd, double altitude, bool upwardFacing, std::string name)
 {//"Temp Sats" are necessary to ensure particles are created before their accompanying satellites
 	if (initialized_m)
 		throw std::runtime_error("Simulation::createTempSat: initializeSimulation has already been called, no satellite will be created of name " + name);
@@ -137,7 +137,7 @@ void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, 
 
 void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
 {
-	int partInd{ tmpsat->particleInd };
+	unsigned int partInd{ tmpsat->particleInd };
 	double altitude{ tmpsat->altitude };
 	bool upwardFacing{ tmpsat->upwardFacing };
 	std::string name{ tmpsat->name };
@@ -245,7 +245,7 @@ void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool
 		std::vector<double> altMax;
 		std::vector<double> mag;
 
-		for (int entry = 0; entry < args.size() / 3; entry++)
+		for (unsigned int entry = 0; entry < args.size() / 3; entry++)
 		{
 			altMin.push_back(args.at(3 * entry));
 			altMax.push_back(args.at(3 * entry + 1));

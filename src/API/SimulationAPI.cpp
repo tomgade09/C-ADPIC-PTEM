@@ -10,11 +10,17 @@ using utils::fileIO::CSV;
 using utils::string::strToDblVec;
 
 //Simulation Management Functions
-DLLEXP_EXTC Sim* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir) {
-	SIM_API_EXCEP_CHECK(return new Sim(dt, simMin, simMax, rootdir)); }
+DLLEXP_EXTC Sim* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir)
+{
+	SIM_API_EXCEP_CHECK(return new Sim(dt, simMin, simMax, rootdir));
+	return nullptr; //if above fails
+}
 
-DLLEXP_EXTC Sim* loadCompletedSimDataAPI(const char* fileDir) {
-	SIM_API_EXCEP_CHECK(return new Sim(fileDir)); }
+DLLEXP_EXTC Sim* loadCompletedSimDataAPI(const char* fileDir)
+{
+	SIM_API_EXCEP_CHECK(return new Sim(fileDir));
+	return nullptr; //if above fails
+}
 
 DLLEXP_EXTC void initializeSimulationAPI(Sim* sim) {
 	SIM_API_EXCEP_CHECK(sim->initializeSimulation()); }
@@ -72,11 +78,17 @@ DLLEXP_EXTC void setBFieldModelAPI(Sim* sim, const char* modelName, const char* 
 DLLEXP_EXTC void addEFieldModelAPI(Sim* sim, const char* modelName, const char* doubleString) {
 	SIM_API_EXCEP_CHECK(sim->addEFieldModel(modelName, strToDblVec(doubleString))); }
 
-DLLEXP_EXTC double getBFieldAtSAPI(Sim* sim, double s, double time) {
-	SIM_API_EXCEP_CHECK(return sim->getBFieldAtS(s, time)); }
+DLLEXP_EXTC double getBFieldAtSAPI(Sim* sim, double s, double time)
+{
+	SIM_API_EXCEP_CHECK(return sim->getBFieldAtS(s, time));
+	return 0.0; //if above fails
+}
 
-DLLEXP_EXTC double getEFieldAtSAPI(Sim* sim, double s, double time) {
-	SIM_API_EXCEP_CHECK(return sim->getEFieldAtS(s, time)); }
+DLLEXP_EXTC double getEFieldAtSAPI(Sim* sim, double s, double time)
+{
+	SIM_API_EXCEP_CHECK(return sim->getEFieldAtS(s, time));
+	return 0.0; //if above fails
+}
 
 
 //Particle Management Functions
@@ -88,49 +100,91 @@ DLLEXP_EXTC void createParticleTypeAPI(Sim* sim, const char* name, double mass, 
 DLLEXP_EXTC void createSatelliteAPI(Sim* sim, int particleInd, double altitude, bool upwardFacing, const char* name) {
 	SIM_API_EXCEP_CHECK(sim->createTempSat(particleInd, altitude, upwardFacing, name)); }
 
-DLLEXP_EXTC int  getNumberOfSatellitesAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfSatellites())); }
+DLLEXP_EXTC int  getNumberOfSatellitesAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfSatellites()));
+	return -1; //if above fails
+}
 
-DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd) {
-	SIM_API_EXCEP_CHECK(return sim->getSatelliteData(satelliteInd).at(msmtInd).at(attributeInd).data()); }
+DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd)
+{
+	SIM_API_EXCEP_CHECK(return sim->getSatelliteData(satelliteInd).at(msmtInd).at(attributeInd).data());
+	return nullptr; //if above fails
+}
 
-DLLEXP_EXTC int getPartIndOfSatAPI(Sim* sim, int satelliteInd) {
-	SIM_API_EXCEP_CHECK(return sim->getPartIndOfSat(satelliteInd)); }
+DLLEXP_EXTC int getPartIndOfSatAPI(Sim* sim, int satelliteInd)
+{
+	SIM_API_EXCEP_CHECK(return sim->getPartIndOfSat(satelliteInd));
+	return -1; //if above fails
+}
 
 
 //Access Functions
-DLLEXP_EXTC double getSimTimeAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return sim->simtime()); }
+DLLEXP_EXTC double getSimTimeAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return sim->simtime());
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC double getDtAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return sim->dt()); }
+DLLEXP_EXTC double getDtAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return sim->dt());
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC double getSimMinAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return sim->simMin()); }
+DLLEXP_EXTC double getSimMinAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return sim->simMin());
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC double getSimMaxAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return sim->simMax()); }
+DLLEXP_EXTC double getSimMaxAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return sim->simMax());
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC int getNumberOfParticleTypesAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticleTypes())); }
+DLLEXP_EXTC int getNumberOfParticleTypesAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticleTypes()));
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC int getNumberOfParticlesAPI(Sim* sim, int partInd) {
-	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticles(partInd))); }
+DLLEXP_EXTC int getNumberOfParticlesAPI(Sim* sim, int partInd)
+{
+	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticles(partInd)));
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC int getNumberOfAttributesAPI(Sim* sim, int partInd) {
-	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfAttributes(partInd))); }
+DLLEXP_EXTC int getNumberOfAttributesAPI(Sim* sim, int partInd)
+{
+	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfAttributes(partInd)));
+	return -1.0; //if above fails
+}
 
-DLLEXP_EXTC const char* getParticleNameAPI(Sim* sim, int partInd) {
-	SIM_API_EXCEP_CHECK(return sim->getParticleName(partInd).c_str()); }
+DLLEXP_EXTC const char* getParticleNameAPI(Sim* sim, int partInd)
+{
+	SIM_API_EXCEP_CHECK(return sim->getParticleName(partInd).c_str());
+	return nullptr; //if above fails
+}
 
-DLLEXP_EXTC const char* getSatelliteNameAPI(Sim* sim, int satInd) {
-	SIM_API_EXCEP_CHECK(return sim->getSatelliteName(satInd).c_str()); }
+DLLEXP_EXTC const char* getSatelliteNameAPI(Sim* sim, int satInd)
+{
+	SIM_API_EXCEP_CHECK(return sim->getSatelliteName(satInd).c_str());
+	return nullptr; //if above fails
+}
 
-DLLEXP_EXTC LogFile* getLogFilePointerAPI(Sim* sim) {
-	SIM_API_EXCEP_CHECK(return sim->log()); }
+DLLEXP_EXTC LogFile* getLogFilePointerAPI(Sim* sim)
+{
+	SIM_API_EXCEP_CHECK(return sim->log());
+	return nullptr; //if above fails
+}
 
-DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData) {
-	SIM_API_EXCEP_CHECK(return sim->getParticleData(partIndex, originalData).at(attrIndex).data()); }
+DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData)
+{
+	SIM_API_EXCEP_CHECK(return sim->getParticleData(partIndex, originalData).at(attrIndex).data());
+	return nullptr; //if above fails
+}
 
 
 //CSV functions
@@ -153,7 +207,7 @@ DLLEXP_EXTC void writeCommonCSVAPI(Sim* sim)
 		csvtmp.addspace();
 
 		std::vector<std::vector<double>> energyPitch(2, std::vector<double>(origData.at(0).size()));
-		for (int elem = 0; elem < energyPitch.at(0).size(); elem++)
+		for (unsigned int elem = 0; elem < energyPitch.at(0).size(); elem++)
 		{
 			energyPitch.at(0).at(elem) = 0.5 * MASS_ELECTRON * (pow(origData.at(0).at(elem), 2) + pow(origData.at(1).at(elem), 2)) / JOULE_PER_EV;
 			energyPitch.at(1).at(elem) = atan2(abs(origData.at(1).at(elem)), -origData.at(0).at(elem)) / RADS_PER_DEG;

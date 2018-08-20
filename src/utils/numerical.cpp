@@ -18,14 +18,14 @@ namespace utils
 			std::fill(energies_eV.begin(), energies_eV.end(), 0.0); //zeroes data in the return arrays
 			std::fill(pitches_deg.begin(), pitches_deg.end(), 0.0); //guarantees E/PA is 0 if vpara/vperp is zero
 
-			for (int part = 0; part < vpara.size(); part++)
+			for (unsigned int part = 0; part < vpara.size(); part++)
 			{
 				bool nonZero{ vpara.at(part) != 0.0 || vperp.at(part) != 0.0 };
 
 				if (nonZero) //check this or else the function can produce "NaN" in some indicies (I think atan2 is responsible) -> if false, the data at that index will be left 0
 				{
 					energies_eV.at(part) = (0.5 * mass * (vpara.at(part) * vpara.at(part) + vperp.at(part) * vperp.at(part)) / JOULE_PER_EV);
-					pitches_deg.at(part) = atan2(abs(vperp.at(part)), -vpara.at(part)) / RADS_PER_DEG;
+					pitches_deg.at(part) = atan2(std::abs(vperp.at(part)), -vpara.at(part)) / RADS_PER_DEG;
 				}
 			}
 		}
@@ -43,7 +43,7 @@ namespace utils
 			std::fill(vpara.begin(), vpara.end(), 0.0); //zeroes data in the return arrays
 			std::fill(vperp.begin(), vperp.end(), 0.0); //guarantees E/PA is 0 if vpara/vperp is zero
 
-			for (int part = 0; part < energies_eV.size(); part++)
+			for (unsigned int part = 0; part < energies_eV.size(); part++)
 			{
 				bool nonZero{ energies_eV.at(part) != 0.0 };
 
@@ -95,10 +95,10 @@ namespace utils
 		DLLEXP double calcMean(const std::vector<double>& calcMyMean, bool absValue) //absValue defaults to false
 		{
 			double sum{ 0 };
-			for (int iii = 0; iii < calcMyMean.size(); iii++)
+			for (unsigned int iii = 0; iii < calcMyMean.size(); iii++)
 			{
 				if (absValue)
-					sum += abs(calcMyMean.at(iii));
+					sum += std::abs(calcMyMean.at(iii));
 				else
 					sum += calcMyMean.at(iii);
 			}
@@ -109,7 +109,7 @@ namespace utils
 		{
 			double stdDev{ 0 };
 			double mean{ calcMean(calcMyStdDev, false) };
-			for (int iii = 0; iii < calcMyStdDev.size(); iii++)
+			for (unsigned int iii = 0; iii < calcMyStdDev.size(); iii++)
 			{
 				stdDev += pow(calcMyStdDev.at(iii) - mean, 2);
 			}
@@ -124,11 +124,11 @@ namespace utils
 
 			double maxerr{ 0.0 };
 			double minerr{ 1.0e300 };
-			for (int iii = 0; iii < basevals.size(); iii++)
+			for (unsigned int iii = 0; iii < basevals.size(); iii++)
 			{
 				if (basevals.at(iii) == 0.0 && skipzeroes) { continue; }
 				if (testvals.at(iii) == 0.0 && skipzeroes) { continue; }
-				double err{ abs((basevals.at(iii) - testvals.at(iii)) / basevals.at(iii)) };
+				double err{ std::abs((basevals.at(iii) - testvals.at(iii)) / basevals.at(iii)) };
 				if (err > maxerr) { maxerr = err; }
 				if (err < minerr) { minerr = err; }
 			}
@@ -142,11 +142,11 @@ namespace utils
 				throw std::invalid_argument("coutNumAboveEps: vectors are not the same size");
 
 			int above{ 0 };
-			for (int iii = 0; iii < basevals.size(); iii++)
+			for (unsigned int iii = 0; iii < basevals.size(); iii++)
 			{
 				if (basevals.at(iii) == 0.0 && skipzeroes) { continue; }
 				if (testvals.at(iii) == 0.0 && skipzeroes) { continue; }
-				if (abs((basevals.at(iii) - testvals.at(iii)) / basevals.at(iii)) > errEps) { above++; };
+				if (std::abs((basevals.at(iii) - testvals.at(iii)) / basevals.at(iii)) > errEps) { above++; };
 			}
 
 			std::cout << label << " error above " << errEps << ": " << above << std::endl;

@@ -21,6 +21,8 @@ DLLEXP_EXTC PD* PDCreateAPI(const char* saveFolder, const char* attrNames, const
 
 		return ret;
 	);
+
+	return nullptr; //if above fails
 }
 
 DLLEXP_EXTC void PDAddEnergyRangeAPI(PD* pd, int energyBins, double Emin, double Emax, bool logE) {
@@ -35,10 +37,8 @@ DLLEXP_EXTC void PDGenerateAPI(PD* pd, double s_ion, double s_mag) {
 DLLEXP_EXTC void PDFillExtraAttrsAPI(PD* pd, const char* zeroesStr, const char* neg1sStr)
 {
 	SIM_API_EXCEP_CHECK(
-		int attrssize{ (int)pd->data().size() };
-		int partsize{ (int)pd->data().at(0).size() };
-		std::vector<double> zeroes(partsize);
-		std::vector<double> neg_1s(partsize, -1.0);
+		std::vector<double> zeroes(pd->data().at(0).size());
+		std::vector<double> neg_1s(pd->data().at(0).size(), -1.0);
 		
 		for (auto& zero_name : utils::string::strToStrVec(zeroesStr))
 			pd->setattr(zeroes, zero_name);
@@ -52,11 +52,17 @@ DLLEXP_EXTC void PDWriteAPI(PD* pd) {
 
 
 //DistributionFromDisk functions
-DLLEXP_EXTC DFD* DFDLoadAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName, double mass) {
-	SIM_API_EXCEP_CHECK(return new DFD(name, loadFolder, particleName, strToStrVec(attrNames), mass)); }
+DLLEXP_EXTC DFD* DFDLoadAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName, double mass)
+{
+	SIM_API_EXCEP_CHECK(return new DFD(name, loadFolder, particleName, strToStrVec(attrNames), mass));
+	return nullptr; //if above fails
+}
 
-DLLEXP_EXTC const double* DFDDataAPI(DFD* dfd, int attrInd) {
-	SIM_API_EXCEP_CHECK(return dfd->data().at(attrInd).data()); }
+DLLEXP_EXTC const double* DFDDataAPI(DFD* dfd, int attrInd)
+{
+	SIM_API_EXCEP_CHECK(return dfd->data().at(attrInd).data());
+	return nullptr; //if above fails
+}
 
 DLLEXP_EXTC void DFDPrintAPI(DFD* dfd, int at) {
 	SIM_API_EXCEP_CHECK(dfd->print(at)); }

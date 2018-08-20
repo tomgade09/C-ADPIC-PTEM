@@ -4,6 +4,7 @@
 #include "utils/numerical.h"
 
 #include <iostream>
+#include <cmath>
 
 namespace utils
 {
@@ -12,25 +13,25 @@ namespace utils
 		DistributionFromDisk::DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames, double mass) : 
 			name_m{ name }, attrNames_m{ attrNames }, mass_m{ mass }
 		{
-			int attrsize{ 0 };
-			for (int attr = 0; attr < attrNames.size(); attr++)
+			unsigned int attrsize{ 0 };
+			for (unsigned int attr = 0; attr < attrNames.size(); attr++)
 			{
 				std::vector<double> read;
 				fileIO::readDblBin(read, folder + "/" + partName + "_" + attrNames.at(attr) + ".bin");
 				data_m.push_back(read);
-				if (attrNames_m.at(attr).size() > attrsize) { attrsize = (int)attrNames_m.at(attr).size(); }
+				if (attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
 			}
 
-			for (int attr = 0; attr < attrNames.size(); attr++)
+			for (unsigned int attr = 0; attr < attrNames.size(); attr++)
 				if (attrNames_m.at(attr).size() < attrsize) { string::stringPadder(attrNames_m.at(attr), attrsize); }
 		}
 
-		void DistributionFromDisk::print(int at) const
+		void DistributionFromDisk::print(unsigned int at) const
 		{
 			std::cout << name_m << " ";
-			for (int iii = 0; iii < attrNames_m.size(); iii++)
+			for (unsigned int iii = 0; iii < attrNames_m.size(); iii++)
 				std::cout << attrNames_m.at(iii) << ((iii != attrNames_m.size() - 1) ? ", " : ": ");
-			for (int iii = 0; iii < data_m.size(); iii++)
+			for (unsigned int iii = 0; iii < data_m.size(); iii++)
 				std::cout << data_m.at(iii).at(at) << ((iii != data_m.size() - 1) ? ", " : "");
 			std::cout << std::endl;
 
@@ -40,20 +41,20 @@ namespace utils
 			std::cout << "E, Pitch: " << E.at(0) << ", " << Pitch.at(0) << "\n";
 		}
 
-		void DistributionFromDisk::printdiff(DistributionFromDisk& other, int at) const
+		void DistributionFromDisk::printdiff(DistributionFromDisk& other, unsigned int at) const
 		{
-			int datasize{ (int)data_m.size() };
+			unsigned int datasize{ (unsigned int)data_m.size() };
 			if (data_m.size() != other.data().size())
 			{
 				std::cout << "DistributionFromDisk::printdiff: Warning: data from the two distributions does not have the same dimensionality. ";
 				std::cout << "Did you load up two distributions of different types? Using the smaller size." << std::endl;
-				datasize = ((data_m.size() < other.data().size()) ? ((int)data_m.size()) : ((int)other.data().size()));
+				datasize = ((data_m.size() < other.data().size()) ? (data_m.size()) : (other.data().size()));
 			}
 
 			std::vector<double> err(datasize);
-			for (int attr = 0; attr < datasize; attr++)
+			for (unsigned int attr = 0; attr < datasize; attr++)
 			{
-				err.at(attr) = abs((data_m.at(attr).at(at) - other.data().at(attr).at(at)) / data_m.at(attr).at(at));
+				err.at(attr) = std::abs((data_m.at(attr).at(at) - other.data().at(attr).at(at)) / data_m.at(attr).at(at));
 				std::cout << attrNames_m.at(attr) << " (" << name_m << ", " << other.name() << ", err): ";
 				std::cout << data_m.at(attr).at(at) << ", " << other.data().at(attr).at(at) << ", " << err.at(attr) << std::endl;
 			}
@@ -81,7 +82,7 @@ namespace utils
 			if (print)
 			{
 				std::cout << name_m << " ";
-				for (int zero = 0; zero < zeroes.size(); zero++)
+				for (unsigned int zero = 0; zero < zeroes.size(); zero++)
 					std::cout << attrNames_m.at(zero) << " zeroes: " << zeroes.at(zero) << ((zero != zeroes.size() - 1) ? ", " : "");
 				std::cout << std::endl;
 			}
@@ -129,7 +130,7 @@ namespace utils
 				{
 					if (data_m.at(attr).at(part) != data_other.at(attr).at(part))
 					{
-						double err{ abs((data_m.at(attr).at(part) - data_other.at(attr).at(part)) / data_m.at(attr).at(part)) };
+						double err{ std::abs((data_m.at(attr).at(part) - data_other.at(attr).at(part)) / data_m.at(attr).at(part)) };
 						if (minErr.at(attr) > err) { minErr.at(attr) = err; }
 						if (maxErr.at(attr) < err) { maxErr.at(attr) = err; }
 						avgErr.at(attr) = (avgErr.at(attr) * notsame.at(attr) + err) / (notsame.at(attr) + 1);

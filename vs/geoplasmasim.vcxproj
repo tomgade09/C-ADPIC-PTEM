@@ -23,7 +23,9 @@
     <ClCompile Include="..\src\API\SimulationAPI.cpp" />
     <ClCompile Include="..\src\API\utilsAPI.cpp" />
     <ClCompile Include="..\src\LogFile\LogFile.cpp" />
+    <ClCompile Include="..\src\Satellite\Satellite.cpp" />
     <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp" />
+    <ClCompile Include="..\src\Simulation\iterateSimCPU.cpp" />
     <ClCompile Include="..\src\Simulation\previousSimulation.cpp" />
     <ClCompile Include="..\src\Simulation\Simulation.cpp" />
     <ClCompile Include="..\src\utils\fileIO.cpp" />
@@ -278,6 +280,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <PreprocessorDefinitions>DLLFILE;WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnablePREfast>false</EnablePREfast>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
