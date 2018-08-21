@@ -147,19 +147,19 @@ DLLEXP_EXTC double getSimMaxAPI(Sim* sim)
 DLLEXP_EXTC int getNumberOfParticleTypesAPI(Sim* sim)
 {
 	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticleTypes()));
-	return -1.0; //if above fails
+	return -1; //if above fails
 }
 
 DLLEXP_EXTC int getNumberOfParticlesAPI(Sim* sim, int partInd)
 {
 	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfParticles(partInd)));
-	return -1.0; //if above fails
+	return -1; //if above fails
 }
 
 DLLEXP_EXTC int getNumberOfAttributesAPI(Sim* sim, int partInd)
 {
 	SIM_API_EXCEP_CHECK(return (int)(sim->getNumberOfAttributes(partInd)));
-	return -1.0; //if above fails
+	return -1; //if above fails
 }
 
 DLLEXP_EXTC const char* getParticleNameAPI(Sim* sim, int partInd)
@@ -220,12 +220,11 @@ DLLEXP_EXTC void writeCommonCSVAPI(Sim* sim)
 int main()
 {
 	SIM_API_EXCEP_CHECK(
-	Sim* sim{ createSimulationAPI(0.01, 101322.378940846, 19881647.2473464, "./out/") };
-	setupExampleSimulationAPI(sim, 3456000, "./../_in/data");
-	sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
-	runExampleSimulationAPI(sim, 500, 50);
-
-	terminateSimulationAPI(sim);
+		auto sim{ std::make_unique<Simulation>(0.01, 101322.378940846, 19881647.2473464, "./out/") };
+		setupExampleSimulationAPI(sim.get(), 3456000, "./../_in/data");
+		sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
+		sim->initializeSimulation();
+		sim->iterateSimulation(5000, 500);
 	); /* SIM_API_EXCEP_CHECK() */
 
 	return 0;

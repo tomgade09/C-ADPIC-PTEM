@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	std::string simdatadir{ argv[1] };
+	simdatadir += "\\";
 	
 	auto printVec = [](const std::vector<double>& x, int start = 0, int end = 0, int intvl = 1)
 	{ //lambda which prints values from a vector
@@ -43,13 +44,10 @@ int main(int argc, char* argv[])
 
 	auto err = [](double x, double y) { if (x == 0.0 && y == 0.0) return 0.0; return abs((x - y) / x); }; //check on error between two values
 
-	//double ioncm2Ratio{ sqrt(sim->Bmodel()->getBFieldAtS(alt, 0.0) / sim->Bmodel()->getBFieldAtS(sim->simMin(), 0.0)) };
-	//double magcm2Ratio{ sqrt(sim->Bmodel()->getBFieldAtS(alt, 0.0) / sim->Bmodel()->getBFieldAtS(sim->simMax(), 0.0)) };
-
 	Maxwellian maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
-	maxwellian.push_back_ion(10.0,  7.00e7, 20000);
-	maxwellian.push_back_mag(10.0,  2.00e7, 10000);
-	maxwellian.push_back_mag(5.0e3, 1.00e8, 10000);
+	maxwellian.push_back_ion(10.0,  7.00e7, 5000);
+	maxwellian.push_back_mag(10.0,  2.00e7, 5000);
+	maxwellian.push_back_mag(5.0e3, 1.00e8, 5000);
 	maxwellian.magModFactor = NFLUXMAGRATIO; // * magcm2Ratio //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
 	PPData ppdata{ maxwellian, generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true),

@@ -15,7 +15,7 @@ namespace utils
 			std::normal_distribution<> data_nd(mean, sigma);
 
 			#pragma omp parallel for
-			for (unsigned int iii = 0; iii < arrayOut.size(); iii++)
+			for (int iii = 0; iii < (int)arrayOut.size(); iii++)
 				arrayOut.at(iii) = data_nd(mtgen);
 		}
 	}

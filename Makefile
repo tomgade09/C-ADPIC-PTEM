@@ -3,6 +3,7 @@ CC         := g++
 NVCC       := nvcc
 CXXFLAGS   := -std=c++17 -fPIC -pedantic -O2 -fopenmp -Wall -Wno-unused-variable
 NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_30,code=\"sm_30,compute_30\" -x cu -m64 -cudart static -Xcompiler "-fPIC" -Xlinker "-shared -fopenmp"
+LINKFLAGS  := -shared -lcudadevrt -Xcompiler "-fopenmp" -Xlinker "-fopenmp"
 
 # Build-essential directories and defines
 CUDAINC    := /usr/local/cuda/include
@@ -22,7 +23,7 @@ CUOBJECTS  := $(patsubst $(SRC)/%.cu,$(BUILD)/%.obj,$(CUSOURCES))
 
 #Default rule
 $(TARGET): $(OBJECTS) $(CUOBJECTS)
-	$(NVCC) -shared -lcudadevrt -Xcompiler "-fopenmp" -Xlinker "-fopenmp" -o $(TARGET) $(OBJECTS) $(CUOBJECTS)
+	$(NVCC) $(LINKFLAGS) -o $(TARGET) $(OBJECTS) $(CUOBJECTS)
 
 
 # File rules
@@ -109,3 +110,9 @@ clean:
 	find ./lib -name "*.obj" -type f -delete
 	rm $(TARGET)
 
+.PHONY: exec
+exec:
+	TARGET     := $(OUT)/geoplasmasim
+	CXXFLAGS   := -std=c++17 -pedantic -O2 -fopenmp -D_DEBUG -Wall -Wno-unused-variable
+	NVCFLAGS   := -std=c++14 -rdc=true -O2 -gencode=arch=compute_30,code=\"sm_30,compute_30\" -x cu -m64 -cudart static -Xlinker "-fopenmp"
+	LINKFLAGS  := -lcudadevrt -Xcompiler "-fopenmp" -Xlinker "-fopenmp"

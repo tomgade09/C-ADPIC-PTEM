@@ -16,7 +16,7 @@ def simulationRunMain():
 
     sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM)
     sim.setupExampleSim(NUMPARTICLES)
-    sim.runCPU(NUMITER, 500)
+    sim.run(NUMITER, 500)
 
     fields = sim.getFieldsAtAllS(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
     for iii in range(len(fields[2])):

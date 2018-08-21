@@ -54,6 +54,9 @@
     <ClCompile Include="..\..\src\Simulation\iterateSimCPU.cpp">
       <Filter>Source Files\gpsfiles</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Satellite\Satellite.cpp">
+      <Filter>Source Files\gpsfiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\memoryManagement.cu">

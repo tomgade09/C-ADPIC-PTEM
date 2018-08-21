@@ -9,18 +9,18 @@ namespace postprocess
 	{
 		dblVec2D distfluxdnward{ EFlux::satEFlux(ppdata.dnward, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts) };
 		dblVec2D distfluxupward{ EFlux::satEFlux(ppdata.upward, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts) };
-		//dblVec2D backfluxupward { EFlux::backEFlux (ppdata.initial, ppdata.dnward, ppdata.bottom, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts, ppdata.mass, ppdata.charge) }; //calculate backscatter flux
+		dblVec2D backfluxupward{ EFlux::backEFlux (ppdata.initial, ppdata.upward, ppdata.bottom, ppdata.pitchBins, ppdata.energyBins, ppdata.maxCounts, ppdata.mass, ppdata.charge) }; //calculate backscatter flux
 		
 		for (unsigned int iii = 0; iii < distfluxupward.size(); iii++)
 			for (unsigned int jjj = 0; jjj < distfluxupward.at(iii).size(); jjj++)
-				distfluxupward.at(iii).at(jjj) += distfluxdnward.at(iii).at(jjj) /*+ backfluxupward.at(iii).at(jjj)*/;
+				distfluxupward.at(iii).at(jjj) += distfluxdnward.at(iii).at(jjj) + backfluxupward.at(iii).at(jjj);
 
 		return distfluxupward; //really, instead of just upward data, this is the total (see the nested loop above)
 	}
 
 	namespace steady
 	{
-		DLLEXP dblVec2D bsSrcNFluxToSatEFlux(const dblVec2D& bsNumFluxBins, const ParticleData& initialData, const ParticleData& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies)
+		DLLEXP dblVec2D bsSrcNFluxToSatNFlux(const dblVec2D& bsNumFluxBins, const ParticleData& initialData, const ParticleData& satUpwardData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies)
 		{
 			dblVec2D ret(binAngles.size());
 			for (unsigned int iii = 0; iii < ret.size(); iii++)
@@ -30,7 +30,7 @@ namespace postprocess
 			double dlogE{ log10(binEnergies.at(1)) - logEMinBinMid };
 			double dangle{ binAngles.at(1) - binAngles.at(0) };
 
-			for (unsigned int ionAngBin = binAngles.size() / 2; ionAngBin < binAngles.size(); ionAngBin++)
+			for (unsigned int ionAngBin = binAngles.size() / 2; ionAngBin < binAngles.size(); ionAngBin++) //some other time, just get the repeating energies and angles, fit between those, calculate index
 			{ //ionAngBin starts at 95 degrees
 				for (unsigned int ionEngBin = 0; ionEngBin < binEnergies.size(); ionEngBin++)
 				{
@@ -48,13 +48,22 @@ namespace postprocess
 						double tmpAngDiff{ std::abs(tmpBinAng - initialData.pitch.at(part)) };
 						double tmpEngDiff{ std::abs(tmpBinEng - initialData.energy.at(part)) };
 
-						if (tmpAngDiff * (1 - FLT_EPSILON) <= angDiff && tmpEngDiff * (1 - FLT_EPSILON) <= engDiff) { angDiff = tmpAngDiff; engDiff = tmpEngDiff; partInd = (int)part;/*std::cout << partInd << ":" << engDiff << "," << angDiff << ":" << tmpBinEng << "," << tmpBinAng << std::endl;*/ }
-						if (tmpAngDiff < FLT_EPSILON && tmpEngDiff < FLT_EPSILON) { part = initialData.pitch.size(); std::cout << "Sys EPS" << std::endl; } //if both differences are less than FLT_EPSILON - ~1e-7 on Windows 10, it's close enough - there's no bin 1e-7eV wide, nor is there likely to ever be
-																																							//if (tmpAngDiff < ang_epsilon && tmpEngDiff / tmpBinEng < eng_epsilon) { part = initialData.at(2).size(); /*std::cout << "My EPS" << std::endl;*/ } //ends iterations if sim particle representing bin particle is close enough as defined above
+						if (tmpAngDiff * (1 - FLT_EPSILON) <= angDiff && tmpEngDiff * (1 - FLT_EPSILON) <= engDiff)
+						{
+							angDiff = tmpAngDiff;
+							engDiff = tmpEngDiff;
+							partInd = (int)part;
+							/*std::cout << partInd << ":" << engDiff << "," << angDiff << ":" << tmpBinEng << "," << tmpBinAng << std::endl;*/
+						}
+						if (tmpAngDiff < FLT_EPSILON && tmpEngDiff < FLT_EPSILON)
+						{
+							part = initialData.pitch.size();
+							std::cout << "Sys EPS" << std::endl;
+						} //if both differences are less than FLT_EPSILON - ~1e-7 on Windows 10, it's close enough - there's no bin 1e-7eV wide, nor is there likely to ever be
 					}
 
-					double foundAng{ satDownData.pitch.at(partInd) };  //angle of the matching particle at satellite
-					double foundEng{ satDownData.energy.at(partInd) }; //energy of the matching particle at satellite
+					double foundAng{ satUpwardData.pitch.at(partInd) };  //angle of the matching particle at satellite
+					double foundEng{ satUpwardData.energy.at(partInd) }; //energy of the matching particle at satellite
 
 					//assign flux at ionosphere in a bin to the appropriate bin at satellite
 					for (unsigned int satAngBin = 0; satAngBin < binAngles.size(); satAngBin++)
@@ -125,23 +134,25 @@ namespace postprocess
 			const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts, double mass, double charge)
 		{
 			dblVec2D escCntBins{ binning::binWeighted(escapeData.pitch, escapeData.energy, binAngles, binEnergies, maxwCounts) };
-			std::vector<double> escCntBinsSum(escCntBins.at(0).size()); //each bin in units of counts -> # particles
-			for (unsigned int iii = 0; iii < escCntBinsSum.size(); iii++)
+			
+			std::vector<double> escCntBinsSum(escCntBins.at(0).size());    //Sum of escaped particles at each energy, units of dNflux
+
+			for (unsigned int egy = 0; egy < escCntBinsSum.size(); egy++)  //iterate over energies
 			{
-				for (unsigned int jjj = 0; jjj < escCntBins.size(); jjj++)
-					escCntBinsSum.at(iii) += escCntBins.at(jjj).at(iii);
-				escCntBinsSum.at(iii) /= (escCntBins.size()); //isotropically space across pitch angle bins
+				for (unsigned int ang = 0; ang < escCntBins.size(); ang++) //sum over angles, add to sum vector at energyBin
+					escCntBinsSum.at(egy) += escCntBins.at(ang).at(egy);
+				escCntBinsSum.at(egy) /= (escCntBins.size());              //isotropically space across pitch angle bins
 			}
 
-			std::vector<double> numFluxByBin{ backscat::Nflux(escCntBinsSum, binEnergies, 1.5, -4.0, -2.1, 0.3) }; //obtained by log linefitting Evans, 1974 - these seem closest
-
+			std::vector<double> numFluxByEBin{ backscat::Nflux(escCntBinsSum, binEnergies, 1.5, -4.0, -2.1, 0.3) }; //obtained by log linefitting Evans, 1974 - these seem closest
+			
 			double dAngBin{ binAngles.at(1) - binAngles.at(0) };
 			dblVec2D numFlux(binAngles.size(), std::vector<double>(binEnergies.size()));
 			for (unsigned int ang = 0; ang < binAngles.size(); ang++)
 				for (unsigned int eng = 0; eng < binEnergies.size(); eng++)
-					numFlux.at(ang).at(eng) = numFluxByBin.at(eng) * (cos((binAngles.at(ang) - 0.5 * dAngBin) * RADS_PER_DEG) - cos((binAngles.at(ang) + 0.5 * dAngBin) * RADS_PER_DEG));
+					numFlux.at(ang).at(eng) = numFluxByEBin.at(eng) * (cos((binAngles.at(ang) - 0.5 * dAngBin) * RADS_PER_DEG) - cos((binAngles.at(ang) + 0.5 * dAngBin) * RADS_PER_DEG));
 
-			dblVec2D ret{ steady::bsSrcNFluxToSatEFlux(numFlux, initialData, satData, binAngles, binEnergies) };
+			dblVec2D ret{ steady::bsSrcNFluxToSatNFlux(numFlux, initialData, satData, binAngles, binEnergies) };
 			
 			//convert to dEflux
 			for (unsigned int ang = 0; ang < ret.size(); ang++)
@@ -164,9 +175,7 @@ namespace postprocess
 			double logMinEBinMid{ log10(binEnergies.at(0)) };
 			double dlogE_bin{ log10(binEnergies.at(1)) - logMinEBinMid };
 			double dangle_bin{ binAngles.at(1) - binAngles.at(0) };
-			
-			//int endedEarly{ 0 };
-			//int endedLater{ 0 };
+
 			int outsideLimits{ 0 };
 
 			for (unsigned int part = 0; part < particleEnergies.size(); part++) //iterate over particles
@@ -189,36 +198,11 @@ namespace postprocess
 					partPitch >= angbin * dangle_bin &&
 					partPitch < (angbin + 1) * dangle_bin)
 				{
-					//endedEarly++;
 					ret.at(angbin).at(engbin) += maxwCounts.at(part);
 					continue;
 				}
 				else //this shouldn't ever execute, guards should prevent zero and out of limits values
 					throw std::logic_error(std::to_string(part) + " >> " + std::to_string(particleEnergies.at(part)) + ":" + std::to_string(engbin) + ",  " + std::to_string(particlePitches.at(part)) + ":" + std::to_string(angbin));
-
-				//legacy code - took longer and was more error prone with a lot of wasted checks - remove later
-				/*for (int angbin = 0; angbin < binAngles.size(); angbin++)
-				{
-					double angmin{  angbin      * dangle_bin }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
-					double angmax{ (angbin + 1) * dangle_bin };
-					if (angbin == (binAngles.size() - 1)) angmax += 0.001; //I want the top angle bin to include 180 and right now the conditional is ... < 180, not ...<= 180
-
-					for (int ebin = 0; ebin < binEnergies.size(); ebin++)
-					{
-						double emin{ pow(10, (ebin - 0.5) * dlogE_bin + logMinEBinMid) }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
-						double emax{ pow(10, (ebin + 0.5) * dlogE_bin + logMinEBinMid) };
-
-						if ((partPitch >= angmin) && (partPitch < angmax) &&
-							(partEnerg >= emin)   && (partEnerg < emax))
-						{
-							endedLater++;
-
-							ret.at(angbin).at(ebin) += maxwCounts.at(part); //maxwCounts needs to be as long as particleEnergies/particlePitches
-							angbin = binAngles.size(); //no need to iterate over other bins once particle bin is found
-							ebin = binEnergies.size();
-						}
-					}
-				}*/
 			}
 
 			if (outsideLimits > 0) std::cout << "postprocess::binning::binWeighted : Particles out of limits: " << outsideLimits << "\n";
@@ -251,6 +235,18 @@ namespace postprocess
 				for (unsigned int jjj = 0; jjj < data.at(0).size(); jjj++)
 					data.at(iii).at(jjj) /= std::abs(cos(RADS_PER_DEG * binAnglesDegrees.at(iii)));
 		}
+
+		DLLEXP void symmetricBins0To360(dblVec2D& data, std::vector<double>& binAngles) //takes bins from 0-180 and extends to 360 symmetrically reflected across 180 degrees
+		{//data[angle][energy]
+			binAngles.resize(2 * binAngles.size()); //double size of angles vector (goes from 0-180 now)
+			data.resize(binAngles.size()); //set data (vector of double vectors) to size of binAngles (now double sized)
+			
+			for (unsigned int iii = binAngles.size() / 2; iii < binAngles.size(); iii++)
+			{
+				binAngles.at(iii) = 2 * binAngles.at(iii - 1) - binAngles.at(iii - 2);
+				data.at(iii) = data.at(binAngles.size() - iii - 1);
+			}
+		} //needs a good testing
 	} //end namespace postprocess::numerical
 
 	namespace backscat //postprocess::backscat
@@ -285,15 +281,15 @@ namespace postprocess
 		DLLEXP std::vector<double> Nflux(const std::vector<double>& binCounts, const std::vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb)
 		{
 			double logEBinMin{ log10(binEnergies.at(0)) };
-			double dlogE{ log10(binEnergies.at(1)) - logEBinMin };
+			double dlogE{ log10(binEnergies.at(1)) - logEBinMin };                             //depends on a logarithmically spaced E, won't work otherwise
 
 			std::vector<double> bsNflux(binEnergies.size());
-			for (unsigned int nFluxBin = 0; nFluxBin < bsNflux.size(); nFluxBin++) //bins that contain the number flux of the backscatter in the energy bin of the same index
+			for (unsigned int nFluxBin = 0; nFluxBin < bsNflux.size(); nFluxBin++)             //bins that contain the number flux of the backscatter in the energy bin of the same index
 			{
-				double engmin{ pow(10, (nFluxBin - 0.5) * dlogE + logEBinMin) }; //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
+				double engmin{ pow(10, (nFluxBin - 0.5) * dlogE + logEBinMin) };               //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
 				double engmax{ pow(10, (nFluxBin + 0.5) * dlogE + logEBinMin) };
 
-				for (unsigned int incEbin = nFluxBin; incEbin < bsNflux.size(); incEbin++) //nFlux bins are contributed to by all incident particles with E higher than the E associated with the nFlux bin
+				for (unsigned int incEbin = nFluxBin; incEbin < bsNflux.size(); incEbin++)     //nFlux bins are contributed to by all incident particles with E higher than the E associated with the nFlux bin
 				{
 					double incidentE{ pow(10, log10(binEnergies.at(incEbin)) + 0.5 * dlogE) }; //incident E is upper limit of bin - particles in here can be up to this energy, so why not use this instead of mid bin?
 					double intF{ integralF_flux(engmin, engmax, incidentE, primary_logm, primary_logb, secondary_logm, secondary_logb) };

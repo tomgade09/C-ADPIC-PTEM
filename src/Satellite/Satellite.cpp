@@ -9,7 +9,7 @@ void Satellite::satelliteDetectorCPU(const std::vector<std::vector<double>>& par
 	std::vector<std::vector<double>>& detected{ data_m.at(0) };
 
 	#pragma omp parallel for
-	for (unsigned int partind = 0; partind < partdata.at(0).size(); partind++)
+	for (int partind = 0; partind < (int)partdata.at(0).size(); partind++)
 	{
 		if (simtime == 0.0)
 		{

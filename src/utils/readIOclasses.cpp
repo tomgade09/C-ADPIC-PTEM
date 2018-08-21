@@ -139,8 +139,9 @@ namespace utils
 				}
 			}
 
-			std::cout << "================ Summary of differences: name_m, " + other.name() + " (passed in) ================" << std::endl;
-			std::cout << "Number of zeroes in attributes:" << std::endl;
+			std::cout.precision(8);
+			std::cout << "================ Summary of differences: " + name_m + ", " + other.name() + " ================" << std::endl;
+			std::cout << "Number of zeroes in attributes:" << std::endl << std::scientific;
 			for (int attr = 0; attr < datasize; attr++)
 				std::cout << attrNames_m.at(attr) << ": " << zeroes_this.at(attr) << ", " << zeroes_other.at(attr) << std::endl;
 			std::cout << std::endl;
@@ -155,7 +156,7 @@ namespace utils
 				std::cout << attrNames_m.at(attr) << ": " << stdDev_this.at(attr) << ", " << stdDev_other.at(attr) << std::endl;
 			std::cout << std::endl;
 
-			std::cout << "Attribute error (other's deviation from this):" << std::endl;
+			std::cout << "Attribute error ( abs((" + name_m + " - " + other.name() + ") / " + name_m + "):" << std::endl;
 			for (int attr = 0; attr < datasize; attr++)
 				std::cout << attrNames_m.at(attr) << ": Min: " << minErr.at(attr) << ", Max: " << maxErr.at(attr) << ", Avg: " << avgErr.at(attr) << ", Number not same: " << notsame.at(attr) << std::endl;
 			std::cout << std::endl;

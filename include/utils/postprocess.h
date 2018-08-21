@@ -15,7 +15,7 @@ namespace postprocess
 
 	namespace steady
 	{
-		DLLEXP dblVec2D bsSrcNFluxToSatEFlux(const dblVec2D& bsNumFluxBins, const ParticleData& initialData, const ParticleData& satDownData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies);
+		DLLEXP dblVec2D bsSrcNFluxToSatNFlux(const dblVec2D& bsNumFluxBins, const ParticleData& initialData, const ParticleData& satUpwardData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies);
 	}
 
 	namespace EFlux
@@ -29,6 +29,7 @@ namespace postprocess
 		DLLEXP dblVec2D binWeighted(const std::vector<double>& particlePitches, const std::vector<double>& particleEnergies, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, const std::vector<double>& maxwCounts);
 		DLLEXP void countsToEFlux(dblVec2D& energyData, const std::vector<double>& binAngles, const std::vector<double>& binEnergies, double mass, double charge, double BatXSection);
 		DLLEXP void divBinsByCosPitch(dblVec2D& data, std::vector<double> binAnglesDegrees);
+		DLLEXP void symmetricBins0To360(dblVec2D& data, std::vector<double>& binAngles);
 	}
 
 	namespace backscat
