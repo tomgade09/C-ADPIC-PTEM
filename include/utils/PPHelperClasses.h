@@ -39,7 +39,7 @@ namespace postprocess
 		void push_back_ion(double E_peak, double dE_magnitude, int partsAtE = 1);
 		void push_back_mag(double E_peak, double dE_magnitude, int partsAtE = 1);
 		
-		std::vector<double> counts(const ParticleData& init, const double s_ion, const double s_mag, const double B_ion, const double B_alt, const double B_mag);
+		std::vector<double> counts(const ParticleData& init, const double s_ion, const double s_mag);
 	};
 
 	struct DLLCLEXP PPData

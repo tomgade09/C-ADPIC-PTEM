@@ -49,7 +49,7 @@ namespace postprocess
 		magdEMag.push_back(dE_magnitude / (double)partsAtE);
 	}
 
-	std::vector<double> Maxwellian::counts(const ParticleData& init, const double s_ion, const double s_mag, const double B_ion, const double B_alt, const double B_mag)
+	std::vector<double> Maxwellian::counts(const ParticleData& init, const double s_ion, const double s_mag)
 	{
 		std::vector<double> max(init.energy.size()); //array of maxwellian counts
 		std::vector<double> maxtmp; //temporary holder allowing std::transform to be used twice instead of nested loops
@@ -57,8 +57,8 @@ namespace postprocess
 		//multiply magnitudes by scaling factors
 		//may need to be scaled for a number of reasons
 		//ex: differing ranges of pitch angles for ion and mag sources
-		std::transform(iondEMag.begin(), iondEMag.end(), iondEMag.begin(), [&](double dE) { return dE * ionModFactor * std::sqrt(B_ion/B_alt); });
-		std::transform(magdEMag.begin(), magdEMag.end(), magdEMag.begin(), [&](double dE) { return dE * magModFactor * std::sqrt(B_alt/B_mag); });
+		std::transform(iondEMag.begin(), iondEMag.end(), iondEMag.begin(), [&](double dE) { return dE * ionModFactor; });
+		std::transform(magdEMag.begin(), magdEMag.end(), magdEMag.begin(), [&](double dE) { return dE * magModFactor; });
 
 		auto count_E = [&](double E_cnt, double E_peak, double dEflux_peak, bool zero)
 		{ //calculates count for a given E (E_cnt) for a maxwellian peaked at E_peak with magnitude dEflux_peak
@@ -125,17 +125,7 @@ namespace postprocess
 			dnward = ParticleData(sim->satellite(altDngSat)->data().at(0).at(vparaind), sim->satellite(altDngSat)->data().at(0).at(vperpind), mass);
 		); //end SIM_API_EXCEP_CHECK
 
-		maxCounts = maxwellian.counts(initial, s_ion, s_mag, B_ion, B_alt, B_mag);
-		std::cout << "PPData::PPData - multiplying counts by -cos(PA_src) for ion source, 1/cos(PA_sat) for mag source\n";
-		for (unsigned int iii = 0; iii < maxCounts.size(); iii++) //isotropize counts -> 3D
-		{
-			if (initial.s_pos.at(iii) < s_ion * 1.001) //ionospheric source
-				maxCounts.at(iii) *= -cos(initial.pitch.at(iii) * RADS_PER_DEG);
-			else if (initial.s_pos.at(iii) > s_mag * 0.999)//magnetospheric source
-				maxCounts.at(iii) *= 1.0 / cos(dnward.pitch.at(iii) * RADS_PER_DEG);
-			else
-				throw std::logic_error("PPData::PPData : particle is not ionospheric or magnetospheric source");
-		}
+		maxCounts = maxwellian.counts(initial, s_ion, s_mag);
 	}
 	//End PPData
 }

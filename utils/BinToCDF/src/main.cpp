@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	maxwellian.push_back_ion(10.0,  7.00e7, 5000);
 	maxwellian.push_back_mag(10.0,  2.00e7, 5000);
 	maxwellian.push_back_mag(5.0e3, 1.00e8, 5000);
-	maxwellian.magModFactor = NFLUXMAGRATIO; // * magcm2Ratio //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
+	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
 	PPData ppdata{ maxwellian, generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true),
 		simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
