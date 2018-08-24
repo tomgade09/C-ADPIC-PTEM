@@ -55,7 +55,7 @@ namespace utils
 			}
 		}
 
-		DLLEXP std::vector<double> generateSpacedValues(double min, double max, int number, bool logSpaced, bool endInclusive)
+		DLLEXP std::vector<double> generateSpacedValues(double start, double end, int number, bool logSpaced, bool endInclusive)
 		{
 			/*
 				**Note** if logSpaced is true, min and max have to be log(min) and log(max),
@@ -67,6 +67,7 @@ namespace utils
 				-------------------------
 				x     x     x     x     x
 				-------------------------
+				^start ============= end^
 				^min                 max^ << endInclusive = true, ("number" - 1) values
 				^min           max^       << endInclusive = false, "number" values
 			*/
@@ -76,9 +77,9 @@ namespace utils
 
 			std::vector<double> ret(number);
 
-			double dval{ (max - min) / ((endInclusive) ? (number - 1) : number) };
+			double dval{ (end - start) / ((endInclusive) ? (number - 1) : number) };
 			for (int iter = 0; iter < number; iter++)
-				ret.at(iter) = ((logSpaced) ? pow(10, iter * dval + min) : (iter * dval + min));
+				ret.at(iter) = ((logSpaced) ? pow(10, iter * dval + start) : (iter * dval + start));
 
 			return ret;
 		}

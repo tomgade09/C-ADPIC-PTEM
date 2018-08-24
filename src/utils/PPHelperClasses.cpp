@@ -12,7 +12,7 @@ using utils::fileIO::ParticleDistribution;
 namespace postprocess
 {
 	//ParticleData
-	ParticleData::ParticleData(const std::vector<double>& v_para, const std::vector<double>& v_perp, double mass) : vpara{ v_para }, vperp{ v_perp } //auto calculate E, Pitch
+	ParticleData::ParticleData(const vector<double>& v_para, const vector<double>& v_perp, double mass) : vpara{ v_para }, vperp{ v_perp } //auto calculate E, Pitch
 	{
 		utils::numerical::v2DtoEPitch(v_para, v_perp, mass, energy, pitch);
 	}
@@ -49,10 +49,10 @@ namespace postprocess
 		magdEMag.push_back(dE_magnitude / (double)partsAtE);
 	}
 
-	std::vector<double> Maxwellian::counts(const ParticleData& init, const double s_ion, const double s_mag)
+	vector<double> Maxwellian::counts(const ParticleData& init, const double s_ion, const double s_mag)
 	{
-		std::vector<double> max(init.energy.size()); //array of maxwellian counts
-		std::vector<double> maxtmp; //temporary holder allowing std::transform to be used twice instead of nested loops
+		vector<double> max(init.energy.size()); //array of maxwellian counts
+		vector<double> maxtmp; //temporary holder allowing std::transform to be used twice instead of nested loops
 
 		//multiply magnitudes by scaling factors
 		//may need to be scaled for a number of reasons
@@ -74,7 +74,7 @@ namespace postprocess
 			}
 		};
 
-		auto genCounts = [&](const std::vector<double>& EPeak, const std::vector<double>& dEMag, std::function<bool(double)> zero)
+		auto genCounts = [&](const vector<double>& EPeak, const vector<double>& dEMag, std::function<bool(double)> zero)
 		{ //iterates over particles and specified Peak/Magnitude values (ionospheric or magnetospheric) and adds values to "max" (after "maxtmp")
 			for (unsigned int entr = 0; entr < EPeak.size(); entr++) //iterate over ionospheric maxwellian specifications
 			{
@@ -96,15 +96,15 @@ namespace postprocess
 	//End Maxwellian
 
 	//PPData
-	PPData::PPData(Maxwellian maxwellian, std::vector<double> EBins, std::vector<double> PABins, std::string simDataDir, std::string particleName, std::string simBtmSat, std::string altUpgSat, std::string altDngSat) :
-		energyBins{ EBins }, pitchBins{ PABins }
+	PPData::PPData(Maxwellian maxwellian, vector<double> ppEBins, vector<double> ppPABins, string simDataDir, string particleName, string simBtmSat, string upgoingAtAltSat, string dngoingAtAltSat) :
+		ppEBins{ ppEBins }, ppPABins{ ppPABins }
 	{
 		std::unique_ptr<Simulation> sim;
 		SILENCE_COUT(SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(simDataDir)));
 
 		SIM_API_EXCEP_CHECK(
 			s_ion = sim->simMin();
-			s_alt = sim->satellite(altUpgSat)->altitude();
+			s_alt = sim->satellite(upgoingAtAltSat)->altitude();
 			s_mag = sim->simMax();
 
 			B_ion = sim->getBFieldAtS(s_ion, 0.0);
@@ -121,8 +121,8 @@ namespace postprocess
 			initial = ParticleData(sim->particle(particleName)->data(true).at(vparaind), sim->particle(particleName)->data(true).at(vperpind), mass);
 			initial.s_pos = sim->particle(particleName)->data(true).at(sind);
 			bottom = ParticleData(sim->satellite(simBtmSat)->data().at(0).at(vparaind), sim->satellite(simBtmSat)->data().at(0).at(vperpind), mass);
-			upward = ParticleData(sim->satellite(altUpgSat)->data().at(0).at(vparaind), sim->satellite(altUpgSat)->data().at(0).at(vperpind), mass);
-			dnward = ParticleData(sim->satellite(altDngSat)->data().at(0).at(vparaind), sim->satellite(altDngSat)->data().at(0).at(vperpind), mass);
+			upward = ParticleData(sim->satellite(upgoingAtAltSat)->data().at(0).at(vparaind), sim->satellite(upgoingAtAltSat)->data().at(0).at(vperpind), mass);
+			dnward = ParticleData(sim->satellite(dngoingAtAltSat)->data().at(0).at(vparaind), sim->satellite(dngoingAtAltSat)->data().at(0).at(vperpind), mass);
 		); //end SIM_API_EXCEP_CHECK
 
 		maxCounts = maxwellian.counts(initial, s_ion, s_mag);

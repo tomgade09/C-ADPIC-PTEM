@@ -6,19 +6,22 @@
 #include "Simulation/Simulation.h"
 #include "utils/writeIOclasses.h"
 
+using std::string;
+using std::vector;
+
 namespace postprocess
 {
 	struct DLLCLEXP ParticleData
 	{
-		std::vector<double> vpara;
-		std::vector<double> vperp;
-		std::vector<double> energy;
-		std::vector<double> pitch;
-		std::vector<double> t_esc;
-		std::vector<double> s_pos;
+		vector<double> vpara;
+		vector<double> vperp;
+		vector<double> energy;
+		vector<double> pitch;
+		vector<double> t_esc;
+		vector<double> s_pos;
 
 		ParticleData() {} //empty constructor for making an empty ParticleData
-		ParticleData(const std::vector<double>& v_para, const std::vector<double>& v_perp, double mass);
+		ParticleData(const vector<double>& v_para, const vector<double>& v_perp, double mass);
 		void free();
 	};
 
@@ -28,18 +31,18 @@ namespace postprocess
 		double ionModFactor{ 1.0 };   //for now, the user needs to adjust these manually
 		double magModFactor{ 1.0 };   //eventually, I'd like to calculate them automatically
 
-		std::vector<double> ionEPeak; //ionospheric source peak energy of maxwellian
-		std::vector<double> iondEMag; //ionospheric source magnitude of peak
+		vector<double> ionEPeak; //ionospheric source peak energy of maxwellian
+		vector<double> iondEMag; //ionospheric source magnitude of peak
 
-		std::vector<double> magEPeak; //same for magnetosphere
-		std::vector<double> magdEMag; //basically x, y axes (top, bottom) of a maxwellian graph
+		vector<double> magEPeak; //same for magnetosphere
+		vector<double> magdEMag; //basically x, y axes (top, bottom) of a maxwellian graph
 
 		Maxwellian(double dlogEdist);
 
 		void push_back_ion(double E_peak, double dE_magnitude, int partsAtE = 1);
 		void push_back_mag(double E_peak, double dE_magnitude, int partsAtE = 1);
 		
-		std::vector<double> counts(const ParticleData& init, const double s_ion, const double s_mag);
+		vector<double> counts(const ParticleData& init, const double s_ion, const double s_mag);
 	};
 
 	struct DLLCLEXP PPData
@@ -55,18 +58,22 @@ namespace postprocess
 		double mass;
 		double charge;
 
-		//postprocessing bins
-		const std::vector<double> energyBins;
-		const std::vector<double> pitchBins;
+		//Original Distribution Bins
+		vector<double> distEBins;
+		vector<double> distPABins;
 
-		//particle data
-		std::vector<double> maxCounts; //maxwellian weights - "number of particles represented by the particle at same index"
-		ParticleData initial;          //initial particle data
-		ParticleData bottom;           //data on particles that escape out the bottom
-		ParticleData upward;           //data on particles that are upgoing at satellite
-		ParticleData dnward;           //data on particles that are downgoing at satellite
+		//Postprocessing Bins
+		const vector<double> ppEBins;
+		const vector<double> ppPABins;
 
-		PPData(Maxwellian maxwellian, std::vector<double> EBins, std::vector<double> PABins, std::string simDataDir, std::string particleName, std::string simBtmSat, std::string upgoingAtAltSat, std::string dngoingAtAltSat);
+		//Satellite and Maxwellian Data
+		vector<double> maxCounts; //maxwellian weights - "number of particles represented by the particle at same index"
+		ParticleData initial;     //initial particle data
+		ParticleData bottom;      //data on particles that escape out the bottom
+		ParticleData upward;      //data on particles that are upgoing at satellite
+		ParticleData dnward;      //data on particles that are downgoing at satellite
+
+		PPData(Maxwellian maxwellian, vector<double> ppEBins, vector<double> ppPABins, string simDataDir, string particleName, string simBtmSat, string upgoingAtAltSat, string dngoingAtAltSat);
 	};
 } //end namespace postprocess
 
