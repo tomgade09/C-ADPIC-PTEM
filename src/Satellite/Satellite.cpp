@@ -4,6 +4,17 @@
 #include "Satellite/Satellite.h"
 #include "ErrorHandling/simExceptionMacros.h"
 
+Satellite::Satellite(std::string name, std::vector<std::string> attributeNames, double altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr) :
+	name_m{ name }, attrNames_m{ attributeNames }, altitude_m{ altitude }, upwardFacing_m{ upwardFacing }, numberOfParticles_m{ numberOfParticles }, particleData2D_d{ partDataGPUPtr }
+{
+	initializeGPU();
+}
+
+Satellite::~Satellite()
+{
+	freeGPUMemory();
+}
+
 void Satellite::satelliteDetectorCPU(const std::vector<std::vector<double>>& partdata, double simtime, double dt)
 {
 	std::vector<std::vector<double>>& detected{ data_m.at(0) };

@@ -35,21 +35,49 @@ namespace postprocess
 		vector<double> satWeights{ ppdata.maxCounts };
 		vector<double> bsWeights { ppdata.maxCounts };
 
+		vector<double> totalNumPartsIon(ppdata.distEBins.size());
+		vector<double> totalNumPartsMag(ppdata.distEBins.size());
+		vector<double> adjNumPartsIon  (ppdata.distEBins.size());
+		vector<double> adjNumPartsMagSt(ppdata.distEBins.size());
+		vector<double> adjNumPartsMagBS(ppdata.distEBins.size());
+
 		for (unsigned int iii = 0; iii < ppdata.initial.s_pos.size(); iii++) //isotropize counts -> 3D
 		{
+			unsigned int ind{ iii % ppdata.distEBins.size() };
 			if (ppdata.initial.s_pos.at(iii) < ppdata.s_ion * 1.001)     //ionospheric source
 			{
+				totalNumPartsIon.at(ind) += satWeights.at(iii); //totalNum... index assumes energy is iterated first
+				adjNumPartsIon.at(ind)   += satWeights.at(iii) * -cos(ppdata.initial.pitch.at(iii) * RADS_PER_DEG);
 				satWeights.at(iii) *= -cos(ppdata.initial.pitch.at(iii) * RADS_PER_DEG) * Aratio_ion_sat;
 				bsWeights.at(iii)  *= -cos(ppdata.initial.pitch.at(iii) * RADS_PER_DEG) * Aratio_ion_bs * bsScale; //without QSPS, there shouldn't be any ionospheric-source particles influencing the backscatter
 			}
 			else if (ppdata.initial.s_pos.at(iii) > ppdata.s_mag * 0.999)//magnetospheric source
 			{
+				totalNumPartsMag.at(ind) += satWeights.at(iii);
+				adjNumPartsMagSt.at(ind) += satWeights.at(iii) / cos(ppdata.dnward.pitch.at(iii) * RADS_PER_DEG);
+				adjNumPartsMagBS.at(ind) += satWeights.at(iii) / cos(ppdata.bottom.pitch.at(iii) * RADS_PER_DEG);
 				satWeights.at(iii) *= 1.0 / cos(ppdata.dnward.pitch.at(iii) * RADS_PER_DEG) * Aratio_mag_sat;
 				bsWeights.at(iii)  *= 1.0 / cos(ppdata.bottom.pitch.at(iii) * RADS_PER_DEG) * Aratio_mag_bs * bsScale;
 			}
 			else
 				throw std::logic_error("postprocess::steadyFlux : particle is not ionospheric or magnetospheric source");
 		}
+
+		for (unsigned int iii = 0; iii < ppdata.initial.s_pos.size(); iii++) //re-normalize since the total num of parts has been shifted by cos factor
+		{ //CHECK THIS CODE
+			unsigned int ind{ iii % ppdata.distEBins.size() };
+			if (ppdata.initial.s_pos.at(iii) < ppdata.s_ion * 1.001)     //ionospheric source
+			{ //CHECK THIS CODE
+				satWeights.at(iii) *= totalNumPartsIon.at(ind) / adjNumPartsIon.at(ind);
+				bsWeights.at(iii)  *= totalNumPartsIon.at(ind) / adjNumPartsIon.at(ind);
+			}
+			else if (ppdata.initial.s_pos.at(iii) > ppdata.s_mag * 0.999)//magnetospheric source
+			{
+				satWeights.at(iii) *= totalNumPartsMag.at(ind) / adjNumPartsMagSt.at(ind);
+				bsWeights.at(iii)  *= totalNumPartsMag.at(ind) / adjNumPartsMagBS.at(ind);
+			}
+		}
+
 
 		// 2. Calculate dEfluxes
 		dblVec2D distfluxdnward{ EFlux::satdEFlux(ppdata.dnward, ppdata.ppPABins, ppdata.ppEBins, satWeights) };
@@ -193,16 +221,34 @@ namespace postprocess
 			// output: 1D vector of backscatter dNFlux(?) by energy bin at ionosphere
 
 			// 4. Distribute BS dNflux Equally Over Pitch Bins
+			vector<double> totalNFlux(distEbins.size()); //normalize factors
+			vector<double> adjNFlux  (distEbins.size());
+			
 			dblVec2D numFlux(distPAbins.size());
 			for (unsigned int ang = 0; ang < numFlux.size(); ang++)
 			{
 				if (ang >= numFlux.size() / 2) //FOR REVERSED ANGLES - change later to be more general
-					numFlux.at(ang) = vector<double>(distEbins.size());
+					numFlux.at(ang) = vector<double>(distEbins.size()); //empty vector of the right size
 				else
 				{
 					numFlux.at(ang) = bsdNFluxByEBin;
 					for (unsigned int eny = 0; eny < numFlux.at(ang).size(); eny++)
+					{
+						totalNFlux.at(eny) += numFlux.at(ang).at(eny);
 						numFlux.at(ang).at(eny) *= -cos(distPAbins.at(ang) * RADS_PER_DEG);
+						adjNFlux.at(eny)   += numFlux.at(ang).at(eny);
+					}
+				}
+			}
+
+			for (unsigned int ang = 0; ang < numFlux.size(); ang++)
+			{
+				if (ang >= numFlux.size() / 2) //FOR REVERSED ANGLES - change later to be more general
+					continue;
+				else
+				{
+					for (unsigned int eny = 0; eny < numFlux.at(ang).size(); eny++)
+						numFlux.at(ang).at(eny) *= totalNFlux.at(eny) / adjNFlux.at(eny);
 				}
 			}
 			// output: 2D vector of bs dNFlux at ionosphere per pitch, energy bin - should only be upward (90-180)

@@ -9,6 +9,19 @@ using utils::fileIO::writeTxtFile;
 using utils::fileIO::readTxtFile;
 using utils::string::strToStrVec;
 
+SimAttributes::SimAttributes(std::string filename, bool readFile) : filename_m{ filename }, read_m{ readFile }//readFile defaults to false
+{
+	if (readFile)
+	{
+		read();
+		read_m = true;
+	}
+}
+SimAttributes::~SimAttributes()
+{
+	if (!read_m) write();
+}
+
 /*
 	Saving paradigm:
 	[[[[ ]]]] encapsulates classnames

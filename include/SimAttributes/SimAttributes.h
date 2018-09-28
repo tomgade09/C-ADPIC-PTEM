@@ -46,8 +46,8 @@ public: //all this is public so callers can access the raw data (so I don't have
 	attrsData partAD{ "Particle" }; //Particle attributes
 	attrsData satAD{ "Satellite" }; //Satellite attributes
 
-	SimAttributes(std::string filename, bool readFile = false) : filename_m{ filename }, read_m{ readFile } { if (readFile) { read(); read_m = true; } }
-	~SimAttributes() { if (!read_m) write(); }
+	SimAttributes(std::string filename, bool readFile = false);
+	~SimAttributes();
 	
 	void addData(std::string classname, std::string name, VEC(std::string) stringAttrLabels, VEC(std::string) stringAttributes, VEC(std::string) doubleAttrLabels, VEC(double) doubleAttributes);
 };
