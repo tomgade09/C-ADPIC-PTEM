@@ -33,9 +33,15 @@ namespace postprocess
 
 	namespace backscat
 	{
-		DLLEXP double evans_flux(double E_eval, double E_incident, double prim_logm, double prim_logb, double scnd_logm, double scnd_logb);
-		DLLEXP double integralEvans_flux(double lower, double upper, double incidentE, double prim_fact, double prim_logb, double scnd_fact, double scnd_logb);
-		DLLEXP vector<double> dNflux_bs(const vector<double>& binCounts, const vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb);
+		DLLEXP double   evans_flux(double E_eval, double E_incident, double prim_logm, double prim_logb, double scnd_logm, double scnd_logb);
+		DLLEXP double   integralEvans_flux(double lower, double upper, double incidentE, double prim_fact, double prim_logb, double scnd_fact, double scnd_logb);
+		DLLEXP dblVec2D dNflux_bs_ion(const dblVec2D& counts_esc_ion, const vector<double>& binAngles, const vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb);
+	}
+
+	namespace multLevelBS
+	{
+		DLLEXP void scatterMain();
+		DLLEXP void singleLevel(double* sumCollideAbove, double Z, double p, double h, double E, double PA);
 	}
 }
 

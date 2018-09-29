@@ -30,7 +30,7 @@ namespace postprocess
 		double Aratio_mag_sat{ std::sqrt(ppdata.B_alt / ppdata.B_mag) };
 		double Aratio_ion_bs { std::sqrt(ppdata.B_ion / ppdata.B_ion) * std::sqrt(ppdata.B_alt / ppdata.B_ion) };
 		double Aratio_mag_bs { std::sqrt(ppdata.B_ion / ppdata.B_mag) * std::sqrt(ppdata.B_alt / ppdata.B_ion) };
-		double bsScale{ 0.1 }; //for now, arbitrary factor to get in the ballpark
+		double bsScale{ /*0.*/1 }; //for now, arbitrary factor to get in the ballpark
 
 		vector<double> satWeights{ ppdata.maxCounts };
 		vector<double> bsWeights { ppdata.maxCounts };
@@ -203,62 +203,22 @@ namespace postprocess
 		{
 			// Section 1 - Get dNflux at Satellite
 			// 1. Bin Escaped Particles by PA, Energy IN HIGHER RESOLUTION
-			dblVec2D escapeBinned{ binning::binWeighted(escapeData.pitch, escapeData.energy, distPAbins, distEbins, maxwCounts) };
+			dblVec2D ionEscBins{ binning::binWeighted(escapeData.pitch, escapeData.energy, distPAbins, distEbins, maxwCounts) };
 			// output: 2D vector [PA][Eng] of number of escaped particles (dNFlux), weighted by specified maxwellians, binned by Energy and Pitch Angle
 
-			// 2. Sum dNflux over PA Bins, Per E Bin and Average
-			vector<double> escapeBinned_Eonly(escapeBinned.at(0).size()); //Sum of escaped particles at each energy, units of dNflux
-			for (unsigned int egy = 0; egy < escapeBinned_Eonly.size(); egy++)  //iterate over energies
-			{
-				for (auto& ang : escapeBinned)                          //sum over angles, add to sum vector at energyBin
-					escapeBinned_Eonly.at(egy) += ang.at(egy);
-				escapeBinned_Eonly.at(egy) /= (double)escapeBinned.size() / 2; //isotropically space across pitch angle bins - divide by # ion PA bins, this value later put in each ionospheric angle bin
-			}
-			// output: 1D vector of total number of escaped particles (dNFlux) per energy, reduced by # of ionsph pitch bins
 
-			// 3. Calculate BS dNflux from dNflux Incident to Ionosphere
-			vector<double> bsdNFluxByEBin{ backscat::dNflux_bs(escapeBinned_Eonly, distEbins, 1.5, -4.0, -2.1, 0.3) }; //obtained by log linefitting Evans, 1974 - these seem closest
+			// 2. Calculate BS dNflux from dNflux Incident to Ionosphere
+			dblVec2D dNflux_BS{ backscat::dNflux_bs_ion(ionEscBins, distPAbins, distEbins, 1.5, -4.0, -2.1, 0.3) }; //obtained by log linefitting Evans, 1974 - these seem closest
 			// output: 1D vector of backscatter dNFlux(?) by energy bin at ionosphere
 
-			// 4. Distribute BS dNflux Equally Over Pitch Bins
-			vector<double> totalNFlux(distEbins.size()); //normalize factors
-			vector<double> adjNFlux  (distEbins.size());
 			
-			dblVec2D numFlux(distPAbins.size());
-			for (unsigned int ang = 0; ang < numFlux.size(); ang++)
-			{
-				if (ang >= numFlux.size() / 2) //FOR REVERSED ANGLES - change later to be more general
-					numFlux.at(ang) = vector<double>(distEbins.size()); //empty vector of the right size
-				else
-				{
-					numFlux.at(ang) = bsdNFluxByEBin;
-					for (unsigned int eny = 0; eny < numFlux.at(ang).size(); eny++)
-					{
-						totalNFlux.at(eny) += numFlux.at(ang).at(eny);
-						numFlux.at(ang).at(eny) *= -cos(distPAbins.at(ang) * RADS_PER_DEG);
-						adjNFlux.at(eny)   += numFlux.at(ang).at(eny);
-					}
-				}
-			}
-
-			for (unsigned int ang = 0; ang < numFlux.size(); ang++)
-			{
-				if (ang >= numFlux.size() / 2) //FOR REVERSED ANGLES - change later to be more general
-					continue;
-				else
-				{
-					for (unsigned int eny = 0; eny < numFlux.at(ang).size(); eny++)
-						numFlux.at(ang).at(eny) *= totalNFlux.at(eny) / adjNFlux.at(eny);
-				}
-			}
-			// output: 2D vector of bs dNFlux at ionosphere per pitch, energy bin - should only be upward (90-180)
-			
-			// 5. Translate BS dNflux at Source to dNflux at Satellite
-			dblVec2D ret{ steady::bsSrcToSat(numFlux, initialData, satData, ppPABins, ppEBins) };
+			// 3. Translate BS dNflux at Source to dNflux at Satellite
+			dblVec2D ret{ steady::bsSrcToSat(dNflux_BS, initialData, satData, ppPABins, ppEBins) };
 			// output: 2D vector of bs dNFlux at satellite per pitch, energy bin - should only be upward (90-180)
 			// Section 1 End
 
-			// 6. Convert from dNflux to dEflux
+
+			// 4. Convert from dNflux to dEflux
 			for (unsigned int ang = 0; ang < ret.size(); ang++)
 			{
 				for (unsigned int eng = 0; eng < ret.at(0).size(); eng++)
@@ -378,32 +338,93 @@ namespace postprocess
 			return integral_sec + integral_prm;
 		}
 
-		DLLEXP vector<double> dNflux_bs(const vector<double>& binCounts, const vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb)
-		{ //converts incident dNflux to bs Nflux
+		DLLEXP dblVec2D dNflux_bs_ion(const dblVec2D& counts_esc_ion, const vector<double>& binAngles, const vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb)
+		{ //converts downward dNflux at ionosphere to bs (upward) dNflux
+			// 1. Sum dNflux over PA Bins, Per E Bin and Average
+			vector<double> escapeCountPerE(counts_esc_ion.at(0).size());      //Sum of escaped particles at each energy, units of dNflux
+			for (unsigned int egy = 0; egy < escapeCountPerE.size(); egy++)   //iterate over energies
+			{
+				for (auto& ang : counts_esc_ion)                              //sum over angles, add to sum vector at energyBin
+					escapeCountPerE.at(egy) += ang.at(egy);
+				escapeCountPerE.at(egy) /= (double)counts_esc_ion.size() / 2; //isotropically space across pitch angle bins - divide by # ion PA bins, this value later put in each ionospheric angle bin
+			}
+			// output: 1D vector of total number of escaped particles (dNFlux) per energy, reduced by # of ionsph pitch bins
+
+
+			// 2. Calculate upward dNflux (backscatter) per E
 			double logEBinMin{ log10(binEnergies.at(0)) };                                   //depends on an array where E is minimum at index 0, max at last index
 			double dlogE{ log10(binEnergies.at(1)) - logEBinMin };                           //depends on a logarithmically spaced E, won't work otherwise
 
-			vector<double> binCntxE{ binCounts };
-			for (unsigned int ebin = 0; ebin < binCounts.size(); ebin++)
-				binCntxE.at(ebin) *= binEnergies.at(ebin);
+			vector<double> upwardCountPerE{ escapeCountPerE };
+			for (unsigned int ebin = 0; ebin < escapeCountPerE.size(); ebin++)
+				upwardCountPerE.at(ebin) *= binEnergies.at(ebin); //convert to dEflux
 
-			vector<double> bsdNflux(binEnergies.size());
-			for (unsigned int dNFluxBin = 0; dNFluxBin < bsdNflux.size(); dNFluxBin++)       //bins that contain the number flux of the backscatter in the energy bin of the same index
+			vector<double> dNfluxPerE_bs(binEnergies.size());
+			for (unsigned int dNFluxBin = 0; dNFluxBin < dNfluxPerE_bs.size(); dNFluxBin++)       //bins that contain the number flux of the backscatter in the energy bin of the same index
 			{
-				double engmin{ pow(10, (dNFluxBin - 0.5) * dlogE + logEBinMin) };            //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
+				double engmin{ pow(10, (dNFluxBin - 0.5) * dlogE + logEBinMin) };                 //assumes evenly spaced angle bins - a reasonable assumption and probably commonly the case
 				double engmax{ pow(10, (dNFluxBin + 0.5) * dlogE + logEBinMin) };
 
-				for (unsigned int incEbin = dNFluxBin; incEbin < bsdNflux.size(); incEbin++) //nFlux bins are contributed to by all incident particles with E higher than the E associated with the nFlux bin
+				for (unsigned int incEbin = dNFluxBin; incEbin < dNfluxPerE_bs.size(); incEbin++) //nFlux bins are contributed to by all incident particles with E higher than the E associated with the nFlux bin
 				{//change to mid bin
-					double incidentE{ binEnergies.at(incEbin) };                             //incident E is upper limit of bin
+					double incidentE{ binEnergies.at(incEbin) };                                  //incident E is upper limit of bin
 					double intF{ integralEvans_flux(engmin, engmax, incidentE, primary_logm, primary_logb, secondary_logm, secondary_logb) };
 
-					bsdNflux.at(dNFluxBin) += intF * binCntxE.at(incEbin) / (engmax - engmin);
-					//bsdNflux.at(dNFluxBin) += john_flux(binEnergies.at(dNFluxBin), binEnergies.at(incEbin), primary_logm, primary_logb, secondary_logm, secondary_logb) * binCntxE.at(incEbin);
+					dNfluxPerE_bs.at(dNFluxBin) += intF * upwardCountPerE.at(incEbin) / (engmax - engmin);
+					//dNfluxPerE_bs.at(dNFluxBin) += john_flux(binEnergies.at(dNFluxBin), binEnergies.at(incEbin), primary_logm, primary_logb, secondary_logm, secondary_logb) * binCntxE.at(incEbin);
+				}
+			}
+			// output: 1D vector of the upgoing (backscatter) dNflux per E
+
+
+			// 3. Distribute BS dNflux Isotropically Over Pitch Bins
+			vector<double> totalNFlux(binEnergies.size()); //normalize factors
+			vector<double> adjNFlux  (binEnergies.size());
+
+			dblVec2D dNfluxPerEPA_bs(binAngles.size());
+			for (unsigned int ang = 0; ang < dNfluxPerEPA_bs.size(); ang++)
+			{
+				if (ang >= dNfluxPerEPA_bs.size() / 2) //FOR REVERSED ANGLES - change later to be more general
+					dNfluxPerEPA_bs.at(ang) = vector<double>(binEnergies.size()); //empty vector of the right size
+				else
+				{
+					dNfluxPerEPA_bs.at(ang) = dNfluxPerE_bs;
+					for (unsigned int eny = 0; eny < dNfluxPerEPA_bs.at(ang).size(); eny++)
+					{
+						totalNFlux.at(eny) += dNfluxPerEPA_bs.at(ang).at(eny);
+						dNfluxPerEPA_bs.at(ang).at(eny) *= -cos(binAngles.at(ang) * RADS_PER_DEG);
+						adjNFlux.at(eny)   += dNfluxPerEPA_bs.at(ang).at(eny);
+					}
 				}
 			}
 
-			return bsdNflux;
+			for (unsigned int ang = 0; ang < dNfluxPerEPA_bs.size(); ang++)
+			{
+				if (ang >= dNfluxPerEPA_bs.size() / 2) //FOR REVERSED ANGLES - change later to be more general
+					continue;
+				else
+				{
+					for (unsigned int eny = 0; eny < dNfluxPerEPA_bs.at(ang).size(); eny++)
+						dNfluxPerEPA_bs.at(ang).at(eny) *= totalNFlux.at(eny) / adjNFlux.at(eny);
+				}
+			}
+			// output: 2D vector of bs dNFlux at ionosphere per pitch, energy bin - should only be upward (90-180)
+
+
+			return dNfluxPerEPA_bs;
 		}
 	} //end namespace postprocess::backscat
+
+	namespace multLevelBS
+	{
+		DLLEXP void scatterMain()
+		{
+
+		}
+
+		DLLEXP void singleLevel(double* sumCollideAbove, double Z, double p, double h, double E, double PA)
+		{
+
+		}
+	}
 }
