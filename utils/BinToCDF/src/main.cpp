@@ -18,12 +18,14 @@ constexpr double NFLUXMAGRATIO{ 16.0 / 90.0 }; //so here, the distribution is fr
 const std::string PARTNAME    { "elec" };
 const std::string BTMSATNM    { "btmElec" };
 const std::string UPGSATNM    { "4e6ElecDown" }; //"Down" is downward facing detector (so upgoing), not downgoing particles
-const std::string DNGSATNM    { "4e6ElecUp" }; //same
+const std::string DNGSATNM    { "4e6ElecUp" };   //same
 
 
 using postprocess::PPData;
 using postprocess::ParticleData;
 using postprocess::Maxwellian;
+using postprocess::Bins;
+using postprocess::Ionosphere;
 using utils::numerical::generateSpacedValues;
 
 int main(int argc, char* argv[])
@@ -53,15 +55,16 @@ int main(int argc, char* argv[])
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
 	// Form Postprocessing Data
-	PPData ppdata{ maxwellian, generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true),
+	Bins distbins(generateSpacedValues(0.5, 4.5, DSTNEBINS, true, true), generateSpacedValues(179.9975, 0.0025, DSTNANGLEBINS, false, true));
+	Bins satbins (generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true));
+
+	Ionosphere ionsph(58, 620000.0, 50000.0);
+	ionsph.setp(1.0e16, 1.0e3);
+	ionsph.setZ(7.5); //atomic number of dominant scatter species
+
+	PPData ppdata{ ionsph, maxwellian, distbins, satbins,
 		simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
 
-	ppdata.distEBins.reserve(DSTNEBINS);
-	ppdata.distPABins.reserve(DSTNANGLEBINS);
-
-	for (unsigned int eng = 0; eng < DSTNEBINS; eng++) //assumes energy is iterated first - this will change
-		ppdata.distEBins.push_back(ppdata.initial.energy.at(eng)); //set distribution E, PA bins vectors
-	ppdata.distPABins = generateSpacedValues(179.9975, 0.0025, DSTNANGLEBINS, false, true); //eventually move this into PP data along with a way to read a dist attributes file - also make that for dist writing class 
 
 	// Run Post Process Code
 	std::vector<std::vector<double>> fluxData;
@@ -77,8 +80,8 @@ int main(int argc, char* argv[])
 	/* Create CDF file and setup with appropriate variables, write data */
 	std::unique_ptr<CDFFileClass> cdf = std::make_unique<CDFFileClass>("4e6Altitude");
 
-	cdf->writeNewZVar("Mid-Bin Energies (eV)", CDF_DOUBLE, { CDFNEBINS }, (void*)ppdata.ppEBins.data());
-	cdf->writeNewZVar("Mid-Bin Angles (Degrees)", CDF_DOUBLE, { CDFNANGLEBINS }, (void*)ppdata.ppPABins.data());
+	cdf->writeNewZVar("Mid-Bin Energies (eV)", CDF_DOUBLE, { CDFNEBINS }, (void*)ppdata.satbins.E.data());
+	cdf->writeNewZVar("Mid-Bin Angles (Degrees)", CDF_DOUBLE, { CDFNANGLEBINS }, (void*)satbins.PA.data());
 	cdf->writeNewZVar("Electrons Energy/Pitch Angle Count, Maxwellian-Weighted", CDF_DOUBLE, { CDFNANGLEBINS, CDFNEBINS }, cntArray2D);
 
 	return 0;

@@ -73,6 +73,40 @@ __host__ __device__ double DipoleBLUT::getGradBAtS(const double s, const double 
 	return (getBFieldAtS(s + ds_gradB_m, simtime) - getBFieldAtS(s - ds_gradB_m, simtime)) / (2 * ds_gradB_m);
 }
 
+#ifdef COMMENT_OUT
+__host__ __device__ double DipoleBLUT::getSAtBField(const double B, const double t) const
+{ //dont know how accurate this is...may not be very - don't use for now
+	throw std::logic_error("DipoleBLUT::getSAtBField: function is not ready for use yet.  The author is not confident of its accuracy.");
+	int startInd{ -1 };
+	if (B <= getBFieldAtS(simMin_m, t)) //need to do abs val later?  Will B ever be positive?
+		startInd = 0;
+	else if (B >= getBFieldAtS(simMax_m, t))
+		startInd = numMsmts_m - 2; //if s is above simMax, we interpolate based on the highest indicies ([numMsmts - 2] to [numMsmts - 1])
+	else
+	{
+		for (unsigned int ind = 0; ind < numMsmts_m - 1; ind++)
+		{
+			#ifndef __CUDA_ARCH__ //host code
+			if (B >= magnitude_m.at(ind) && B < magnitude_m.at(ind + 1))
+			#else //device code
+			if (B >= magnitude_d[ind] && B < magnitude_d[ind + 1])
+			#endif /* !__CUDA_ARCH__ */
+			{
+				startInd = ind;
+				break;
+			}
+		}
+	}
+	//if (startInd < 0) throw std::logic_error("DipoleBLUT::getSAtBField: B was not found between two adjacent indicies in magnitude array");
+
+	// deltaB_bin / deltas_bin^3 * (s'(dist up from altBin)) + B@altBin
+	#ifndef __CUDA_ARCH__ //host code
+	return (B - magnitude_m.at(startInd)) * ds_msmt_m / (magnitude_m.at(startInd + 1) - magnitude_m.at(startInd)) + altitude_m.at(startInd); //s = mB + s(0)
+	#else
+	return (B - magnitude_d[startInd])    * ds_msmt_m / (magnitude_d[startInd + 1]    - magnitude_d[startInd])    + altitude_d[startInd];    //s = mB + s(0)
+	#endif /* !__CUDA_ARCH__ */
+}
+#endif
 
 //DipoleB class member functions
 void DipoleBLUT::setupEnvironment()

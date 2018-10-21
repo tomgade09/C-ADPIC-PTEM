@@ -92,6 +92,57 @@ __host__ __device__ double DipoleB::getGradBAtS(const double s, const double sim
 	return (getBFieldAtS(s + ds_m, simtime) - getBFieldAtS(s - ds_m, simtime)) / (2 * ds_m);
 }
 
+/*__host__ __device__ double DipoleB::getSAtBField(const double B, const double t) const
+{
+	throw std::logic_error("DipoleB::getSAtBField: function is not ready for use yet.  The author is not confident of its accuracy.");
+	double err{ 1.0e-10 };
+	double s_guess{
+		(B < -25000.0e-9) ? (0.35 * RADIUS_EARTH - 100000.0) / (getBFieldAtS(0.35 * RADIUS_EARTH, t) - getBFieldAtS(100000.0, t)) * B +                           //linefit of 100km - 0.35 RE
+			(0.35 * RADIUS_EARTH - (0.35 * RADIUS_EARTH - 100000.0) / (getBFieldAtS(0.35 * RADIUS_EARTH, t) * getBFieldAtS(0.35 * RADIUS_EARTH, t))) :            //calculate b
+		(B < -6666.66e-9) ? (1.10 * RADIUS_EARTH - 0.35 * RADIUS_EARTH) / (getBFieldAtS(1.10 * RADIUS_EARTH, t) - getBFieldAtS(0.35 * RADIUS_EARTH, t)) * B +     //linefit of 0.35 RE to 1.10 RE
+			(1.10 * RADIUS_EARTH - (1.10 * RADIUS_EARTH - 0.35 * RADIUS_EARTH) / (getBFieldAtS(1.10 * RADIUS_EARTH, t) - getBFieldAtS(0.35 * RADIUS_EARTH, t))) : //calculate b
+		(3.00 * RADIUS_EARTH - 1.10 * RADIUS_EARTH) / (getBFieldAtS(3.00 * RADIUS_EARTH, t) - getBFieldAtS(1.10 * RADIUS_EARTH, t)) * B +                         //linefit of 3.00 RE to 1.10 RE
+			(3.00 * RADIUS_EARTH - (3.00 * RADIUS_EARTH - 1.10 * RADIUS_EARTH) / (getBFieldAtS(3.00 * RADIUS_EARTH, t) - getBFieldAtS(1.10 * RADIUS_EARTH, t)))   //calculate b
+	};
+	double delta_s{ 1.0e6 };
+	double B_guess{ getBFieldAtS(s_guess, t) };
+	bool over{ 0 };
+
+	while (abs((B_guess - B) / B) > err)
+	{
+		over = (B_guess >= B);
+		
+		while (1)
+		{
+			if (over)
+			{
+				s_guess -= delta_s;
+				if (s_guess <= 0.0)
+				{
+					s_guess += delta_s;
+					break;
+				}
+
+				B_guess = getBFieldAtS(s_guess, t);
+
+				if (B_guess < B) break;
+			}
+			else
+			{
+				s_guess += delta_s;
+				B_guess = getBFieldAtS(s_guess, t);
+				
+				if (B_guess > B) break;
+			}
+		}
+		
+		if (delta_s < err) break;
+		delta_s /= 5.0;
+	}
+
+	return s_guess;
+}*/
+
 
 //DipoleB class member functions
 void DipoleB::setupEnvironment()

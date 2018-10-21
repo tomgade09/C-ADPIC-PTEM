@@ -12,9 +12,28 @@ using utils::fileIO::ParticleDistribution;
 namespace postprocess
 {
 	//ParticleData
-	ParticleData::ParticleData(const vector<double>& v_para, const vector<double>& v_perp, double mass) : vpara{ v_para }, vperp{ v_perp } //auto calculate E, Pitch
+	ParticleData::ParticleData()
 	{
-		utils::numerical::v2DtoEPitch(v_para, v_perp, mass, energy, pitch);
+		//creates an empty ParticleData with vectors of size 0
+	}
+
+	ParticleData::ParticleData(vector<double>& v_para, vector<double>& v_perp, double mass) :
+		vpara{ std::move(v_para) }, vperp{ std::move(v_perp) } //auto calculate E, Pitch
+	{
+		utils::numerical::v2DtoEPitch(vpara, vperp, mass, energy, pitch);
+	}
+
+	ParticleData::ParticleData(unsigned int size, bool EPA_only) //EPA_only defaults to true
+	{
+		energy.resize(size);
+		pitch.resize(size);
+		
+		if (EPA_only) return;
+
+		vpara.resize(size);
+		vperp.resize(size);
+		t_esc.resize(size);
+		s_pos.resize(size);
 	}
 
 	void ParticleData::free()
@@ -35,21 +54,26 @@ namespace postprocess
 	}
 	//End ParticleData
 
+
 	//Maxwellian
-	Maxwellian::Maxwellian(double dlogEdist) : dlogE_dist{ dlogEdist } {}
+	Maxwellian::Maxwellian(double dlogEdist) : dlogE_dist{ dlogEdist }
+	{
+
+	}
 
 	void Maxwellian::push_back_ion(double E_peak, double dE_magnitude, int partsAtE)
 	{
 		ionEPeak.push_back(E_peak);
 		iondEMag.push_back(dE_magnitude / (double)partsAtE); //scales dE according to how many particles will be in the bin containing E
 	}
+
 	void Maxwellian::push_back_mag(double E_peak, double dE_magnitude, int partsAtE)
 	{
 		magEPeak.push_back(E_peak);
 		magdEMag.push_back(dE_magnitude / (double)partsAtE);
 	}
 
-	vector<double> Maxwellian::counts(const ParticleData& init, const double s_ion, const double s_mag)
+	vector<double> Maxwellian::counts(ParticleData& init, double s_ion, double s_mag)
 	{
 		vector<double> max(init.energy.size()); //array of maxwellian counts
 		vector<double> maxtmp; //temporary holder allowing std::transform to be used twice instead of nested loops
@@ -74,7 +98,7 @@ namespace postprocess
 			}
 		};
 
-		auto genCounts = [&](const vector<double>& EPeak, const vector<double>& dEMag, std::function<bool(double)> zero)
+		auto genCounts = [&](const vector<double>& EPeak, const vector<double>& dEMag, double modFactor, std::function<bool(double)> zero)
 		{ //iterates over particles and specified Peak/Magnitude values (ionospheric or magnetospheric) and adds values to "max" (after "maxtmp")
 			for (unsigned int entr = 0; entr < EPeak.size(); entr++) //iterate over ionospheric maxwellian specifications
 			{
@@ -88,27 +112,134 @@ namespace postprocess
 
 		//run the above lambda for ionospheric and magnetospheric sources
 		//lambda determines whether or not the particle in question is ion/mag source, returns boolean
-		genCounts(ionEPeak, iondEMag, [&s_ion](double s) { return (s > s_ion * 1.001); });
-		genCounts(magEPeak, magdEMag, [&s_mag](double s) { return (s < s_mag * 0.999); });
+		genCounts(ionEPeak, iondEMag, ionModFactor, [&s_ion](double s) { return (s > s_ion * 1.001); });
+		genCounts(magEPeak, magdEMag, magModFactor, [&s_mag](double s) { return (s < s_mag * 0.999); });
 
 		return max;
 	}
 	//End Maxwellian
 
+
+	//Bins
+	Bins::Bins(vector<double>& E_bins, vector<double>& PA_bins, dblVec2D& cnt_bins) :
+		E{ std::move(E_bins) }, PA{ std::move(PA_bins) }, counts{ std::move(cnt_bins) }//counts{ (cnt_bins.size() == 0) ? cnt_bins : std::move(cnt_bins) }
+	{
+
+	}
+
+	Bins::Bins(const Bins& copy) //copy constructor
+	{
+		E = copy.E;
+		PA = copy.PA;
+		counts.resize(copy.counts.size());
+		for (unsigned int cnt = 0; cnt < copy.counts.size(); cnt++)
+			counts.at(cnt) = copy.counts.at(cnt);
+	}
+	//End Bins
+	
+
+	//Ionosphere
+	Ionosphere::Ionosphere(unsigned int numLayers, double s_max, double s_min)
+	{
+		h = vector<double>(numLayers);
+		Z = vector<double>(numLayers);
+		p = vector<double>(numLayers);
+		s = vector<double>(numLayers);
+		B = vector<double>(numLayers);
+
+		for (unsigned int layer = 0; layer < numLayers; layer++) //endpoint inclusive
+		{
+			s.at(layer) = s_max - layer * (s_max - s_min) / (numLayers - 1); //in m
+			h.at(layer) = 100 * (s_max - s_min) / (numLayers - 1); //in cm, hence * 100
+		}
+	}
+
+	Ionosphere::Ionosphere(vector<double>& s_vec) : s{ std::move(s_vec) }
+	{
+		h = vector<double>(s_vec.size());
+		Z = vector<double>(s_vec.size());
+		p = vector<double>(s_vec.size());
+		B = vector<double>(s_vec.size());
+	}
+
+	void Ionosphere::seth(double h_all)
+	{
+		if (h.at(0) != 0) std::cout << "Ionosphere::seth: Warning, array already has non-zero values.  Continuing\n";
+		for (auto& h_layer : h)
+			h_layer = h_all;
+	}
+
+	void Ionosphere::seth(vector<double>& h_vec)
+	{
+		if (h_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::seth: h_vec.size does not match s.size");
+		h = h_vec;
+	}
+
+	void Ionosphere::setZ(double Z_all)
+	{
+		for (auto& Z_layer : Z)
+			Z_layer = Z_all;
+	}
+
+	void Ionosphere::setZ(vector<double>& Z_vec)
+	{
+		if (Z_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setZ: Z_vec.size does not match s.size");
+		Z = Z_vec;
+	}
+
+	void Ionosphere::setp(double p_max, double p_min, bool log) //log defaults to true
+	{
+		if (log)
+		{
+			p_max = log10(p_max);
+			p_min = log10(p_min);
+
+			for (unsigned int layer = 0; layer < s.size(); layer++)
+				p.at(layer) = pow(10.0, layer * (p_max - p_min) / ((double)s.size() - 1) + p_min); //start at low density (high alt) and go up in density (low alt)
+		}
+		else
+		{
+			for (unsigned int layer = 0; layer < s.size(); layer++)
+				p.at(layer) = layer * (p_max - p_min) / ((double)s.size() - 1) + p_min;
+		}
+	}
+
+	void Ionosphere::setp(vector<double>& p_vec)
+	{
+		if (p_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setp: p_vec.size does not match s.size");
+		p = p_vec;
+	}
+
+	void Ionosphere::setB(BField* Bfield, double t)
+	{
+		for (unsigned int s_layer = 0; s_layer < s.size(); s_layer++)
+		{
+			B.at(s_layer) = Bfield->getBFieldAtS(s.at(s_layer), t);
+		}
+	}
+
+	void Ionosphere::setB(vector<double>& B_vec)
+	{
+		if (B_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setp: B_vec.size does not match s.size");
+		B = B_vec;
+	}
+	//End Ionosphere
+
+
 	//PPData
-	PPData::PPData(Maxwellian maxwellian, vector<double> ppEBins, vector<double> ppPABins, string simDataDir, string particleName, string simBtmSat, string upgoingAtAltSat, string dngoingAtAltSat) :
-		ppEBins{ ppEBins }, ppPABins{ ppPABins }
+	PPData::PPData(const Ionosphere& ionosphere, Maxwellian& maxwellian, const Bins& distBins, const Bins& satBins, string simDataDir, string particleName, string btmSatName, string upgSatName, string dngSatName) :
+		ionsph{ std::move(ionosphere) }, distbins{ std::move(distBins) }, satbins{ std::move(satBins) }
 	{
 		std::unique_ptr<Simulation> sim;
 		SILENCE_COUT(SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(simDataDir)));
 
 		SIM_API_EXCEP_CHECK(
 			s_ion = sim->simMin();
-			s_alt = sim->satellite(upgoingAtAltSat)->altitude();
+			s_sat = sim->satellite(upgSatName)->altitude();
 			s_mag = sim->simMax();
 
 			B_ion = sim->getBFieldAtS(s_ion, 0.0);
-			B_alt = sim->getBFieldAtS(s_alt, 0.0);
+			B_sat = sim->getBFieldAtS(s_sat, 0.0);
 			B_mag = sim->getBFieldAtS(s_mag, 0.0);
 
 			mass = sim->particle(particleName)->mass();
@@ -118,14 +249,16 @@ namespace postprocess
 			int vperpind{ sim->particle(particleName)->getAttrIndByName("vperp") };
 			int sind{ sim->particle(particleName)->getAttrIndByName("s") };
 
-			initial = ParticleData(sim->particle(particleName)->data(true).at(vparaind), sim->particle(particleName)->data(true).at(vperpind), mass);
-			initial.s_pos = sim->particle(particleName)->data(true).at(sind);
-			bottom = ParticleData(sim->satellite(simBtmSat)->data().at(0).at(vparaind), sim->satellite(simBtmSat)->data().at(0).at(vperpind), mass);
-			upward = ParticleData(sim->satellite(upgoingAtAltSat)->data().at(0).at(vparaind), sim->satellite(upgoingAtAltSat)->data().at(0).at(vperpind), mass);
-			dnward = ParticleData(sim->satellite(dngoingAtAltSat)->data().at(0).at(vparaind), sim->satellite(dngoingAtAltSat)->data().at(0).at(vperpind), mass);
+			initial = ParticleData(sim->particle(particleName)->__data(true).at(vparaind), sim->particle(particleName)->__data(true).at(vperpind), mass);
+			initial.s_pos = sim->particle(particleName)->__data(true).at(sind);
+			bottom = ParticleData(sim->satellite(btmSatName)->__data().at(0).at(vparaind), sim->satellite(btmSatName)->__data().at(0).at(vperpind), mass);
+			upward = ParticleData(sim->satellite(upgSatName)->__data().at(0).at(vparaind), sim->satellite(upgSatName)->__data().at(0).at(vperpind), mass);
+			dnward = ParticleData(sim->satellite(dngSatName)->__data().at(0).at(vparaind), sim->satellite(dngSatName)->__data().at(0).at(vperpind), mass);
+
+			ionsph.setB(sim->Bmodel(), 0.0);
 		); //end SIM_API_EXCEP_CHECK
 
-		maxCounts = maxwellian.counts(initial, s_ion, s_mag);
+		maxWeights = maxwellian.counts(initial, s_ion, s_mag);
 	}
 	//End PPData
 }

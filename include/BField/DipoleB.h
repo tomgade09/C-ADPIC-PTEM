@@ -41,6 +41,7 @@ public:
 
 	__host__ __device__ double getBFieldAtS(const double s, const double t) const override;
 	__host__ __device__ double getGradBAtS (const double s, const double t) const override;
+	//__host__ __device__ double getSAtBField(const double B, const double t) const override;
 
 	__host__ double getErrTol() const { return errorTolerance_m; }
 	__host__ double getds()     const { return ds_m; }

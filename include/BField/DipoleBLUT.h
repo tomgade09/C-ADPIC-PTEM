@@ -38,11 +38,12 @@ public:
 
 	//for testing
 	double ILAT() { return ILATDegrees_m; }
-	double ds_msmt() { return ds_msmt_m; }
+	double ds_msmt()  { return ds_msmt_m; }
 	double ds_gradB() { return ds_gradB_m; }
 
 	__host__ __device__ double getBFieldAtS(const double s, const double t) const override;
 	__host__ __device__ double getGradBAtS(const double s, const double t) const override;
+	//__host__ __device__ double getSAtBField(const double B, const double t) const override;
 
 	__device__ void setAltArray(double* altArray) { altitude_d = altArray; }
 	__device__ void setMagArray(double* magArray) { magnitude_d = magArray; }

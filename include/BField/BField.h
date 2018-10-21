@@ -25,6 +25,7 @@ public:
 
 	__host__ __device__ virtual double getBFieldAtS(const double s, const double t) const = 0;
 	__host__ __device__ virtual double getGradBAtS (const double s, const double t) const = 0;
+	//__host__ __device__ virtual double getSAtBField(const double B, const double t) const = 0;
 
 	__host__ virtual std::string name()   const { return modelName_m; }
 	__host__ virtual BField** getPtrGPU() const { return this_d; } //once returned, have to cast it to the appropriate type

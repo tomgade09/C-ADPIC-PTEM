@@ -5,10 +5,11 @@
 #include "dlldefines.h"
 #include "utils/PPHelperClasses.h"
 
-//#define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
+#define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
 
 using std::vector;
 typedef vector<vector<double>> dblVec2D;
+typedef vector<double> dblVec;
 
 namespace postprocess
 {
@@ -16,32 +17,34 @@ namespace postprocess
 
 	namespace steady
 	{
-		DLLEXP dblVec2D bsSrcToSat(const dblVec2D& bsNumFluxBins, const ParticleData& initialData, const ParticleData& satUpwardData, const vector<double>& binAngles, const vector<double>& binEnergies);
+		DLLEXP dblVec2D bsSrcToSat(const Bins& dist, const Bins& sat, const dblVec2D& bsCounts, const ParticleData& initialData, const ParticleData& satUpwardData);
 	}
 
 	namespace EFlux
 	{
-		DLLEXP dblVec2D satdEFlux(const ParticleData& sat, const vector<double>& binAngles, const vector<double>& binEnergies, const vector<double>& numWeight);
-		DLLEXP dblVec2D bksdEFlux(const ParticleData& initialData, const ParticleData& satData, const ParticleData& escapeData, const vector<double>& ppPABins, const vector<double>& ppEBins, const vector<double>& maxwCounts, const vector<double>& distPAbins, const vector<double>& distEbins);
+		DLLEXP dblVec2D satdEFlux(const ParticleData& sat, const Bins& satBins, const dblVec& weights_atSat);
+		DLLEXP dblVec2D bksdEFlux(const PPData& ppdata, const dblVec& numWeight);
 	}
 
 	namespace binning
 	{
-		DLLEXP dblVec2D binWeighted(const vector<double>& particlePitches, const vector<double>& particleEnergies, const vector<double>& binAngles, const vector<double>& binEnergies, const vector<double>& counts);
-		DLLEXP void symmetricBins0To360(dblVec2D& data, vector<double>& binAngles);
+		DLLEXP dblVec2D binWeighted(const ParticleData& particles, const Bins& bins, const dblVec& weights_atIon);
+		DLLEXP void     symmetricBins0To360(dblVec2D& data, dblVec& binAngles);
 	}
 
 	namespace backscat
 	{
-		DLLEXP double   evans_flux(double E_eval, double E_incident, double prim_logm, double prim_logb, double scnd_logm, double scnd_logb);
-		DLLEXP double   integralEvans_flux(double lower, double upper, double incidentE, double prim_fact, double prim_logb, double scnd_fact, double scnd_logb);
-		DLLEXP dblVec2D dNflux_bs_ion(const dblVec2D& counts_esc_ion, const vector<double>& binAngles, const vector<double>& binEnergies, double primary_logm, double primary_logb, double secondary_logm, double secondary_logb);
+		DLLEXP double   evans_flux(double E_eval, double E_incident);
+		DLLEXP double   integralEvans_flux(double lower, double upper, double incidentE);
+		DLLEXP dblVec2D dNflux_bs_ion(const Bins& dist, const dblVec2D& escapeCountBinned);
 	}
 
 	namespace multLevelBS
 	{
-		DLLEXP void scatterMain();
-		DLLEXP void singleLevel(double* sumCollideAbove, double Z, double p, double h, double E, double PA);
+		//DLLEXP dblVec2D scatterMain(const Ionosphere& ionsph, const Bins& escape);
+		//DLLEXP dblVec2D bsAtLevel(dblVec2D counts, const dblVec& PAbins, const dblVec& Ebins, double* sumCollideAbove, double Z, double p, double h, double E, double PA);
+		//DLLEXP dblVec2D alt_reflect(const Bins& bins, BField* B, double B_ion, double t);
+		//DLLEXP double   scatterPct(double sumCollideAbove, double Z, double p, double h, double E, double PA);
 	}
 }
 
