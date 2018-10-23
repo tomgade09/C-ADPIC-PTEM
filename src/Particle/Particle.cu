@@ -62,7 +62,6 @@ __global__ void randomGenerator(double** currData, double vmean, double vsigma, 
 	//s is not set!!!
 }
 
-
 //Host code
 //the problem with below is that it's based on a certain attribute structure - this needs to be removed from the class and put somewhere else
 void Particle::generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass)
@@ -117,6 +116,24 @@ void Particle::generateRandomParticles(const std::vector<double>& s, int startIn
 	CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
 
 	initDataLoaded_m = true;
+}
+
+void Particle::setParticleSource_s(double s_ion, double s_mag)
+{
+	int s_ind{ getAttrIndByName("s") };
+	int v_ind{ getAttrIndByName("vpara") };
+
+	for (unsigned int ind = 0; ind < origData_m.at(s_ind).size(); ind++)
+	{
+		if (origData_m.at(v_ind).at(ind) > 0.0)
+			origData_m.at(s_ind).at(ind) = s_ion;
+		else if (origData_m.at(v_ind).at(ind) < 0.0)
+			origData_m.at(s_ind).at(ind) = s_mag;
+		else
+			throw std::logic_error("Particle::setParticleSource_s: vpara value is exactly 0.0 - load data to the origData_m array first.  Aborting.  index: " + std::to_string(ind));
+	}
+
+	copyDataToGPU();
 }
 
 void Particle::initializeGPU()

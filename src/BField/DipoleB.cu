@@ -4,6 +4,8 @@
 #include "ErrorHandling/cudaErrorCheck.h"
 #include "ErrorHandling/cudaDeviceMacros.h"
 
+constexpr double B0{ 3.12e-5 }; //won't change from sim to sim
+
 //setup CUDA kernels
 __global__ void setupEnvironmentGPU_DipoleB(BField** this_d, double ILATDeg, double errTol, double ds)
 {
@@ -15,29 +17,29 @@ __global__ void deleteEnvironmentGPU_DipoleB(BField** dipoleb)
 	ZEROTH_THREAD_ONLY("deleteEnvironmentGPU_DipoleB", delete ((DipoleB*)(*dipoleb)));
 }
 
-__host__ __device__ DipoleB::DipoleB(double ILATDegrees, double errorTolerance, double ds) :
-	BField("DipoleB"), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }
+__host__ __device__ DipoleB::DipoleB(double ILATDegrees, double errorTolerance, double ds, bool useGPU) :
+	BField("DipoleB"), ILATDegrees_m{ ILATDegrees }, ds_m{ ds }, errorTolerance_m{ errorTolerance }, useGPU_m{ useGPU }
 {
 	L_m = RADIUS_EARTH / pow(cos(ILATDegrees * RADS_PER_DEG), 2);
 	L_norm_m = L_m / RADIUS_EARTH;
 	s_max_m = getSAtLambda(ILATDegrees_m);
 
 	#ifndef __CUDA_ARCH__ //host code
-	setupEnvironment();
+	if (useGPU_m) setupEnvironment();
 	#endif /* !__CUDA_ARCH__ */
 }
 
 __host__ __device__ DipoleB::~DipoleB()
 {
 	#ifndef __CUDA_ARCH__ //host code
-	deleteEnvironment();
+	if (useGPU_m) deleteEnvironment();
 	#endif /* !__CUDA_ARCH__ */
 }
 
 //B Field related kernels
 __host__ __device__ double DipoleB::getSAtLambda(const double lambdaDegrees) const
 {
-	//double x{ asinh(sqrt(3.0) * sinpi(lambdaDegrees / 180.0)) };
+	//double x{ asinh(sqrt(3.0) * sinpi(lambdaDegrees / 180.0)) }; //asinh triggers an odd cuda 8.x bug that is resolved in 9.x+
 	double sinh_x{ sqrt(3.0) * sinpi(lambdaDegrees / 180.0) };
 	double x{ log(sinh_x + sqrt(sinh_x * sinh_x + 1)) }; //trig identity for asinh - a bit faster - asinh(x) == ln(x + sqrt(x*x + 1))
 
@@ -92,56 +94,11 @@ __host__ __device__ double DipoleB::getGradBAtS(const double s, const double sim
 	return (getBFieldAtS(s + ds_m, simtime) - getBFieldAtS(s - ds_m, simtime)) / (2 * ds_m);
 }
 
-/*__host__ __device__ double DipoleB::getSAtBField(const double B, const double t) const
+__host__ __device__ double DipoleB::getSAtAlt(const double alt_fromRe) const
 {
-	throw std::logic_error("DipoleB::getSAtBField: function is not ready for use yet.  The author is not confident of its accuracy.");
-	double err{ 1.0e-10 };
-	double s_guess{
-		(B < -25000.0e-9) ? (0.35 * RADIUS_EARTH - 100000.0) / (getBFieldAtS(0.35 * RADIUS_EARTH, t) - getBFieldAtS(100000.0, t)) * B +                           //linefit of 100km - 0.35 RE
-			(0.35 * RADIUS_EARTH - (0.35 * RADIUS_EARTH - 100000.0) / (getBFieldAtS(0.35 * RADIUS_EARTH, t) * getBFieldAtS(0.35 * RADIUS_EARTH, t))) :            //calculate b
-		(B < -6666.66e-9) ? (1.10 * RADIUS_EARTH - 0.35 * RADIUS_EARTH) / (getBFieldAtS(1.10 * RADIUS_EARTH, t) - getBFieldAtS(0.35 * RADIUS_EARTH, t)) * B +     //linefit of 0.35 RE to 1.10 RE
-			(1.10 * RADIUS_EARTH - (1.10 * RADIUS_EARTH - 0.35 * RADIUS_EARTH) / (getBFieldAtS(1.10 * RADIUS_EARTH, t) - getBFieldAtS(0.35 * RADIUS_EARTH, t))) : //calculate b
-		(3.00 * RADIUS_EARTH - 1.10 * RADIUS_EARTH) / (getBFieldAtS(3.00 * RADIUS_EARTH, t) - getBFieldAtS(1.10 * RADIUS_EARTH, t)) * B +                         //linefit of 3.00 RE to 1.10 RE
-			(3.00 * RADIUS_EARTH - (3.00 * RADIUS_EARTH - 1.10 * RADIUS_EARTH) / (getBFieldAtS(3.00 * RADIUS_EARTH, t) - getBFieldAtS(1.10 * RADIUS_EARTH, t)))   //calculate b
-	};
-	double delta_s{ 1.0e6 };
-	double B_guess{ getBFieldAtS(s_guess, t) };
-	bool over{ 0 };
-
-	while (abs((B_guess - B) / B) > err)
-	{
-		over = (B_guess >= B);
-		
-		while (1)
-		{
-			if (over)
-			{
-				s_guess -= delta_s;
-				if (s_guess <= 0.0)
-				{
-					s_guess += delta_s;
-					break;
-				}
-
-				B_guess = getBFieldAtS(s_guess, t);
-
-				if (B_guess < B) break;
-			}
-			else
-			{
-				s_guess += delta_s;
-				B_guess = getBFieldAtS(s_guess, t);
-				
-				if (B_guess > B) break;
-			}
-		}
-		
-		if (delta_s < err) break;
-		delta_s /= 5.0;
-	}
-
-	return s_guess;
-}*/
+	double lambda{ acos(sqrt((alt_fromRe + RADIUS_EARTH) / L_m)) / RADS_PER_DEG };
+	return s_max_m - getSAtLambda(lambda);
+}
 
 
 //DipoleB class member functions

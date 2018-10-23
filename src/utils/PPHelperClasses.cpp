@@ -121,8 +121,8 @@ namespace postprocess
 
 
 	//Bins
-	Bins::Bins(vector<double>& E_bins, vector<double>& PA_bins, dblVec2D& cnt_bins) :
-		E{ std::move(E_bins) }, PA{ std::move(PA_bins) }, counts{ std::move(cnt_bins) }//counts{ (cnt_bins.size() == 0) ? cnt_bins : std::move(cnt_bins) }
+	Bins::Bins(vector<double>& E_bins, vector<double>& PA_bins) ://, dblVec2D& ind_1D) :
+		E{ std::move(E_bins) }, PA{ std::move(PA_bins) }//, index_1D{ std::move(ind_1D) }
 	{
 
 	}
@@ -131,9 +131,9 @@ namespace postprocess
 	{
 		E = copy.E;
 		PA = copy.PA;
-		counts.resize(copy.counts.size());
-		for (unsigned int cnt = 0; cnt < copy.counts.size(); cnt++)
-			counts.at(cnt) = copy.counts.at(cnt);
+		//index_1D.resize(copy.index_1D.size());
+		//for (unsigned int cnt = 0; cnt < copy.index_1D.size(); cnt++)
+			//index_1D.at(cnt) = copy.index_1D.at(cnt);
 	}
 	//End Bins
 	
@@ -223,11 +223,17 @@ namespace postprocess
 		if (B_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setp: B_vec.size does not match s.size");
 		B = B_vec;
 	}
+
+	void Ionosphere::altToS(BField* B)
+	{
+		for (unsigned int s_ind = 0; s_ind < s.size(); s_ind++)
+			s.at(s_ind) = B->getSAtAlt(s.at(s_ind));
+	}
 	//End Ionosphere
 
 
 	//PPData
-	PPData::PPData(const Ionosphere& ionosphere, Maxwellian& maxwellian, const Bins& distBins, const Bins& satBins, string simDataDir, string particleName, string btmSatName, string upgSatName, string dngSatName) :
+	PPData::PPData(Ionosphere& ionosphere, Maxwellian& maxwellian, const Bins& distBins, const Bins& satBins, string simDataDir, string particleName, string btmSatName, string upgSatName, string dngSatName) :
 		ionsph{ std::move(ionosphere) }, distbins{ std::move(distBins) }, satbins{ std::move(satBins) }
 	{
 		std::unique_ptr<Simulation> sim;
@@ -255,7 +261,9 @@ namespace postprocess
 			upward = ParticleData(sim->satellite(upgSatName)->__data().at(0).at(vparaind), sim->satellite(upgSatName)->__data().at(0).at(vperpind), mass);
 			dnward = ParticleData(sim->satellite(dngSatName)->__data().at(0).at(vparaind), sim->satellite(dngSatName)->__data().at(0).at(vperpind), mass);
 
-			ionsph.setB(sim->Bmodel(), 0.0);
+			DipoleB dip(sim->Bmodel()->ILAT(), 1.0e-10, RADIUS_EARTH / 1000.0, false);
+			ionsph.altToS(&dip);
+			ionsph.setB(&dip, 0.0);
 		); //end SIM_API_EXCEP_CHECK
 
 		maxWeights = maxwellian.counts(initial, s_ion, s_mag);

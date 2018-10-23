@@ -54,10 +54,10 @@ DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* l
 
 		sim->createTempSat(0, simMin * 0.999, true, "btmElec");
 		sim->createTempSat(0, simMax * 1.001, false, "topElec");
-		sim->createTempSat(0, 3049829.25570638, false, "3e6ElecDown"); //altitude = 3000km
-		sim->createTempSat(0, 3049829.25570638, true, "3e6ElecUp");
-		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecDown"); //altitude = 4000km
-		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecUp");
+		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
+		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
+
+		sim->particle(0)->setParticleSource_s(simMin, simMax);
 	); /* SIM_API_EXCEP_CHECK() */
 }
 

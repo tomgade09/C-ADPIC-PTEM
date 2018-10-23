@@ -13,17 +13,17 @@ namespace utils
 		DistributionFromDisk::DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames, double mass) : 
 			name_m{ name }, attrNames_m{ attrNames }, mass_m{ mass }
 		{
-			unsigned int attrsize{ 0 };
+			size_t attrsize{ 0 };
 			for (unsigned int attr = 0; attr < attrNames.size(); attr++)
 			{
 				std::vector<double> read;
 				fileIO::readDblBin(read, folder + "/" + partName + "_" + attrNames.at(attr) + ".bin");
 				data_m.push_back(read);
-				if (attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
+				if ((unsigned int)attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
 			}
 
 			for (unsigned int attr = 0; attr < attrNames.size(); attr++)
-				if (attrNames_m.at(attr).size() < attrsize) { string::stringPadder(attrNames_m.at(attr), attrsize); }
+				if (attrNames_m.at(attr).size() < attrsize) { string::stringPadder(attrNames_m.at(attr), (unsigned int)attrsize); }
 		}
 
 		void DistributionFromDisk::print(unsigned int at) const
@@ -43,7 +43,7 @@ namespace utils
 
 		void DistributionFromDisk::printdiff(DistributionFromDisk& other, unsigned int at) const
 		{
-			unsigned int datasize{ (unsigned int)data_m.size() };
+			size_t datasize{ data_m.size() };
 			if (data_m.size() != other.data().size())
 			{
 				std::cout << "DistributionFromDisk::printdiff: Warning: data from the two distributions does not have the same dimensionality. ";
@@ -52,7 +52,7 @@ namespace utils
 			}
 
 			std::vector<double> err(datasize);
-			for (unsigned int attr = 0; attr < datasize; attr++)
+			for (size_t attr = 0; attr < datasize; attr++)
 			{
 				err.at(attr) = std::abs((data_m.at(attr).at(at) - other.data().at(attr).at(at)) / data_m.at(attr).at(at));
 				std::cout << attrNames_m.at(attr) << " (" << name_m << ", " << other.name() << ", err): ";

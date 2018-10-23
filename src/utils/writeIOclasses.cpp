@@ -99,8 +99,8 @@ namespace utils
 				std::cout << saveFolder_m + "/" + particleName_m + "_" + attrNm + ".bin" << std::endl;
 			std::cout << "[" << data_m.size() << "] x [" << data_m.at(0).size() << "]" << std::endl;
 
-			for (unsigned int attr = 0; attr < data_m.size(); attr++)
-				fileIO::writeDblBin(data_m.at(attr), saveFolder_m + "/" + particleName_m + "_" + attrNames_m.at(attr) + ".bin", data_m.at(0).size());
+			for (size_t attr = 0; attr < data_m.size(); attr++)
+				fileIO::writeDblBin(data_m.at(attr), saveFolder_m + "/" + particleName_m + "_" + attrNames_m.at(attr) + ".bin", (unsigned int)data_m.at(0).size());
 
 			clear();
 			data_m = std::vector<std::vector<double>>(3);

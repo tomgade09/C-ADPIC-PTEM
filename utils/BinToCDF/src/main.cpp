@@ -17,8 +17,8 @@ constexpr double NFLUXIONRATIO{ 90.0 / 90.0 }; //numerator (90) is normal range 
 constexpr double NFLUXMAGRATIO{ 16.0 / 90.0 }; //so here, the distribution is from 16 degrees to zero (not 90 to 0), meaning the dist has more particles per angle
 const std::string PARTNAME    { "elec" };
 const std::string BTMSATNM    { "btmElec" };
-const std::string UPGSATNM    { "4e6ElecDown" }; //"Down" is downward facing detector (so upgoing), not downgoing particles
-const std::string DNGSATNM    { "4e6ElecUp" };   //same
+const std::string UPGSATNM    { "4e6ElecUpg" };
+const std::string DNGSATNM    { "4e6ElecDng" };
 
 
 using postprocess::PPData;
@@ -49,8 +49,8 @@ int main(int argc, char* argv[])
 
 	// Form Maxwellian
 	Maxwellian maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
-	maxwellian.push_back_ion(10.0,  7.00e7, 5000);
-	maxwellian.push_back_mag(10.0,  2.00e7, 5000);
+	maxwellian.push_back_ion(3.0,   7.00e7, 5000);
+	maxwellian.push_back_mag(3.0,   1.50e7, 5000);
 	maxwellian.push_back_mag(5.0e3, 1.00e8, 5000);
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
@@ -58,9 +58,10 @@ int main(int argc, char* argv[])
 	Bins distbins(generateSpacedValues(0.5, 4.5, DSTNEBINS, true, true), generateSpacedValues(179.9975, 0.0025, DSTNANGLEBINS, false, true));
 	Bins satbins (generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true));
 
-	Ionosphere ionsph(58, 620000.0, 50000.0);
+	Ionosphere ionsph(59, 620000.0, 40000.0);
 	ionsph.setp(1.0e16, 1.0e3);
-	ionsph.setZ(7.5); //atomic number of dominant scatter species
+	ionsph.setZ(8.0); //atomic number of dominant scatter species
+
 
 	PPData ppdata{ ionsph, maxwellian, distbins, satbins,
 		simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };

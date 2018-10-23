@@ -12,7 +12,6 @@ using std::vector;
 typedef vector<vector<double>> dblVec2D;
 typedef vector<double> dblVec;
 
-
 namespace postprocess
 {
 	struct DLLCLEXP ParticleData
@@ -27,6 +26,7 @@ namespace postprocess
 		ParticleData(); //empty constructor for making an empty ParticleData
 		ParticleData(unsigned int size, bool EPA_only = true);
 		ParticleData(vector<double>& v_para, vector<double>& v_perp, double mass);
+		
 		void free();
 	};
 
@@ -54,9 +54,9 @@ namespace postprocess
 	{
 		vector<double> E;
 		vector<double> PA;
-		dblVec2D       counts;
+		//dblVec2D       index_1D; //the index of the corresponding particle in 1D
 
-		Bins(vector<double>& E_bins, vector<double>& PA_bins, dblVec2D& cnt_bins = vector<vector<double>>());
+		Bins(vector<double>& E_bins, vector<double>& PA_bins);// , dblVec2D& ind_1D);
 		Bins(const Bins& copy); //copy constructor
 	};
 
@@ -79,23 +79,24 @@ namespace postprocess
 		void setp(vector<double>& p_vec);
 		void setB(BField* B, double t);
 		void setB(vector<double>& B_vec);
+		void altToS(BField* B);
 	};
 
 	struct DLLCLEXP PPData
 	{
-		double s_ion; //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
-		double s_sat; //distance **along the field line** (in m from Re) where the satellite resides
-		double s_mag; //distance **along the field line** (in m from Re) representing outer limit of the sim
+		double s_ion;      //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
+		double s_sat;      //distance **along the field line** (in m from Re) where the satellite resides
+		double s_mag;      //distance **along the field line** (in m from Re) representing outer limit of the sim
 
-		double B_ion; //B Field strength at ionospheric source
-		double B_sat; //B Field strength at satellite
-		double B_mag; //B Field strength at magnetospheric source
+		double B_ion;      //B Field strength at ionospheric source
+		double B_sat;      //B Field strength at satellite
+		double B_mag;      //B Field strength at magnetospheric source
 
 		double mass;
 		double charge;
 
-		Bins distbins; //Original Distribution Bins - represents the binning of the equ of motion simulation
-		Bins satbins; //Satellite Bins - represents how the data is binned and output from the satellite
+		Bins distbins;     //Original Distribution Bins - represents the binning of the equ of motion simulation
+		Bins satbins;      //Satellite Bins - represents how the data is binned and output from the satellite
 		Ionosphere ionsph; //Ionosphere Parameters (for multi-level scattering)
 
 		//Satellite and Maxwellian Data
@@ -105,7 +106,7 @@ namespace postprocess
 		ParticleData   upward;     //data on particles that are upgoing at satellite
 		ParticleData   dnward;     //data on particles that are downgoing at satellite
 
-		PPData(const Ionosphere& ionosphere, Maxwellian& maxwellian, const Bins& distBins, const Bins& satBins, string simDataDir, string particleName, string btmSatName, string upgSatName, string dngSatName);
+		PPData(Ionosphere& ionosphere, Maxwellian& maxwellian, const Bins& distBins, const Bins& satBins, string simDataDir, string particleName, string btmSatName, string upgSatName, string dngSatName);
 	};
 
 } //end namespace postprocess

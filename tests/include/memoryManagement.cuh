@@ -57,6 +57,8 @@ namespace test
 		__host__ __device__ double getBFieldAtS(const double s, const double t) const { return val_m; }
 		__host__ __device__ double getEFieldAtS(const double s, const double t) const { return val_m; }
 		__host__ __device__ double getGradBAtS (const double s, const double t) const { return val_m / 10.0; }
+		__host__ __device__ double getSAtAlt(const double alt_fromRe) const { return 0.0; }
+		double ILAT() const { return 0.0; }
 	};
 }
 

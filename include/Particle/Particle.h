@@ -57,6 +57,8 @@ public:
 	void saveDataToDisk(std::string folder, bool orig) const;
 	void generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass);
 	
+	void setParticleSource_s(double s_ion, double s_mag);
+
 	void copyDataToGPU();
 	void copyDataToHost();
 	void freeGPUMemory();
