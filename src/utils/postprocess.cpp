@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <cmath>
 
+#include "utils/fileIO.h"
+
+#include <iomanip>
+
 using std::pow;
 using std::string;
 using utils::numerical::generateSpacedValues;
@@ -16,6 +20,16 @@ constexpr double EVANS_SECD_LOGB{ 0.3 };
 #define TESTVEC_ISZEROLASTHALF(vec, name) vecTest(vec, [](double cnt) { return (cnt != 0.0); }, true, name, (unsigned int)vec.size() / 2);
 #define TESTVEC_ISZEROWHOLEVEC(vec, name) vecTest(vec, [](double cnt) { return (cnt != 0.0); }, true, name);
 #define TESTVEC_NOTNEGWHOLEVEC(vec, name) vecTest(vec, [](double cnt) { return (cnt < 0.0); }, true, name);
+
+inline dblVec serialize2DVec(const dblVec2D& in)
+{
+	dblVec out;
+
+	for (auto& v : in)
+		out.insert(std::end(out), std::begin(v), std::end(v));
+
+	return out;
+}
 
 inline bool vecTest(const dblVec2D& vec, std::function<bool(double)> test, bool throwOnTrue=false,
 	string label = "", unsigned int outStart=0, unsigned int outStop=0, unsigned int inStart=0, unsigned int inStop=0)
@@ -88,7 +102,7 @@ namespace postprocess
 		double Aratio_mag_sat{ std::sqrt(ppdata.B_sat / ppdata.B_mag) };
 		double Aratio_ion_bs { std::sqrt(ppdata.B_ion / ppdata.B_ion) * std::sqrt(ppdata.B_sat / ppdata.B_ion) };
 		double Aratio_mag_bs { std::sqrt(ppdata.B_ion / ppdata.B_mag) * std::sqrt(ppdata.B_sat / ppdata.B_ion) };
-		double bsScale{ 0.1 / 3.0 }; //for now, arbitrary factor to get in the ballpark
+		double bsScale{ 0.1 }; //for now, arbitrary factor to get in the ballpark
 
 		dblVec weights_atSat{ ppdata.maxWeights }; //scaled by decrease in cross-sectional area A
 		dblVec weights_atIon{ ppdata.maxWeights }; //as the particle moves down the B field line
@@ -109,6 +123,15 @@ namespace postprocess
 			else
 				throw std::logic_error("postprocess::steadyFlux : particle is not ionospheric or magnetospheric source");
 		}
+
+
+		////
+		////
+		utils::fileIO::writeDblBin(weights_atSat, "dat\\00weights_atSat.bin", (unsigned int)weights_atSat.size());
+		utils::fileIO::writeDblBin(weights_atIon, "dat\\01weights_atIon.bin", (unsigned int)weights_atIon.size());
+		////
+		////
+
 
 		TESTVEC_NOTNEGWHOLEVEC(weights_atSat, "steadyFlux::weights_atSat");
 		TESTVEC_NOTNEGWHOLEVEC(weights_atIon, "steadyFlux::weights_atIon");
@@ -157,12 +180,16 @@ namespace postprocess
 			dblVec2D escapeCountBinned{ binning::binWeighted(ppdata.bottom, ppdata.distbins, weights_atIon) };
 			// output: 2D vector [PA][Eng] of number of escaped particles (dNFlux), weighted by specified maxwellians, binned by Energy and Pitch Angle
 
+			utils::fileIO::writeDblBin(serialize2DVec(escapeCountBinned), "dat\\02escapeCntBin.bin", (unsigned int)(escapeCountBinned.size()*escapeCountBinned.front().size()));
+
 			TESTVEC_ISZEROFRSTHALF(escapeCountBinned, "bksdEFlux::escapeCountBinned");
 
 			// 1.2. Calculate BS dNflux from dNflux Incident to Ionosphere
 			//dblVec2D dNflux_BS{ backscat::dNflux_bs_ion(ppdata.distbins, escapeCountBinned) }; //original, single level
 			dblVec2D dNflux_BS{ multLevelBS::scatterMain(ppdata.ionsph, ppdata.distbins, escapeCountBinned, ppdata.B_sat) }; //new multi-level hotness
 			// output: 2D vector of backscatter dNFlux by dist bins at ionosphere (upgoing)
+
+			utils::fileIO::writeDblBin(serialize2DVec(dNflux_BS), "dat\\03dNflux_BS.bin", (unsigned int)(dNflux_BS.size()*dNflux_BS.front().size()));
 
 			TESTVEC_ISZEROLASTHALF(dNflux_BS, "bksdEFlux::dNflux_BS");
 
@@ -171,6 +198,8 @@ namespace postprocess
 			// output: 2D vector of bs dNFlux at satellite per PA, E (sat binned) - should only be upward (90-180)
 			// Section 1 End
 			
+			utils::fileIO::writeDblBin(serialize2DVec(ret), "dat\\04dNflux_BS_atSat.bin", (unsigned int)(ret.size()*ret.front().size()));
+
 			TESTVEC_ISZEROFRSTHALF(ret, "bksdEFlux::backscatter");
 
 			// 2.1. Convert from dNflux to dEflux
@@ -296,6 +325,10 @@ namespace postprocess
 
 		DLLEXP dblVec2D dNflux_bs_ion(const Bins& dist, const dblVec2D& escapeCountBinned)
 		{ //converts downward dNflux at ionosphere (dist binned) to bs (upward) dNflux (also dist binned)
+			utils::fileIO::writeDblBin(dist.PA, "dat\\3.1distPA.bin", (unsigned int)dist.PA.size());
+			utils::fileIO::writeDblBin(dist.E, "dat\\3.2distE.bin", (unsigned int)dist.E.size());
+			utils::fileIO::writeDblBin(serialize2DVec(escapeCountBinned), "dat\\3.3binnedCountsIn.bin", (unsigned int)(escapeCountBinned.size()*escapeCountBinned.front().size()));
+
 			// 1. Sum dNflux over PA Bins (dist bins), Per E Bin and Average
 			dblVec escapeCountPerE(dist.E.size());                 //Sum of escaped particles at each energy, units of dNflux
 			for (unsigned int egy = 0; egy < dist.E.size(); egy++) //iterate over energies
@@ -306,6 +339,7 @@ namespace postprocess
 			}
 			// output: 1D vector of total number of escaped particles (dNFlux) per energy, reduced by # of ionsph pitch bins
 
+			utils::fileIO::writeDblBin(escapeCountPerE, "dat\\3aEscapeCntPerE.bin", (unsigned int)escapeCountPerE.size());
 			
 			// 2. Calculate upward dNflux (backscatter) per E bin
 			double logEBinMin{ log10(dist.E.at(0)) };         //depends on an array where E is minimum at index 0, max at last index
@@ -314,6 +348,8 @@ namespace postprocess
 			dblVec upwardCountPerE{ escapeCountPerE };
 			for (unsigned int ebin = 0; ebin < escapeCountPerE.size(); ebin++) //why is this the case!!!
 				upwardCountPerE.at(ebin) *= dist.E.at(ebin);  //convert to dEflux escaping into the layer
+
+			utils::fileIO::writeDblBin(upwardCountPerE, "dat\\3bEscapeEPerE.bin", (unsigned int)upwardCountPerE.size());
 
 			dblVec dNfluxPerE_bs(dist.E.size());
 			for (unsigned int dNFluxBin = 0; dNFluxBin < dNfluxPerE_bs.size(); dNFluxBin++)       //bins that contain the number flux of the backscatter in the energy bin of the same index
@@ -326,6 +362,7 @@ namespace postprocess
 					double incidentE{ dist.E.at(incEbin) };                                       //incident E is upper limit of bin
 					double intF{ integralEvans_flux(engmin, engmax, incidentE) };
 					
+					//dNfluxPerE_bs.at(dNFluxBin) += intF * escapeCountPerE.at(incEbin) * dist.E.at(incEbin) / (engmax - engmin);
 					dNfluxPerE_bs.at(dNFluxBin) += intF * upwardCountPerE.at(incEbin) / (engmax - engmin);
 										
 					//dNfluxPerE_bs.at(dNFluxBin) += intF * escapeCountPerE.at(incEbin) / (engmax - engmin);
@@ -334,6 +371,7 @@ namespace postprocess
 			}
 			// output: 1D vector of the upgoing (backscatter) dNflux per E
 			
+			utils::fileIO::writeDblBin(dNfluxPerE_bs, "dat\\3cEscapeEPerE.bin", (unsigned int)dNfluxPerE_bs.size());
 
 			// 3. Distribute BS dNflux Isotropically Over Pitch Bins
 			dblVec2D dNfluxPerEPA_bs(dist.PA.size());
@@ -344,14 +382,27 @@ namespace postprocess
 				else
 				{
 					dNfluxPerEPA_bs.at(ang) = dNfluxPerE_bs;
+
 					for (unsigned int eny = 0; eny < dNfluxPerEPA_bs.at(ang).size(); eny++)
-					{
 						dNfluxPerEPA_bs.at(ang).at(eny) *= -cos(dist.PA.at(ang) * RADS_PER_DEG);
-					}
 				}
 			}
-			// output: 2D vector of bs dNFlux at ionosphere per pitch, energy bin - should only be upward (90-180)
 
+			// normalize //
+			/*for (unsigned int eny = 0; eny < dNfluxPerEPA_bs.front().size(); eny++)
+			{
+				double nonNormTotal{ 0.0 };
+				for (unsigned int ang = 0; ang < dNfluxPerEPA_bs.size(); ang++)
+					nonNormTotal += dNfluxPerEPA_bs.at(ang).at(eny);
+
+				for (unsigned int ang = 0; ang < dNfluxPerEPA_bs.size(); ang++)
+				{
+					if (nonNormTotal != 0.0)
+						dNfluxPerEPA_bs.at(ang).at(eny) *= escapeCountPerE.at(eny) / nonNormTotal;
+				}
+			}*/
+			// remove if doesn't work //
+			// output: 2D vector of bs dNFlux at ionosphere per pitch, energy bin - should only be upward (90-180)
 
 			return dNfluxPerEPA_bs;
 		}
@@ -394,7 +445,7 @@ namespace postprocess
 
 			auto newPA = [](double PA_init, double B_init, double B_final)
 			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
-				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2)) - 1 };
+				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
 
 				if (one < 0.0) return -1.0; //if this is the case, particle has reflects before B_final
 
@@ -444,7 +495,7 @@ namespace postprocess
 
 			auto newPA = [](double PA_init, double B_init, double B_final)
 			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
-				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2)) - 1 };
+				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
 
 				if (one < 0.0) return -1.0; //if this is the case, particle has reflects before B_final
 
@@ -511,7 +562,12 @@ namespace postprocess
 
 				if (*sumCollideAboveDngoing1D.at(part) < 1.0)
 				{
-					sct = scatterPct(*sumCollideAboveDngoing1D.at(part), ionsph.Z.at(level), ionsph.p.at(level), ionsph.h.at(level), dngoing.energy.at(part), dngoing.pitch.at(part));
+					for (size_t species = 0; species < ionsph.p.size(); species++)
+					{
+						sct += scatterPct(*sumCollideAboveDngoing1D.at(part), ionsph.Z.at(species), ionsph.p.at(species).at(level),
+							ionsph.h.at(level), dngoing.energy.at(part), dngoing.pitch.at(part));
+					}
+
 					*sumCollideAboveDngoing1D.at(part) += sct;
 
 					if (*sumCollideAboveDngoing1D.at(part) > 1.0)
@@ -523,6 +579,9 @@ namespace postprocess
 
 				if (sct < 0.0) throw std::logic_error("postprocess::multLevelBS::bsAtLevel: scatter % is < 0.0 - sct%, %collideAbove: "
 					+ std::to_string(sct) + ", " + std::to_string(*sumCollideAboveDngoing1D.at(part)));
+
+				//if (sct != 1.0) throw std::logic_error("postprocess::multLevelBS::bsAtLevel: scatter not 100%: sct, PA, E: " +
+					//std::to_string(sct) + ", " + std::to_string(dngoing.pitch.at(part)) + ", " + std::to_string(dngoing.energy.at(part)));
 
 				dngoing.count.at(part) *= sct;
 			}

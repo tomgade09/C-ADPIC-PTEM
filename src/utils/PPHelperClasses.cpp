@@ -141,25 +141,15 @@ namespace postprocess
 	//Ionosphere
 	Ionosphere::Ionosphere(unsigned int numLayers, double s_max, double s_min)
 	{
-		h = vector<double>(numLayers);
-		Z = vector<double>(numLayers);
-		p = vector<double>(numLayers);
-		s = vector<double>(numLayers);
-		B = vector<double>(numLayers);
+		s = vector<double>(numLayers + 1);
+		h = vector<double>(numLayers + 1);
+		B = vector<double>(numLayers + 1);
 
-		for (unsigned int layer = 0; layer < numLayers; layer++) //endpoint inclusive
+		for (unsigned int layer = 0; layer < numLayers + 1; layer++) //endpoint inclusive, adds one more at the bottom (sim needs)
 		{
 			s.at(layer) = s_max - layer * (s_max - s_min) / (numLayers - 1); //in m
 			h.at(layer) = 100 * (s_max - s_min) / (numLayers - 1); //in cm, hence * 100
 		}
-	}
-
-	Ionosphere::Ionosphere(vector<double>& s_vec) : s{ std::move(s_vec) }
-	{
-		h = vector<double>(s_vec.size());
-		Z = vector<double>(s_vec.size());
-		p = vector<double>(s_vec.size());
-		B = vector<double>(s_vec.size());
 	}
 
 	void Ionosphere::seth(double h_all)
@@ -167,47 +157,6 @@ namespace postprocess
 		if (h.at(0) != 0) std::cout << "Ionosphere::seth: Warning, array already has non-zero values.  Continuing\n";
 		for (auto& h_layer : h)
 			h_layer = h_all;
-	}
-
-	void Ionosphere::seth(vector<double>& h_vec)
-	{
-		if (h_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::seth: h_vec.size does not match s.size");
-		h = h_vec;
-	}
-
-	void Ionosphere::setZ(double Z_all)
-	{
-		for (auto& Z_layer : Z)
-			Z_layer = Z_all;
-	}
-
-	void Ionosphere::setZ(vector<double>& Z_vec)
-	{
-		if (Z_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setZ: Z_vec.size does not match s.size");
-		Z = Z_vec;
-	}
-
-	void Ionosphere::setp(double p_max, double p_min, bool log) //log defaults to true
-	{
-		if (log)
-		{
-			p_max = log10(p_max);
-			p_min = log10(p_min);
-
-			for (unsigned int layer = 0; layer < s.size(); layer++)
-				p.at(layer) = pow(10.0, layer * (p_max - p_min) / ((double)s.size() - 1) + p_min); //start at low density (high alt) and go up in density (low alt)
-		}
-		else
-		{
-			for (unsigned int layer = 0; layer < s.size(); layer++)
-				p.at(layer) = layer * (p_max - p_min) / ((double)s.size() - 1) + p_min;
-		}
-	}
-
-	void Ionosphere::setp(vector<double>& p_vec)
-	{
-		if (p_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setp: p_vec.size does not match s.size");
-		p = p_vec;
 	}
 
 	void Ionosphere::setB(BField* Bfield, double t)
@@ -228,6 +177,19 @@ namespace postprocess
 	{
 		for (unsigned int s_ind = 0; s_ind < s.size(); s_ind++)
 			s.at(s_ind) = B->getSAtAlt(s.at(s_ind));
+	}
+
+	void Ionosphere::addSpecies(string name, double Z_spec, function<double(double)> density_s)
+	{
+		if (names.size() != p.size()) throw std::logic_error("Ionosphere::addSpecies: size of names and p vectors do not match - names, p: " +
+			std::to_string(names.size()) + ", " + std::to_string(p.size()));
+
+		names.push_back(name);
+		Z.push_back(Z_spec);
+		p.push_back(vector<double>(s.size()));
+
+		for (size_t dens = 0; dens < p.back().size(); dens++)
+			p.back().at(dens) = density_s(s.at(dens));
 	}
 	//End Ionosphere
 

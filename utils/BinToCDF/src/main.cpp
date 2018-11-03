@@ -28,6 +28,8 @@ using postprocess::Bins;
 using postprocess::Ionosphere;
 using utils::numerical::generateSpacedValues;
 
+#define DUALREGIONLOGLINEFIT(bound, logm_upper, logb_upper, logm_lower, logb_lower) [](double s){ if (s > bound) return pow(10.0, logm_upper * s + logb_upper); else return pow(10.0, logm_lower * s + logb_lower); }
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)
@@ -49,18 +51,33 @@ int main(int argc, char* argv[])
 
 	// Form Maxwellian
 	Maxwellian maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
-	maxwellian.push_back_ion(3.0,   7.00e7, 5000);
-	maxwellian.push_back_mag(3.0,   1.50e7, 5000);
-	maxwellian.push_back_mag(5.0e3, 1.00e8, 5000);
+	maxwellian.push_back_ion(5.0,   3.00e7, 5000);
+	maxwellian.push_back_mag(5.0,   1.50e7, 5000);
+	maxwellian.push_back_mag(5.0e3, 8.00e7, 5000);
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
 	// Form Postprocessing Data
 	Bins distbins(generateSpacedValues(0.5, 4.5, DSTNEBINS, true, true), generateSpacedValues(179.9975, 0.0025, DSTNANGLEBINS, false, true));
 	Bins satbins (generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true));
 
-	Ionosphere ionsph(59, 620000.0, 40000.0);
-	ionsph.setp(1.0e16, 1.0e3);
-	ionsph.setZ(8.0); //atomic number of dominant scatter species
+
+	auto O = [](double s) {
+		if (s > 135000.0)
+			return pow(10.0, (4.0 - log10(3.0e10)) / (800000.0 - 135000.0) * s + 11.79203);
+		else if (s > 98000.0)
+			return pow(10.0, (log10(3.0e10) - log10(6.0e11)) / (135000.0 - 98000.0) * s + 15.22412);
+		else
+			return pow(10.0, (log10(6.0e11) - 8.0) / (98000.0 - 76000.0) * s - 5.0518);
+	};
+
+	Ionosphere ionsph(58, 620000.0, 50000.0);
+	//Ionosphere ionsph(232, 620000.0, 50000.0);
+	//Ionosphere ionsph(2, 620000.0, 619999.9999);
+	//ionsph.addSpecies("ScatterAll", 1.0e6, [](double s) { return 1.0e30; });
+	ionsph.addSpecies("N2", 14.0, DUALREGIONLOGLINEFIT(130000.0, (4.0 - 11.0) / (540000.0 - 130000.0), 13.21951, (11.0 - 19.0) / (130000 - 8000), 19.52459));
+	ionsph.addSpecies("He", 3.0,  DUALREGIONLOGLINEFIT(120000.0, (6.0 - log10(5.0e7)) / (1000000.0 - 120000.0), 7.930648, (log10(5.0e7) - 14) / (120000.0), 14.0));
+	ionsph.addSpecies("O2", 16.0, DUALREGIONLOGLINEFIT(130000.0, (10.0 - 4.0) / (130000.0 - 450000.0), 12.4375, (18.0 - 10.0) / (20000.0 - 130000.0), 19.45455));
+	ionsph.addSpecies("O",  8.0,  O);
 
 
 	PPData ppdata{ ionsph, maxwellian, distbins, satbins,

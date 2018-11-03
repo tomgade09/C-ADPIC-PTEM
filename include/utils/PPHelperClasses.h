@@ -8,6 +8,7 @@
 
 using std::string;
 using std::vector;
+using std::function;
 
 typedef vector<vector<double>> dblVec2D;
 typedef vector<double> dblVec;
@@ -62,24 +63,22 @@ namespace postprocess
 
 	struct DLLCLEXP Ionosphere
 	{
-		vector<double> h;      //layer height (in cm)
-		vector<double> Z;      //atomic number of dominant species/weighted average
-		vector<double> p;      //density
-		vector<double> s;      //layer altitude (top of layer, in m, along field line)
-		vector<double> B;      //magnetic field strength at each layer
+		vector<double> s;         //layer altitude (top of layer, in m, along field line)
+		vector<double> h;         //layer height (in cm)
+		vector<double> B;         //magnetic field strength at each layer
+
+		vector<string> names;     //name - i.e. H, He, O2, etc
+		vector<double> Z;         //atomic number
+		vector<vector<double>> p; //density - outer = species, inner = level
 
 		Ionosphere(unsigned int numLayers, double s_max, double s_min);
-		Ionosphere(vector<double>& s_vec);
 
 		void seth(double h_all);
-		void seth(vector<double>& h_vec);
-		void setZ(double Z_all);
-		void setZ(vector<double>& Z_vec);
-		void setp(double p_max, double p_min, bool log = true);
-		void setp(vector<double>& p_vec);
 		void setB(BField* B, double t);
 		void setB(vector<double>& B_vec);
 		void altToS(BField* B);
+
+		void addSpecies(string name, double Z, function<double(double)> density_s);
 	};
 
 	struct DLLCLEXP PPData
