@@ -25,7 +25,7 @@ namespace utils
 			int length{ (int)(binFile.tellg()) / 8 };
 			binFile.seekg(0, binFile.beg);
 			binFile.close();
-			std::cout << "fileIO::readDblBin: (unknown size): num elements determined from disk: " << length << std::endl;
+			//std::cout << "fileIO::readDblBin: (unknown size): num elements determined from disk: " << length << std::endl;
 
 			arrayToReadInto.resize(length);
 

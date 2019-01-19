@@ -125,7 +125,8 @@ void SimAttributes::read()
 		if (end - beg == 0) { return std::string(""); }
 		std::string ret{ findstr.substr(beg, end - between.size()) };
 		if (erase) { findstr.erase(0, end); }
-		return ret; };
+		return ret;
+	};
 
 	auto splitEntries = [](std::string splitchars, std::string& findstr) {
 	    std::vector<std::string> ret;
@@ -134,7 +135,8 @@ void SimAttributes::read()
 			findstr.erase(0, findstr.find(splitchars) + 4); }
 		ret.push_back(findstr);
 		findstr.clear();
-		return ret; };
+		return ret;
+	};
 
 	auto entrToAtrVec = [&](std::vector<std::string> entryStrings) {
 	    std::vector<std::vector<std::vector<std::string>>> ret(5);
@@ -147,7 +149,8 @@ void SimAttributes::read()
 
 			std::cout << (*entr) << std::endl;
 		}
-		return ret; };
+		return ret;
+	};
 
 	auto exactStr2Dbl = [](std::string s) { double ret; for (int iii = 0; iii < 8; iii++) { reinterpret_cast<char*>(&ret)[iii] = s[iii]; } return ret; };
 

@@ -4,9 +4,10 @@
 
 using utils::string::findAttrInd;
 
-Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, simAttr_m{ std::make_unique<SimAttributes>(prevSimDir + '/' + "Simulation.attr", true) },
-	logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "reload.log", 20) }
+Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, simAttr_m{ std::make_unique<SimAttributes>(prevSimDir + "/Simulation.attr", true) },
+	logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "/reload.log", 20) }
 {
+	std::cout << "Start Sim Load\n";
 	//Load Simulation attributes
 	{//blocked so vectors lose scope afterward
 		std::vector<std::string> simLbls{ simAttr_m->simAD.dblLabels_m.at(0) };
@@ -47,5 +48,7 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, si
 		)};
 		createSatellite(tmpsat.get(), false);
 		satellite(getNumberOfSatellites() - 1)->loadDataFromDisk(saveRootDir_m + "/bins/satellites/");
+		tempSats_m.push_back(std::move(tmpsat));
 	}
+	std::cout << "End Sim Load\n";
 }

@@ -37,7 +37,7 @@ class Simulation(_Simulation._SimulationCDLL):
 
             self.finalData_m = self.getFinalDataAllParticles()
             self.origData_m  = self.getOriginalDataAllParticles()
-            self.satData_m   = self.getSatelliteData()
+            #self.satData_m   = self.getSatelliteData()
 
         return
 
@@ -114,7 +114,7 @@ class Simulation(_Simulation._SimulationCDLL):
         for jjj in range(self.numSats_m):
             attrptr = []
             for kk in range(self.numAttrs_m[self.satPartInd_m[jjj]] + 2):
-                attrptr.append(self.simDLL_m.getSatelliteDataPointersAPI(self.cppSimPtr_m, jjj, kk))
+                attrptr.append(self.simDLL_m.getSatelliteDataPointersAPI(self.cppSimPtr_m, jjj, 0, kk))
             satptr.append(attrptr)
         
         satsdata = []
@@ -175,12 +175,12 @@ class Simulation(_Simulation._SimulationCDLL):
     def getEFieldatS(self, s, time):
         return self.simDLL_m.getEFieldAtSAPI(self.cppSimPtr_m, s, time)
 
-    def setBFieldModel(name, doublesString):
+    def setBFieldModel(self, name, doublesString):
         name_c = ctypes.create_string_buffer(bytes(name, encoding='utf-8'))
         doublesString_c = ctypes.create_string_buffer(bytes(doublesString, encoding='utf-8'))
         self.simDLL_m.setBFieldModelAPI(self.cppSimPtr_m, name_c, doublesString_c)
 
-    def addEFieldModel(name, doublesString):
+    def addEFieldModel(self, name, doublesString):
         name_c = ctypes.create_string_buffer(bytes(name, encoding='utf-8'))
         doublesString_c = ctypes.create_string_buffer(bytes(doublesString, encoding='utf-8'))
         self.simDLL_m.addEFieldModelAPI(self.cppSimPtr_m, name_c, doublesString_c)

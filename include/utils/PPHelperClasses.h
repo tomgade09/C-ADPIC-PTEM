@@ -10,25 +10,41 @@ using std::string;
 using std::vector;
 using std::function;
 
-typedef vector<vector<double>> dblVec2D;
-typedef vector<double> dblVec;
+//types to make function arguments more explicit
+typedef double eV;
+typedef double kg;
+typedef double tesla;
+typedef double meters;
+typedef double dNflux;
+typedef double dEflux;
+typedef double degrees;
+typedef double coulomb;
+typedef vector<double> degrees_v1D;
+typedef vector<double> dNflux_v1D;
+typedef vector<double> dEflux_v1D;
+typedef vector<vector<double>> dNflux_v2D;
+typedef vector<vector<double>> dEflux_v2D;
+
+typedef vector<double> double_v1D;
+typedef vector<vector<double>> double_v2D;
+//types to make function arguments more explicit
 
 namespace postprocess
 {
 	struct DLLCLEXP ParticleData
 	{
-		vector<double> vpara;
-		vector<double> vperp;
-		vector<double> energy;
-		vector<double> pitch;
-		vector<double> t_esc;
-		vector<double> s_pos;
+		double_v1D  vpara;
+		double_v1D  vperp;
+		double_v1D  energy;
+		degrees_v1D pitch;
+		double_v1D  t_esc;
+		double_v1D  s_pos;
 
 		ParticleData(); //empty constructor for making an empty ParticleData
 		ParticleData(unsigned int size, bool EPA_only = true);
-		ParticleData(vector<double>& v_para, vector<double>& v_perp, double mass);
+		ParticleData(double_v1D& v_para, double_v1D& v_perp, double mass);
 		
-		void free();
+		void clear();
 	};
 
 	struct DLLCLEXP Maxwellian
@@ -37,75 +53,74 @@ namespace postprocess
 		double ionModFactor{ 1.0 }; //for now, the user needs to adjust these manually
 		double magModFactor{ 1.0 }; //eventually, I'd like to calculate them automatically
 
-		vector<double> ionEPeak;    //ionospheric source peak energy of maxwellian
-		vector<double> iondEMag;    //ionospheric source magnitude of peak
+		double_v1D ionEPeak;    //ionospheric source peak energy of maxwellian
+		dEflux_v1D iondEMag;    //ionospheric source magnitude of peak
 
-		vector<double> magEPeak;    //same for magnetosphere
-		vector<double> magdEMag;    //basically x, y axes (top, bottom) of a maxwellian graph dE vs E
+		double_v1D magEPeak;    //same for magnetosphere
+		dEflux_v1D magdEMag;    //basically x, y axes (top, bottom) of a maxwellian graph dE vs E
 
 		Maxwellian(double dlogEdist);
 
-		void push_back_ion(double E_peak, double dE_magnitude, int partsAtE = 1);
-		void push_back_mag(double E_peak, double dE_magnitude, int partsAtE = 1);
+		void push_back_ion(eV E_peak, dEflux dE_magnitude, int partsAtE);
+		void push_back_mag(eV E_peak, dEflux dE_magnitude, int partsAtE);
 		
-		vector<double> counts(ParticleData& init, double s_ion, double s_mag);
+		dEflux_v1D dEfluxAtE(ParticleData& init, meters s_ion, meters s_mag);
 	};
 
 	struct DLLCLEXP Bins
 	{
-		vector<double> E;
-		vector<double> PA;
-		//dblVec2D       index_1D; //the index of the corresponding particle in 1D
+		double_v1D  E;
+		degrees_v1D PA;
 
-		Bins(vector<double>& E_bins, vector<double>& PA_bins);// , dblVec2D& ind_1D);
+		Bins(double_v1D& E_bins, degrees_v1D& PA_bins);
 		Bins(const Bins& copy); //copy constructor
 	};
 
 	struct DLLCLEXP Ionosphere
 	{
-		vector<double> s;         //layer altitude (top of layer, in m, along field line)
-		vector<double> h;         //layer height (in cm)
-		vector<double> B;         //magnetic field strength at each layer
+		double_v1D s;         //layer altitude (top of layer, in m, along field line)
+		double_v1D h;         //layer height (in cm)
+		double_v1D B;         //magnetic field strength at each layer
 
-		vector<string> names;     //name - i.e. H, He, O2, etc
-		vector<double> Z;         //atomic number
-		vector<vector<double>> p; //density - outer = species, inner = level
+		vector<string> names; //name - i.e. H, He, O2, etc
+		double_v1D Z;         //atomic number
+		double_v2D p;         //density - outer = species, inner = level
 
 		Ionosphere(unsigned int numLayers, double s_max, double s_min);
 
 		void seth(double h_all);
 		void setB(BField* B, double t);
-		void setB(vector<double>& B_vec);
+		void setB(double_v1D& B_vec);
 		void altToS(BField* B);
 
 		void addSpecies(string name, double Z, function<double(double)> density_s);
 	};
 
-	struct DLLCLEXP PPData
+	struct DLLCLEXP EOMSimData
 	{
-		double s_ion;      //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
-		double s_sat;      //distance **along the field line** (in m from Re) where the satellite resides
-		double s_mag;      //distance **along the field line** (in m from Re) representing outer limit of the sim
+		meters s_ion;      //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
+		meters s_sat;      //distance **along the field line** (in m from Re) where the satellite resides
+		meters s_mag;      //distance **along the field line** (in m from Re) representing outer limit of the sim
 
-		double B_ion;      //B Field strength at ionospheric source
-		double B_sat;      //B Field strength at satellite
-		double B_mag;      //B Field strength at magnetospheric source
+		tesla  B_ion;      //B Field strength at ionospheric source
+		tesla  B_sat;      //B Field strength at satellite
+		tesla  B_mag;      //B Field strength at magnetospheric source
 
-		double mass;
-		double charge;
+		kg      mass;
+		coulomb charge;
 
 		Bins distbins;     //Original Distribution Bins - represents the binning of the equ of motion simulation
 		Bins satbins;      //Satellite Bins - represents how the data is binned and output from the satellite
 		Ionosphere ionsph; //Ionosphere Parameters (for multi-level scattering)
 
 		//Satellite and Maxwellian Data
-		vector<double> maxWeights; //maxwellian weights - "number of particles represented by the particle at same index"
-		ParticleData   initial;    //initial particle data
-		ParticleData   bottom;     //data on particles that escape out the bottom
-		ParticleData   upward;     //data on particles that are upgoing at satellite
-		ParticleData   dnward;     //data on particles that are downgoing at satellite
+		dEflux_v1D   maxwellian; //maxwellian weights - "number of particles represented by the particle at same index"
+		ParticleData initial;    //initial particle data
+		ParticleData bottom;     //data on particles that escape out the bottom
+		ParticleData upward;     //data on particles that are upgoing at satellite
+		ParticleData dnward;     //data on particles that are downgoing at satellite
 
-		PPData(Ionosphere& ionosphere, Maxwellian& maxwellian, const Bins& distBins, const Bins& satBins, string simDataDir, string particleName, string btmSatName, string upgSatName, string dngSatName);
+		EOMSimData(Ionosphere& ionosphere, Maxwellian& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat);
 	};
 
 } //end namespace postprocess

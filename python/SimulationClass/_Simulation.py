@@ -22,7 +22,7 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.terminateSimulationAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.terminateSimulationAPI.restype = None
         self.simDLL_m.loadCompletedSimDataAPI.argtypes = (ctypes.c_char_p,)
-        self.simDLL_m.loadCompletedSimDataAPI.restype = None
+        self.simDLL_m.loadCompletedSimDataAPI.restype = ctypes.c_void_p
         self.simDLL_m.setupExampleSimulationAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
         self.simDLL_m.setupExampleSimulationAPI.restype = None
         self.simDLL_m.setupSingleElectronAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double)

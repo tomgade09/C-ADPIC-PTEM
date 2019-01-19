@@ -15,6 +15,7 @@ def simulationRunMain():
     print("================  SIMULATION ", dtg, " ================")
 
     sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM)
+    sim.addEFieldModel("QSPS", "6122055.12507376, 7151503.70444183, 8.00e-4")
     sim.setupExampleSim(NUMPARTICLES)
     sim.run(NUMITER, 500)
 
