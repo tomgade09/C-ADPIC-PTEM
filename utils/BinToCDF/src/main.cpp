@@ -1,5 +1,6 @@
 #include <memory>
-#include "utils\postprocess.h"
+#include "utils\ionosphere.h"
+#include "utils\ionosphereUtils.h"
 #include "CDFFileClass.h"
 #include "ErrorHandling/simExceptionMacros.h"
 #include "utils\numerical.h"
@@ -21,11 +22,11 @@ const std::string UPGSATNM    { "4e6ElecUpg" };
 const std::string DNGSATNM    { "4e6ElecDng" };
 
 using std::string;
-using postprocess::PPData;
-using postprocess::ParticleData;
-using postprocess::Maxwellian;
-using postprocess::Bins;
-using postprocess::Ionosphere;
+using ionosphere::Bins;
+using ionosphere::EOMSimData;
+using ionosphere::ParticleData;
+using ionosphere::MaxwellianSpecs;
+using ionosphere::IonosphereSpecs;
 using utils::numerical::generateSpacedValues;
 
 #define DUALREGIONLOGLINEFIT(bound, logm_upper, logb_upper, logm_lower, logb_lower) [](double s){ if (s > bound) return pow(10.0, logm_upper * s + logb_upper); else return pow(10.0, logm_lower * s + logb_lower); }
@@ -82,8 +83,8 @@ int main(int argc, char* argv[])
 	auto err = [](double x, double y) { if (x == 0.0 && y == 0.0) return 0.0; return abs((x - y) / x); }; //check on error between two values
 
 	// Form Maxwellian
-	Maxwellian maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
-	maxwellian.push_back_ion(2.5,   6.00e7, 45000); //12000
+	MaxwellianSpecs maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
+	maxwellian.push_back_ion(2.5,   6.00e7, 13500); //12000
 	maxwellian.push_back_mag(2.5,   6.00e7, 18500); //4250
 	maxwellian.push_back_mag(2.5e3, 1.20e8, 1.6e7); //4250
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
@@ -103,7 +104,7 @@ int main(int argc, char* argv[])
 	};
 
 	/* Physical ionosphere model */
-	Ionosphere ionsph(58, 620000.0, 50000.0);
+	IonosphereSpecs ionsph(58, 620000.0, 50000.0);
 	//Ionosphere ionsph(232, 620000.0, 50000.0);
 	ionsph.addSpecies("N2", 14.0, DUALREGIONLOGLINEFIT(130000.0, (4.0 - 11.0) / (540000.0 - 130000.0), 13.21951, (11.0 - 19.0) / (130000 - 8000), 19.52459));
 	ionsph.addSpecies("He", 3.0,  DUALREGIONLOGLINEFIT(120000.0, (6.0 - log10(5.0e7)) / (1000000.0 - 120000.0), 7.930648, (log10(5.0e7) - 14) / (120000.0), 14.0));
@@ -116,7 +117,7 @@ int main(int argc, char* argv[])
 	/* End test ionosphere */
 
 
-	PPData ppdata{ ionsph, maxwellian, distbins, satbins,
+	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
 
 	//printVec(ppdata.maxWeights, 0, 96);
@@ -126,7 +127,7 @@ int main(int argc, char* argv[])
 
 	// Run Post Process Code
 	std::vector<std::vector<double>> fluxData;
-	SIM_API_EXCEP_CHECK(fluxData = postprocess::steadyFlux(ppdata));
+	SIM_API_EXCEP_CHECK(fluxData = steadyFlux(eomdata));
 
 
 	if (args.cdf)
@@ -140,7 +141,7 @@ int main(int argc, char* argv[])
 		/* Create CDF file and setup with appropriate variables, write data */
 		std::unique_ptr<CDFFileClass> cdf = std::make_unique<CDFFileClass>("4e6Altitude");
 
-		cdf->writeNewZVar("Mid-Bin Energies (eV)", CDF_DOUBLE, { CDFNEBINS }, (void*)ppdata.satbins.E.data());
+		cdf->writeNewZVar("Mid-Bin Energies (eV)", CDF_DOUBLE, { CDFNEBINS }, (void*)eomdata.satbins.E.data());
 		cdf->writeNewZVar("Mid-Bin Angles (Degrees)", CDF_DOUBLE, { CDFNANGLEBINS }, (void*)satbins.PA.data());
 		cdf->writeNewZVar("Electrons Energy/Pitch Angle Count, Maxwellian-Weighted", CDF_DOUBLE, { CDFNANGLEBINS, CDFNEBINS }, cntArray2D);
 

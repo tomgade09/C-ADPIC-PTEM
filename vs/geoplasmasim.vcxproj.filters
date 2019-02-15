@@ -54,9 +54,6 @@
     <ClCompile Include="..\src\API\utilsAPI.cpp">
       <Filter>Source Files\API</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\postprocess.cpp">
-      <Filter>Source Files\utils\Post-Process</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\utils\readIOclasses.cpp">
       <Filter>Source Files\utils\IO</Filter>
     </ClCompile>
@@ -66,14 +63,17 @@
     <ClCompile Include="..\src\utils\writeIOclasses.cpp">
       <Filter>Source Files\utils\IO</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\PPHelperClasses.cpp">
-      <Filter>Source Files\utils\Post-Process</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Simulation\iterateSimCPU.cpp">
       <Filter>Source Files\Simulation</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Satellite\Satellite.cpp">
       <Filter>Source Files\Satellite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\ionosphere.cpp">
+      <Filter>Source Files\utils\Ionosphere</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\ionosphereClasses.cpp">
+      <Filter>Source Files\utils\Ionosphere</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,17 +164,20 @@
     <ClInclude Include="..\include\utils\readIOclasses.h">
       <Filter>Header Files\utils\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\postprocess.h">
-      <Filter>Header Files\utils\Post-Process</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\utils\PPHelperClasses.h">
-      <Filter>Header Files\utils\Post-Process</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\utils\silenceStreamMacros.h">
       <Filter>Header Files\utils\Macros</Filter>
     </ClInclude>
     <ClInclude Include="..\include\utils\loopmacros.h">
       <Filter>Header Files\utils\Macros</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\ionosphere.h">
+      <Filter>Header Files\utils\Ionosphere</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\ionosphereClasses.h">
+      <Filter>Header Files\utils\Ionosphere</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\ionosphereUtils.h">
+      <Filter>Header Files\utils\Ionosphere</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -360,20 +363,20 @@
     <Filter Include="Header Files\utils\IO">
       <UniqueIdentifier>{a08eb9bf-ee6d-47fe-936f-e6fed7e0cb6e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\utils\Post-Process">
-      <UniqueIdentifier>{ab12224d-26d3-4d7b-b54b-5c13e9bf73ea}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\utils\Macros">
       <UniqueIdentifier>{dbb49a59-887a-4a30-af2e-2ff4298c2883}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\utils\IO">
       <UniqueIdentifier>{5b674949-5f2f-490e-894a-84d3b0cce31d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\utils\Post-Process">
-      <UniqueIdentifier>{dc8d6857-238b-44a4-87e5-d2a921411459}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Python Files\examples">
       <UniqueIdentifier>{ad8e9691-1bbf-4511-b99b-be83a59f24f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils\Ionosphere">
+      <UniqueIdentifier>{ab12224d-26d3-4d7b-b54b-5c13e9bf73ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utils\Ionosphere">
+      <UniqueIdentifier>{dc8d6857-238b-44a4-87e5-d2a921411459}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -2,14 +2,14 @@
 #include <iterator>
 
 
-#include "utils/postprocess.h"
+#include "utils/ionosphere.h"
 #include "utils/numerical.h"
 #include "utils/silenceStreamMacros.h"
 #include "ErrorHandling/simExceptionMacros.h"
 
 using utils::fileIO::ParticleDistribution;
 
-namespace postprocess
+namespace ionosphere
 {
 	//ParticleData
 	ParticleData::ParticleData()
@@ -55,25 +55,33 @@ namespace postprocess
 	//End ParticleData
 
 
-	//Maxwellian
-	Maxwellian::Maxwellian(double dlogEdist) : dlogE_dist{ dlogEdist }
+	//MaxwellianSpecs
+	MaxwellianSpecs::MaxwellianSpecs(double dlogEdist) : dlogE_dist{ dlogEdist }
 	{
 
 	}
 
-	void Maxwellian::push_back_ion(eV E_peak, dEflux dE_magnitude, int partsAtE)
+	void MaxwellianSpecs::push_back_ion(eV E_peak, dEflux dE_magnitude, int partsAtE)
 	{
+		if (E_peak <= 0.0) throw std::logic_error("MaxwellianSpecs::push_back_ion: E_peak <= 0.0.  E_peak must be > 0.0 " + std::to_string(E_peak));
+		if (dE_magnitude <= 0.0) throw std::logic_error("MaxwellianSpecs::push_back_ion: dE_mag <= 0.0.  dE_mag must be > 0.0 " + std::to_string(E_peak));
+		if (partsAtE <= 0) throw std::logic_error("MaxwellianSpecs::push_back_ion: partsAtE <= 0.  Not physical. " + std::to_string(partsAtE));
+
 		ionEPeak.push_back(E_peak);
 		iondEMag.push_back(dE_magnitude / (double)partsAtE); //scales dE according to how many particles will be in the bin containing E
 	}
 
-	void Maxwellian::push_back_mag(eV E_peak, dEflux dE_magnitude, int partsAtE)
+	void MaxwellianSpecs::push_back_mag(eV E_peak, dEflux dE_magnitude, int partsAtE)
 	{
+		if (E_peak <= 0.0) throw std::logic_error("MaxwellianSpecs::push_back_mag: E_peak <= 0.0.  E_peak must be > 0.0 " + std::to_string(E_peak));
+		if (dE_magnitude <= 0.0) throw std::logic_error("MaxwellianSpecs::push_back_mag: dE_mag <= 0.0.  dE_mag must be > 0.0 " + std::to_string(E_peak));
+		if (partsAtE <= 0) throw std::logic_error("MaxwellianSpecs::push_back_mag: partsAtE <= 0.  Not physical. " + std::to_string(partsAtE));
+
 		magEPeak.push_back(E_peak);
 		magdEMag.push_back(dE_magnitude / (double)partsAtE);
 	}
 
-	dEflux_v1D Maxwellian::dEfluxAtE(ParticleData& init, meters s_ion, meters s_mag)
+	dNflux_v1D MaxwellianSpecs::dNfluxAtE(ParticleData& init, meters s_ion, meters s_mag)
 	{
 		dNflux_v1D max(init.energy.size()); //array of maxwellian counts
 		dNflux_v1D maxtmp; //temporary holder allowing std::transform to be used twice instead of nested loops
@@ -87,7 +95,7 @@ namespace postprocess
 		auto count_E = [&](eV E_eval, eV E_peak, dEflux dEflux_peak, bool zero)
 		{ //calculates count for a given E (E_eval) for a maxwellian peaked at E_peak with magnitude dEflux_peak
 			if (E_peak <= 0.0)
-				throw std::logic_error("Maxwellian::counts: invalid maxwellian peak E (le 0.0)");
+				throw std::logic_error("MaxwellianSpecs::counts: invalid maxwellian peak E (le 0.0)");
 			if (zero || E_eval == 0.0)
 				return 0.0;
 				
@@ -116,7 +124,7 @@ namespace postprocess
 
 		return max;
 	}
-	//End Maxwellian
+	//End MaxwellianSpecs
 
 
 	//Bins
@@ -134,8 +142,8 @@ namespace postprocess
 	//End Bins
 	
 
-	//Ionosphere
-	Ionosphere::Ionosphere(unsigned int numLayers, double s_max, double s_min)
+	//IonosphereSpecs
+	IonosphereSpecs::IonosphereSpecs(unsigned int numLayers, double s_max, double s_min)
 	{
 		s = double_v1D(numLayers + 1);
 		h = double_v1D(numLayers + 1);
@@ -148,14 +156,14 @@ namespace postprocess
 		}
 	}
 
-	void Ionosphere::seth(double h_all)
+	void IonosphereSpecs::seth(double h_all)
 	{
-		if (h.at(0) != 0) std::cout << "Ionosphere::seth: Warning, array already has non-zero values.  Continuing\n";
+		if (h.at(0) != 0) std::cout << "IonosphereSpecs::seth: Warning, array already has non-zero values.  Continuing\n";
 		for (auto& h_layer : h)
 			h_layer = h_all;
 	}
 
-	void Ionosphere::setB(BField* Bfield, double t)
+	void IonosphereSpecs::setB(BField* Bfield, double t)
 	{
 		for (unsigned int s_layer = 0; s_layer < s.size(); s_layer++)
 		{
@@ -163,21 +171,21 @@ namespace postprocess
 		}
 	}
 
-	void Ionosphere::setB(double_v1D& B_vec)
+	void IonosphereSpecs::setB(double_v1D& B_vec)
 	{
-		if (B_vec.size() != s.size()) throw std::invalid_argument("Ionosphere::setp: B_vec.size does not match s.size");
+		if (B_vec.size() != s.size()) throw std::invalid_argument("IonosphereSpecs::setp: B_vec.size does not match s.size");
 		B = B_vec;
 	}
 
-	void Ionosphere::altToS(BField* B)
+	void IonosphereSpecs::altToS(BField* B)
 	{
 		for (unsigned int s_ind = 0; s_ind < s.size(); s_ind++)
 			s.at(s_ind) = B->getSAtAlt(s.at(s_ind));
 	}
 
-	void Ionosphere::addSpecies(string name, double Z_spec, function<double(double)> density_s)
+	void IonosphereSpecs::addSpecies(string name, double Z_spec, function<double(double)> density_s)
 	{
-		if (names.size() != p.size()) throw std::logic_error("Ionosphere::addSpecies: size of names and p vectors do not match - names, p: " +
+		if (names.size() != p.size()) throw std::logic_error("IonosphereSpecs::addSpecies: size of names and p vectors do not match - names, p: " +
 			std::to_string(names.size()) + ", " + std::to_string(p.size()));
 
 		names.push_back(name);
@@ -187,11 +195,11 @@ namespace postprocess
 		for (size_t dens = 0; dens < p.back().size(); dens++)
 			p.back().at(dens) = density_s(s.at(dens));
 	}
-	//End Ionosphere
+	//End IonosphereSpecs
 
 
 	//PPData
-	EOMSimData::EOMSimData(Ionosphere& ionosphere, Maxwellian& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat) :
+	EOMSimData::EOMSimData(IonosphereSpecs& ionosphere, MaxwellianSpecs& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat) :
 		ionsph{ std::move(ionosphere) }, distbins{ std::move(distribution) }, satbins{ std::move(satellite) }
 	{
 		std::unique_ptr<Simulation> sim;
@@ -229,7 +237,19 @@ namespace postprocess
 			ionsph.setB(&dip, 0.0);
 		); //end SIM_API_EXCEP_CHECK
 
-		maxwellian = maxspecs.dEfluxAtE(initial, s_ion, s_mag);
+		maxwellian = maxspecs.dNfluxAtE(initial, s_ion, s_mag);
+
+		//make sure EOMSimData has been properly formed
+		if (s_ion <= 0.0) throw std::logic_error("EOMSimData::EOMSimData: s_ion <= 0.  Something is wrong. " + std::to_string(s_ion));
+		if (s_sat <= 0.0) throw std::logic_error("EOMSimData::EOMSimData: s_sat <= 0.  Something is wrong. " + std::to_string(s_sat));
+		if (s_mag <= 0.0) throw std::logic_error("EOMSimData::EOMSimData: s_mag <= 0.  Something is wrong. " + std::to_string(s_mag));
+
+		if (B_ion >= 0.0) throw std::logic_error("EOMSimData::EOMSimData: B_ion >= 0.  Something is wrong. " + std::to_string(B_ion));
+		if (B_sat >= 0.0) throw std::logic_error("EOMSimData::EOMSimData: B_sat >= 0.  Something is wrong. " + std::to_string(B_sat));
+		if (B_mag >= 0.0) throw std::logic_error("EOMSimData::EOMSimData: B_mag >= 0.  Something is wrong. " + std::to_string(B_mag));
+
+		if (mass <= 0.0)  throw std::logic_error("EOMSimData::EOMSimData: mass <= 0.  Something is wrong. " + std::to_string(mass));
+		if (charge == 0.0) throw std::logic_error("EOMSimData::EOMSimData: charge = 0.  Something is wrong. " + std::to_string(charge));
 	}
 	//End PPData
 }

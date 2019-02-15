@@ -1,35 +1,17 @@
-#ifndef POSTPROCESS_HELPER_H
-#define POSTPROCESS_HELPER_H
+#ifndef IONOSPHERE_CLASSES_H
+#define IONOSPHERE_CLASSES_H
 
 #include <vector>
 #include <string>
 #include "Simulation/Simulation.h"
 #include "utils/writeIOclasses.h"
+#include "utils/ionosphereUtils.h"
 
 using std::string;
 using std::vector;
 using std::function;
 
-//types to make function arguments more explicit
-typedef double eV;
-typedef double kg;
-typedef double tesla;
-typedef double meters;
-typedef double dNflux;
-typedef double dEflux;
-typedef double degrees;
-typedef double coulomb;
-typedef vector<double> degrees_v1D;
-typedef vector<double> dNflux_v1D;
-typedef vector<double> dEflux_v1D;
-typedef vector<vector<double>> dNflux_v2D;
-typedef vector<vector<double>> dEflux_v2D;
-
-typedef vector<double> double_v1D;
-typedef vector<vector<double>> double_v2D;
-//types to make function arguments more explicit
-
-namespace postprocess
+namespace ionosphere
 {
 	struct DLLCLEXP ParticleData
 	{
@@ -47,7 +29,7 @@ namespace postprocess
 		void clear();
 	};
 
-	struct DLLCLEXP Maxwellian
+	struct DLLCLEXP MaxwellianSpecs
 	{ //at some point, needs to take in distribution data to generate weights/etc
 		double dlogE_dist;          //dlogE of the particle distribution (not bins)
 		double ionModFactor{ 1.0 }; //for now, the user needs to adjust these manually
@@ -59,12 +41,12 @@ namespace postprocess
 		double_v1D magEPeak;    //same for magnetosphere
 		dEflux_v1D magdEMag;    //basically x, y axes (top, bottom) of a maxwellian graph dE vs E
 
-		Maxwellian(double dlogEdist);
+		MaxwellianSpecs(double dlogEdist);
 
 		void push_back_ion(eV E_peak, dEflux dE_magnitude, int partsAtE);
 		void push_back_mag(eV E_peak, dEflux dE_magnitude, int partsAtE);
 		
-		dEflux_v1D dEfluxAtE(ParticleData& init, meters s_ion, meters s_mag);
+		dNflux_v1D dNfluxAtE(ParticleData& init, meters s_ion, meters s_mag);
 	};
 
 	struct DLLCLEXP Bins
@@ -76,7 +58,7 @@ namespace postprocess
 		Bins(const Bins& copy); //copy constructor
 	};
 
-	struct DLLCLEXP Ionosphere
+	struct DLLCLEXP IonosphereSpecs
 	{
 		double_v1D s;         //layer altitude (top of layer, in m, along field line)
 		double_v1D h;         //layer height (in cm)
@@ -86,7 +68,7 @@ namespace postprocess
 		double_v1D Z;         //atomic number
 		double_v2D p;         //density - outer = species, inner = level
 
-		Ionosphere(unsigned int numLayers, double s_max, double s_min);
+		IonosphereSpecs(unsigned int numLayers, double s_max, double s_min);
 
 		void seth(double h_all);
 		void setB(BField* B, double t);
@@ -111,7 +93,7 @@ namespace postprocess
 
 		Bins distbins;     //Original Distribution Bins - represents the binning of the equ of motion simulation
 		Bins satbins;      //Satellite Bins - represents how the data is binned and output from the satellite
-		Ionosphere ionsph; //Ionosphere Parameters (for multi-level scattering)
+		IonosphereSpecs ionsph; //Ionosphere Parameters (for multi-level scattering)
 
 		//Satellite and Maxwellian Data
 		dEflux_v1D   maxwellian; //maxwellian weights - "number of particles represented by the particle at same index"
@@ -120,9 +102,9 @@ namespace postprocess
 		ParticleData upward;     //data on particles that are upgoing at satellite
 		ParticleData dnward;     //data on particles that are downgoing at satellite
 
-		EOMSimData(Ionosphere& ionosphere, Maxwellian& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat);
+		EOMSimData(IonosphereSpecs& ionosphere, MaxwellianSpecs& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat);
 	};
 
-} //end namespace postprocess
+} //end namespace ionosphere
 
-#endif /* !POSTPROCESS_HELPER_H */
+#endif /* !IONOSPHERE_CLASSES_H */

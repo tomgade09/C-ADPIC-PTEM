@@ -15,9 +15,9 @@ def simulationRunMain():
     print("================  SIMULATION ", dtg, " ================")
 
     sim = Simulation(DLLLOCATION, savedir, DT, MIN_S_SIM, MAX_S_SIM)
-    sim.addEFieldModel("QSPS", "6122055.12507376, 7151503.70444183, 8.00e-4")
+    #sim.addEFieldModel("QSPS", "6122055.12507376, 7151503.70444183, 8.00e-4")
     sim.setupExampleSim(NUMPARTICLES)
-    sim.run(NUMITER, 500)
+    sim.run(NUMITER, 5000)
 
     fields = sim.getFieldsAtAllS(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)
     for iii in range(len(fields[2])):

@@ -1,13 +1,13 @@
-#ifndef POSTPROCESS_H
-#define POSTPROCESS_H
+#ifndef IONOSPHERE_H
+#define IONOSPHERE_H
 
 #include <vector>
 #include "dlldefines.h"
-#include "utils/PPHelperClasses.h"
+#include "utils/ionosphereClasses.h"
 
 #define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
 
-namespace postprocess
+namespace ionosphere
 {
 	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata);
 
@@ -25,21 +25,19 @@ namespace postprocess
 
 	namespace backscat
 	{
-		DLLEXP dNflux     johnd_flux(double E_eval, double E_incident);
+		DLLEXP dNflux     johnd_flux(double E_eval, double E_incident, dEflux dE_incident);
 		DLLEXP dEflux     integralJohnd_flux(double lower, double upper, double E_incident);
-		DLLEXP dNflux     evans_flux(double E_eval, double E_incident);
-		DLLEXP dEflux     integralEvans_flux(double lower, double upper, double incidentE);
 		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& escapeCountBinned);
-		DLLEXP dNflux_v2D sourceToSatellite(const EOMSimData& eomdata, const dNflux_v2D& bsCounts);
+		DLLEXP dNflux_v2D ionsphToSatellite(const EOMSimData& eomdata, const dNflux_v2D& bsCounts);
 	}
 
-	namespace multLevelBS
+	namespace multiLevelBS
 	{
-		DLLEXP dNflux_v2D scatterMain(const Ionosphere& ionsph, const Bins& distbins, const dNflux_v2D& ionsphTopLvl, double B_sat);
-		DLLEXP dNflux_v2D bsAtLevel(const Ionosphere& ionsph, const Bins& distbins, const dNflux_v2D& ionsphTopLvl, double_v2D& sumCollideAbove, double B_sat, unsigned int level);
+		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl);
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl, double_v2D& sumCollideAbove, unsigned int level);
 		DLLEXP double_v2D alt_reflect(const Bins& distbins, BField* B, double B_ion, double t);
-		DLLEXP double     scatterPct (double sumCollideAbove, double Z, double p, double h, double E, degrees PA);
+		DLLEXP double     scatterPct (double sumCollideAbove, double Z, double p, double h, eV E, degrees PA);
 	}
 }
 
-#endif /* !POSTPROCESS_H */
+#endif /* !IONOSPHERE_H */
