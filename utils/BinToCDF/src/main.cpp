@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
 	// Form Maxwellian
 	MaxwellianSpecs maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
 	maxwellian.push_back_ion(2.5,   6.00e7, 13500); //12000
-	maxwellian.push_back_mag(2.5,   6.00e7, 18500); //4250
-	maxwellian.push_back_mag(2.5e3, 1.20e8, 1.6e7); //4250
+	maxwellian.push_back_mag(2.5,   6.00e7, 18500 * 0.3); //4250
+	maxwellian.push_back_mag(2.5e3, 1.20e8, 2000); //4250
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
 	// Form Postprocessing Data

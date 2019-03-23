@@ -35,7 +35,6 @@ namespace ionosphere
 	{
 		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl);
 		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl, double_v2D& sumCollideAbove, unsigned int level);
-		DLLEXP double_v2D alt_reflect(const Bins& distbins, BField* B, double B_ion, double t);
 		DLLEXP double     scatterPct (double sumCollideAbove, double Z, double p, double h, eV E, degrees PA);
 	}
 }

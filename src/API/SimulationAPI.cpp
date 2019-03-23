@@ -52,8 +52,8 @@ DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* l
 
 		sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 
-		sim->createTempSat(0, simMin * 0.999, true, "btmElec");
-		sim->createTempSat(0, simMax * 1.001, false, "topElec");
+		sim->createTempSat(0, simMin, true, "btmElec");
+		sim->createTempSat(0, simMax, false, "topElec");
 		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
 		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
 

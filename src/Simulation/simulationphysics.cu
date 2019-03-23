@@ -116,16 +116,16 @@ namespace physics
 		const double* t_incident_d{ currData_d[3] };
 		double* t_escape_d{ currData_d[4] };
 
-		if (t_escape_d[thdInd] >= 0.0) //particle has escaped, t_escape is >= 0 iff it has both entered and is outside the sim boundaries
+		if (t_escape_d[thdInd] >= 0.0) //particle has escaped, t_escape is >= 0 iff it has both entered previously and is currently outside the sim boundaries
 			return;
 		else if (t_incident_d[thdInd] > simtime) //particle hasn't "entered the sim" yet
 			return;
-		else if (s_d[thdInd] < simmin * 0.999) //particle is out of sim to the bottom and t_escape not set yet
-		{//eventually build in "fuzzy boundary" - maybe eventually create new particle with initial characteristics on escape
+		else if (s_d[thdInd] < simmin) //particle is out of sim to the bottom and t_escape not set yet
+		{
 			t_escape_d[thdInd] = simtime;
-			return;                      //fuzzyIonosphere(); if (t_escape_d[thdInd] >= 0.0 && t_escape_d[thdInd] < simtime) { return; }
+			return;
 		}
-		else if (s_d[thdInd] > simmax * 1.001) //particle is out of sim to the top and t_escape not set yet
+		else if (s_d[thdInd] > simmax) //particle is out of sim to the top and t_escape not set yet
 		{//maybe eventaully create new particle with initial characteristics on escape
 			t_escape_d[thdInd] = simtime;
 			return;
@@ -156,12 +156,12 @@ namespace physics
 			return;
 		else if (*t_incident > simtime)
 			return;
-		else if (*s < simmin * 0.999)
+		else if (*s < simmin)
 		{
 			*t_escape = simtime;
 			return;
 		}
-		else if (*s > simmax * 1.001)
+		else if (*s > simmax)
 		{
 			*t_escape = simtime;
 			return;
@@ -233,7 +233,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	long cudaloopind{ 0 };
 	while (cudaloopind < numberOfIterations)
 	{	
-		if (cudaloopind % checkDoneEvery == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in tnis iter (every checkDoneEvery iterations), set to true
+		if (cudaloopind % checkDoneEvery == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in this iter (every checkDoneEvery iterations), set to true
 
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{

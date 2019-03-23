@@ -102,7 +102,7 @@ namespace ionosphere
 			//eV binWidth_E { pow(10, log10(E_eval) + 0.5 * dlogE_dist) - pow(10, log10(E_eval) - 0.5 * dlogE_dist) };
 			//eV binWidth_kT{ pow(10, log10(E_peak) + 0.5 * dlogE_dist) - pow(10, log10(E_peak) - 0.5 * dlogE_dist) };
 			//return exp(-E_eval / E_peak) * binWidth_E / E_eval * (dEflux_peak / (exp(-1.0) * binWidth_kT));
-			return dEflux_peak * exp(-E_eval / E_peak) * E_eval / (exp(-1.0) * E_peak);
+			return (dEflux_peak / (exp(-2.0) * E_peak * E_peak)) * (exp(-2.0 * E_eval / E_peak) * E_eval);
 		};
 
 		auto genCounts = [&](const double_v1D& E_peak, const dEflux_v1D& dEMag, double modFactor, std::function<bool(double)> zero)
@@ -204,7 +204,7 @@ namespace ionosphere
 	{
 		std::unique_ptr<Simulation> sim;
 		SILENCE_COUT(SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(dir_simdata)));
-
+		
 		Particle* particle{ sim->particle(name_particle) };
 		Satellite* sat_btm{ sim->satellite(name_btmsat) };
 		Satellite* sat_dng{ sim->satellite(name_dngsat) };
@@ -229,8 +229,11 @@ namespace ionosphere
 			initial = ParticleData(particle->__data(true).at(vparaind), particle->__data(true).at(vperpind), mass);
 			initial.s_pos = particle->__data(true).at(sind);
 			bottom = ParticleData(sat_btm->__data().at(0).at(vparaind), sat_btm->__data().at(0).at(vperpind), mass);
+			bottom.s_pos = std::move(sat_btm->__data().at(0).at(sind));
 			upward = ParticleData(sat_upg->__data().at(0).at(vparaind), sat_upg->__data().at(0).at(vperpind), mass);
+			upward.s_pos = std::move(sat_upg->__data().at(0).at(sind));
 			dnward = ParticleData(sat_dng->__data().at(0).at(vparaind), sat_dng->__data().at(0).at(vperpind), mass);
+			dnward.s_pos = std::move(sat_dng->__data().at(0).at(sind));
 
 			DipoleB dip(sim->Bmodel()->ILAT(), 1.0e-10, RADIUS_EARTH / 1000.0, false);
 			ionsph.altToS(&dip);
