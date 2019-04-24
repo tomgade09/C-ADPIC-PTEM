@@ -138,17 +138,17 @@ void Particle::setParticleSource_s(double s_ion, double s_mag)
 
 void Particle::initializeGPU()
 {
-	size_t memSize{ numberOfParticles_m * (getNumberOfAttributes()) * sizeof(double) };
-	CUDA_API_ERRCHK(cudaMalloc((void **)&origData1D_d, memSize));
+	size_t memSize{ numberOfParticles_m * (getNumberOfAttributes() + 1) * sizeof(double) };
+	//CUDA_API_ERRCHK(cudaMalloc((void **)&origData1D_d, memSize));
 	CUDA_API_ERRCHK(cudaMalloc((void **)&currData1D_d, memSize));
-	CUDA_API_ERRCHK(cudaMalloc((void **)&origData2D_d, getNumberOfAttributes() * sizeof(double*)));
-	CUDA_API_ERRCHK(cudaMalloc((void **)&currData2D_d, getNumberOfAttributes() * sizeof(double*)));
+	//CUDA_API_ERRCHK(cudaMalloc((void **)&origData2D_d, getNumberOfAttributes() * sizeof(double*)));
+	CUDA_API_ERRCHK(cudaMalloc((void **)&currData2D_d, (getNumberOfAttributes() + 1) * sizeof(double*)));
 
-	CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, memSize));
+	//CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, memSize));
 	CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, memSize));
 
-	setup2DArray <<< 1, 1 >>> (origData1D_d, origData2D_d, getNumberOfAttributes(), numberOfParticles_m);
-	setup2DArray <<< 1, 1 >>> (currData1D_d, currData2D_d, getNumberOfAttributes(), numberOfParticles_m);
+	//setup2DArray <<< 1, 1 >>> (origData1D_d, origData2D_d, getNumberOfAttributes(), numberOfParticles_m);
+	setup2DArray <<< 1, 1 >>> (currData1D_d, currData2D_d, getNumberOfAttributes() + 1, numberOfParticles_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	dataOnGPU_m = true;
@@ -179,14 +179,14 @@ void Particle::freeGPUMemory()
 {
 	if (!dataOnGPU_m) { return; }
 
-	CUDA_API_ERRCHK(cudaFree(origData1D_d));
+	//CUDA_API_ERRCHK(cudaFree(origData1D_d));
 	CUDA_API_ERRCHK(cudaFree(currData1D_d));
-	CUDA_API_ERRCHK(cudaFree(origData2D_d));
+	//CUDA_API_ERRCHK(cudaFree(origData2D_d));
 	CUDA_API_ERRCHK(cudaFree(currData2D_d));
 
-	origData1D_d = nullptr;
+	//origData1D_d = nullptr;
 	currData1D_d = nullptr;
-	origData2D_d = nullptr;
+	//origData2D_d = nullptr;
 	currData2D_d = nullptr;
 
 	dataOnGPU_m = false;
@@ -194,9 +194,9 @@ void Particle::freeGPUMemory()
 
 void Particle::clearGPUMemory()
 {
-	if (origData1D_d && currData1D_d)
+	if (/*origData1D_d &&*/ currData1D_d)
 	{
-		CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
+		//CUDA_API_ERRCHK(cudaMemset(origData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
 		CUDA_API_ERRCHK(cudaMemset(currData1D_d, 0, sizeof(double) * (int)attributeNames_m.size() * numberOfParticles_m));
 	}
 }

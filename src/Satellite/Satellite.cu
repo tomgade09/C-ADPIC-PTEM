@@ -36,14 +36,12 @@ __global__ void satelliteDetector(double** data_d, double** capture_d, double si
 
 	const double* v_d{ data_d[0] };
 	const double* s_d{ data_d[2] };
-	//below needs to be changed
-	double s_minus_vdt{ s_d[thdInd] - v_d[thdInd] * dt }; //flawed - vdt may be less distance than the particle actually travels - v is not constant
-	//only real solution I can see is if the particle is within so much distance, store the value of s to be used next time to see if the particle crossed
+	const double* s0_d{ data_d[5] };
 
 	if (//no detected particle is in the data array at the thread's index already AND
-		((!upward) && (s_d[thdInd] >= altitude) && (s_minus_vdt < altitude)) //detector is facing down and particle crosses altitude in dt
+		((!upward) && (s_d[thdInd] >= altitude) && (s0_d[thdInd] < altitude)) //detector is facing down and particle crosses altitude in dt
 		  || //OR
-		(( upward) && (s_d[thdInd] <= altitude) && (s_minus_vdt > altitude)) //detector is facing up and particle crosses altitude in dt
+		(( upward) && (s_d[thdInd] <= altitude) && (s0_d[thdInd] > altitude)) //detector is facing up and particle crosses altitude in dt
 	   )
 	{
 		const double* mu_d{ data_d[1] };

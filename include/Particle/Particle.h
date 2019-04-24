@@ -12,9 +12,9 @@ protected:
 	std::vector<std::vector<double>> origData_m;
 	std::vector<std::vector<double>> currData_m;
 
-	double*  origData1D_d{ nullptr };
+	//double*  origData1D_d{ nullptr };
 	double*  currData1D_d{ nullptr };
-	double** origData2D_d{ nullptr };
+	//double** origData2D_d{ nullptr };
 	double** currData2D_d{ nullptr };
 
 	std::vector<std::string> attributeNames_m;
@@ -46,7 +46,7 @@ public:
 	long        getNumberOfParticles()  const { return numberOfParticles_m; }
 	int         getNumberOfAttributes() const { return (int)attributeNames_m.size(); }
 	bool        getInitDataLoaded() const { return initDataLoaded_m; }
-	double**    getOrigDataGPUPtr() const { return origData2D_d; }
+	//double**    getOrigDataGPUPtr() const { return origData2D_d; }
 	double**    getCurrDataGPUPtr() const { return currData2D_d; }
 
 	int         getAttrIndByName(std::string searchName) const;

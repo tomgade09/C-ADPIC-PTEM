@@ -49,7 +49,7 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 		if (cudaloopind % checkDoneEvery == 0) { done = true; }
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{
-			std::vector<std::vector<double>>& data{ (*part)->__data(false) }; //get a reference to the particle's curr data array
+			std::vector<std::vector<double>>& data{ (*part)->__data(false) }; //get a reference to the particle's curr data array-
 
 			#pragma omp parallel for
 			for (int ind = 0; ind < (*part)->getNumberOfParticles(); ind++)

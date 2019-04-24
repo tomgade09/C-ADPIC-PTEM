@@ -115,6 +115,7 @@ namespace physics
 		double* s_d{ currData_d[2] };
 		const double* t_incident_d{ currData_d[3] };
 		double* t_escape_d{ currData_d[4] };
+		double* s0_d{ currData_d[5] };
 
 		if (t_escape_d[thdInd] >= 0.0) //particle has escaped, t_escape is >= 0 iff it has both entered previously and is currently outside the sim boundaries
 			return;
@@ -144,6 +145,7 @@ namespace physics
 		//will slow v down as the particle travels along ds), so I take the average of the two and it seems close enough s = (v0 + (v0 + dv)) / 2 * dt = v0 + dv/2 * dt
 		//hence the /2 factor below - FYI, this was checked by the particle's energy (steady state, no E Field) remaining the same throughout the simulation
 		double v_orig{ v_d[thdInd] };
+		s0_d[thdInd] = s_d[thdInd];
 		v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], dt, args, bfield, efield);
 		s_d[thdInd] += (v_d[thdInd] + v_orig) / 2 * dt;
 	}
@@ -234,7 +236,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	while (cudaloopind < numberOfIterations)
 	{	
 		if (cudaloopind % checkDoneEvery == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in this iter (every checkDoneEvery iterations), set to true
-
+		
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{
 			iterateParticle <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, EFieldModel_d,
