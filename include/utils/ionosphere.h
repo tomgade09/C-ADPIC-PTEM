@@ -25,7 +25,7 @@ namespace ionosphere
 
 	namespace backscat
 	{
-		DLLEXP dNflux     johnd_flux(double E_eval, double E_incident, dEflux dE_incident);
+		DLLEXP dNflux     johnd_flux(double E_eval, double E_incident, dNflux dN_incident);
 		DLLEXP dEflux     integralJohnd_flux(double lower, double upper, double E_incident);
 		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& escapeCountBinned);
 		DLLEXP dNflux_v2D ionsphToSatellite(const EOMSimData& eomdata, const dNflux_v2D& bsCounts);
@@ -36,6 +36,12 @@ namespace ionosphere
 		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl);
 		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl, double_v2D& sumCollideAbove, unsigned int level);
 		DLLEXP double     scatterPct (double sumCollideAbove, double Z, double p, double h, eV E, degrees PA);
+	}
+
+	namespace debug
+	{
+		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata);
+		DLLEXP void eomError(const EOMSimData& ideal, const EOMSimData& eomsim);
 	}
 }
 

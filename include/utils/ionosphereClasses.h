@@ -23,7 +23,7 @@ namespace ionosphere
 		double_v1D  s_pos;
 
 		ParticleData(); //empty constructor for making an empty ParticleData
-		ParticleData(unsigned int size, bool EPA_only = true);
+		ParticleData(size_t size, bool EPA_only = true);
 		ParticleData(double_v1D& v_para, double_v1D& v_perp, double mass);
 		
 		void clear();
@@ -101,6 +101,8 @@ namespace ionosphere
 		ParticleData bottom;     //data on particles that escape out the bottom
 		ParticleData upward;     //data on particles that are upgoing at satellite
 		ParticleData dnward;     //data on particles that are downgoing at satellite
+
+		string datadir;          //directory where sim data is stored
 
 		EOMSimData(IonosphereSpecs& ionosphere, MaxwellianSpecs& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat);
 	};

@@ -10,6 +10,7 @@ using std::cout;
 using std::string;
 using std::to_string;
 using std::logic_error;
+using utils::fileIO::readDblBin;
 using utils::numerical::generateSpacedValues;
 
 constexpr double EVANS_PRIM_LOGM{ 1.5 };  //obtained by log linefitting Evans, 1974 - these seem closest
@@ -34,169 +35,353 @@ inline void printLayer(const ionosphere::IonosphereSpecs& ionsph, unsigned int l
 
 namespace ionosphere
 {
-	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata2)
+	namespace debug
 	{
-		//generate "Ideal(tm)" distribution, compare with sim
-		/*auto newPA = [](degrees PA_init, tesla B_init, tesla B_final)
-		{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
-			double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
-
-			if (one < 0.0) return -1.0; //if this is the case, particle reflects before B_final
-
-			degrees ret{ atan(sqrt(1.0 / one)) / RADS_PER_DEG };
-
-			if (PA_init > 90.0) ret = 180.0 - ret; //anything above 90 is returned as below 90 by these equations, so invert ret to be above 90
-
-			return ret;
-		};
-
-		ParticleData btm(3456000);
-		ParticleData upw(3456000);
-		ParticleData dnw(3456000);
-
-		double btmPAerr{ 0.0 };
-		double upwPAerr{ 0.0 };
-		double dnwPAerr{ 0.0 };
-		double btmEerr{ 0.0 };
-		double upwEerr{ 0.0 };
-		double dnwEerr{ 0.0 };
-		int extrabtm{ 0 };
-		int extraupw{ 0 };
-		int extradnw{ 0 };
-
-		for (int part = 0; part < eomdata2.initial.energy.size(); part++)
+		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata)
 		{
-			if (eomdata2.initial.s_pos.at(part) < eomdata2.s_ion * 1.001)
-			{
-				double satPA{ newPA(eomdata2.initial.pitch.at(part), eomdata2.B_ion, eomdata2.B_sat) };
+			auto newPA = [](degrees PA_init, tesla B_init, tesla B_final)
+			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
+				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
 
-				if (satPA > 0)
-				{
-					upw.pitch.at(part) = satPA;
-					upw.energy.at(part) = eomdata2.initial.energy.at(part);
-				}
-			}
-			else if (eomdata2.initial.s_pos.at(part) > eomdata2.s_mag * 0.999)
-			{
-				double satPA{ newPA(eomdata2.initial.pitch.at(part), eomdata2.B_mag, eomdata2.B_sat) };
-				double btmPA{ newPA(eomdata2.initial.pitch.at(part), eomdata2.B_mag, eomdata2.B_ion) };
+				if (one < 0.0) return -1.0; //if this is the case, particle reflects before B_final
 
-				if (satPA > 0)
+				degrees ret{ atan(sqrt(1.0 / one)) / RADS_PER_DEG };
+
+				if (PA_init > 90.0) ret = 180.0 - ret; //anything above 90 is returned as below 90 by these equations, so invert ret to be above 90
+
+				return ret;
+			};
+
+			ParticleData btm(eomdata.bottom.energy.size());
+			ParticleData upw(eomdata.upward.energy.size());
+			ParticleData dnw(eomdata.dnward.energy.size());
+
+			for (int part = 0; part < eomdata.initial.energy.size(); part++)
+			{
+				if (eomdata.initial.s_pos.at(part) < eomdata.s_ion * 1.001)
 				{
-					dnw.pitch.at(part) = satPA;
-					dnw.energy.at(part) = eomdata2.initial.energy.at(part);
-					if (btmPA < 0)
+					double satPA{ newPA(eomdata.initial.pitch.at(part), eomdata.B_ion, eomdata.B_sat) };
+
+					if (satPA > 0)
 					{
-						upw.pitch.at(part) = 180.0 - satPA;
-						upw.energy.at(part) = eomdata2.initial.energy.at(part);
+						upw.pitch.at(part) = satPA;
+						upw.energy.at(part) = eomdata.initial.energy.at(part);
 					}
 				}
-				if (btmPA > 0)
+				else if (eomdata.initial.s_pos.at(part) > eomdata.s_mag * 0.999)
 				{
-					btm.pitch.at(part) = btmPA;
-					btm.energy.at(part) = eomdata2.initial.energy.at(part);
+					double satPA{ newPA(eomdata.initial.pitch.at(part), eomdata.B_mag, eomdata.B_sat) };
+					double btmPA{ newPA(eomdata.initial.pitch.at(part), eomdata.B_mag, eomdata.B_ion) };
+
+					if (satPA > 0)
+					{
+						dnw.pitch.at(part) = satPA;
+						dnw.energy.at(part) = eomdata.initial.energy.at(part);
+						if (btmPA < 0)
+						{
+							upw.pitch.at(part) = 180.0 - satPA;
+							upw.energy.at(part) = eomdata.initial.energy.at(part);
+						}
+					}
+					if (btmPA > 0)
+					{
+						btm.pitch.at(part) = btmPA;
+						btm.energy.at(part) = eomdata.initial.energy.at(part);
+					}
+				}
+				else
+				{
+					throw logic_error("debug::generateIdealSatDists : particle is not ionospheric or magnetospheric source");
 				}
 			}
-			else
-			{
-				throw logic_error("ionosphere::steadyFlux : particle is not ionospheric or magnetospheric source");
-			}
 
-			if ((btm.pitch.at(part) != 0.0) && (eomdata2.bottom.pitch.at(part) != 0.0) && (abs(btm.pitch.at(part) - eomdata2.bottom.pitch.at(part)) > btmPAerr))
-				btmPAerr = abs(btm.pitch.at(part) - eomdata2.bottom.pitch.at(part));
-			if ((upw.pitch.at(part) != 0.0) && (abs(upw.pitch.at(part) - eomdata2.upward.pitch.at(part)) > upwPAerr))
-				upwPAerr = abs(upw.pitch.at(part) - eomdata2.upward.pitch.at(part));
-			if ((dnw.pitch.at(part) != 0.0) && (eomdata2.dnward.pitch.at(part) != 0.0) && (abs(dnw.pitch.at(part) - eomdata2.dnward.pitch.at(part)) > dnwPAerr))
-				dnwPAerr = abs(dnw.pitch.at(part) - eomdata2.dnward.pitch.at(part));
+			EOMSimData ret{ eomdata };
+			ret.bottom = btm;
+			ret.upward = upw;
+			ret.dnward = dnw;
 
-			if ((btm.pitch.at(part) != 0.0) && (eomdata2.bottom.pitch.at(part) == 0.0))
-				extrabtm++;
-			if ((upw.pitch.at(part) != 0.0) && (eomdata2.upward.pitch.at(part) == 0.0))
-				extraupw++;
-			if ((dnw.pitch.at(part) != 0.0) && (eomdata2.dnward.pitch.at(part) == 0.0))
-				extradnw++;
+			return ret;
 		}
-
-		std::cout << btmPAerr << "\n" << upwPAerr << "\n" << dnwPAerr << "\n\n";
-		std::cout << extrabtm << "\n" << extraupw << "\n" << extradnw << "\n";
-
-		//exit(1);
-
-		//EOMSimData eomdata{ eomdata2 };
-		//eomdata.bottom = btm;
-		//eomdata.upward = upw;
-		//eomdata.dnward = dnw;*/
-
-		/*try //compare "ideal" array with EOM sim values, use with above "ideal" creation code
+		
+		DLLEXP void eomError(const EOMSimData& ideal, const EOMSimData& eomsim)
 		{
-			std::string simpath{ "..\\_dataout\\190202_11.37.17.620km.dtDivBy10\\" };
-			//std::string simpath{ "..\\_dataout\\190112_13.18.14.QSPS800eV.500s\\"};
+			cout << "Need to finish.  Returning.\n";
+			return;
 
-			ParticleData topData(3456000, false); //need to load data at top of sim
-			ParticleData finalData(3456000, false);
+			auto err = [](double base, double dev) { return abs((base - dev) / dev); };
 
+			vector<double> maxErr(8); //topPA, btmPA, upwPA, dnwPA, topE, btmE, upwE, dnwE
+			vector<int> extra(4); //top, btm, upw, dnw
+			
+			//load top data
+			ParticleData eomtop;
+			readDblBin(eomtop.vpara, eomsim.datadir + "bins\\satellites\\topElec_vpara.bin");
+			readDblBin(eomtop.vperp, eomsim.datadir + "bins\\satellites\\topElec_vperp.bin");
+			readDblBin(eomtop.s_pos, eomsim.datadir + "bins\\satellites\\topElec_s.bin");
+			utils::numerical::v2DtoEPitch(eomtop.vpara, eomtop.vperp, eomsim.mass, eomtop.energy, eomtop.pitch);
+
+			for (int part = 0; part < eomsim.initial.energy.size(); part++)
 			{
-				Satellite top("topElec", { "vpara", "vperp", "s", "time", "index" }, eomdata2.s_mag, false, 3456000, nullptr);
-				top.loadDataFromDisk(simpath + "bins\\satellites\\");
+				//does ideal dist have more detected particles?
+				//top condition here - will require newPA
+				if ((ideal.bottom.pitch.at(part) != 0.0) && (eomsim.bottom.pitch.at(part) == 0.0))
+					extra.at(1)++;
+				if ((ideal.upward.pitch.at(part) != 0.0) && (eomsim.upward.pitch.at(part) == 0.0))
+					extra.at(2)++;
+				if ((ideal.dnward.pitch.at(part) != 0.0) && (eomsim.dnward.pitch.at(part) == 0.0))
+					extra.at(3)++;
 
-				topData.vpara = top.data().at(0).at(0);
-				topData.vperp = top.data().at(0).at(1);
-				utils::numerical::v2DtoEPitch(topData.vpara, topData.vperp, eomdata.mass, topData.energy, topData.pitch);
-
-				utils::fileIO::readDblBin(finalData.vpara, simpath + "bins\\particles_final\\elec_vpara.bin");
-				utils::fileIO::readDblBin(finalData.vperp, simpath + "bins\\particles_final\\elec_vperp.bin");
-				utils::fileIO::readDblBin(finalData.s_pos, simpath + "bins\\particles_final\\elec_s.bin");
-				utils::numerical::v2DtoEPitch(finalData.vpara, finalData.vperp, eomdata.mass, finalData.energy, finalData.pitch);
+				//compare pitch, E of top, btm, upw, dnw
+				if ((ideal.bottom.pitch.at(part) != 0.0) && (eomsim.bottom.pitch.at(part) != 0.0) && (err(ideal.bottom.pitch.at(part), eomsim.bottom.pitch.at(part)) > maxErr.at(1)))
+					maxErr.at(1) = err(ideal.bottom.pitch.at(part), eomsim.bottom.pitch.at(part));
+				if ((ideal.upward.pitch.at(part) != 0.0) && (eomsim.upward.pitch.at(part) != 0.0) && (err(ideal.upward.pitch.at(part), eomsim.upward.pitch.at(part)) > maxErr.at(2)))
+					maxErr.at(2) = err(ideal.upward.pitch.at(part), eomsim.upward.pitch.at(part));
+				if ((ideal.dnward.pitch.at(part) != 0.0) && (eomsim.dnward.pitch.at(part) != 0.0) && (err(ideal.dnward.pitch.at(part), eomsim.dnward.pitch.at(part)) > maxErr.at(3)))
+					maxErr.at(3) = err(ideal.dnward.pitch.at(part), eomsim.dnward.pitch.at(part));
 			}
-
-			int btmIdealSize{ 0 };
-			int topIdealSize{ 0 };
-			int btmSimSize{ 0 };
-			int topSimSize{ 0 };
-			int simMissDn{ 0 };
-			int simMissUp{ 0 };
-
-			for (int part = 0; part < eomdata.bottom.energy.size(); part++)
-			{
-				if (eomdata2.bottom.energy.at(part) > 0.0)
-					btmSimSize++;
-				if (topData.energy.at(part) > 0.0)
-					topSimSize++;
-
-				if (eomdata.bottom.energy.at(part) > 0.0)
-					btmIdealSize++;
-
-				if (eomdata.dnward.energy.at(part) != 0.0 && eomdata2.dnward.energy.at(part) == 0.0)
-					simMissDn++;
-				if (eomdata.upward.energy.at(part) != 0.0 && eomdata2.upward.energy.at(part) == 0.0)
-					simMissUp++;
-
-				//if (eomdata.bottom.energy.at(part) == 0.0 && topEnergy.at(part) == 0.0)
-				//{
-					//if (part == 277949) continue;
-					//std::cout << "Final: " << part << " ind, " << finalEnergy.at(part) << " eV, " << finalPitchA.at(part) << " deg, " << finals.at(part) << " m\n";
-					//std::cout << "Init:  " << part << " ind, " << eomdata.initial.energy.at(part) << " eV, " << eomdata.initial.pitch.at(part) << " deg, " << eomdata.initial.s_pos.at(part) << " m\n";
-					//std::cout << "Btm:   " << part << " ind, " << eomdata.bottom.energy.at(part)  << " eV, " << eomdata.bottom.pitch.at(part)  << " deg, " << eomdata.bottom.s_pos.at(part)  << " m\n";
-					//std::cout << "       " << eomdata.bottom.vpara.at(part) << " vpara m/s, " << eomdata.bottom.vperp.at(part) << " vperp m/s\n";
-					//std::cout << "Upw:   " << part << " ind, " << eomdata.upward.energy.at(part) << " eV, " << eomdata.upward.pitch.at(part) << " deg, " << eomdata.upward.s_pos.at(part) << " m\n";
-					//std::cout << "       " << eomdata.upward.vpara.at(part) << " vpara m/s, " << eomdata.upward.vperp.at(part) << " vperp m/s\n";
-					//std::cout << "Dnw:   " << part << " ind, " << eomdata.dnward.energy.at(part) << " eV, " << eomdata.dnward.pitch.at(part) << " deg, " << eomdata.dnward.s_pos.at(part) << " m\n";
-					//std::cout << "       " << eomdata.dnward.vpara.at(part) << " vpara m/s, " << eomdata.dnward.vperp.at(part) << " vperp m/s\n";
-					//exit(1);
-				//}
-			}
-
-			std::cout << "\n\n\n" << btmSimSize << "\n" << topSimSize << "\n" << "\n";
-			std::cout << btmIdealSize << "\n" << "\n";
-			std::cout << simMissDn << "\n" << simMissUp << "\n";
 		}
-		catch (std::exception& e)
+
+		void setMaxwellians(EOMSimData& eomdata)
 		{
-			std::cout << e.what() << "\n";
+			std::vector<double> realMagMaxwellian = {
+				511.7803363,
+				455.366866,
+				404.1659709,
+				357.6960119,
+				315.5198528,
+				277.2407488,
+				242.498614,
+				210.9666344,
+				182.3481933,
+				156.3740811,
+				132.7999634,
+				111.4040819,
+				91.7746781,
+				73.55799355,
+				57.02452115,
+				42.01873297,
+				34.36415945,
+				28.31990953,
+				22.99218389,
+				18.56252397,
+				14.73461663,
+				11.99012355,
+				9.875617326,
+				8.350030687,
+				7.817520858,
+				7.352563096,
+				7.057355075,
+				6.732956547,
+				5.444957563,
+				4.258616122,
+				3.148063762,
+				2.667671894,
+				2.31874741,
+				2.413216721,
+				2.510346733,
+				2.16919973,
+				1.822258224,
+				1.538644415,
+				1.454668358,
+				1.448302276,
+				1.421289335,
+				1.392400846,
+				1.356434703,
+				1.3223143,
+				1.340996193,
+				1.24936111,
+				1.082697097,
+				1.027704468,
+				1.022389203,
+				0.954603057,
+				0.853591162,
+				0.787414014,
+				0.712480444,
+				0.618899297,
+				0.613108903,
+				0.676524001,
+				0.741544197,
+				0.809125578,
+				0.826634801,
+				0.844583081,
+				0.909628356,
+				0.96415381,
+				1.006445782,
+				1.033757784,
+				1.034400169 * 1.480727,
+				1.042600148 * 1.480727,
+				1.055748627 * 1.428545,
+				1.07152601  * 1.428545,
+				1.078133553 * 1.470468,
+				1.058734323 * 1.470468,
+				1.039323547 * 1.438624,
+				1.012305997 * 1.438624,
+				0.994205528 * 1.442204,
+				0.985836018 * 1.442204,
+				0.910594196 * 1.312604,
+				0.838235396 * 1.312604,
+				0.759978758 * 1.234802,
+				0.688727757 * 1.234802,
+				0.582535504 * 1.223116,
+				0.484989966 * 1.223116,
+				0.393631204 * 1.319446,
+				0.330308124 * 1.319446,
+				0.27732655  * 1.287453,
+				0.225898359 * 1.287453,
+				0.178965883, //84
+				0.142250867,
+				0.110109027,
+				0.082409802,
+				0.060637842,
+				0.042555514,
+				0.027887484,
+				0.0150541,
+				0.008638964,
+				0.004889727,
+				0.002865042,
+				0.010868959
+			};
+
+			/*
+			std::vector<double> realIonMaxwellian = {
+				628.8979407 / 2.4786570,
+				565.8638197 / 2.4786570,
+				508.6540186 / 2.1904623,
+				456.7303733 / 2.1904623,
+				409.6044458 / 1.9406344,
+				366.8329293 / 1.9406344,
+				328.0134787 / 1.7238276,
+				292.780925  / 1.7238276,
+				260.8038409 / 1.5356057,
+				231.7814228 / 1.5356057,
+				205.4406609 / 1.3725660,
+				181.5337716 / 1.3725660,
+				159.4832008 / 1.2364910,
+				138.7981913 / 1.2364910,
+				120.0244659 / 1.1444663,
+				102.9854228 / 1.1444663,
+				89.92642941 / 1.0706112,
+				78.43829219 / 1.0706112,
+				67.92556403,
+				58.16316132,
+				49.00339734,
+				39.55476535,
+				32.43565065,
+				27.49226718,
+				23.65374146,
+				20.06519194,
+				16.08473353,
+				12.55060252,
+				10.72488715,
+				9.128684634,
+				7.798530255,
+				6.437362853,
+				5.176560025,
+				4.356319064,
+				3.620845049,
+				3.394283882,
+				3.146182049,
+				2.535331134,
+				2.166546899,
+				1.906599314,
+				1.725538745,
+				1.572503401,
+				1.42385702,
+				1.291013895,
+				1.33179657,
+				1.213164987,
+				0.98581798,
+				0.891060771,
+				0.856747842,
+				0.813801222,
+				0.767419376,
+				0.762158834,
+				0.727575643,
+				0.647540963,
+				0.613472219,
+				0.616017952,
+				0.584045464,
+				0.515672013,
+				0.529429898,
+				0.548721841,
+				0.510828937,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			};
+			*/
+
+			std::vector<double> realIonMaxwellian(96, 0);
+
+			for (unsigned int part = 0; part < eomdata.initial.pitch.size(); part++)
+			{
+				if (eomdata.initial.pitch.at(part) < 90.0)
+				{
+					eomdata.maxwellian.at(part) = realMagMaxwellian.at(part % 96);
+				}
+				else
+				{
+					eomdata.maxwellian.at(part) = realIonMaxwellian.at(part % 96);
+				}
+			}
 		}
 
-		exit(1);*/
+		void outputFunctionsToCSV(const EOMSimData& eom)
+		{
+			string rootfold{".\\debug\\"};
+			cout << rootfold << "\n";
 
+			dNflux_v2D dE_johnd_flux(eom.distbins.E.size(), dNflux_v1D(eom.distbins.E.size() + 1)); //outer: E incident, inner: E eval
+			for (size_t Einc = 0; Einc < eom.distbins.E.size(); Einc++)
+			{
+				for (size_t Eeval = 0; Eeval < eom.distbins.E.size(); Eeval++)
+				{ //test when a single particle hits the ionosphere and scatters - this should produce Evans' graph or something like it
+					dE_johnd_flux.at(Einc).at(Eeval + 1) = 
+						backscat::johnd_flux(eom.distbins.E.at(Eeval), eom.distbins.E.at(Einc), 1.0);
+				}
+			}
+			
+			{
+				utils::fileIO::CSV bsdEOnePart(rootfold + "bsdEOnePart.csv");
+				bsdEOnePart.add(dE_johnd_flux, vector<string>(eom.distbins.E.size()));
+			}
+		}
+	}
+
+	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eom)
+	{
 		/*{ //print maxwellian values for magsph and ionsph
 			std::vector<double> print;
 			for (int iii = 0; iii < 96; iii++)
@@ -209,216 +394,16 @@ namespace ionosphere
 			printVec2D({ print2 }, "Maxwellian magsph");
 		}*/
 
-		std::vector<double> realMagMaxwellian = {
-511.7803363,
-455.366866,
-404.1659709,
-357.6960119,
-315.5198528,
-277.2407488,
-242.498614,
-210.9666344,
-182.3481933,
-156.3740811,
-132.7999634,
-111.4040819,
-91.7746781,
-73.55799355,
-57.02452115,
-42.01873297,
-34.36415945,
-28.31990953,
-22.99218389,
-18.56252397,
-14.73461663,
-11.99012355,
-9.875617326,
-8.350030687,
-7.817520858,
-7.352563096,
-7.057355075,
-6.732956547,
-5.444957563,
-4.258616122,
-3.148063762,
-2.667671894,
-2.31874741,
-2.413216721,
-2.510346733,
-2.16919973,
-1.822258224,
-1.538644415,
-1.454668358,
-1.448302276,
-1.421289335,
-1.392400846,
-1.356434703,
-1.3223143,
-1.340996193,
-1.24936111,
-1.082697097,
-1.027704468,
-1.022389203,
-0.954603057,
-0.853591162,
-0.787414014,
-0.712480444,
-0.618899297,
-0.613108903,
-0.676524001,
-0.741544197,
-0.809125578,
-0.826634801,
-0.844583081,
-0.909628356,
-0.96415381,
-1.006445782,
-1.033757784,
-1.034400169,
-1.042600148,
-1.055748627,
-1.07152601,
-1.078133553,
-1.058734323,
-1.039323547,
-1.012305997,
-0.994205528,
-0.985836018,
-0.910594196,
-0.838235396,
-0.759978758,
-0.688727757,
-0.582535504,
-0.484989966,
-0.393631204,
-0.330308124,
-0.27732655,
-0.225898359,
-0.178965883,
-0.142250867,
-0.110109027,
-0.082409802,
-0.060637842,
-0.042555514,
-0.027887484,
-0.0150541,
-0.008638964,
-0.004889727,
-0.002865042,
-0.010868959
-		};
+		std::cout << "B_ion: " << eom.B_ion << "\n";
+		std::cout << "B_sat: " << eom.B_sat << "\n";
+		std::cout << "B_mag: " << eom.B_mag << "\n";
 
-		std::vector<double> realIonMaxwellian = {
-		628.8979407,
-565.8638197,
-508.6540186,
-456.7303733,
-409.6044458,
-366.8329293,
-328.0134787,
-292.780925,
-260.8038409,
-231.7814228,
-205.4406609,
-181.5337716,
-159.4832008,
-138.7981913,
-120.0244659,
-102.9854228,
-89.92642941,
-78.43829219,
-67.92556403,
-58.16316132,
-49.00339734,
-39.55476535,
-32.43565065,
-27.49226718,
-23.65374146,
-20.06519194,
-16.08473353,
-12.55060252,
-10.72488715,
-9.128684634,
-7.798530255,
-6.437362853,
-5.176560025,
-4.356319064,
-3.620845049,
-3.394283882,
-3.146182049,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0,
-0
-		};
+		debug::outputFunctionsToCSV(eom);
 
-		EOMSimData eomdata{ eomdata2 };
-		for (unsigned int part = 0; part < eomdata.initial.pitch.size(); part++)
-		{
-			if (eomdata.initial.pitch.at(part) < 90.0)
-			{
-				eomdata.maxwellian.at(part) = realMagMaxwellian.at(part % 96);
-			}
-			else
-			{
-				eomdata.maxwellian.at(part) = realIonMaxwellian.at(part % 96);
-			}
-		}
+		exit(1);
+
+		EOMSimData eomdata{ debug::generateIdealSatDists(eom) };
+		debug::setMaxwellians(eomdata);
 
 		printIonosphere(eomdata.ionsph);
 
@@ -478,7 +463,7 @@ namespace ionosphere
 		// 3. Sum dEfluxes
 		for (unsigned int ang = 0; ang < distfluxupward.size(); ang++)
 			for (unsigned int eny = 0; eny < distfluxupward.at(ang).size(); eny++)
-				distfluxupward.at(ang).at(eny) += distfluxdnward.at(ang).at(eny) + backfluxupward.at(ang).at(eny);
+				distfluxupward.at(ang).at(eny) += distfluxdnward.at(ang).at(eny) +backfluxupward.at(ang).at(eny);
 
 		return distfluxupward; //really, instead of just upward data, this is the total (see the nested loop above)
 	}
@@ -658,16 +643,16 @@ namespace ionosphere
 		constexpr double JOHND_SECD_LOGM_GT10{ -1.8 }; //was -2.25 (from John, but he changed to -1.8) //was at -4.0
 		constexpr double JOHND_SECD_LOGB_GT10{ -1.7 }; //was -1.7 (from John) //was at -1.0
 
-		DLLEXP dNflux johnd_flux(double E_eval, double E_incident, dEflux dE_incident)
+		DLLEXP dNflux johnd_flux(double E_eval, double E_incident, dNflux dN_incident)
 		{
-			if (E_eval > E_incident * (1 + FLT_EPSILON))// return 0.0;
-				throw logic_error("johnd_flux: E_eval is higher than E_incident.  Not physical.  Eval, Incident: " + to_string(E_eval) + " , " + to_string(E_incident));
+			if (E_eval > E_incident * (1 + FLT_EPSILON)) return 0.0;
+				//throw logic_error("johnd_flux: E_eval is higher than E_incident.  Not physical.  Eval, Incident: " + to_string(E_eval) + " , " + to_string(E_incident));
 
 			double secd_logm{ (E_incident <= 10.0) ? JOHND_SECD_LOGM_LT10 : JOHND_SECD_LOGM_GT10 };
 			double secd_logb{ (E_incident <= 10.0) ? JOHND_SECD_LOGB_LT10 : JOHND_SECD_LOGB_GT10 };
 
-			return dE_incident * pow(10.0, secd_logm * log10(E_eval) + secd_logb) + //secondary BS
-				  (dE_incident / E_incident) * 10000.0 * pow(10.0, JOHND_PRIM_LOGM * log10(E_eval / E_incident) + JOHND_PRIM_LOGB); //primary BS
+			return dN_incident * pow(10.0, secd_logm * log10(E_eval) + secd_logb) + //secondary BS
+				   dN_incident * (10000.0 / E_incident) * pow(10.0, JOHND_PRIM_LOGM * log10(E_eval / E_incident) + JOHND_PRIM_LOGB); //primary BS
 		}
 
 		DLLEXP dEflux integralJohnd_flux(double lower, double upper, double E_incident)
@@ -708,13 +693,13 @@ namespace ionosphere
 			for (unsigned int incEbin = 0; incEbin < dist.E.size(); incEbin++)
 			{
 				double E_incident{ dist.E.at(incEbin) };
-				double dEflux_incBin{ dNsumPerE.at(incEbin) * E_incident };
+				double dNflux_incBin{ dNsumPerE.at(incEbin) };
 
 				for (unsigned int evalEbin = 0; evalEbin <= incEbin; evalEbin++)
 				{
 					double E_eval{ dist.E.at(evalEbin) };
 
-					dNbsPerE.at(evalEbin) += johnd_flux(E_eval, E_incident, dEflux_incBin);
+					dNbsPerE.at(evalEbin) += johnd_flux(E_eval, E_incident, dNflux_incBin);
 				}
 			}
 			// output: 1D vector of the upgoing (backscatter) dNflux per E
@@ -852,14 +837,17 @@ namespace ionosphere
 			//lambda that generates scatter/reflect percentage and updates total scatter % of defined particle
 			auto sctReflPct = [&](double& sumSctAbove, eV E, degrees pitch)
 			{
-				if (pitch > 90.0) //upgoing - whatever hasn't scattered so far, reflects
+				//upgoing - whatever hasn't scattered so far, reflects
+				//no scattering happens in this case
+				if (pitch > 90.0)
 					return (1.0 - sumSctAbove); //so return 1.0 - "sum % scattered in layers above"
 
 				//dngoing - percent that scatters in this layer
+				//scattering happens in this case
 				double sct{ 0.0 };
 
 				for (size_t species = 0; species < eom.ionsph.p.size(); species++)
-				{
+				{ //iterate through species, add scatter % for each atomic species
 					sct += scatterPct(sumSctAbove, eom.ionsph.Z.at(species), eom.ionsph.p.at(species).at(level),
 						eom.ionsph.h.at(level), E, pitch);
 				}
@@ -905,7 +893,7 @@ namespace ionosphere
 						{ //these particles are upgoing
 							degrees pa_sat{ newPA(180.0 - pa_level, eom.ionsph.B.at(level), eom.B_sat) }; //pitch at satellite - eventually may need to run through sourceToSatellite
 							dNflux layerEPAcount{ ionsphTopLvl.at(ang).at(eny) //dNflux incident to ionosphere at a given E, PA
-								* sctReflPct(sumCollideAbove.at(ang).at(eny), eom.distbins.E.at(eny), 180.0 - pa_level) //percent reflected
+								* sctReflPct(sumCollideAbove.at(ang).at(eny), eom.distbins.E.at(eny), 180.0 - pa_level) //percent reflected - "180 - pa" is used to signal to the lambda to return whatever hasn't reflected
 								* Aratio_ion_bslevel //gyroradius cross-sectional area difference from ionsph to bslevel
 								/ -cos(pa_sat * RADS_PER_DEG) }; //cos of pitch at satellite (where detected)
 							

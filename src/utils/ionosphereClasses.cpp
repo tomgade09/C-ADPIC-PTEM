@@ -23,7 +23,7 @@ namespace ionosphere
 		utils::numerical::v2DtoEPitch(vpara, vperp, mass, energy, pitch);
 	}
 
-	ParticleData::ParticleData(unsigned int size, bool EPA_only) //EPA_only defaults to true
+	ParticleData::ParticleData(size_t size, bool EPA_only) //EPA_only defaults to true
 	{
 		energy.resize(size);
 		pitch.resize(size);
@@ -200,7 +200,7 @@ namespace ionosphere
 
 	//PPData
 	EOMSimData::EOMSimData(IonosphereSpecs& ionosphere, MaxwellianSpecs& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat) :
-		ionsph{ std::move(ionosphere) }, distbins{ std::move(distribution) }, satbins{ std::move(satellite) }
+		ionsph{ std::move(ionosphere) }, distbins{ std::move(distribution) }, satbins{ std::move(satellite) }, datadir{ dir_simdata }
 	{
 		std::unique_ptr<Simulation> sim;
 		SILENCE_COUT(SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(dir_simdata)));
