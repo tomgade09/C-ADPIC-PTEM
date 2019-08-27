@@ -16,12 +16,15 @@ using std::to_string;
 //types to make function arguments more explicit
 typedef double eV;
 typedef double kg;
+typedef double cm;
 typedef double tesla;
+typedef double percm3;
 typedef double meters;
 typedef double dNflux;
 typedef double dEflux;
 typedef double degrees;
 typedef double coulomb;
+typedef double percent;
 typedef vector<double> degrees_v1D;
 typedef vector<double> dNflux_v1D;
 typedef vector<double> dEflux_v1D;

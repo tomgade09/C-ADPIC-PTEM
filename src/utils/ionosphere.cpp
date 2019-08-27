@@ -4,6 +4,8 @@
 #include <cmath>
 
 #include "utils/fileIO.h"
+#include "utils/writeIOclasses.h"
+#include "ErrorHandling/simExceptionMacros.h"
 
 using std::pow;
 using std::cout;
@@ -21,8 +23,8 @@ constexpr double EVANS_SECD_LOGB{ 0.3 };
 inline void printIonosphere(const ionosphere::IonosphereSpecs& ionsph)
 {
 	cout << "==================== Backscatter Simulation ====================" << "\n";
-	cout << "Min, Max s (m): " << *(ionsph.s.end() - 1) << ", " << ionsph.s.front() << "\n";
-	cout << "Min, Max B (T): " << *(ionsph.B.end() - 1) << ", " << ionsph.B.front() << "\n";
+	cout << "Min, Max s (m): " << *(ionsph.s.end() - 2) << ", " << ionsph.s.front() << "\n";
+	cout << "Min, Max B (T): " << *(ionsph.B.end() - 2) << ", " << ionsph.B.front() << "\n";
 	cout << "Num of Layers : " << ionsph.s.size() - 1 << "\n";
 	cout << "Atomic Species: " << "Fix later.\n";
 	cout << "================================================================" << "\n";
@@ -30,7 +32,8 @@ inline void printIonosphere(const ionosphere::IonosphereSpecs& ionsph)
 
 inline void printLayer(const ionosphere::IonosphereSpecs& ionsph, unsigned int layer)
 {
-	cout << "Layer: " << layer << " / " << ionsph.s.size() - 2 << ", s: " << ionsph.s.at(layer) << ", B: " << ionsph.B.at(layer) << "\n";
+	cout << "Layer: " << layer << " / " << ionsph.s.size() - 2 << ", s: ";
+	cout << ionsph.s.at(layer) << ", B: " << ionsph.B.at(layer) << "\n";
 }
 
 namespace ionosphere
@@ -39,7 +42,7 @@ namespace ionosphere
 	{
 		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata)
 		{
-			auto newPA = [](degrees PA_init, tesla B_init, tesla B_final)
+			auto newPA = [](const degrees PA_init, const tesla B_init, const tesla B_final)
 			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
 				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
 
@@ -345,7 +348,7 @@ namespace ionosphere
 
 			std::vector<double> realIonMaxwellian(96, 0);
 
-			for (unsigned int part = 0; part < eomdata.initial.pitch.size(); part++)
+			for (size_t part = 0; part < eomdata.initial.pitch.size(); part++)
 			{
 				if (eomdata.initial.pitch.at(part) < 90.0)
 				{
@@ -380,7 +383,7 @@ namespace ionosphere
 		}
 	}
 
-	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eom)
+	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata)
 	{
 		/*{ //print maxwellian values for magsph and ionsph
 			std::vector<double> print;
@@ -394,16 +397,31 @@ namespace ionosphere
 			printVec2D({ print2 }, "Maxwellian magsph");
 		}*/
 
-		std::cout << "B_ion: " << eom.B_ion << "\n";
-		std::cout << "B_sat: " << eom.B_sat << "\n";
-		std::cout << "B_mag: " << eom.B_mag << "\n";
+		//std::cout << "B_ion: " << eom.B_ion << "\n";
+		//std::cout << "B_sat: " << eom.B_sat << "\n";
+		//std::cout << "B_mag: " << eom.B_mag << "\n";
 
-		debug::outputFunctionsToCSV(eom);
+		//debug::outputFunctionsToCSV(eom);
 
-		exit(1);
+		//exit(1);
 
-		EOMSimData eomdata{ debug::generateIdealSatDists(eom) };
-		debug::setMaxwellians(eomdata);
+		//EOMSimData eomdata{ debug::generateIdealSatDists(eom) };
+		//debug::setMaxwellians(eomdata);
+
+		//
+		//
+		// Spit out csv files (for diagnostics)
+		{ //outputs densities of ionosphere species by height to a csv
+			utils::fileIO::CSV dens{ "debug/ionospheric densities/densities.csv" };
+
+			dens.add(eomdata.ionsph.p.at(0), "N2 dens");
+			dens.add(eomdata.ionsph.p.at(1), "He dens");
+			dens.add(eomdata.ionsph.p.at(2), "O2 dens");
+			dens.add(eomdata.ionsph.p.at(3), "O dens");
+		}
+		// End spit out csv files
+		//
+		//
 
 		printIonosphere(eomdata.ionsph);
 
@@ -413,12 +431,17 @@ namespace ionosphere
 		double Aratio_ion_ion{ std::sqrt(eomdata.B_ion / eomdata.B_ion) }; //gyroradius cross-sectional area ratio, ionsph (up, reflect, down) to ionsph
 		double Aratio_mag_ion{ std::sqrt(eomdata.B_ion / eomdata.B_mag) }; //gyroradius cross-sectional area ratio, magsph to ionsph
 
+		cout << "ion to sat: " << Aratio_ion_sat << "\n";
+		cout << "mag to sat: " << Aratio_mag_sat << "\n";
+		cout << "ion to ion: " << Aratio_ion_ion << "\n";
+		cout << "mag to ion: " << Aratio_mag_ion << "\n";
+
 		dNflux_v1D maxwellian_sat{ eomdata.maxwellian }; //scaled by decrease in gyroradius cross-sectional area A below
 		dNflux_v1D maxwellian_ion{ eomdata.maxwellian };
 
-		for (unsigned int part = 0; part < eomdata.initial.s_pos.size(); part++) //isotropize counts -> 3D
+		for (size_t part = 0; part < eomdata.initial.s_pos.size(); part++) //isotropize counts -> 3D
 		{
-			if (eomdata.initial.s_pos.at(part) < eomdata.s_ion * 1.001)     //ionospheric source, upgoing
+			if (eomdata.initial.s_pos.at(part) < eomdata.s_ion * 1.001)    //ionospheric source, upgoing
 			{
 				maxwellian_sat.at(part) *= -cos(eomdata.initial.pitch.at(part) * RADS_PER_DEG) * Aratio_ion_sat;
 				maxwellian_ion.at(part) *= Aratio_ion_ion; //should just be equal to 1, but gives it symmetry
@@ -426,45 +449,44 @@ namespace ionosphere
 			else if (eomdata.initial.s_pos.at(part) > eomdata.s_mag * 0.999)//magnetospheric source, downgoing
 			{
 				if (eomdata.dnward.pitch.at(part) >= 90.0)
-				{
-					std::cout << "Warning! Downgoing particle pitch >= 90.0. Taking 180-PA. ind, s, pitch, energy: "
-						<< part << ", " << eomdata.dnward.s_pos.at(part) << ", " << eomdata.dnward.pitch.at(part)
-						<< ", " << eomdata.dnward.energy.at(part) << "\n";
-					eomdata.dnward.pitch.at(part) = 180.0 - eomdata.dnward.pitch.at(part);
-				}
+					throw logic_error("ionosphere::steadyFlux : downward pitch of particle is >= 90 deg");
 
 				maxwellian_sat.at(part) *= 1.0 / cos(eomdata.dnward.pitch.at(part) * RADS_PER_DEG) * Aratio_mag_sat;
 				maxwellian_ion.at(part) *= Aratio_mag_ion;
 			}
 			else
-				throw logic_error("ionosphere::steadyFlux : particle is not ionospheric or magnetospheric source");
+				throw logic_error("ionosphere::steadyFlux : particle is not ionospheric or magnetospheric source - it's somewhere between the ionosphere and magnetosphere");
 
 			if (eomdata.bottom.pitch.at(part) >= 90.0)
-			{
-				std::cout << "Warning! Bottom particle pitch >= 90.0. Taking 180-PA. ind, s, pitch, energy: "
-					<< part << ", " << eomdata.bottom.s_pos.at(part) << ", " << eomdata.bottom.pitch.at(part)
-					<< ", " << eomdata.bottom.energy.at(part) << "\n";
-				eomdata.bottom.pitch.at(part) = 180.0 - eomdata.bottom.pitch.at(part);
-			}
+				throw logic_error("ionosphere::steadyFlux : bottom pitch of particle is >= 90 deg");
 		}
 
 		TESTVEC_NOTNEGWHOLEVEC(maxwellian_sat, "steadyFlux::maxwellian_sat");
 
+
 		// 2. Calculate dEfluxes
 		dEflux_v2D distfluxdnward{ dEFlux::satellite(eomdata.dnward, eomdata.satbins, maxwellian_sat) };
 		dEflux_v2D distfluxupward{ dEFlux::satellite(eomdata.upward, eomdata.satbins, maxwellian_sat) };
-		dEflux_v2D backfluxupward{ dEFlux::backscatr(eomdata, maxwellian_ion) };
-
+		dEflux_v2D bkscfluxupward{ dEFlux::backscatr(eomdata, maxwellian_ion) };
+		
 		printVec2D(distfluxdnward, "Dnward Flux at Satellite");
 		printVec2D(distfluxupward, "Upward Flux at Satellite");
-		printVec2D(backfluxupward, "Flux Due to Backscatter at Satellite");
+		printVec2D(bkscfluxupward, "Flux Due to Backscatter at Satellite");
 
 
 		// 3. Sum dEfluxes
-		for (unsigned int ang = 0; ang < distfluxupward.size(); ang++)
-			for (unsigned int eny = 0; eny < distfluxupward.at(ang).size(); eny++)
-				distfluxupward.at(ang).at(eny) += distfluxdnward.at(ang).at(eny) +backfluxupward.at(ang).at(eny);
+		for (size_t ang = 0; ang < distfluxupward.size(); ang++)
+			for (size_t eny = 0; eny < distfluxupward.at(ang).size(); eny++)
+				distfluxupward.at(ang).at(eny) += distfluxdnward.at(ang).at(eny) + bkscfluxupward.at(ang).at(eny);
 
+		//
+		//
+		// TEST BACKSCATTER ONLY //
+		return bkscfluxupward;
+		// DELETE THIS WHEN DONE WITH TEST //
+		//
+		//
+		
 		return distfluxupward; //really, instead of just upward data, this is the total (see the nested loop above)
 	}
 
@@ -479,25 +501,25 @@ namespace ionosphere
 			// Section 1 End
 
 			// 2. Convert from dNflux to dEflux
-			for (unsigned int ang = 0; ang < ret.size(); ang++)
-				for (unsigned int eng = 0; eng < ret.at(0).size(); eng++)
+			for (size_t ang = 0; ang < ret.size(); ang++)
+				for (size_t eng = 0; eng < ret.at(0).size(); eng++)
 					ret.at(ang).at(eng) *= satBins.E.at(eng);
 
 
 			return ret;
 		}
 
-		DLLEXP dEflux_v2D backscatr(const EOMSimData& eomdata, const dNflux_v1D& dNatIonsph)
+		DLLEXP dEflux_v2D backscatr(const EOMSimData& eomdata, const dNflux_v1D& dNatIonsph1D)
 		{
 			// Section 1 - Get dNflux at Satellite
 			// 1.1. Bin Escaped Particles by EOM simulation (distribution) PA, Energy Bins (for high res backscatter)
-			dNflux_v2D downwardAtIonsph{ binning::binParticles(eomdata.bottom, eomdata.distbins, dNatIonsph) };
+			dNflux_v2D dNatIonsph{ binning::binParticles(eomdata.bottom, eomdata.distbins, dNatIonsph1D) };
 			// output: 2D vector [PA][Eng] of number of escaped particles (dNFlux), weighted by specified maxwellians, binned by Energy and Pitch Angle
 
-			TESTVEC_ISZEROFRSTHALF(downwardAtIonsph, "backscatr::downwardAtIonsph");
+			TESTVEC_ISZEROFRSTHALF(dNatIonsph, "backscatr::dNatIonsph");
 
 			// 1.2. Calculate BS dNflux from dNflux Incident to Ionosphere
-			dNflux_v2D BSatIonsph{ multiLevelBS::scatterMain(eomdata, downwardAtIonsph) }; //new multi-level hotness
+			dNflux_v2D BSatIonsph{ multiLevelBS::scatterMain(eomdata, dNatIonsph) }; //new multi-level hotness
 			// output: 2D vector of backscatter dNFlux by dist bins at ionosphere (upgoing)
 
 			TESTVEC_ISZEROLASTHALF(BSatIonsph, "backscatr::BSatIonsph");
@@ -508,13 +530,12 @@ namespace ionosphere
 			// Section 1 End
 
 			// 2.1. Convert from dNflux to dEflux
-			for (unsigned int ang = 0; ang < ret.size(); ang++)
+			for (size_t ang = 0; ang < ret.size(); ang++)
 			{
-				for (unsigned int eng = 0; eng < ret.at(0).size(); eng++)
-					ret.at(ang).at(eng) *= eomdata.satbins.E.at(eng);
+				for (size_t eny = 0; eny < ret.at(0).size(); eny++)
+					ret.at(ang).at(eny) *= eomdata.satbins.E.at(eny);
 			}
 			// output: 2D vector of bs dEflux
-
 
 			return ret;
 		}
@@ -541,7 +562,7 @@ namespace ionosphere
 			int outsideLimits{ 0 };
 			int epsilonNeeded{ 0 };
 
-			for (unsigned int part = 0; part < particles.energy.size(); part++) //iterate over particles
+			for (size_t part = 0; part < particles.energy.size(); part++) //iterate over particles
 			{
 				double partEnerg{ particles.energy.at(part) };
 				double partPitch{ particles.pitch.at(part) };
@@ -608,18 +629,18 @@ namespace ionosphere
 			return ret;
 		}
 
-		DLLEXP void symmetricBins0To360(dEflux_v2D& data, double_v1D& binAngles) //takes bins from 0-180 and extends to 360 symmetrically reflected across 180 degrees
+		DLLEXP void symmetricBins180To360(dEflux_v2D& data, double_v1D& binAngles) //takes bins from 0-180 and extends to 360 symmetrically reflected across 180 degrees
 		{//data[angle][energy]
 			binAngles.resize(2 * binAngles.size()); //double size of angles vector (goes from 0-180 now)
 			data.resize(binAngles.size()); //set data (vector of double vectors) to size of binAngles (now double sized)
 			
-			for (unsigned int ang = (unsigned int)binAngles.size() / 2; ang < (unsigned int)binAngles.size(); ang++)
+			for (size_t ang = binAngles.size() / 2; ang < binAngles.size(); ang++)
 			{
 				binAngles.at(ang) = 2 * binAngles.at(ang - 1) - binAngles.at(ang - 2);
 				data.at(ang) = data.at(binAngles.size() - ang - 1);
 			}
 		} //needs a good testing
-	} //end namespace ionosphere::numerical
+	} //end namespace ionosphere::binning
 
 	namespace backscat //ionosphere::backscat
 	{
@@ -636,14 +657,21 @@ namespace ionosphere
 			BS'_prim(x) = d_pri / (prim_logm + 1) * x ^ (prim_logm + 1), if x > E_incident, BS_scnd||prim = 0
 		*/
 
-		constexpr double JOHND_PRIM_LOGM{ 3.5 }; //was 3.5 (from John) //0.8, 0.4 matches high E bump
+		/*constexpr double JOHND_PRIM_LOGM{ 3.5 }; //was 3.5 (from John) //0.8, 0.4 matches high E bump
 		constexpr double JOHND_PRIM_LOGB{ -5.8 }; //was -5.8 (from John) //-5.5 matches high E bump
 		constexpr double JOHND_SECD_LOGM_LT10{ -1.0 }; //was -1.0 (from John)
 		constexpr double JOHND_SECD_LOGB_LT10{ -2.5 }; //was -2.5 (from John)
 		constexpr double JOHND_SECD_LOGM_GT10{ -1.8 }; //was -2.25 (from John, but he changed to -1.8) //was at -4.0
-		constexpr double JOHND_SECD_LOGB_GT10{ -1.7 }; //was -1.7 (from John) //was at -1.0
+		constexpr double JOHND_SECD_LOGB_GT10{ -1.7 }; //was -1.7 (from John) //was at -1.0*/
 
-		DLLEXP dNflux johnd_flux(double E_eval, double E_incident, dNflux dN_incident)
+		constexpr double JOHND_PRIM_LOGM{ 1.132 }; //was 3.5 (from John) //0.8, 0.4 matches high E bump
+		constexpr double JOHND_PRIM_LOGB{ -4.90 }; //was -5.8 (from John) //-5.5 matches high E bump
+		constexpr double JOHND_SECD_LOGM_LT10{ -1.0 }; //was -1.0 (from John)
+		constexpr double JOHND_SECD_LOGB_LT10{ -2.5 }; //was -2.5 (from John)
+		constexpr double JOHND_SECD_LOGM_GT10{ -2.245 }; //was -2.25 (from John, but he changed to -1.8) //was at -4.0
+		constexpr double JOHND_SECD_LOGB_GT10{  0.153 }; //was -1.7 (from John) //was at -1.0
+
+		DLLEXP dNflux johnd_flux(eV E_eval, eV E_incident, dNflux dN_incident)
 		{
 			if (E_eval > E_incident * (1 + FLT_EPSILON)) return 0.0;
 				//throw logic_error("johnd_flux: E_eval is higher than E_incident.  Not physical.  Eval, Incident: " + to_string(E_eval) + " , " + to_string(E_incident));
@@ -655,7 +683,7 @@ namespace ionosphere
 				   dN_incident * (10000.0 / E_incident) * pow(10.0, JOHND_PRIM_LOGM * log10(E_eval / E_incident) + JOHND_PRIM_LOGB); //primary BS
 		}
 
-		DLLEXP dEflux integralJohnd_flux(double lower, double upper, double E_incident)
+		/*DLLEXP dEflux integralJohnd_flux(double lower, double upper, double E_incident)
 		{
 			throw std::exception("integralJohnd_flux used");//make sure this isnt used for now
 			double secd_logm{ (E_incident <= 10.0) ? JOHND_SECD_LOGM_LT10 : JOHND_SECD_LOGM_GT10 };
@@ -664,16 +692,16 @@ namespace ionosphere
 			double integral_sec{ (pow(upper, secd_logm + 1.0) - pow(lower, secd_logm + 1.0)) * pow(10.0, secd_logb) / (secd_logm + 1.0) };
 			double integral_prm{ (pow(upper, JOHND_PRIM_LOGM + 1.0) - pow(lower, JOHND_PRIM_LOGM + 1.0)) * pow(10.0, JOHND_PRIM_LOGB + 4.0) / ((JOHND_PRIM_LOGM + 1.0) * pow(E_incident, JOHND_PRIM_LOGM + 1.0)) };
 			return integral_sec + integral_prm;
-		}
+		}*/
 
-		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& downwardAtIonsph)
+		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& dNpointofScatter)
 		{ //converts downward dNflux at ionosphere (dist binned) to bs (upward) dNflux (also dist binned)
 			// 1. Sum dNflux over PA Bins (dist bins), Per E Bin and Average
-			dNflux_v1D dNsumPerE(dist.E.size());                   //Sum of escaped particles at each energy, units of dNflux
+			dNflux_v1D dNsumPerE(dist.E.size());             //Sum of escaped particles at each energy, units of dNflux
 
-			for (unsigned int egy = 0; egy < dist.E.size(); egy++) //iterate over energies
+			for (size_t egy = 0; egy < dist.E.size(); egy++) //iterate over energies
 			{
-				for (unsigned int ang = 0; ang < dist.PA.size(); ang++)
+				for (size_t ang = 0; ang < dist.PA.size(); ang++)
 				{
 					if (dist.PA.at(ang) > 90.0) continue;
 
@@ -681,7 +709,7 @@ namespace ionosphere
 						(abs(dist.PA.at(ang + 1) - dist.PA.at(ang))) : //if we are at first index, ang - 1 doesn't exist
 						(abs(dist.PA.at(ang) - dist.PA.at(ang - 1))) };//if we are at last index, ang + 1 doesn't exist
 
-					dNsumPerE.at(egy) += downwardAtIonsph.at(ang).at(egy) * 4 * PI * 27.85 *
+					dNsumPerE.at(egy) += dNpointofScatter.at(ang).at(egy) * 4 * PI * 27.85 *
 						abs(sin(dist.PA.at(ang) * RADS_PER_DEG) * sin(dangle / 2.0 * RADS_PER_DEG) *
 							cos(dist.PA.at(ang) * RADS_PER_DEG) * cos(dangle / 2.0 * RADS_PER_DEG));
 				}
@@ -690,12 +718,12 @@ namespace ionosphere
 
 			// 2. Calculate upward dNflux (backscatter) per E bin
 			dNflux_v1D dNbsPerE(dist.E.size());
-			for (unsigned int incEbin = 0; incEbin < dist.E.size(); incEbin++)
+			for (size_t incEbin = 0; incEbin < dist.E.size(); incEbin++)
 			{
 				double E_incident{ dist.E.at(incEbin) };
 				double dNflux_incBin{ dNsumPerE.at(incEbin) };
 
-				for (unsigned int evalEbin = 0; evalEbin <= incEbin; evalEbin++)
+				for (size_t evalEbin = 0; evalEbin <= incEbin; evalEbin++)
 				{
 					double E_eval{ dist.E.at(evalEbin) };
 
@@ -707,7 +735,7 @@ namespace ionosphere
 			// 3. Distribute BS dNflux Isotropically Over Pitch Bins
 			dNflux_v2D BS(dist.PA.size());
 
-			for (unsigned int ang = 0; ang < dist.PA.size(); ang++)
+			for (size_t ang = 0; ang < dist.PA.size(); ang++)
 			{
 				BS.at(ang) = dNflux_v1D(dist.E.size());
 
@@ -715,7 +743,7 @@ namespace ionosphere
 					continue; //empty vector of the right size
 				else
 				{
-					for (unsigned int eny = 0; eny < dist.E.size(); eny++)
+					for (size_t eny = 0; eny < dist.E.size(); eny++)
 						BS.at(ang).at(eny) = dNbsPerE.at(eny) * -cos(dist.PA.at(ang) * RADS_PER_DEG) / (4 * PI);
 				}
 			}
@@ -729,11 +757,13 @@ namespace ionosphere
 			double Aratio_ion_sat{ std::sqrt(eomdata.B_sat / eomdata.B_ion) };
 
 			#define count s_pos //allows me to use an existing vector in ParticleData with a name that makes sense
-			ParticleData particles;
+			ParticleData particles; //TO DO: eventually reserve vectors - it may speed things up a bit
 
-			for (unsigned int ang = 0; ang < eomdata.distbins.PA.size(); ang++)
+			for (size_t ang = 0; ang < eomdata.distbins.PA.size(); ang++)
 			{
-				for (unsigned int eny = 0; eny < eomdata.distbins.E.size(); eny++) //this works because ionospheric bins are same as distribution
+				if (eomdata.distbins.PA.at(ang) <= 90.0) continue;
+
+				for (size_t eny = 0; eny < eomdata.distbins.E.size(); eny++) //this works because ionospheric bins are same as distribution
 				{ //ionospheric source particles detected moving upward
 					particles.pitch.push_back(eomdata.upward.pitch.at(ang * eomdata.distbins.E.size() + eny));
 					particles.energy.push_back(eomdata.upward.energy.at(ang * eomdata.distbins.E.size() + eny));
@@ -754,13 +784,32 @@ namespace ionosphere
 
 	namespace multiLevelBS
 	{
-		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl)
+		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& dNionsphTop)
 		{
+			//
+			//
+			// Spit out csv files (for diagnostics)
+			{ //outputs pitch angle and energy bins to a CSV
+				utils::fileIO::CSV bins{ "debug/angle, pitch bins - satellite/bins.csv" };
+
+				bins.add(eom.satbins.E, "E");
+				bins.add(eom.satbins.PA, "PA");
+			}
+			{
+				utils::fileIO::CSV bins{ "debug/angle, pitch bins - simulation/bins.csv" };
+
+				bins.add(eom.distbins.E, "E");
+				bins.add(eom.distbins.PA, "PA");
+			}
+			// End spit out csv files
+			//
+			//
+
 			double_v2D pctScattered(eom.distbins.PA.size(), dNflux_v1D(eom.distbins.E.size())); //% scattered per bin
 
 			ParticleData particles;
 
-			auto newPA = [](degrees PA_init, tesla B_init, tesla B_final)
+			auto newPA = [](const degrees PA_init, const tesla B_init, const tesla B_final)
 			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
 				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
 
@@ -774,32 +823,34 @@ namespace ionosphere
 			};
 
 			// >> level calculate
-			for (unsigned int level = 0; level < eom.ionsph.s.size() - 1; level++)
+			for (size_t level = 0; level < eom.ionsph.s.size() - 1; level++)
 			{//for now, depends on adding one extra level (to see if particles reflect somewhere within the last layer)
-				printLayer(eom.ionsph, level);
+				printLayer(eom.ionsph, (unsigned int)level);
 
-				dNflux_v2D bs_level{ bsAtLevel(eom, ionsphTopLvl, pctScattered, level) };
+				dNflux_v2D bs_level{ bsAtLevel(eom, dNionsphTop, pctScattered, (unsigned int)level) };
 
 				TESTVEC_ISZEROLASTHALF(bs_level, "scatterMain::bs_level");
 
 				double Aratio_bslevel_ion{ std::sqrt(eom.B_ion / eom.ionsph.B.at(level)) };
 
 				// >> >> adjust PA
-				for (unsigned int ang = 0; ang < eom.distbins.PA.size(); ang++)
+				for (size_t ang = 0; ang < eom.distbins.PA.size(); ang++)
 				{
-					double newpa{ newPA(eom.distbins.PA.at(ang), eom.ionsph.B.at(level), eom.ionsph.B.at(0)) };
-					if (newpa < 0.0) throw logic_error(string("ionosphere::multiLevelBS::scatterMain: return value of newPA is -1 ")
+					if (eom.distbins.PA.at(ang) <= 90.0) continue;
+
+					degrees paTopIon{ newPA(eom.distbins.PA.at(ang), eom.ionsph.B.at(level), eom.ionsph.B.at(0)) };
+					if (paTopIon < 0.0) throw logic_error(string("ionosphere::multiLevelBS::scatterMain: return value of newPA is -1 ")
 						+ "indicating reflection before B_final.  This shouldn't happen as B_final is less in magnitude than B_initial. "
 						+ " The particle can't physically reflect in this case, but simply be pushed closer to 180.  Something is wrong.");
 
-					for (unsigned int eny = 0; eny < eom.distbins.E.size(); eny++)
+					for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
 					{
 						if (bs_level.at(ang).at(eny) != 0.0)
 						{
 							//#define count s_pos <- defined above in bsSrcToSat
 							//allows me to use an existing vector in ParticleData with a name that makes sense
 							//so, particles.count uses particles.s_pos, but renames it to how I want to use it
-							particles.pitch.push_back(newpa);
+							particles.pitch.push_back(paTopIon);
 							particles.energy.push_back(eom.distbins.E.at(eny));
 							particles.count.push_back(bs_level.at(ang).at(eny) * Aratio_bslevel_ion); //from level to top ionsph
 							//these vectors need to get cleaned out as the sim runs - otherwise all layers
@@ -813,15 +864,57 @@ namespace ionosphere
 			return binning::binParticles(particles, eom.distbins, particles.count);
 		}
 
-		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl, double_v2D& sumCollideAbove, unsigned int level)
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, unsigned int level)
 		{
-			ParticleData dngoing;
+			//
+			//
+			// Spit out csv files (for diagnostics)
+			{ //produces % scatter probability at each level, per PA bin, per E bin
+				vector<string> labels(eom.satbins.PA.size() + 1);
+				for (int label = 0; label < eom.satbins.PA.size(); label++)
+					labels.at(label) = to_string(eom.satbins.PA.at(label));
+
+				string levelattrs{ "" };
+				for (size_t specs = 0; specs < eom.ionsph.names.size(); specs++) levelattrs += eom.ionsph.names.at(specs) + " ";
+				levelattrs += "Z p h";
+				labels.back() = levelattrs;
+
+				vector<vector<double>> prob(eom.satbins.PA.size() + 1, vector<double>(eom.satbins.E.size()));
+				prob.back().resize(eom.ionsph.p.size() * 3);
+				for (size_t PAs = 0; PAs < eom.satbins.PA.size(); PAs++)
+				{
+					for (size_t Es = 0; Es < eom.satbins.E.size(); Es++)
+					{
+						for (size_t species = 0; species < eom.ionsph.p.size(); species++)
+						{
+							if (PAs == 0 && Es == 0)
+							{
+								prob.back().at(3 * species) = eom.ionsph.Z.at(species);
+								prob.back().at(3 * species + 1) = eom.ionsph.p.at(species).at(level);
+								prob.back().at(3 * species + 2) = eom.ionsph.h.at(level);
+							}
+							prob.at(PAs).at(Es) += scatterPct(0.0, eom.ionsph.Z.at(species),
+								eom.ionsph.p.at(species).at(level),	eom.ionsph.h.at(species),
+								eom.satbins.E.at(Es), eom.satbins.PA.at(PAs));
+						}
+					}
+				}
+
+				utils::fileIO::CSV scatprobs{ "debug/level scatter probs/scatter_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
+				scatprobs.add(eom.satbins.E, "Es + PAs");
+				scatprobs.add(prob, labels);
+			}
+			// End spit out csv files
+			//
+			//
+
+			ParticleData dngoing; //TO DO: reserve size of vectors to increase the speed
 			ParticleData upgoing;
 
 			double Aratio_ion_bslevel{ std::sqrt(eom.ionsph.B.at(level) / eom.B_ion) };
 
 			//lambda that generates new PA from an initial PA based on B field strength change
-			auto newPA = [](degrees PA_init, tesla B_init, tesla B_final)
+			auto newPA = [](const degrees PA_init, const tesla B_init, const tesla B_final)
 			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
 				double one{ B_init / B_final * (1.0 + 1.0 / pow(tan(PA_init * RADS_PER_DEG), 2.0)) - 1.0 };
 
@@ -835,45 +928,47 @@ namespace ionosphere
 			};
 
 			//lambda that generates scatter/reflect percentage and updates total scatter % of defined particle
-			auto sctReflPct = [&](double& sumSctAbove, eV E, degrees pitch)
+			auto sctReflPct = [&](double& pctScatteredAbove, const eV E, const degrees pitch)
 			{
 				//upgoing - whatever hasn't scattered so far, reflects
 				//no scattering happens in this case
 				if (pitch > 90.0)
-					return (1.0 - sumSctAbove); //so return 1.0 - "sum % scattered in layers above"
+					return (1.0 - pctScatteredAbove); //so return 1.0 - "sum % scattered in layers above"
+				
+				//==================//
 
 				//dngoing - percent that scatters in this layer
 				//scattering happens in this case
 				double sct{ 0.0 };
 
 				for (size_t species = 0; species < eom.ionsph.p.size(); species++)
-				{ //iterate through species, add scatter % for each atomic species
-					sct += scatterPct(sumSctAbove, eom.ionsph.Z.at(species), eom.ionsph.p.at(species).at(level),
+				{ //iterate through species, add scatter % for each one
+					sct += scatterPct(pctScatteredAbove, eom.ionsph.Z.at(species), eom.ionsph.p.at(species).at(level),
 						eom.ionsph.h.at(level), E, pitch);
 				}
 
-				if (sct + sumSctAbove > 1.0)
+				if (sct + pctScatteredAbove > 1.0)
 				{ //no more than 100% of particles can have scattered
-					sct = 1.0 - sumSctAbove; //sct% for this layer is equal to however much is left until the total scattered is 100%
-					sumSctAbove = 1.0;
+					sct = 1.0 - pctScatteredAbove; //sct% for this layer is equal to however much is left until the total scattered is 100%
+					pctScatteredAbove = 1.0;
 				}
 				else
 				{ //sum is less than 100%, so add to the total as normal
-					sumSctAbove += sct;
+					pctScatteredAbove += sct;
 				}
 
 				if (sct < 0.0) throw logic_error("ionosphere::multiLevelBS::bsAtLevel: scatter % is < 0.0 - sct%, %collideAbove: "
-					+ to_string(sct) + ", " + to_string(sumSctAbove));
+					+ to_string(sct) + ", " + to_string(pctScatteredAbove));
 				if (sct > 1.0) throw logic_error("ionosphere::multiLevelBS::bsAtLevel: scatter % is > 1.0 - sct%, %collideAbove: "
-					+ to_string(sct) + ", " + to_string(sumSctAbove));
+					+ to_string(sct) + ", " + to_string(pctScatteredAbove));
 
 				return sct;
 			};
 
 			// >> >> adjust PA, check if reflected
-			for (unsigned int ang = 0; ang < eom.distbins.PA.size(); ang++)
+			for (size_t ang = 0; ang < eom.distbins.PA.size(); ang++)
 			{
-				if (eom.distbins.PA.at(ang) > 90.0) continue; //there should be no upgoing in ionsphTopLvl
+				if (eom.distbins.PA.at(ang) > 90.0) continue; //there should be no upgoing in dNionsphTop
 
 				degrees pa_level{ newPA(eom.distbins.PA.at(ang), eom.ionsph.B.at(0), eom.ionsph.B.at(level)) };
 				degrees pa_nextlevel{ newPA(eom.distbins.PA.at(ang), eom.ionsph.B.at(0), eom.ionsph.B.at(level + 1)) };
@@ -887,39 +982,42 @@ namespace ionosphere
 				}
 				else if (pa_nextlevel < 0.0)
 				{ //particle reflects before next level, add all particles of this pitch moving in the opposite direction
-					for (unsigned int eny = 0; eny < eom.distbins.E.size(); eny++)
+					for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
 					{
-						if (ionsphTopLvl.at(ang).at(eny) != 0.0 && sumCollideAbove.at(ang).at(eny) < 1.0)
+						if (dNionsphTop.at(ang).at(eny) != 0.0 && pctScatteredAbove.at(ang).at(eny) < 1.0)
 						{ //these particles are upgoing
+							if (180.0 - pa_level <= 90.0)
+								throw logic_error("ionosphere::multiLevelBS::bsAtLevel: sctReflPct will not return (1 - % scattered), logic error somewhere");
+
 							degrees pa_sat{ newPA(180.0 - pa_level, eom.ionsph.B.at(level), eom.B_sat) }; //pitch at satellite - eventually may need to run through sourceToSatellite
-							dNflux layerEPAcount{ ionsphTopLvl.at(ang).at(eny) //dNflux incident to ionosphere at a given E, PA
-								* sctReflPct(sumCollideAbove.at(ang).at(eny), eom.distbins.E.at(eny), 180.0 - pa_level) //percent reflected - "180 - pa" is used to signal to the lambda to return whatever hasn't reflected
+							dNflux dNbyEPAlayer{ dNionsphTop.at(ang).at(eny) //dNflux incident to ionosphere at a given E, PA
+								* sctReflPct(pctScatteredAbove.at(ang).at(eny), eom.distbins.E.at(eny), 180.0 - pa_level) //percent reflected - "180 - pa" is used to signal to the lambda to return whatever hasn't reflected
 								* Aratio_ion_bslevel //gyroradius cross-sectional area difference from ionsph to bslevel
 								/ -cos(pa_sat * RADS_PER_DEG) }; //cos of pitch at satellite (where detected)
-							
+
 							//#define count s_pos <- defined above in sourceToSatellite
 							//allows me to use an existing vector in ParticleData with a name that makes sense
 							//so, particles.count uses particles.s_pos, but renames it to how I want to use it
 							upgoing.energy.push_back(eom.distbins.E.at(eny));
 							upgoing.pitch.push_back(180.0 - pa_level);
-							upgoing.count.push_back(layerEPAcount);
+							upgoing.count.push_back(dNbyEPAlayer);
 						}
 					}
 				}
 				else
 				{ //particle makes it to the next level - invoke scattering
-					for (unsigned int eny = 0; eny < eom.distbins.E.size(); eny++)
+					for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
 					{
-						if (ionsphTopLvl.at(ang).at(eny) != 0.0 && sumCollideAbove.at(ang).at(eny) < 1.0)
+						if (dNionsphTop.at(ang).at(eny) != 0.0 && pctScatteredAbove.at(ang).at(eny) < 1.0)
 						{ //these particles are downgoing
-							dNflux layerEPAcount{ ionsphTopLvl.at(ang).at(eny) //dNflux incident to ionosphere at a given E, PA
-								* sctReflPct(sumCollideAbove.at(ang).at(eny), eom.distbins.E.at(eny), pa_level) //percent scattered
+							dNflux dNbyEPAlayer{ dNionsphTop.at(ang).at(eny) //dNflux incident to ionosphere at a given E, PA
+								* sctReflPct(pctScatteredAbove.at(ang).at(eny), eom.distbins.E.at(eny), pa_level) //percent scattered
 								* Aratio_ion_bslevel //gyroradius cross-sectional area difference from ionsph to bslevel
 								/ cos(pa_level * RADS_PER_DEG) }; //pitch at lowest level (level of scattering)
 
 							dngoing.energy.push_back(eom.distbins.E.at(eny));
 							dngoing.pitch.push_back(pa_level);
-							dngoing.count.push_back(layerEPAcount);
+							dngoing.count.push_back(dNbyEPAlayer);
 						}
 					}
 				}
@@ -931,23 +1029,76 @@ namespace ionosphere
 			// >> >> bin particles at level
 			dNflux_v2D dnBinned{ binning::binParticles(dngoing, eom.distbins, dngoing.count) };
 			dNflux_v2D upBinned{ binning::binParticles(upgoing, eom.distbins, upgoing.count) };
-			
+
 			TESTVEC_ISZEROFRSTHALF(dnBinned, "bsAtLevel:: " + to_string(level) + " ::dnBinned");
 			TESTVEC_ISZEROLASTHALF(upBinned, "bsAtLevel:: " + to_string(level) + " ::upBinned");
 			
 			// >> >> calculate backscatter
 			dNflux_v2D ret{ backscat::downwardToBackscatter(eom.distbins, dnBinned) };
 
+			//
+			//
+			// Spit out csv files (for diagnostics)
+			{ //produces dN refl and scat at each level, per PA bin, per E bin
+				vector<string> scatlabels;
+				vector<string> refllabels;
+				vector<vector<double>> refl;
+				vector<vector<double>> scat;
+				vector<vector<double>> backscat;
+
+				for (size_t ang = 0; ang < eom.distbins.PA.size(); ang += 5000)
+				{
+					if (eom.distbins.PA.at(ang) < 90.0)
+					{
+						scatlabels.push_back(to_string(eom.distbins.PA.at(ang)));
+
+						vector<double> tmp(eom.distbins.E.size());
+						vector<double> tmp2(eom.distbins.E.size());
+						for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
+						{
+							tmp.at(eny) = dnBinned.at(ang).at(eny);
+							tmp2.at(eny) = ret.at(ang).at(eny);
+						}
+						scat.push_back(tmp);
+						backscat.push_back(tmp2);
+					}
+					else
+					{
+						refllabels.push_back(to_string(eom.distbins.PA.at(ang)));
+
+						vector<double> tmp(eom.distbins.E.size());
+						for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
+						{
+							tmp.at(eny) = upBinned.at(ang).at(eny);
+						}
+						refl.push_back(tmp);
+					}
+				}
+
+				utils::fileIO::CSV bksccsv{ "debug/level dN upgoing/bksc_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
+				utils::fileIO::CSV scatcsv{ "debug/level dN upgoing/scat_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
+				utils::fileIO::CSV reflcsv{ "debug/level dN upgoing/refl_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
+				bksccsv.add(eom.distbins.E, "Es + PAs");
+				bksccsv.add(backscat, refllabels);
+				scatcsv.add(eom.distbins.E, "Es + PAs");
+				scatcsv.add(scat, scatlabels);
+				reflcsv.add(eom.distbins.E, "Es + PAs");
+				reflcsv.add(refl, refllabels);
+			}
+			// End spit out csv files
+			//
+			//
+
 			TESTVEC_ISZEROLASTHALF(ret, "bsAtLevel:: " + to_string(level) + " ::backscatter_level");
 			
-			for (unsigned int ang = 0; ang < ret.size(); ang++)
-				for (unsigned int eny = 0; eny < ret.at(0).size(); eny++)
+			for (size_t ang = 0; ang < ret.size(); ang++)
+				for (size_t eny = 0; eny < ret.at(0).size(); eny++)
 					ret.at(ang).at(eny) += upBinned.at(ang).at(eny);
 
 			return ret;
 		}
 
-		DLLEXP double scatterPct(double sumCollideAbove, double Z, double p, double h, eV E, degrees PA)
+		DLLEXP percent scatterPct(percent sumCollideAbove, double Z, percm3 p, cm h, eV E, degrees PA)
 		{
 			if (sumCollideAbove >= 1.0) throw logic_error("ionosphere::multiLevelBS::scatterPct: sumCollideAbove is greater than / equal to 1.0.  "
 				+ string("100% has scattered already.  Conditions in bsAtLevel should have prevented this from happening."));

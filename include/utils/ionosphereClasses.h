@@ -76,6 +76,9 @@ namespace ionosphere
 		void altToS(BField* B);
 
 		void addSpecies(string name, double Z, function<double(double)> density_s);
+
+	private:
+		void seth();
 	};
 
 	struct DLLCLEXP EOMSimData

@@ -78,6 +78,9 @@ $(BUILD)/utils/postprocess.o: $(SRC)/utils/postprocess.cpp
 $(BUILD)/utils/numerical.o: $(SRC)/utils/numerical.cpp
 	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/utils/numerical.cpp -o $(BUILD)/utils/numerical.o
 
+$(BUILD)/utils/ionosphere.o: $(SRC)/utils/ionosphere.cpp
+	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/utils/ionosphere.cpp -o $(BUILD)/utils/ionosphere.o
+	
 $(BUILD)/Particle/Particle.o: $(SRC)/Particle/Particle.cpp
 	$(CC) $(CXXFLAGS) -c $(INCS) $(LIBS) $(SRC)/Particle/Particle.cpp -o $(BUILD)/Particle/Particle.o
 

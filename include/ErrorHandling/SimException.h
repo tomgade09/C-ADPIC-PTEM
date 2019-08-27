@@ -22,7 +22,7 @@ public:
 		if (!numericalArguments_m.empty())
 		{
 			args_m += "double: ";
-			for (unsigned int iii = 0; iii < numericalArguments_m.size(); iii++)
+			for (size_t iii = 0; iii < numericalArguments_m.size(); iii++)
 			{
 				args_m += std::to_string(numericalArguments_m.at(iii));
 				if (iii < numericalArguments_m.size() - 1)
@@ -33,7 +33,7 @@ public:
 		if (!stringArguments_m.empty())
 		{
 			args_m += "; string: ";
-			for (unsigned int iii = 0; iii < stringArguments_m.size(); iii++)
+			for (size_t iii = 0; iii < stringArguments_m.size(); iii++)
 			{
 				args_m += stringArguments_m.at(iii);
 				if (iii < stringArguments_m.size() - 1)

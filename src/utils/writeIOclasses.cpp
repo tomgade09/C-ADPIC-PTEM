@@ -14,24 +14,21 @@ namespace utils
 		{
 			if (data_m.size() == 0)
 			{
-				printf("CSV::write: data_m empty, nothing to write to disk\n");
+				//printf("CSV::write: data_m empty, nothing to write to disk\n");
 				return;
 			}
 
+			size_t largestdim{ 0 };
+			for (size_t data = 0; data < data_m.size(); data++)
+				if (data_m.at(data).size() > largestdim) largestdim = data_m.at(data).size();
+
 			std::ofstream file(filename_m, std::ios::trunc);
-			for (unsigned int iii = 0; iii < labels_m.size(); iii++)
+			for (size_t iii = 0; iii < labels_m.size(); iii++)
 				file << labels_m.at(iii) << ((iii != labels_m.size() - 1) ? "," : "\n");
 			file.close();
 
-			fileIO::write2DCSV(data_m, filename_m, (int)data_m.at(0).size(), (int)data_m.size(), ',', false);
+			fileIO::write2DCSV(data_m, filename_m, largestdim, data_m.size(), ',', false);
 			data_m.clear();
-		}
-
-		void CSV::pad(std::vector<double>& vec)
-		{
-			if (vec.size() > data_m.size())
-				printf("CSV::pad: warning: vec is bigger than data_m.at(0) - some doubles in vec will be trimmed off\n");
-			vec.resize(data_m.size());
 		}
 
 		//public
@@ -42,10 +39,6 @@ namespace utils
 
 		void CSV::add(std::vector<double> vec, std::string label)
 		{
-			if (data_m.size() > 0 && vec.size() != data_m.at(0).size())
-			{
-				pad(vec);
-			}
 			data_m.push_back(vec);
 			labels_m.push_back(label);
 		}
@@ -100,7 +93,7 @@ namespace utils
 			std::cout << "[" << data_m.size() << "] x [" << data_m.at(0).size() << "]" << std::endl;
 
 			for (size_t attr = 0; attr < data_m.size(); attr++)
-				fileIO::writeDblBin(data_m.at(attr), saveFolder_m + "/" + particleName_m + "_" + attrNames_m.at(attr) + ".bin", (unsigned int)data_m.at(0).size());
+				fileIO::writeDblBin(data_m.at(attr), saveFolder_m + "/" + particleName_m + "_" + attrNames_m.at(attr) + ".bin", data_m.at(0).size());
 
 			clear();
 			data_m = std::vector<std::vector<double>>(3);
@@ -120,7 +113,7 @@ namespace utils
 			write();
 		}
 
-		void ParticleDistribution::setattr(std::vector<double>& attr, unsigned int ind)
+		void ParticleDistribution::setattr(std::vector<double>& attr, size_t ind)
 		{
 			if (ind >= attrNames_m.size())
 				throw std::invalid_argument("ParticleDistribution::setattr: ind is higher than data_m.size() - 1");
@@ -129,7 +122,7 @@ namespace utils
 
 		void ParticleDistribution::setattr(std::vector<double>& attr, std::string name)
 		{
-			for (unsigned int name_ind = 0; name_ind < attrNames_m.size(); name_ind++)
+			for (size_t name_ind = 0; name_ind < attrNames_m.size(); name_ind++)
 				if (name == attrNames_m.at(name_ind)) { setattr(attr, name_ind); return; }
 
 			throw std::logic_error("ParticleDistribution::setattr: no attribute named " + name);
@@ -172,11 +165,11 @@ namespace utils
 			double vpara{ EPAtoV(energy, pitch, true ) };
 			double vperp{ EPAtoV(energy, pitch, false) };
 
-			unsigned int finalsize{ (padmult != 0) ?
-				((((unsigned int)data_m.at(0).size() + numParticles) / padmult) + 1) * padmult : //calculate the nearest larger binsize that is a multiple of padmult
-				(unsigned int)data_m.at(0).size() + numParticles //if not padding, just calculate current size + number to add
+			size_t finalsize{ (padmult != 0) ?
+				(((data_m.at(0).size() + numParticles) / padmult) + 1) * padmult : //calculate the nearest larger binsize that is a multiple of padmult
+				data_m.at(0).size() + numParticles //if not padding, just calculate current size + number to add
 			};
-			unsigned int padnum{ finalsize - ((unsigned int)data_m.at(0).size() + numParticles) }; //how many placeholders do we have to add to get to the above size? - 0 if not padding, something else if padding
+			size_t padnum{ finalsize - (data_m.at(0).size() + numParticles) }; //how many placeholders do we have to add to get to the above size? - 0 if not padding, something else if padding
 
 			for (auto& attr : data_m)
 				attr.reserve(finalsize);
@@ -187,13 +180,13 @@ namespace utils
 				data_m.at(1).push_back(vperp);
 				data_m.at(2).push_back(s);
 
-				for (unsigned int otherattr = 3; otherattr < data_m.size(); otherattr++)
+				for (size_t otherattr = 3; otherattr < data_m.size(); otherattr++)
 					data_m.at(otherattr).push_back(padvals_m.at(otherattr)); //pad the remaining attributes
 			}
 
 			if (padmult != 0)
 			{//used to pad the number of values so length is even multiple of padmult (for CUDA execution - make a multiple of blocksize)
-				for (unsigned int attr = 0; attr < data_m.size(); attr++)
+				for (size_t attr = 0; attr < data_m.size(); attr++)
 					for (unsigned int pad = 0; pad < padnum; pad++)
 						data_m.at(attr).push_back(padvals_m.at(attr));
 			}
@@ -219,13 +212,13 @@ namespace utils
 			}
 
 			std::cout << "Energy Bins (min, max : bin size): ";
-			for (unsigned int eng = 0; eng < ranges_m.at(0).size(); eng++)
+			for (size_t eng = 0; eng < ranges_m.at(0).size(); eng++)
 				std::cout << ((eng > 0) ? "                                   " : "") << ranges_m.at(0).at(eng).at(0) << ", " << ranges_m.at(0).at(eng).at(1) << " : " << ranges_m.at(0).at(eng).at(2) << std::endl;
 			std::cout << "Pitch Bins (min, max : bin size): ";
-			for (unsigned int ang = 0; ang < ranges_m.at(1).size(); ang++)
+			for (size_t ang = 0; ang < ranges_m.at(1).size(); ang++)
 				std::cout << ((ang > 0) ? "                                  " : "") << ranges_m.at(1).at(ang).at(0) << ", " << ranges_m.at(1).at(ang).at(1) << " : " << ranges_m.at(1).at(ang).at(2) << std::endl;
 
-			unsigned int finalsize{ ((unsigned int)energyPitch_m.at(0).size() * (unsigned int)energyPitch_m.at(1).size() + (unsigned int)data_m.at(0).size()) }; //energy bins * pitch bins + any other particles currently specified = total
+			size_t finalsize{ (energyPitch_m.at(0).size() * energyPitch_m.at(1).size() + data_m.at(0).size()) }; //energy bins * pitch bins + any other particles currently specified = total
 
 			for (auto& attr : data_m)
 				attr.reserve(finalsize); //prevents multiple resize/deep copy operations
@@ -237,7 +230,7 @@ namespace utils
 					data_m.at(0).push_back(EPAtoV(energy, pitch, true ));
 					data_m.at(1).push_back(EPAtoV(energy, pitch, false));
 
-					for (unsigned int otherattr = 3; otherattr < data_m.size(); otherattr++)
+					for (size_t otherattr = 3; otherattr < data_m.size(); otherattr++)
 						data_m.at(otherattr).push_back(padvals_m.at(otherattr)); //pad the remaining attributes
 				}
 			}

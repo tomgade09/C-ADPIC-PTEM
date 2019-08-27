@@ -25,7 +25,7 @@ __global__ void deleteEnvironmentGPU_DipoleBLUT(BField** this_d)
 
 __global__ void calcBarray_DipoleBLUT(BField** dipole, double* altitude, double* magnitude, double simMin, double ds)
 {
-	unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
+	size_t thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 	double s{ simMin + ds * thdInd };
 
 	altitude[thdInd] = s;

@@ -18,7 +18,7 @@ namespace utils
 			std::fill(energies_eV.begin(), energies_eV.end(), 0.0); //zeroes data in the return arrays
 			std::fill(pitches_deg.begin(), pitches_deg.end(), 0.0); //guarantees E/PA is 0 if vpara/vperp is zero
 
-			for (unsigned int part = 0; part < vpara.size(); part++)
+			for (size_t part = 0; part < vpara.size(); part++)
 			{
 				bool nonZero{ vpara.at(part) != 0.0 || vperp.at(part) != 0.0 };
 
@@ -43,7 +43,7 @@ namespace utils
 			std::fill(vpara.begin(), vpara.end(), 0.0); //zeroes data in the return arrays
 			std::fill(vperp.begin(), vperp.end(), 0.0); //guarantees E/PA is 0 if vpara/vperp is zero
 
-			for (unsigned int part = 0; part < energies_eV.size(); part++)
+			for (size_t part = 0; part < energies_eV.size(); part++)
 			{
 				bool nonZero{ energies_eV.at(part) != 0.0 };
 
@@ -96,7 +96,7 @@ namespace utils
 		DLLEXP double calcMean(const std::vector<double>& calcMyMean, bool absValue) //absValue defaults to false
 		{
 			double sum{ 0 };
-			for (unsigned int iii = 0; iii < calcMyMean.size(); iii++)
+			for (size_t iii = 0; iii < calcMyMean.size(); iii++)
 			{
 				if (absValue)
 					sum += std::abs(calcMyMean.at(iii));
@@ -110,7 +110,7 @@ namespace utils
 		{
 			double stdDev{ 0 };
 			double mean{ calcMean(calcMyStdDev, false) };
-			for (unsigned int iii = 0; iii < calcMyStdDev.size(); iii++)
+			for (size_t iii = 0; iii < calcMyStdDev.size(); iii++)
 			{
 				stdDev += pow(calcMyStdDev.at(iii) - mean, 2);
 			}
@@ -125,7 +125,7 @@ namespace utils
 
 			double maxerr{ 0.0 };
 			double minerr{ 1.0e300 };
-			for (unsigned int iii = 0; iii < basevals.size(); iii++)
+			for (size_t iii = 0; iii < basevals.size(); iii++)
 			{
 				if (basevals.at(iii) == 0.0 && skipzeroes) { continue; }
 				if (testvals.at(iii) == 0.0 && skipzeroes) { continue; }
@@ -143,7 +143,7 @@ namespace utils
 				throw std::invalid_argument("coutNumAboveEps: vectors are not the same size");
 
 			int above{ 0 };
-			for (unsigned int iii = 0; iii < basevals.size(); iii++)
+			for (size_t iii = 0; iii < basevals.size(); iii++)
 			{
 				if (basevals.at(iii) == 0.0 && skipzeroes) { continue; }
 				if (testvals.at(iii) == 0.0 && skipzeroes) { continue; }

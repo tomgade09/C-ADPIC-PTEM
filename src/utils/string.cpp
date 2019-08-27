@@ -7,14 +7,14 @@ namespace utils
 	{
 		DLLEXP unsigned int findAttrInd(std::string attr, std::vector<std::string> allAttrs)
 		{
-			for (unsigned int ind = 0; ind < allAttrs.size(); ind++)
+			for (size_t ind = 0; ind < allAttrs.size(); ind++)
 			{
 				if (allAttrs.at(ind) == attr)
-					return ind;
+					return (unsigned int)ind;
 			}
 
 			std::string allAttrsStr;
-			for (unsigned int attr = 0; attr < allAttrs.size(); attr++)
+			for (size_t attr = 0; attr < allAttrs.size(); attr++)
 				allAttrsStr += allAttrs.at(attr);
 
 			throw std::invalid_argument("utils::string::findAttrInd: cannot find attribute " + attr + " in string " + allAttrsStr);
@@ -57,13 +57,13 @@ namespace utils
 			if (strVec.size() == 0)
 				return ret;
 
-			for (unsigned int str = 0; str < strVec.size(); str++)
+			for (size_t str = 0; str < strVec.size(); str++)
 				ret.push_back(atof(strVec.at(str).c_str()));
 
 			return ret;
 		}
 
-		DLLEXP void stringPadder(std::string& in, unsigned int totalStrLen, unsigned int indEraseFrom) //indEraseFrom defaults to 0
+		DLLEXP void stringPadder(std::string& in, size_t totalStrLen, unsigned int indEraseFrom) //indEraseFrom defaults to 0
 		{
 			if (totalStrLen <= 0 || indEraseFrom < 0)
 				return;
@@ -72,7 +72,7 @@ namespace utils
 
 			if ((totalStrLen - txtlen) > 0)
 			{
-				for (unsigned int iii = 0; iii < (totalStrLen - txtlen); iii++)
+				for (size_t iii = 0; iii < (totalStrLen - txtlen); iii++)
 					in += ' ';
 			}
 			else

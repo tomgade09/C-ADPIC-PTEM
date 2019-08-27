@@ -107,7 +107,7 @@ namespace ionosphere
 
 		auto genCounts = [&](const double_v1D& E_peak, const dEflux_v1D& dEMag, double modFactor, std::function<bool(double)> zero)
 		{ //iterates over particles and specified Peak/Magnitude values (ionospheric or magnetospheric) and adds values to "max" (after "maxtmp")
-			for (unsigned int entr = 0; entr < E_peak.size(); entr++) //iterate over ionospheric maxwellian specifications
+			for (size_t entr = 0; entr < E_peak.size(); entr++) //iterate over ionospheric maxwellian specifications
 			{
 				auto getCount = [&](double E, double s) { return count_E(E, E_peak.at(entr), dEMag.at(entr), zero(s)); };
 
@@ -156,16 +156,34 @@ namespace ionosphere
 		}
 	}
 
+	void IonosphereSpecs::seth()
+	{
+		if (s.size() == 0)
+			throw std::logic_error("IonosphereSpecs::seth: Error: s is not populated with values.");
+		
+		for (size_t layer = 0; layer < s.size() - 1; layer++)
+			h.at(layer) = 100 * (s.at(layer) - s.at(layer + 1));
+		
+		h.at(s.size() - 1) = h.at(s.size() - 2);
+	}
+
 	void IonosphereSpecs::seth(double h_all)
 	{
-		if (h.at(0) != 0) std::cout << "IonosphereSpecs::seth: Warning, array already has non-zero values.  Continuing\n";
+		bool warn{ false };
 		for (auto& h_layer : h)
+		{
+			if (!warn && h.at(0) != 0)
+			{
+				std::cout << "IonosphereSpecs::seth: Warning: array already has non-zero values.  Continuing\n";
+				warn = true;
+			}
 			h_layer = h_all;
+		}
 	}
 
 	void IonosphereSpecs::setB(BField* Bfield, double t)
 	{
-		for (unsigned int s_layer = 0; s_layer < s.size(); s_layer++)
+		for (size_t s_layer = 0; s_layer < s.size(); s_layer++)
 		{
 			B.at(s_layer) = Bfield->getBFieldAtS(s.at(s_layer), t);
 		}
@@ -179,8 +197,10 @@ namespace ionosphere
 
 	void IonosphereSpecs::altToS(BField* B)
 	{
-		for (unsigned int s_ind = 0; s_ind < s.size(); s_ind++)
+		for (size_t s_ind = 0; s_ind < s.size(); s_ind++)
 			s.at(s_ind) = B->getSAtAlt(s.at(s_ind));
+
+		seth();
 	}
 
 	void IonosphereSpecs::addSpecies(string name, double Z_spec, function<double(double)> density_s)
@@ -192,8 +212,8 @@ namespace ionosphere
 		Z.push_back(Z_spec);
 		p.push_back(vector<double>(s.size()));
 
-		for (size_t dens = 0; dens < p.back().size(); dens++)
-			p.back().at(dens) = density_s(s.at(dens));
+		for (size_t alt = 0; alt < p.back().size(); alt++)
+			p.back().at(alt) = density_s(s.at(alt));
 	}
 	//End IonosphereSpecs
 

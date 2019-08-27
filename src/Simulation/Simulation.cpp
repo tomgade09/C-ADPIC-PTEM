@@ -32,7 +32,7 @@ void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts) /
 	std::cout << "BField Model:   " << BFieldModel_m->name() << std::endl;
 	std::cout << "EField Elems:   " << EFieldModel_m->getEElemsStr() << std::endl;
 	std::cout << "Particles:      ";
-	for (unsigned int iii = 0; iii < particles_m.size(); iii++) {
+	for (size_t iii = 0; iii < particles_m.size(); iii++) {
 		std::cout << ((iii != 0) ? "                " : "") << particles_m.at(iii)->name() << ": #: " << particles_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particles_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl;
 	}
 	std::cout << "Satellites:     ";
@@ -94,7 +94,7 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 	if (save)
 	{
 		std::vector<std::string> attrLabels;
-		for (unsigned int atr = 0; atr < attrNames.size(); atr++)
+		for (size_t atr = 0; atr < attrNames.size(); atr++)
 			attrLabels.push_back("attrName");
 		attrLabels.push_back("loadFilesDir");
 		
@@ -114,11 +114,11 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 
 void Simulation::createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name)
 {
-	for (unsigned int partInd = 0; partInd < particles_m.size(); partInd++)
+	for (size_t partInd = 0; partInd < particles_m.size(); partInd++)
 	{
-		if (particle(partInd)->name() == partName)
+		if (particle((int)partInd)->name() == partName)
 		{
-			createTempSat(partInd, altitude, upwardFacing, name);
+			createTempSat((unsigned int)partInd, altitude, upwardFacing, name);
 			return;
 		}
 	}
@@ -245,7 +245,7 @@ void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool
 		std::vector<double> altMax;
 		std::vector<double> mag;
 
-		for (unsigned int entry = 0; entry < args.size() / 3; entry++)
+		for (size_t entry = 0; entry < args.size() / 3; entry++)
 		{
 			altMin.push_back(args.at(3 * entry));
 			altMax.push_back(args.at(3 * entry + 1));

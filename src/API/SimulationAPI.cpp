@@ -207,7 +207,7 @@ DLLEXP_EXTC void writeCommonCSVAPI(Sim* sim)
 		csvtmp.addspace();
 
 		std::vector<std::vector<double>> energyPitch(2, std::vector<double>(origData.at(0).size()));
-		for (unsigned int elem = 0; elem < energyPitch.at(0).size(); elem++)
+		for (size_t elem = 0; elem < energyPitch.at(0).size(); elem++)
 		{
 			energyPitch.at(0).at(elem) = 0.5 * MASS_ELECTRON * (pow(origData.at(0).at(elem), 2) + pow(origData.at(1).at(elem), 2)) / JOULE_PER_EV;
 			energyPitch.at(1).at(elem) = atan2(abs(origData.at(1).at(elem)), -origData.at(0).at(elem)) / RADS_PER_DEG;

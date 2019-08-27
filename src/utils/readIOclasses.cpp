@@ -14,24 +14,24 @@ namespace utils
 			name_m{ name }, attrNames_m{ attrNames }, mass_m{ mass }
 		{
 			size_t attrsize{ 0 };
-			for (unsigned int attr = 0; attr < attrNames.size(); attr++)
+			for (size_t attr = 0; attr < attrNames.size(); attr++)
 			{
 				std::vector<double> read;
 				fileIO::readDblBin(read, folder + "/" + partName + "_" + attrNames.at(attr) + ".bin");
 				data_m.push_back(read);
-				if ((unsigned int)attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
+				if (attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
 			}
 
-			for (unsigned int attr = 0; attr < attrNames.size(); attr++)
-				if (attrNames_m.at(attr).size() < attrsize) { string::stringPadder(attrNames_m.at(attr), (unsigned int)attrsize); }
+			for (size_t attr = 0; attr < attrNames.size(); attr++)
+				if (attrNames_m.at(attr).size() < attrsize) { string::stringPadder(attrNames_m.at(attr), attrsize); }
 		}
 
 		void DistributionFromDisk::print(unsigned int at) const
 		{
 			std::cout << name_m << " ";
-			for (unsigned int iii = 0; iii < attrNames_m.size(); iii++)
+			for (size_t iii = 0; iii < attrNames_m.size(); iii++)
 				std::cout << attrNames_m.at(iii) << ((iii != attrNames_m.size() - 1) ? ", " : ": ");
-			for (unsigned int iii = 0; iii < data_m.size(); iii++)
+			for (size_t iii = 0; iii < data_m.size(); iii++)
 				std::cout << data_m.at(iii).at(at) << ((iii != data_m.size() - 1) ? ", " : "");
 			std::cout << std::endl;
 
@@ -82,7 +82,7 @@ namespace utils
 			if (print)
 			{
 				std::cout << name_m << " ";
-				for (unsigned int zero = 0; zero < zeroes.size(); zero++)
+				for (size_t zero = 0; zero < zeroes.size(); zero++)
 					std::cout << attrNames_m.at(zero) << " zeroes: " << zeroes.at(zero) << ((zero != zeroes.size() - 1) ? ", " : "");
 				std::cout << std::endl;
 			}

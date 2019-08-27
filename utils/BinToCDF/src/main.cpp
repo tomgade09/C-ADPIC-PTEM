@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 	// Form Maxwellian
 	MaxwellianSpecs maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
 	maxwellian.push_back_ion(2.5,   6.00e7, 13500); //12000
-	maxwellian.push_back_mag(2.5,   6.00e7, 18500 * 0.3); //4250
+	maxwellian.push_back_mag(2.5,   6.00e7, 18500 * 3 / 10); //4250
 	maxwellian.push_back_mag(2.5e3, 1.20e8, 2000); //4250
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
@@ -104,8 +104,9 @@ int main(int argc, char* argv[])
 	};
 
 	/* Physical ionosphere model */
-	IonosphereSpecs ionsph(58, 620000.0, 50000.0);
+	IonosphereSpecs ionsph(58, 620000.0, 50000.0); //this is in alt - converted to s (dist along field line) once it's inserted into eomdata below (constructor handles this)
 	//Ionosphere ionsph(232, 620000.0, 50000.0);
+	//These functions return number density in cm^-3
 	ionsph.addSpecies("N2", 14.0, DUALREGIONLOGLINEFIT(130000.0, (4.0 - 11.0) / (540000.0 - 130000.0), 13.21951, (11.0 - 19.0) / (130000 - 8000), 19.52459));
 	ionsph.addSpecies("He", 3.0,  DUALREGIONLOGLINEFIT(120000.0, (6.0 - log10(5.0e7)) / (1000000.0 - 120000.0), 7.930648, (log10(5.0e7) - 14) / (120000.0), 14.0));
 	ionsph.addSpecies("O2", 16.0, DUALREGIONLOGLINEFIT(130000.0, (10.0 - 4.0) / (130000.0 - 450000.0), 12.4375, (18.0 - 10.0) / (20000.0 - 130000.0), 19.45455));
@@ -115,7 +116,6 @@ int main(int argc, char* argv[])
 	//Ionosphere ionsph(2, 620000.0, 619999.9999);
 	//ionsph.addSpecies("ScatterAll", 1.0e6, [](double s) { return 1.0e30; });
 	/* End test ionosphere */
-
 
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };

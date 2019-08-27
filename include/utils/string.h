@@ -13,7 +13,7 @@ namespace utils
 		DLLEXP std::vector<std::string> strToStrVec(std::string str, const char delim = ',');
 		DLLEXP std::string strVecToStr(std::vector<std::string> strVec, const char delim = ',');
 		DLLEXP std::vector<double> strToDblVec(std::string str, const char delim = ',');
-		DLLEXP void stringPadder(std::string& in, unsigned int totalStrLen, unsigned int indEraseFrom = 0);
+		DLLEXP void stringPadder(std::string& in, size_t totalStrLen, unsigned int indEraseFrom = 0);
 	}
 }
 

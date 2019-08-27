@@ -83,7 +83,7 @@ std::string SimAttributes::generateString(attrsData& ad)
 	std::string ret;
 
 	ret = CLASSWRAP(ad.classname_m);
-	for (unsigned int entry = 0; entry < ad.strLabels_m.size(); entry++) //iterates over entries
+	for (size_t entry = 0; entry < ad.strLabels_m.size(); entry++) //iterates over entries
 	{
 		ret += NAMEWRAP(ad.names_m.at(entry));
 		ret += ATTRSWRAP(strVec1DToStr(ad.strLabels_m.at(entry)));
@@ -155,7 +155,7 @@ void SimAttributes::read()
 	auto exactStr2Dbl = [](std::string s) { double ret; for (int iii = 0; iii < 8; iii++) { reinterpret_cast<char*>(&ret)[iii] = s[iii]; } return ret; };
 
 	auto strvToDblVec = [&](std::vector<std::vector<std::string>>& vec) { std::vector<std::vector<double>> ret;
-		for (unsigned int iii = 0; iii < vec.size(); iii++)
+		for (size_t iii = 0; iii < vec.size(); iii++)
 		{
 			std::vector<double> tmp;
 			while (vec.at(iii).at(0).find("$$$$") != std::string::npos)

@@ -22,17 +22,17 @@ namespace utils
 				throw std::invalid_argument("fileIO::readDblBin: could not open file " + filename + " for reading");
 
 			binFile.seekg(0, binFile.end);
-			int length{ (int)(binFile.tellg()) / 8 };
+			size_t length{ (size_t)binFile.tellg() / 8 };
 			binFile.seekg(0, binFile.beg);
 			binFile.close();
 			//std::cout << "fileIO::readDblBin: (unknown size): num elements determined from disk: " << length << std::endl;
 
 			arrayToReadInto.resize(length);
 
-			readDblBin(arrayToReadInto, filename, (long)length);
+			readDblBin(arrayToReadInto, filename, length);
 		}
 
-		DLLEXP void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, unsigned int numOfDblsToRead)
+		DLLEXP void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, size_t numOfDblsToRead)
 		{
 			if (arrayToReadInto.size() < numOfDblsToRead)
 				throw std::invalid_argument("fileIO::readDblBin: std::vector is not big enough to contain the data being read from file " + filename);
@@ -42,7 +42,7 @@ namespace utils
 				throw std::invalid_argument("fileIO::readDblBin: could not open file " + filename + " for reading");
 
 			binFile.seekg(0, binFile.end);
-			unsigned int length{ (unsigned int)binFile.tellg() };
+			size_t length{ (size_t)binFile.tellg() };
 			binFile.seekg(0, binFile.beg);
 
 			if (length < numOfDblsToRead * 8)
@@ -57,7 +57,7 @@ namespace utils
 			binFile.close();
 		}
 
-		DLLEXP void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, unsigned int numofentries, unsigned int numofcols, const char delim)
+		DLLEXP void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, size_t numofentries, size_t numofcols, const char delim)
 		{
 			std::ifstream csv{ filename };
 			if (!csv.is_open())
@@ -66,7 +66,7 @@ namespace utils
 				throw std::invalid_argument("fileIO::read2DCSV: std::vector outer vector is not big enough to contain the data being read from file " + filename);
 			if (array2DToReadInto.size() > numofcols)
 				std::cerr << "fileIO::read2DCSV: std::vector outer vector is bigger than numofcols, some data in the vector will remain unmodified" << std::endl;
-			for (unsigned int col = 0; col < array2DToReadInto.size(); col++)
+			for (size_t col = 0; col < array2DToReadInto.size(); col++)
 			{
 				if (array2DToReadInto.at(col).size() < numofentries)
 					throw std::invalid_argument("fileIO::read2DCSV: std::vector inner vector is not big enough to contain the data being read from file " + filename);
@@ -76,14 +76,14 @@ namespace utils
 
 			try
 			{
-				for (unsigned int iii = 0; iii < numofentries; iii++)
+				for (size_t iii = 0; iii < numofentries; iii++)
 				{
 					std::string in;
 					std::getline(csv, in);
 
 					std::stringstream in_ss(in);
 
-					for (unsigned int jjj = 0; jjj < numofcols; jjj++)
+					for (size_t jjj = 0; jjj < numofcols; jjj++)
 					{
 						std::string val;
 						std::getline(in_ss, val, delim);
@@ -119,7 +119,7 @@ namespace utils
 
 
 		//write functions
-		DLLEXP void writeDblBin(const std::vector<double>& dataarray, std::string filename, unsigned int numelements, bool overwrite)//overwrite defaults to true
+		DLLEXP void writeDblBin(const std::vector<double>& dataarray, std::string filename, size_t numelements, bool overwrite)//overwrite defaults to true
 		{
 			std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 			if (!binfile.is_open())
@@ -134,7 +134,7 @@ namespace utils
 			binfile.close();
 		}
 
-		DLLEXP void write2DCSV(const std::vector<std::vector<double>>& dataarray, std::string filename, unsigned int numofentries, unsigned int numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
+		DLLEXP void write2DCSV(const std::vector<std::vector<double>>& dataarray, std::string filename, size_t numofentries, size_t numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
 		{
 			std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 			if (!csv.is_open())
@@ -145,10 +145,19 @@ namespace utils
 				throw std::invalid_argument("fileIO::write2DCSV: size of data vector is less than the doubles requested from it for filename " + filename);
 			}
 
-			for (unsigned int iii = 0; iii < numofentries; iii++)
+			for (size_t iii = 0; iii < numofentries; iii++)
 			{
-				for (unsigned int jjj = 0; jjj < numofcols; jjj++)
-					csv << std::setprecision(precision) << dataarray.at(jjj).at(iii) << delim;
+				for (size_t jjj = 0; jjj < numofcols; jjj++)
+				{
+					try
+					{
+						csv << std::setprecision(precision) << dataarray.at(jjj).at(iii) << delim;
+					}
+					catch (std::out_of_range) //if the csv being written has uneven columns, this just fills in a blank where there's no data
+					{
+						csv << "" << delim;
+					}
+				}
 
 				csv << "\n";
 			}

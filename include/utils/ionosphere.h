@@ -9,39 +9,39 @@
 
 namespace ionosphere
 {
+	namespace debug
+	{
+		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata);
+		DLLEXP void eomError(const EOMSimData& ideal, const EOMSimData& eomsim);
+	}
+
 	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata);
 
 	namespace dEFlux
 	{
 		DLLEXP dEflux_v2D satellite(const ParticleData& particles, const Bins& satBins, const dNflux_v1D& dNatSat);
-		DLLEXP dEflux_v2D backscatr(const EOMSimData& eomdata, const dNflux_v1D& dNatIonsph);
+		DLLEXP dEflux_v2D backscatr(const EOMSimData& eomdata, const dNflux_v1D& dNatIonsph1D);
 	}
 
 	namespace binning
 	{
 		DLLEXP dNflux_v2D binParticles(const ParticleData& particles, const Bins& bins, const dNflux_v1D& countPerParticle);
-		DLLEXP void       symmetricBins0To360(dEflux_v2D& data, double_v1D& binAngles);
+		DLLEXP void       symmetricBins180To360(dEflux_v2D& data, double_v1D& binAngles);
 	}
 
 	namespace backscat
 	{
-		DLLEXP dNflux     johnd_flux(double E_eval, double E_incident, dNflux dN_incident);
-		DLLEXP dEflux     integralJohnd_flux(double lower, double upper, double E_incident);
-		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& escapeCountBinned);
+		DLLEXP dNflux     johnd_flux(eV E_eval, eV E_incident, dNflux dN_incident);
+		//DLLEXP dEflux     integralJohnd_flux(double lower, double upper, double E_incident);
+		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& dNpointofScatter);
 		DLLEXP dNflux_v2D ionsphToSatellite(const EOMSimData& eomdata, const dNflux_v2D& bsCounts);
 	}
 
 	namespace multiLevelBS
 	{
-		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl);
-		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& ionsphTopLvl, double_v2D& sumCollideAbove, unsigned int level);
-		DLLEXP double     scatterPct (double sumCollideAbove, double Z, double p, double h, eV E, degrees PA);
-	}
-
-	namespace debug
-	{
-		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata);
-		DLLEXP void eomError(const EOMSimData& ideal, const EOMSimData& eomsim);
+		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& dNionsphTop);
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, unsigned int level);
+		DLLEXP percent    scatterPct(percent sumCollideAbove, double Z, percm3 p, cm h, eV E, degrees PA);
 	}
 }
 

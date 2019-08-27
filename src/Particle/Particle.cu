@@ -123,7 +123,7 @@ void Particle::setParticleSource_s(double s_ion, double s_mag)
 	int s_ind{ getAttrIndByName("s") };
 	int v_ind{ getAttrIndByName("vpara") };
 
-	for (unsigned int ind = 0; ind < origData_m.at(s_ind).size(); ind++)
+	for (size_t ind = 0; ind < origData_m.at(s_ind).size(); ind++)
 	{
 		if (origData_m.at(v_ind).at(ind) > 0.0)
 			origData_m.at(s_ind).at(ind) = s_ion;
