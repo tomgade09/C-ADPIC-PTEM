@@ -69,11 +69,11 @@
     <ClCompile Include="..\src\Satellite\Satellite.cpp">
       <Filter>Source Files\Satellite</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\ionosphere.cpp">
-      <Filter>Source Files\utils\Ionosphere</Filter>
+    <ClCompile Include="..\src\ionosphere\ionosphere.cpp">
+      <Filter>Source Files\ionosphere</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\ionosphereClasses.cpp">
-      <Filter>Source Files\utils\Ionosphere</Filter>
+    <ClCompile Include="..\src\ionosphere\ionosphereClasses.cpp">
+      <Filter>Source Files\ionosphere</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -170,14 +170,14 @@
     <ClInclude Include="..\include\utils\loopmacros.h">
       <Filter>Header Files\utils\Macros</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\ionosphere.h">
-      <Filter>Header Files\utils\Ionosphere</Filter>
+    <ClInclude Include="..\include\ionosphere\ionosphere.h">
+      <Filter>Header Files\ionosphere</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\ionosphereClasses.h">
-      <Filter>Header Files\utils\Ionosphere</Filter>
+    <ClInclude Include="..\include\ionosphere\ionosphereClasses.h">
+      <Filter>Header Files\ionosphere</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\utils\ionosphereUtils.h">
-      <Filter>Header Files\utils\Ionosphere</Filter>
+    <ClInclude Include="..\include\ionosphere\ionosphereUtils.h">
+      <Filter>Header Files\ionosphere</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -372,11 +372,11 @@
     <Filter Include="Python Files\examples">
       <UniqueIdentifier>{ad8e9691-1bbf-4511-b99b-be83a59f24f2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\utils\Ionosphere">
-      <UniqueIdentifier>{ab12224d-26d3-4d7b-b54b-5c13e9bf73ea}</UniqueIdentifier>
+    <Filter Include="Header Files\ionosphere">
+      <UniqueIdentifier>{7852ca5a-61ca-44df-80bc-bec40a1a5193}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\utils\Ionosphere">
-      <UniqueIdentifier>{dc8d6857-238b-44a4-87e5-d2a921411459}</UniqueIdentifier>
+    <Filter Include="Source Files\ionosphere">
+      <UniqueIdentifier>{51512738-f5fc-4752-ad16-4e52d3d9023e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

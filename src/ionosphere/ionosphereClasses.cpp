@@ -2,7 +2,7 @@
 #include <iterator>
 
 
-#include "utils/ionosphere.h"
+#include "ionosphere/ionosphere.h"
 #include "utils/numerical.h"
 #include "utils/silenceStreamMacros.h"
 #include "ErrorHandling/simExceptionMacros.h"

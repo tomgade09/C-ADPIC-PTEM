@@ -19,7 +19,7 @@ class Simulation
 protected:
 	//Structs that fill various roles	
 	struct TempSat
-	{//Struct that holds data to create satellite - allows satellites to be created before particles through API
+	{//Struct that holds data to create satellite - allows satellites to be added in any order, but ensure they are created before particles
 		unsigned int particleInd;
 		double altitude;
 		bool upwardFacing;

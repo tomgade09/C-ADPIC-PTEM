@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "dlldefines.h"
-#include "utils/ionosphereClasses.h"
+#include "ionosphere/ionosphereClasses.h"
 
 #define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
 

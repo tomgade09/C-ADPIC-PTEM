@@ -1,4 +1,4 @@
-#include "utils/ionosphere.h"
+#include "ionosphere/ionosphere.h"
 #include "utils/numerical.h"
 #include <algorithm>
 #include <cmath>
@@ -402,9 +402,7 @@ namespace ionosphere
 		//std::cout << "B_mag: " << eom.B_mag << "\n";
 
 		//debug::outputFunctionsToCSV(eom);
-
 		//exit(1);
-
 		//EOMSimData eomdata{ debug::generateIdealSatDists(eom) };
 		//debug::setMaxwellians(eomdata);
 
@@ -482,7 +480,7 @@ namespace ionosphere
 		//
 		//
 		// TEST BACKSCATTER ONLY //
-		return bkscfluxupward;
+		//return bkscfluxupward;
 		// DELETE THIS WHEN DONE WITH TEST //
 		//
 		//
@@ -695,7 +693,7 @@ namespace ionosphere
 		}*/
 
 		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& dNpointofScatter)
-		{ //converts downward dNflux at ionosphere (dist binned) to bs (upward) dNflux (also dist binned)
+		{ //converts downward dNflux at point of scatter (dist binned) to bs (upward) dNflux (also dist binned)
 			// 1. Sum dNflux over PA Bins (dist bins), Per E Bin and Average
 			dNflux_v1D dNsumPerE(dist.E.size());             //Sum of escaped particles at each energy, units of dNflux
 
@@ -800,6 +798,16 @@ namespace ionosphere
 
 				bins.add(eom.distbins.E, "E");
 				bins.add(eom.distbins.PA, "PA");
+			}
+			{
+				utils::fileIO::CSV dNionTop{ "debug/downwarddNIonosphereTop.csv" };
+				
+				vector<string> labels(eom.distbins.PA.size());
+				for (int label = 0; label < eom.distbins.PA.size(); label+=10000)
+					labels.at(label) = to_string(eom.distbins.PA.at(label));
+				cout << dNionsphTop.size() << "  " << labels.size() << "\n";
+				dNionTop.add(dNionsphTop, labels);
+
 			}
 			// End spit out csv files
 			//

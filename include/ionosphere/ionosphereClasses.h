@@ -5,7 +5,7 @@
 #include <string>
 #include "Simulation/Simulation.h"
 #include "utils/writeIOclasses.h"
-#include "utils/ionosphereUtils.h"
+#include "ionosphere/ionosphereUtils.h"
 
 using std::string;
 using std::vector;

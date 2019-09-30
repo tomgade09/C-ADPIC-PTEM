@@ -194,26 +194,6 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 
 		attrNames = { "ILAT", "ds", "numMsmts" };
 	}
-	/*else if (name == "IGRF")
-	{
-		//BFieldModel_m = std::make_unique<IGRFB>(args.at(0));
-		std::cout << "IGRF not implemented yet!! :D  Using DipoleB" << std::endl;
-		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
-		args.resize(3);
-		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getErrTol();
-		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getds();
-		attrNames = { "ILAT", "ds", "errTol" };
-	}
-	else if (name == "InvRCubedB")
-	{
-		//BFieldModel_m = std::make_unique<InvRCubedB>(args.at(0));
-		std::cout << "InvRCubed not implemented yet!! :D  Using DipoleB" << std::endl;
-		BFieldModel_m = std::make_unique<DipoleB>(args.at(0));
-		args.resize(3);
-		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getErrTol();
-		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getds();
-		attrNames = { "ILAT", "ds", "errTol" };
-	}*/
 	else
 	{
 		std::cout << "Not sure what model is being referenced.  Using DipoleB instead of " << name << std::endl;
@@ -300,9 +280,3 @@ void Simulation::resetSimulation(bool fields)
 		EFieldModel_m.reset();
 	}
 }
-
-/*void Simulation::generateBackscatterParticleDists() //coming soon
-{
-	particles_m.clear();
-	particles_m.push_back(std::make_unique<Particle>(
-}*/

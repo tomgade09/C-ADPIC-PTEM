@@ -1,14 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geoplasmasim", "geoplasmasim.vcxproj", "{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "..\tests\vs\tests.vcxproj", "{CF286872-8234-4D42-965E-9723C09CCCBA}"
-	ProjectSection(ProjectDependencies) = postProject
-		{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D} = {F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,12 +15,11 @@ Global
 		{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}.Debug|x64.Build.0 = Debug|x64
 		{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}.Release|x64.ActiveCfg = Release|x64
 		{F99C52E6-751A-42DA-8861-2CF5BBEB9E5D}.Release|x64.Build.0 = Release|x64
-		{CF286872-8234-4D42-965E-9723C09CCCBA}.Debug|x64.ActiveCfg = Debug|x64
-		{CF286872-8234-4D42-965E-9723C09CCCBA}.Debug|x64.Build.0 = Debug|x64
-		{CF286872-8234-4D42-965E-9723C09CCCBA}.Release|x64.ActiveCfg = Release|x64
-		{CF286872-8234-4D42-965E-9723C09CCCBA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7E6D9F98-D3C9-41D2-9A63-9945D87C420F}
 	EndGlobalSection
 EndGlobal

@@ -22,6 +22,7 @@
     <ProjectGuid>{C7D51C0B-C768-41A4-A860-23E98EF0C5C2}</ProjectGuid>
     <RootNamespace>BinToCDF</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <ProjectName>ionosphere</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

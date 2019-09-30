@@ -1,9 +1,9 @@
 #include <memory>
-#include "utils\ionosphere.h"
-#include "utils\ionosphereUtils.h"
+#include "ionosphere/ionosphere.h"
+#include "ionosphere/ionosphereUtils.h"
 #include "CDFFileClass.h"
 #include "ErrorHandling/simExceptionMacros.h"
-#include "utils\numerical.h"
+#include "utils/numerical.h"
 #include <sstream>
 #include <algorithm>
 #include <iterator>
