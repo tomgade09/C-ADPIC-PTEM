@@ -11,7 +11,9 @@ using std::pow;
 using std::cout;
 using std::string;
 using std::to_string;
+using std::exception;
 using std::logic_error;
+using std::out_of_range;
 using utils::fileIO::readDblBin;
 using utils::numerical::generateSpacedValues;
 
@@ -40,7 +42,7 @@ namespace ionosphere
 {
 	namespace debug
 	{
-		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata)
+		EOMSimData generateIdealSatDists(const EOMSimData& eomdata)
 		{
 			auto newPA = [](const degrees PA_init, const tesla B_init, const tesla B_final)
 			{ //relies on constant mu to calculate - if mu is not conserved, this function doesn't give accurate results
@@ -74,7 +76,7 @@ namespace ionosphere
 				else if (eomdata.initial.s_pos.at(part) > eomdata.s_mag * 0.999)
 				{
 					double satPA{ newPA(eomdata.initial.pitch.at(part), eomdata.B_mag, eomdata.B_sat) };
-					double btmPA{ newPA(eomdata.initial.pitch.at(part), eomdata.B_mag, eomdata.B_ion) };
+					double btmPA{ newPA(eomdata.initial.pitch.at(part), eomdata.B_mag, eomdata.B_ion/*-0.0000587126*/) };
 
 					if (satPA > 0)
 					{
@@ -106,7 +108,7 @@ namespace ionosphere
 			return ret;
 		}
 		
-		DLLEXP void eomError(const EOMSimData& ideal, const EOMSimData& eomsim)
+		void eomError(const EOMSimData& ideal, const EOMSimData& eomsim)
 		{
 			cout << "Need to finish.  Returning.\n";
 			return;
@@ -146,7 +148,7 @@ namespace ionosphere
 
 		void setMaxwellians(EOMSimData& eomdata)
 		{
-			std::vector<double> realMagMaxwellian = {
+			vector<double> realMagMaxwellian = {
 				511.7803363,
 				455.366866,
 				404.1659709,
@@ -246,7 +248,7 @@ namespace ionosphere
 			};
 
 			/*
-			std::vector<double> realIonMaxwellian = {
+			vector<double> realIonMaxwellian = {
 				628.8979407 / 2.4786570,
 				565.8638197 / 2.4786570,
 				508.6540186 / 2.1904623,
@@ -346,7 +348,7 @@ namespace ionosphere
 			};
 			*/
 
-			std::vector<double> realIonMaxwellian(96, 0);
+			vector<double> realIonMaxwellian(96, 0);
 
 			for (size_t part = 0; part < eomdata.initial.pitch.size(); part++)
 			{
@@ -361,61 +363,118 @@ namespace ionosphere
 			}
 		}
 
-		void outputFunctionsToCSV(const EOMSimData& eom)
+		void outputdEfluxToCSV(const EOMSimData& eom)
 		{
-			string rootfold{".\\debug\\"};
-			cout << rootfold << "\n";
-
+			string rootfold{ ".\\debug\\" };
+			
 			dNflux_v2D dE_johnd_flux(eom.distbins.E.size(), dNflux_v1D(eom.distbins.E.size() + 1)); //outer: E incident, inner: E eval
 			for (size_t Einc = 0; Einc < eom.distbins.E.size(); Einc++)
 			{
 				for (size_t Eeval = 0; Eeval < eom.distbins.E.size(); Eeval++)
 				{ //test when a single particle hits the ionosphere and scatters - this should produce Evans' graph or something like it
-					dE_johnd_flux.at(Einc).at(Eeval + 1) = 
+					dE_johnd_flux.at(Einc).at(Eeval + 1) =
 						backscat::johnd_flux(eom.distbins.E.at(Eeval), eom.distbins.E.at(Einc), 1.0);
 				}
 			}
-			
+
+			utils::fileIO::CSV bsdEOnePart(rootfold + "bsdEOnePart.csv");
+			bsdEOnePart.add(dE_johnd_flux, vector<string>(eom.distbins.E.size()));
+		}
+
+		void outputVectorsToCSV(string filename, const vector<vector<double>>& data, const vector<string>& labels, int writeEvery = 1, int startIdx = 0, int stopIdx = 0)
+		{
+			utils::fileIO::CSV file{ filename };
+
+			if (writeEvery == 1 && startIdx == 0 && stopIdx == 0)
 			{
-				utils::fileIO::CSV bsdEOnePart(rootfold + "bsdEOnePart.csv");
-				bsdEOnePart.add(dE_johnd_flux, vector<string>(eom.distbins.E.size()));
+				file.add(data, labels);
 			}
+			else
+			{
+				vector<vector<double>> dataSmall;
+				vector<string> labelsSmall;
+
+				bool labelsError{ false };
+
+				if (stopIdx == 0) stopIdx = data.size();
+				for (size_t idx = startIdx; idx < stopIdx; idx += writeEvery)
+				{
+					dataSmall.push_back(data.at(idx));
+					try
+					{
+						labelsSmall.push_back(labels.at(idx));
+					}
+					catch (const out_of_range& e)
+					{
+						if (!labelsError)
+							cout << "Warning: File name " + filename + " does not have as many labels as data indicies.  Things may be labeled incorrectly.\n";
+						
+						labelsSmall.push_back("");
+						labelsError = true;
+					}
+				}
+
+				file.add(dataSmall, labelsSmall);
+			}
+		}
+
+		void outputVectorsToCSV(string filename, const vector<vector<double>>& data, const vector<double>& labels, int writeEvery = 1, int startIdx = 0, int stopIdx = 0)
+		{
+			vector<string> strlabels;
+
+			for (size_t idx = 0; idx < labels.size(); idx++)
+				strlabels.push_back(to_string(labels.at(idx)));
+
+			outputVectorsToCSV(filename, data, strlabels, writeEvery, startIdx, stopIdx);
+		}
+
+		void outputVectorsToCSV(string filename, const function<double(double, double)> datafunc, const vector<double>& outeridx, const vector<double>& inneridx, const vector<string> labels, int writeEvery = 1, int startIdx = 0, int stopIdx = 0)
+		{
+			vector<vector<double>> data(outeridx.size(), vector<double>(inneridx.size()));
+
+			for (size_t outer = 0; outer < outeridx.size(); outer++)
+			{
+				for (size_t inner = 0; inner < inneridx.size(); inner++)
+				{
+					data.at(outer).at(inner) = datafunc(outeridx.at(outer), inneridx.at(inner));
+				}
+			}
+
+			outputVectorsToCSV(filename, data, labels, writeEvery, startIdx, stopIdx);
+		}
+
+		void outputVectorsToCSV(string filename, const function<double(double, double)> datafunc, const vector<double>& outeridx, const vector<double>& inneridx, const vector<double> labels, int writeEvery = 1, int startIdx = 0, int stopIdx = 0)
+		{
+			vector<string> strlabels;
+
+			for (size_t idx = 0; idx < labels.size(); idx++)
+				strlabels.push_back(to_string(labels.at(idx)));
+
+			outputVectorsToCSV(filename, datafunc, outeridx, inneridx, strlabels, writeEvery, startIdx, stopIdx);
 		}
 	}
 
-	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata)
+	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eom)
 	{
-		/*{ //print maxwellian values for magsph and ionsph
-			std::vector<double> print;
-			for (int iii = 0; iii < 96; iii++)
-				print.push_back(eomdata.maxwellian.at(iii));
-			printVec2D({ print }, "Maxwellian ionsph");
+		EOMSimData eomdata{ debug::generateIdealSatDists(eom) };
+		debug::setMaxwellians(eomdata);
 
-			std::vector<double> print2;
-			for (int iii = 1728000; iii < 1728096; iii++)
-				print2.push_back(eomdata.maxwellian.at(iii));
-			printVec2D({ print2 }, "Maxwellian magsph");
-		}*/
-
-		//std::cout << "B_ion: " << eom.B_ion << "\n";
-		//std::cout << "B_sat: " << eom.B_sat << "\n";
-		//std::cout << "B_mag: " << eom.B_mag << "\n";
-
-		//debug::outputFunctionsToCSV(eom);
-		//exit(1);
-		//EOMSimData eomdata{ debug::generateIdealSatDists(eom) };
-		//debug::setMaxwellians(eomdata);
+		cout << "B_ion: " << eomdata.B_ion << "\n";
+		cout << "B_sat: " << eomdata.B_sat << "\n";
+		cout << "B_mag: " << eomdata.B_mag << "\n";
 
 		//
 		//
 		// Spit out csv files (for diagnostics)
-		{ //outputs densities of ionosphere species by height to a csv
-			utils::fileIO::CSV dens{ "debug/ionospheric densities/densities.csv" };
-
-			dens.add(eomdata.ionsph.p.at(0), "N2 dens");
-			dens.add(eomdata.ionsph.p.at(1), "He dens");
-			dens.add(eomdata.ionsph.p.at(2), "O2 dens");
-			dens.add(eomdata.ionsph.p.at(3), "O dens");
+		try
+		{
+			debug::outputVectorsToCSV("debug/ionospheric densities/densities.csv", eomdata.ionsph.p, eomdata.ionsph.names);
+		}
+		catch (const exception& e)
+		{
+			cout << "ionsph densities CSVs\n";
+			cout << e.what() << "\n";
+			throw;
 		}
 		// End spit out csv files
 		//
@@ -429,10 +488,10 @@ namespace ionosphere
 		double Aratio_ion_ion{ std::sqrt(eomdata.B_ion / eomdata.B_ion) }; //gyroradius cross-sectional area ratio, ionsph (up, reflect, down) to ionsph
 		double Aratio_mag_ion{ std::sqrt(eomdata.B_ion / eomdata.B_mag) }; //gyroradius cross-sectional area ratio, magsph to ionsph
 
-		cout << "ion to sat: " << Aratio_ion_sat << "\n";
-		cout << "mag to sat: " << Aratio_mag_sat << "\n";
-		cout << "ion to ion: " << Aratio_ion_ion << "\n";
-		cout << "mag to ion: " << Aratio_mag_ion << "\n";
+		//cout << "ion to sat: " << Aratio_ion_sat << "\n";
+		//cout << "mag to sat: " << Aratio_mag_sat << "\n";
+		//cout << "ion to ion: " << Aratio_ion_ion << "\n";
+		//cout << "mag to ion: " << Aratio_mag_ion << "\n";
 
 		dNflux_v1D maxwellian_sat{ eomdata.maxwellian }; //scaled by decrease in gyroradius cross-sectional area A below
 		dNflux_v1D maxwellian_ion{ eomdata.maxwellian };
@@ -466,7 +525,7 @@ namespace ionosphere
 		dEflux_v2D distfluxdnward{ dEFlux::satellite(eomdata.dnward, eomdata.satbins, maxwellian_sat) };
 		dEflux_v2D distfluxupward{ dEFlux::satellite(eomdata.upward, eomdata.satbins, maxwellian_sat) };
 		dEflux_v2D bkscfluxupward{ dEFlux::backscatr(eomdata, maxwellian_ion) };
-		
+
 		printVec2D(distfluxdnward, "Dnward Flux at Satellite");
 		printVec2D(distfluxupward, "Upward Flux at Satellite");
 		printVec2D(bkscfluxupward, "Flux Due to Backscatter at Satellite");
@@ -484,7 +543,7 @@ namespace ionosphere
 		// DELETE THIS WHEN DONE WITH TEST //
 		//
 		//
-		
+
 		return distfluxupward; //really, instead of just upward data, this is the total (see the nested loop above)
 	}
 
@@ -683,7 +742,7 @@ namespace ionosphere
 
 		/*DLLEXP dEflux integralJohnd_flux(double lower, double upper, double E_incident)
 		{
-			throw std::exception("integralJohnd_flux used");//make sure this isnt used for now
+			throw exception("integralJohnd_flux used");//make sure this isnt used for now
 			double secd_logm{ (E_incident <= 10.0) ? JOHND_SECD_LOGM_LT10 : JOHND_SECD_LOGM_GT10 };
 			double secd_logb{ (E_incident <= 10.0) ? JOHND_SECD_LOGB_LT10 : JOHND_SECD_LOGB_GT10 };
 
@@ -701,13 +760,13 @@ namespace ionosphere
 			{
 				for (size_t ang = 0; ang < dist.PA.size(); ang++)
 				{
-					if (dist.PA.at(ang) > 90.0) continue;
+					if (dist.PA.at(ang) > 90.0) continue; //there's no downward flux in the upward direction
 
 					degrees dangle{ (ang == 0) ?
 						(abs(dist.PA.at(ang + 1) - dist.PA.at(ang))) : //if we are at first index, ang - 1 doesn't exist
 						(abs(dist.PA.at(ang) - dist.PA.at(ang - 1))) };//if we are at last index, ang + 1 doesn't exist
 
-					dNsumPerE.at(egy) += dNpointofScatter.at(ang).at(egy) * 4 * PI * 27.85 *
+					dNsumPerE.at(egy) += dNpointofScatter.at(ang).at(egy) * 4 * PI * //27.85 *
 						abs(sin(dist.PA.at(ang) * RADS_PER_DEG) * sin(dangle / 2.0 * RADS_PER_DEG) *
 							cos(dist.PA.at(ang) * RADS_PER_DEG) * cos(dangle / 2.0 * RADS_PER_DEG));
 				}
@@ -731,12 +790,10 @@ namespace ionosphere
 			// output: 1D vector of the upgoing (backscatter) dNflux per E
 
 			// 3. Distribute BS dNflux Isotropically Over Pitch Bins
-			dNflux_v2D BS(dist.PA.size());
+			dNflux_v2D BS(dist.PA.size(), vector<double>(dist.E.size()));
 
 			for (size_t ang = 0; ang < dist.PA.size(); ang++)
 			{
-				BS.at(ang) = dNflux_v1D(dist.E.size());
-
 				if (dist.PA.at(ang) <= 90.0)
 					continue; //empty vector of the right size
 				else
@@ -787,28 +844,21 @@ namespace ionosphere
 			//
 			//
 			// Spit out csv files (for diagnostics)
-			{ //outputs pitch angle and energy bins to a CSV
-				utils::fileIO::CSV bins{ "debug/angle, pitch bins - satellite/bins.csv" };
-
-				bins.add(eom.satbins.E, "E");
-				bins.add(eom.satbins.PA, "PA");
-			}
+			try
 			{
-				utils::fileIO::CSV bins{ "debug/angle, pitch bins - simulation/bins.csv" };
+				debug::outputVectorsToCSV("debug/angle, pitch bins/satbins.csv", { eom.satbins.E, eom.satbins.PA }, vector<string>{ "E", "PA" });
 
-				bins.add(eom.distbins.E, "E");
-				bins.add(eom.distbins.PA, "PA");
+				debug::outputVectorsToCSV("debug/angle, pitch bins/distbins.csv", { eom.distbins.E, eom.distbins.PA }, vector<string>{ "E", "PA" });
+
+				debug::outputVectorsToCSV("debug/dNdwnwdIonosphereTop.csv", dNionsphTop, eom.distbins.PA, 600, 18000, 36000);
 			}
+			catch (const exception& e)
 			{
-				utils::fileIO::CSV dNionTop{ "debug/downwarddNIonosphereTop.csv" };
-				
-				vector<string> labels(eom.distbins.PA.size());
-				for (int label = 0; label < eom.distbins.PA.size(); label+=10000)
-					labels.at(label) = to_string(eom.distbins.PA.at(label));
-				cout << dNionsphTop.size() << "  " << labels.size() << "\n";
-				dNionTop.add(dNionsphTop, labels);
-
+				cout << "bins and sum dN down CSVs\n";
+				cout << e.what() << "\n";
+				throw;
 			}
+
 			// End spit out csv files
 			//
 			//
@@ -877,40 +927,29 @@ namespace ionosphere
 			//
 			//
 			// Spit out csv files (for diagnostics)
-			{ //produces % scatter probability at each level, per PA bin, per E bin
-				vector<string> labels(eom.satbins.PA.size() + 1);
-				for (int label = 0; label < eom.satbins.PA.size(); label++)
-					labels.at(label) = to_string(eom.satbins.PA.at(label));
-
-				string levelattrs{ "" };
-				for (size_t specs = 0; specs < eom.ionsph.names.size(); specs++) levelattrs += eom.ionsph.names.at(specs) + " ";
-				levelattrs += "Z p h";
-				labels.back() = levelattrs;
-
-				vector<vector<double>> prob(eom.satbins.PA.size() + 1, vector<double>(eom.satbins.E.size()));
-				prob.back().resize(eom.ionsph.p.size() * 3);
-				for (size_t PAs = 0; PAs < eom.satbins.PA.size(); PAs++)
+			try
+			{
+				auto sumSctPct = [&](double PA, double E)
 				{
-					for (size_t Es = 0; Es < eom.satbins.E.size(); Es++)
-					{
-						for (size_t species = 0; species < eom.ionsph.p.size(); species++)
-						{
-							if (PAs == 0 && Es == 0)
-							{
-								prob.back().at(3 * species) = eom.ionsph.Z.at(species);
-								prob.back().at(3 * species + 1) = eom.ionsph.p.at(species).at(level);
-								prob.back().at(3 * species + 2) = eom.ionsph.h.at(level);
-							}
-							prob.at(PAs).at(Es) += scatterPct(0.0, eom.ionsph.Z.at(species),
-								eom.ionsph.p.at(species).at(level),	eom.ionsph.h.at(species),
-								eom.satbins.E.at(Es), eom.satbins.PA.at(PAs));
-						}
-					}
-				}
+					double prob{ 0.0 };
 
-				utils::fileIO::CSV scatprobs{ "debug/level scatter probs/scatter_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
-				scatprobs.add(eom.satbins.E, "Es + PAs");
-				scatprobs.add(prob, labels);
+					for (size_t species = 0; species < eom.ionsph.p.size(); species++)
+					{
+						prob += scatterPct(0.0, eom.ionsph.Z.at(species), eom.ionsph.p.at(species).at(level), eom.ionsph.h.at(species),
+							E, PA);
+					}
+
+					return prob;
+				};
+				
+				debug::outputVectorsToCSV("debug/level scatter probs/scatter_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
+					sumSctPct, eom.satbins.PA, eom.satbins.E, eom.satbins.PA);
+			}
+			catch (const exception& e)
+			{
+				cout << "scatter probs CSVs\n";
+				cout << e.what() << "\n";
+				throw;
 			}
 			// End spit out csv files
 			//
@@ -941,7 +980,11 @@ namespace ionosphere
 				//upgoing - whatever hasn't scattered so far, reflects
 				//no scattering happens in this case
 				if (pitch > 90.0)
-					return (1.0 - pctScatteredAbove); //so return 1.0 - "sum % scattered in layers above"
+				{
+					double ret{ 1.0 - pctScatteredAbove };
+					pctScatteredAbove = 1.0;
+					return ret; //so return 1.0 - "sum % scattered in layers above"
+				}
 				
 				//==================//
 
@@ -990,6 +1033,12 @@ namespace ionosphere
 				}
 				else if (pa_nextlevel < 0.0)
 				{ //particle reflects before next level, add all particles of this pitch moving in the opposite direction
+					//
+					//
+					// this code has been validated: treating the bottom of the ionosphere as a hard boundary,
+					// the graph matches the graph produced with scattering turned off
+					//
+					//
 					for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
 					{
 						if (dNionsphTop.at(ang).at(eny) != 0.0 && pctScatteredAbove.at(ang).at(eny) < 1.0)
@@ -998,6 +1047,7 @@ namespace ionosphere
 								throw logic_error("ionosphere::multiLevelBS::bsAtLevel: sctReflPct will not return (1 - % scattered), logic error somewhere");
 
 							degrees pa_sat{ newPA(180.0 - pa_level, eom.ionsph.B.at(level), eom.B_sat) }; //pitch at satellite - eventually may need to run through sourceToSatellite
+							
 							dNflux dNbyEPAlayer{ dNionsphTop.at(ang).at(eny) //dNflux incident to ionosphere at a given E, PA
 								* sctReflPct(pctScatteredAbove.at(ang).at(eny), eom.distbins.E.at(eny), 180.0 - pa_level) //percent reflected - "180 - pa" is used to signal to the lambda to return whatever hasn't reflected
 								* Aratio_ion_bslevel //gyroradius cross-sectional area difference from ionsph to bslevel
@@ -1047,51 +1097,20 @@ namespace ionosphere
 			//
 			//
 			// Spit out csv files (for diagnostics)
-			{ //produces dN refl and scat at each level, per PA bin, per E bin
-				vector<string> scatlabels;
-				vector<string> refllabels;
-				vector<vector<double>> refl;
-				vector<vector<double>> scat;
-				vector<vector<double>> backscat;
-
-				for (size_t ang = 0; ang < eom.distbins.PA.size(); ang += 5000)
-				{
-					if (eom.distbins.PA.at(ang) < 90.0)
-					{
-						scatlabels.push_back(to_string(eom.distbins.PA.at(ang)));
-
-						vector<double> tmp(eom.distbins.E.size());
-						vector<double> tmp2(eom.distbins.E.size());
-						for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
-						{
-							tmp.at(eny) = dnBinned.at(ang).at(eny);
-							tmp2.at(eny) = ret.at(ang).at(eny);
-						}
-						scat.push_back(tmp);
-						backscat.push_back(tmp2);
-					}
-					else
-					{
-						refllabels.push_back(to_string(eom.distbins.PA.at(ang)));
-
-						vector<double> tmp(eom.distbins.E.size());
-						for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
-						{
-							tmp.at(eny) = upBinned.at(ang).at(eny);
-						}
-						refl.push_back(tmp);
-					}
-				}
-
-				utils::fileIO::CSV bksccsv{ "debug/level dN upgoing/bksc_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
-				utils::fileIO::CSV scatcsv{ "debug/level dN upgoing/scat_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
-				utils::fileIO::CSV reflcsv{ "debug/level dN upgoing/refl_" + to_string((int)eom.ionsph.s.at(level)) + ".csv" };
-				bksccsv.add(eom.distbins.E, "Es + PAs");
-				bksccsv.add(backscat, refllabels);
-				scatcsv.add(eom.distbins.E, "Es + PAs");
-				scatcsv.add(scat, scatlabels);
-				reflcsv.add(eom.distbins.E, "Es + PAs");
-				reflcsv.add(refl, refllabels);
+			try
+			{
+				debug::outputVectorsToCSV("debug/level dN/bksc_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
+					ret, eom.distbins.PA, 600, 0, 18000);
+				debug::outputVectorsToCSV("debug/level dN/scat_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
+					dnBinned, eom.distbins.PA, 600, 18000, 36000);
+				debug::outputVectorsToCSV("debug/level dN/refl_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
+					upBinned, eom.distbins.PA, 1, 17500, 18000); //should be very close to 90 degrees
+			}
+			catch (const exception& e)
+			{
+				cout << "level dN CSVs\n";
+				cout << e.what() << "\n";
+				throw;
 			}
 			// End spit out csv files
 			//

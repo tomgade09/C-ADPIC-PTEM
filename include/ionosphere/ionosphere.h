@@ -9,12 +9,6 @@
 
 namespace ionosphere
 {
-	namespace debug
-	{
-		DLLEXP EOMSimData generateIdealSatDists(const EOMSimData& eomdata);
-		DLLEXP void eomError(const EOMSimData& ideal, const EOMSimData& eomsim);
-	}
-
 	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata);
 
 	namespace dEFlux
@@ -32,7 +26,6 @@ namespace ionosphere
 	namespace backscat
 	{
 		DLLEXP dNflux     johnd_flux(eV E_eval, eV E_incident, dNflux dN_incident);
-		//DLLEXP dEflux     integralJohnd_flux(double lower, double upper, double E_incident);
 		DLLEXP dNflux_v2D downwardToBackscatter(const Bins& dist, const dNflux_v2D& dNpointofScatter);
 		DLLEXP dNflux_v2D ionsphToSatellite(const EOMSimData& eomdata, const dNflux_v2D& bsCounts);
 	}

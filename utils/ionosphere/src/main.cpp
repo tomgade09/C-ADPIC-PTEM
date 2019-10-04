@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
 
 	auto err = [](double x, double y) { if (x == 0.0 && y == 0.0) return 0.0; return abs((x - y) / x); }; //check on error between two values
 
+
 	// Form Maxwellian
 	MaxwellianSpecs maxwellian(4.0 / 95.0); //dlogE of distribution - 4.0 / 95.0, dlogE of bins - 4.0 / 47.0
 	maxwellian.push_back_ion(2.5,   6.00e7, 13500); //12000
@@ -89,11 +90,13 @@ int main(int argc, char* argv[])
 	maxwellian.push_back_mag(2.5e3, 1.20e8, 2000); //4250
 	maxwellian.magModFactor = NFLUXMAGRATIO; //pitch angle space density difference from ionosphere, pitch range is from 0-16, not 0-90
 
+
 	// Form Postprocessing Data
 	Bins distbins(generateSpacedValues(0.5, 4.5, DSTNEBINS, true, true), generateSpacedValues(179.9975, 0.0025, DSTNANGLEBINS, false, true));
 	Bins satbins (generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(5.0, 175.0, CDFNANGLEBINS, false, true));
 
 
+	/* Physical ionosphere model */
 	auto O = [](double s) {
 		if (s > 135000.0)
 			return pow(10.0, (4.0 - log10(3.0e10)) / (800000.0 - 135000.0) * s + 11.79203);
@@ -103,7 +106,6 @@ int main(int argc, char* argv[])
 			return pow(10.0, (log10(6.0e11) - 8.0) / (98000.0 - 76000.0) * s - 5.0518);
 	};
 
-	/* Physical ionosphere model */
 	IonosphereSpecs ionsph(58, 620000.0, 50000.0); //this is in alt - converted to s (dist along field line) once it's inserted into eomdata below (constructor handles this)
 	//Ionosphere ionsph(232, 620000.0, 50000.0);
 	//These functions return number density in cm^-3
@@ -116,6 +118,7 @@ int main(int argc, char* argv[])
 	//Ionosphere ionsph(2, 620000.0, 619999.9999);
 	//ionsph.addSpecies("ScatterAll", 1.0e6, [](double s) { return 1.0e30; });
 	/* End test ionosphere */
+
 
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
