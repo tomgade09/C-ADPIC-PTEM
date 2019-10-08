@@ -123,10 +123,6 @@ int main(int argc, char* argv[])
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
 
-	//printVec(ppdata.maxWeights, 0, 96);
-	//std::cout << "\n";
-	//printVec(ppdata.maxWeights, 1728000, 1728096);
-	//exit(1);
 
 	// Run Post Process Code
 	std::vector<std::vector<double>> fluxData;
