@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 #include <functional>
 
 #define VEC(T) std::vector<T> //to save lots of space

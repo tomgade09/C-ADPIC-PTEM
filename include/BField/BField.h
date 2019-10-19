@@ -4,7 +4,7 @@
 #include <string>
 
 //CUDA includes
-#include "host_defines.h"
+#include "cuda_runtime.h"
 
 class BField
 {
