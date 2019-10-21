@@ -16,9 +16,9 @@
 #include "ErrorHandling/cudaErrorCheck.h"
 #include "ErrorHandling/SimFatalException.h"
 
-//CUDA Variables - if you change these, don't forget to change the associated curand code/blocks/etc
-// For Geforce 960M (author's computer) - maximum 1024 threads per block - try this to see if it results in faster code execution sometime
-constexpr int  BLOCKSIZE{ 256 }; //Number of threads per block - this is most efficient at a multiple of 128 (256 seems to work well), although 250 has been used with slightly less performance
+//CUDA Variables
+// For Geforce 960M (author's computer) - maximum 1024 threads per block - for whatever reason, 256 threads per block is optimal for this code on GTX 1080
+constexpr int  BLOCKSIZE{ 256 }; //Number of threads per block
 
 //Commonly used values
 extern const int SIMCHARSIZE{ 3 * sizeof(double) };
@@ -175,16 +175,6 @@ namespace physics
 		*vpara += foRungeKuttaCUDA(*vpara, dt, args, &bfield, &efield);
 		*s += (*vpara + v_orig) / 2 * dt;
 	}
-
-	/*
-	__device__ void fuzzyIonosphere(double& s_d, const double s_esc_absolute, double& v_d, double& t_escape_d, const double simtime)
-	{
-		if (v_d > 0.0) { return; } //or do we want upgoing to possibly collide???
-		if (someRandomGenerator >/<(=)/== someCondition || s_d <= s_esc_absolute)
-			t_escape_d = simtime;
-		t_escape_d = simtime;
-	}
-	*/
 }
 
 //Simulation member functions
@@ -215,7 +205,22 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	if (!initialized_m)
 		throw SimFatalException("Simulation::iterateSimulation: sim not initialized with initializeSimulation()", __FILE__, __LINE__);
 	
-	printSimAttributes(numberOfIterations, checkDoneEvery);
+	//
+	// Quick fix to show active GPU name.
+	// This code is not checked for returned CUDA errors.  Eventually replace by reading for devices set to use by Environment. 
+	// Maybe build this into printSimAttributes.
+	//
+	cudaDeviceProp gpuprop;
+	int dev{ -1 };
+	cudaGetDevice(&dev);
+	cudaGetDeviceProperties(&gpuprop, dev);
+	//
+	//
+	//
+	//
+	//
+
+	printSimAttributes(numberOfIterations, checkDoneEvery, gpuprop.name);
 	
 	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations));
 	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));

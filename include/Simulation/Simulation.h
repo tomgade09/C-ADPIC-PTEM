@@ -17,7 +17,7 @@
 class Simulation
 {
 protected:
-	//Structs that fill various roles	
+	//Structs and classes that fill various roles	
 	struct TempSat
 	{//Struct that holds data to create satellite - allows satellites to be added in any order, but ensure they are created before particles
 		unsigned int particleInd;
@@ -37,7 +37,6 @@ protected:
 		SatandPart(std::unique_ptr<Satellite> sat, std::shared_ptr<Particle> part) :
 			satellite{ std::move(sat) }, particle{ std::move(part) } {}
 	};
-
 
 	//Simulation Characteristics
 	double       dt_m;
@@ -71,7 +70,7 @@ protected:
 	//Protected functions
 	virtual void createSatellite(TempSat* tmpsat, bool save = true);
 	void incTime() { simTime_m += dt_m; }
-	virtual void printSimAttributes(int numberOfIterations, int itersBtwCouts);
+	virtual void printSimAttributes(int numberOfIterations, int itersBtwCouts, std::string GPUName);
 
 
 public:
@@ -81,6 +80,8 @@ public:
 
 	Simulation(const Simulation&) = delete;
 	Simulation& operator=(const Simulation&) = delete;
+
+	class Environment;
 
 	///One liner functions (usually access)
 	double	    simtime() const { return simTime_m; }

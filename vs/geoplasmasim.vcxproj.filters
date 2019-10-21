@@ -22,6 +22,9 @@
     <CudaCompile Include="..\src\Simulation\simulationphysics.cu">
       <Filter>Source Files\Simulation</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\Simulation\Environment.cu">
+      <Filter>Source Files\Simulation</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\LogFile\LogFile.cpp">
@@ -178,6 +181,9 @@
     </ClInclude>
     <ClInclude Include="..\include\ionosphere\ionosphereUtils.h">
       <Filter>Header Files\ionosphere</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Simulation\Environment.h">
+      <Filter>Header Files\Simulation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

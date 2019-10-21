@@ -179,6 +179,60 @@ namespace ionosphere
 		//
 		//
 
+		//
+		//
+		// QSPS test functions
+		/*
+		vector<double> final_s;
+		vector<double> final_vpara;
+		vector<double> final_vperp;
+
+		utils::fileIO::readDblBin(final_s, eomdata.datadir + "bins/particles_final/elec_s.bin");
+		utils::fileIO::readDblBin(final_vpara, eomdata.datadir + "bins/particles_final/elec_vpara.bin");
+		utils::fileIO::readDblBin(final_vperp, eomdata.datadir + "bins/particles_final/elec_vperp.bin");
+
+		vector<vector<double>> in_sim;
+		for (size_t ind = 0; ind < final_s.size(); ind++)
+		{
+			if (final_s.at(ind) < eomdata.s_mag && final_s.at(ind) > eomdata.s_ion)
+			{
+				in_sim.push_back(vector<double>{ final_s.at(ind), final_vpara.at(ind), final_vperp.at(ind) });
+			}
+		}
+
+		double low_s{ 1.0e18 }; double low_vpara{ 1.0e18 }; double low_vperp{ 1.0e18 };
+		double hi_s{ 0.0 };	double hi_vpara{ 0.0 }; double hi_vperp{ 0.0 };
+
+		for (size_t ind = 0; ind < in_sim.size(); ind++)
+		{
+			if (in_sim.at(ind).at(0) < low_s)
+			{
+				low_s = in_sim.at(ind).at(0);
+				low_vpara = in_sim.at(ind).at(1);
+				low_vperp = in_sim.at(ind).at(2);
+			}
+			if (in_sim.at(ind).at(0) > hi_s)
+			{
+				hi_s = in_sim.at(ind).at(0);
+				hi_vpara = in_sim.at(ind).at(1);
+				hi_vperp = in_sim.at(ind).at(2);
+			}
+		}
+
+		cout << "Number of Particles Still In Sim: " << in_sim.size() << "\n";
+		cout << "s_Mag, s_Ion: " << eomdata.s_mag << ", " << eomdata.s_ion << "\n";
+		cout << "s_QSPS Top, s_QSPS btm: " << "11122579, 9796766\n";
+		cout << "Lowest s - s, vpara, vperp : " << low_s << ", " << low_vpara << ", " << low_vperp << "\n";
+		cout << "Highest s - s, vpara, vperp: " << hi_s << ", " << hi_vpara << ", " << hi_vperp << "\n";
+
+		utils::fileIO::write2DCSV(in_sim, "in_sim.csv", in_sim.at(0).size(), in_sim.size());
+
+		exit(1);
+		*/
+		//
+		//
+		//
+
 		printIonosphere(eomdata.ionsph);
 
 		// 1. Adjust Maxwellian by Cos, SQRT(B ratio) Factors
@@ -430,20 +484,35 @@ namespace ionosphere
 		//constexpr double EVANS_SECD_LOGM{ -2.1 };
 		//constexpr double EVANS_SECD_LOGB{ 0.3 };
 
-		constexpr double JOHND_PRIM_LOGM{ 1.132 };
-		constexpr double JOHND_PRIM_LOGB{ -4.90 };
-		constexpr double JOHND_SECD_LOGM_LT10{ -1.0 };
-		constexpr double JOHND_SECD_LOGB_LT10{ -2.5 };
-		constexpr double JOHND_SECD_LOGM_GT10{ -2.245 };
-		constexpr double JOHND_SECD_LOGB_GT10{  0.153 };
+		//constexpr double JOHND_PRIM_LOGM{ 1.132 };
+		//constexpr double JOHND_PRIM_LOGB{ -4.90 };
+		//constexpr double JOHND_SECD_LOGM_LT10{ -1.0 };
+		//constexpr double JOHND_SECD_LOGB_LT10{ -2.5 };
+		//constexpr double JOHND_SECD_LOGM_GT10{ -2.245 };
+		//constexpr double JOHND_SECD_LOGB_GT10{  0.153 };
+
+		constexpr double JOHND_PRIM_LOGM{ 0.505 };
+		constexpr double JOHND_PRIM_LOGB{ -5.16 };
+		constexpr double JOHND_SECD_LOGM_LT25{ -0.975 };
+		constexpr double JOHND_SECD_LOGB_LT25{ -1.47 };
+		constexpr double JOHND_SECD_LOGM_GT25{ -1.95 };
+		constexpr double JOHND_SECD_LOGB_GT25{ -0.11 };
 
 		DLLEXP dNflux johnd_flux(eV E_eval, eV E_incident, dNflux dN_incident)
 		{
-			if (E_eval > E_incident * (1 + FLT_EPSILON)) return 0.0;
+			if (E_eval > E_incident * (1.0 + FLT_EPSILON)) return 0.0;
 				//throw logic_error("johnd_flux: E_eval is higher than E_incident.  Not physical.  Eval, Incident: " + to_string(E_eval) + " , " + to_string(E_incident));
 
-			double secd_logm{ (E_incident <= 10.0) ? JOHND_SECD_LOGM_LT10 : JOHND_SECD_LOGM_GT10 };
-			double secd_logb{ (E_incident <= 10.0) ? JOHND_SECD_LOGB_LT10 : JOHND_SECD_LOGB_GT10 };
+			double secd_logm{ (E_incident <= 25.0) ? JOHND_SECD_LOGM_LT25 : JOHND_SECD_LOGM_GT25 };
+			double secd_logb{ (E_incident <= 25.0) ? JOHND_SECD_LOGB_LT25 : JOHND_SECD_LOGB_GT25 };
+
+			//
+			//
+			if (E_incident <= 25.0)
+				return E_incident * dN_incident * pow(10.0, secd_logm * log10(25.0) + secd_logb) + //secondary BS
+					   E_incident * dN_incident * (10000.0 / E_incident) * pow(10.0, JOHND_PRIM_LOGM * log10(E_eval / E_incident) + JOHND_PRIM_LOGB); //primary BS;
+			//
+			//
 
 			return E_incident * dN_incident * pow(10.0, secd_logm * log10(E_eval) + secd_logb) + //secondary BS
 				   E_incident * dN_incident * (10000.0 / E_incident) * pow(10.0, JOHND_PRIM_LOGM * log10(E_eval / E_incident) + JOHND_PRIM_LOGB); //primary BS

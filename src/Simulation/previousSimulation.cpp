@@ -10,7 +10,8 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, /*
 	std::cout << "Start Sim Load\n";
 
 	if (prevSimDir == std::string("..\\_dataout\\190202_11.37.17.620km.dtDivBy10\\\\") ||
-		prevSimDir == std::string("..\\_dataout\\190325_23.03.53.620km.dtDivBy10\\\\"))
+		prevSimDir == std::string("..\\_dataout\\190325_23.03.53.620km.dtDivBy10\\\\") ||
+		prevSimDir == std::string("..\\_dataout\\191103_23.03.48.QSPS.100eV.dtDivBy10\\\\"))
 	{ //hacky work around of a bug in the saved sim attributes file for the above sim results (0.0001s dt)
 		std::cout << "special case\n";
 

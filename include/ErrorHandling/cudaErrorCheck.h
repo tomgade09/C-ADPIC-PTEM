@@ -17,18 +17,19 @@
 #define CUDA_KERNEL_ERRCHK_WABORT() __cudaCheckError( __FILE__, __LINE__, false, true )
 #define CUDA_KERNEL_ERRCHK_WSYNC_WABORT() __cudaCheckError( __FILE__, __LINE__, true, true )
 
-inline void __cudaSafeCall(cudaError err, const char* file, const int line)
+inline bool __cudaSafeCall(cudaError err, const char* file, const int line)
 {
 	if (cudaSuccess != err)
 	{
 		std::cerr << file << ":" << line << " : " << "CUDA API error: " << cudaGetErrorString(err) << std::endl;
 		std::cout << "CUDA error: check log file for details" << std::endl;
+		return true;
 	}
 
-	return;
+	return false;
 }
 
-inline void __cudaCheckError(const char* file, const int line, bool sync=false, bool abort=false)
+inline bool __cudaCheckError(const char* file, const int line, bool sync=false, bool abort=false)
 {
 	if (sync)
 	{
@@ -39,6 +40,7 @@ inline void __cudaCheckError(const char* file, const int line, bool sync=false, 
 			std::cout << "CUDA error: check log file for details" << std::endl;
 			if (abort)
 				exit(1);
+			return true;
 		}
 	}
 	else
@@ -48,10 +50,11 @@ inline void __cudaCheckError(const char* file, const int line, bool sync=false, 
 		{
 			std::cerr << file << ":" << line << " : " << "CUDA Kernel error: " << cudaGetErrorString(err) << std::endl;
 			std::cout << "CUDA error: check log file for details" << std::endl;
+			return true;
 		}
 	}
 
-	return;
+	return false;
 }
 
 #endif /* CUDAERRORCHECK_H */

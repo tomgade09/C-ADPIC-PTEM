@@ -71,6 +71,7 @@
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\Satellite\Satellite.h" />
     <ClInclude Include="..\include\SimAttributes\SimAttributes.h" />
+    <ClInclude Include="..\include\Simulation\Environment.h" />
     <ClInclude Include="..\include\Simulation\Simulation.h" />
     <ClInclude Include="..\include\utils\fileIO.h" />
     <ClInclude Include="..\include\utils\readIOclasses.h" />
@@ -88,6 +89,7 @@
     <CudaCompile Include="..\src\EField\QSPS.cu" />
     <CudaCompile Include="..\src\Particle\Particle.cu" />
     <CudaCompile Include="..\src\Satellite\Satellite.cu" />
+    <CudaCompile Include="..\src\Simulation\Environment.cu" />
     <CudaCompile Include="..\src\Simulation\simulationphysics.cu" />
   </ItemGroup>
   <ItemGroup>

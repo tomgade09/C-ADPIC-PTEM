@@ -24,9 +24,10 @@ Simulation::~Simulation()
 }
 
 
-void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts) //protected
+void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts, std::string GPUName) //protected
 {
 	//Sim Header (folder) printed from Python - move here eventually
+	std::cout << "GPU Name:       " << GPUName << "\n";
 	std::cout << "Sim between:    " << simMin_m << "m - " << simMax_m << "m" << std::endl;
 	std::cout << "dt:             " << dt_m << "s" << std::endl;
 	std::cout << "BField Model:   " << BFieldModel_m->name() << std::endl;
