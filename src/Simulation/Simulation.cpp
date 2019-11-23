@@ -55,7 +55,7 @@ const std::vector<std::vector<double>>& Simulation::getParticleData(unsigned int
 	return ((originalData) ? (particles_m.at(partInd)->data(true)) : (particles_m.at(partInd)->data(false)));
 }
 
-const std::vector<std::vector<std::vector<double>>>& Simulation::getSatelliteData(unsigned int satInd)
+const std::vector<std::vector<double>>& Simulation::getSatelliteData(unsigned int satInd)
 {
 	if (satInd > (satPartPairs_m.size() - 1))
 		throw std::out_of_range("Simulation::getSatelliteData: no satellite at the specifed index " + std::to_string(satInd));
@@ -88,6 +88,10 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 	if (simAttr_m == nullptr)
 		save = false;
 
+	for (size_t part = 0; part < particles_m.size(); part++)
+		if (name == particles_m.at(part).get()->name())
+			throw std::invalid_argument("Simulation::createParticleType: particle already exists with the name: " + name);
+
 	logFile_m->writeLogFileEntry("Simulation::createParticleType: Particle Type Created: " + name + ": Mass: " + std::to_string(mass) + ", Charge: " + std::to_string(charge) + ", Number of Parts: " + std::to_string(numParts) + ", Files Loaded?: " + ((loadFilesDir != "") ? "True" : "False"));
 	
 	std::vector<std::string> attrNames{ "vpara", "vperp", "s", "t_inc", "t_esc" };
@@ -109,7 +113,7 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 	if (loadFilesDir != "")
 		newPart->loadDataFromDisk(loadFilesDir);
 
-	newPart->dataAttr(true, 4) = std::vector<double>(newPart->getNumberOfParticles(), -1.0); //sets t_esc to -1.0 - i.e. particles haven't escaped yet
+	newPart->__data(true).at(4) = std::vector<double>(newPart->getNumberOfParticles(), -1.0); //sets t_esc to -1.0 - i.e. particles haven't escaped yet
 	particles_m.push_back(std::move(newPart));
 }
 

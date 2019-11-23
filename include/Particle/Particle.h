@@ -6,63 +6,72 @@
 
 #include "dlldefines.h"
 
+using std::vector;
+using std::string;
+
+#define STRVEC vector<string>
+#define DBLVEC vector<double>
+#define DBL2DV vector<vector<double>>
+
 class Particle
 {
 protected:
-	std::vector<std::vector<double>> origData_m;
-	std::vector<std::vector<double>> currData_m;
+	string name_m; //name of particle
 
-	//double*  origData1D_d{ nullptr };
-	double*  currData1D_d{ nullptr };
-	//double** origData2D_d{ nullptr };
-	double** currData2D_d{ nullptr };
+	STRVEC attributeNames_m;
+	DBL2DV origData_m; //initial data - not modified, but eventually saved to disk
+	DBL2DV currData_m; //current data - that which is being updated by iterating the sim
 
-	std::vector<std::string> attributeNames_m;
+	bool initDataLoaded_m{ false };
+	bool initializedGPU_m{ false }; //consider what to do with this with multi GPU - still necessary?
 
 	long numberOfParticles_m;
 	double mass_m;
 	double charge_m;
 
-	std::string name_m;
+	//device pointers
+	double*  currData1D_d{ nullptr }; //make vectors for handling multiple GPUs
+	double** currData2D_d{ nullptr };
 
-	void initializeGPU();
-
-	bool initDataLoaded_m{ false };
-	bool dataOnGPU_m{ false };
+	virtual void initializeGPU(); //need to modify all of these below to account for multi GPU
+	virtual void copyDataToGPU(bool origToGPU = true);
+	virtual void freeGPUMemory();
+	virtual void deserialize(string serialFolder, string name);
 
 public:
-	Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts);
-	~Particle();
+	Particle(string name, vector<string> attributeNames, double mass, double charge, long numParts);
+	Particle(string serialFolder, string name);
+	virtual ~Particle();
 	Particle(const Particle&) = delete;
-	Particle& operator=(const Particle&) = delete;
+	Particle& operator=(const Particle& otherpart) = delete;
 
-	std::vector<std::vector<double>>&       __data(bool orig) { return ((orig) ? origData_m : currData_m); } //returns a non-const version of data
-	const std::vector<std::vector<double>>& data(bool orig) const { return ((orig) ? origData_m : currData_m); } //returns a const version of data
-	std::vector<double>&                    dataAttr(bool orig, int attr) { return ((orig) ? origData_m.at(attr) : currData_m.at(attr)); }
-	const std::vector<std::string>&         attrNames() const { return attributeNames_m; }
-	std::string name()    const { return name_m; }
-	double      mass()    const { return mass_m; }
-	double      charge()  const { return charge_m; }
-	long        getNumberOfParticles()  const { return numberOfParticles_m; }
-	int         getNumberOfAttributes() const { return (int)attributeNames_m.size(); }
-	bool        getInitDataLoaded() const { return initDataLoaded_m; }
-	//double**    getOrigDataGPUPtr() const { return origData2D_d; }
-	double**    getCurrDataGPUPtr() const { return currData2D_d; }
+	//Access functions
+	string        name()      const;
+	const STRVEC& attributeNames() const;
+	DBL2DV&       __data(bool orig);
+	const DBL2DV& data(bool orig) const;	
+	double        mass()      const;
+	double        charge()    const;
+	size_t        getNumberOfAttributes() const;
+	long          getNumberOfParticles()  const;
+	bool          getInitDataLoaded() const;
+	double**      getCurrDataGPUPtr() const;
 
-	int         getAttrIndByName(std::string searchName) const;
-	std::string getAttrNameByInd(int searchIndx) const;
+	size_t        getAttrIndByName(string searchName) const;
+	string        getAttrNameByInd(size_t searchIndx) const;
 
-	void loadDataFromMem(std::vector<std::vector<double>> data, bool orig = true) { ((orig) ? origData_m = data : currData_m = data); numberOfParticles_m = ((orig) ? (int)origData_m.at(0).size() : (int)currData_m.at(0).size()); }
-	void loadDataFromDisk(std::string folder, bool orig = true);
-	void saveDataToDisk(std::string folder, bool orig) const;
-	void generateRandomParticles(const std::vector<double>& s, int startInd, int length, double vmean, double kBT_eV, double mass);
-	
+	//Other functions
 	void setParticleSource_s(double s_ion, double s_mag);
 
-	void copyDataToGPU();
-	void copyDataToHost();
-	void freeGPUMemory();
-	void clearGPUMemory();
+	void loadDataFromMem(vector<vector<double>> data, bool orig = true);
+	void loadDataFromDisk(string folder, bool orig = true);
+	void saveDataToDisk(string folder, bool orig) const;
+	void copyDataToHost(); //needs to be public because Particle doesn't know when things are done modifying GPU data
+	void serialize(string serialFolder);
 };
+
+#undef STRVEC
+#undef DBLVEC
+#undef DBL2DV
 
 #endif

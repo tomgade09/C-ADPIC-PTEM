@@ -18,6 +18,10 @@ def simulationRunMain():
     #sim.addEFieldModel("QSPS", "6122055.12507376, 7151503.70444183, 8.00e-4")
     #sim.addEFieldModel("QSPS", "9796766.33308899, 11122579.974093, 7.54254e-5")
     sim.setupExampleSim(NUMPARTICLES)
+    #sim.createSatellite(0, 9796766.33308899, False, "QSPSBtmUpg")
+    #sim.createSatellite(0, 9796766.33308899, True, "QSPSBtmDng")
+    #sim.createSatellite(0, 11122579.974093, False, "QSPSTopUpg")
+    #sim.createSatellite(0, 11122579.974093, True, "QSPSTopDng")
     sim.run(NUMITER, ITERBTWCOUTS)
 
     fields = sim.getFieldsAtAllS(0.0, 4000, (sim.simMax_m - sim.simMin_m) / (4000), sim.simMin_m)

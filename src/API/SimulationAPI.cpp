@@ -43,21 +43,18 @@ DLLEXP_EXTC void terminateSimulationAPI(Sim* sim) {
 DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* loadFileDir)
 {
 	SIM_API_EXCEP_CHECK(
-		double simMin{ sim->simMin() };
-		double simMax{ sim->simMax() };
-
 		sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
 		//sim->setBFieldModel("DipoleB", { 72.0 });
 		//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 
 		sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 
-		sim->createTempSat(0, simMin, true, "btmElec");
-		sim->createTempSat(0, simMax, false, "topElec");
+		sim->createTempSat(0, sim->simMin(), true, "btmElec");
+		sim->createTempSat(0, sim->simMax(), false, "topElec");
 		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
 		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
 
-		sim->particle(0)->setParticleSource_s(simMin, simMax);
+		sim->particle(0)->setParticleSource_s(sim->simMin(), sim->simMax());
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
@@ -106,9 +103,9 @@ DLLEXP_EXTC int  getNumberOfSatellitesAPI(Sim* sim)
 	return -1; //if above fails
 }
 
-DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd)
+DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int attributeInd)
 {
-	SIM_API_EXCEP_CHECK(return sim->getSatelliteData(satelliteInd).at(msmtInd).at(attributeInd).data());
+	SIM_API_EXCEP_CHECK(return sim->getSatelliteData(satelliteInd).at(attributeInd).data());
 	return nullptr; //if above fails
 }
 

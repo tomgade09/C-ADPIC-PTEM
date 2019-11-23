@@ -106,7 +106,7 @@ class Simulation(_Simulation._SimulationCDLL):
             B_E_z_dim.append(z0 + binsize * iii)
         return [B_z, E_z, B_E_z_dim]
 
-    def getSatelliteData(self): #Need to add case where satellite captures more or less than the number of particles
+    def getSatelliteData(self):
         if self.numAttrs_m == []:
             self.__getSimChars()
 
@@ -114,7 +114,7 @@ class Simulation(_Simulation._SimulationCDLL):
         for jjj in range(self.numSats_m):
             attrptr = []
             for kk in range(self.numAttrs_m[self.satPartInd_m[jjj]] + 2):
-                attrptr.append(self.simDLL_m.getSatelliteDataPointersAPI(self.cppSimPtr_m, jjj, 0, kk))
+                attrptr.append(self.simDLL_m.getSatelliteDataPointersAPI(self.cppSimPtr_m, jjj, kk))
             satptr.append(attrptr)
         
         satsdata = []

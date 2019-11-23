@@ -28,7 +28,7 @@ namespace physics
 	__global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double mass, bool vperpToMu, int timeInd = 4)
 	{//dataToConvert[0] = vpara, [1] = vperp, [2] = s, [3] = t_incident, [4] = t_escape
 		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
-
+		
 		if (dataToConvert[1][thdInd] != 0.0)
 		{
 			double B_s{ (*bfield)->getBFieldAtS(dataToConvert[2][thdInd], dataToConvert[timeInd][thdInd]) };
@@ -191,7 +191,9 @@ void Simulation::initializeSimulation()
 	EFieldModel_d = EFieldModel_m->getPtrGPU();
 
 	if (tempSats_m.size() > 0)
-	{ LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii).get())); } //create satellites
+	{//create satellites 
+		LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii).get()));
+	}
 	else
 		std::cerr << "Simulation::initializeSimulation: warning: no satellites created" << std::endl;
 
@@ -224,14 +226,12 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	
 	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations));
 	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
-
-	//Copy data to device
-	LOOP_OVER_1D_ARRAY(particles_m.size(), particles_m.at(iii)->copyDataToGPU());
 	
 	//convert particle vperp data to mu
-	for (auto part = particles_m.begin(); part < particles_m.end(); part++)
-		vperpMuConvert <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, (*part)->mass(), true);
-	
+	for (auto& part : particles_m)
+		vperpMuConvert << < part->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >> > (part->getCurrDataGPUPtr(), BFieldModel_d, part->mass(), true);
+	CUDA_KERNEL_ERRCHK_WSYNC();
+
 	//Setup on GPU variable that checks to see if any threads still have a particle in sim and if not, end iterations early
 	bool* simDone_d{ nullptr };
 	CUDA_API_ERRCHK(cudaMalloc((void**)&simDone_d, sizeof(bool)));
@@ -309,7 +309,6 @@ void Simulation::freeGPUMemory()
 
 	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
 
-	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->freeGPUMemory());
 	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->freeGPUMemory());
 
 	dataOnGPU_m = false;

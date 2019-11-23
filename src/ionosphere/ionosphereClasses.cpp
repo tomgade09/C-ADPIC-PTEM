@@ -242,18 +242,18 @@ namespace ionosphere
 			mass = particle->mass();
 			charge = particle->charge();
 
-			int vparaind{ particle->getAttrIndByName("vpara") };
-			int vperpind{ particle->getAttrIndByName("vperp") };
-			int sind{ particle->getAttrIndByName("s") };
+			size_t vparaind{ particle->getAttrIndByName("vpara") };
+			size_t vperpind{ particle->getAttrIndByName("vperp") };
+			size_t sind{ particle->getAttrIndByName("s") };
 
 			initial = ParticleData(particle->__data(true).at(vparaind), particle->__data(true).at(vperpind), mass);
 			initial.s_pos = particle->__data(true).at(sind);
-			bottom = ParticleData(sat_btm->__data().at(0).at(vparaind), sat_btm->__data().at(0).at(vperpind), mass);
-			bottom.s_pos = std::move(sat_btm->__data().at(0).at(sind));
-			upward = ParticleData(sat_upg->__data().at(0).at(vparaind), sat_upg->__data().at(0).at(vperpind), mass);
-			upward.s_pos = std::move(sat_upg->__data().at(0).at(sind));
-			dnward = ParticleData(sat_dng->__data().at(0).at(vparaind), sat_dng->__data().at(0).at(vperpind), mass);
-			dnward.s_pos = std::move(sat_dng->__data().at(0).at(sind));
+			bottom = ParticleData(sat_btm->__data().at(vparaind), sat_btm->__data().at(vperpind), mass);
+			bottom.s_pos = std::move(sat_btm->__data().at(sind));
+			upward = ParticleData(sat_upg->__data().at(vparaind), sat_upg->__data().at(vperpind), mass);
+			upward.s_pos = std::move(sat_upg->__data().at(sind));
+			dnward = ParticleData(sat_dng->__data().at(vparaind), sat_dng->__data().at(vperpind), mass);
+			dnward.s_pos = std::move(sat_dng->__data().at(sind));
 
 			DipoleB dip(sim->Bmodel()->ILAT(), 1.0e-10, RADIUS_EARTH / 1000.0, false);
 			ionsph.altToS(&dip);

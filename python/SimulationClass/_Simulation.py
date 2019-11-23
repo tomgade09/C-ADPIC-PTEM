@@ -50,7 +50,7 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.createSatelliteAPI.restype = None
         self.simDLL_m.getNumberOfSatellitesAPI.argtypes = (ctypes.c_void_p,)
         self.simDLL_m.getNumberOfSatellitesAPI.restype = ctypes.c_int
-        self.simDLL_m.getSatelliteDataPointersAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int)
+        self.simDLL_m.getSatelliteDataPointersAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
         self.simDLL_m.getSatelliteDataPointersAPI.restype = ctypes.POINTER(ctypes.c_double)
         self.simDLL_m.getPartIndOfSatAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getPartIndOfSatAPI.restype = ctypes.c_int

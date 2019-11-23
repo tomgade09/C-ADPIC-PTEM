@@ -5,6 +5,8 @@
 #include <fstream>
 #include <cmath>
 
+using std::cerr;
+
 namespace utils
 {
 	namespace fileIO
@@ -34,7 +36,14 @@ namespace utils
 		//public
 		CSV::~CSV()
 		{
-			write();
+			try
+			{
+				write();
+			}
+			catch (std::exception & e)
+			{
+				cerr << "CSV::~CSV: " << e.what() << ". CSV did not write to disk";
+			}
 		}
 
 		void CSV::add(std::vector<double> vec, std::string label)

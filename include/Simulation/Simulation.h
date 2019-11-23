@@ -106,8 +106,8 @@ public:
 	EField*     Emodel()                    const { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
-	virtual const VEC(VEC(double))&      getParticleData(unsigned int partInd, bool originalData);
-	virtual const VEC(VEC(VEC(double)))& getSatelliteData(unsigned int satInd);
+	virtual const VEC(VEC(double))& getParticleData(unsigned int partInd, bool originalData);
+	virtual const VEC(VEC(double))& getSatelliteData(unsigned int satInd);
 	#undef VEC
 
 	///Forward decs for cpp file, or pure virtuals

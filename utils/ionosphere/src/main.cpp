@@ -15,7 +15,7 @@ constexpr int CDFNANGLEBINS   { 18 };
 constexpr int DSTNEBINS       { 96 };
 constexpr int DSTNANGLEBINS   { 36000 };
 constexpr double NFLUXIONRATIO{ 90.0 / 90.0 }; //numerator (90) is normal range (0-90), denominator is the range of the distribution
-constexpr double NFLUXMAGRATIO{ 16.0 / 90.0 }; //so here, the distribution is from 16 degrees to zero (not 90 to 0), meaning the dist has more particles per angle
+constexpr double NFLUXMAGRATIO{ 90.0 / 90.0 }; //so here, the distribution is from 16 degrees to zero (not 90 to 0), meaning the dist has more particles per angle
 const std::string PARTNAME    { "elec" };
 const std::string BTMSATNM    { "btmElec" };
 const std::string UPGSATNM    { "4e6ElecUpg" };
@@ -403,7 +403,7 @@ int main(int argc, char* argv[])
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
 
-	debug::setIdealSatDists(eomdata);
+	//debug::setIdealSatDists(eomdata); //set non-time dependent equation - calculated distribution
 	debug::setRealMaxwellians(eomdata);
 
 

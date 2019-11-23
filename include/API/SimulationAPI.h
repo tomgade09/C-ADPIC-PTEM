@@ -34,7 +34,7 @@ DLLEXP_EXTC void createParticleTypeAPI(Sim* sim, const char* name, double mass, 
 //Satellite Management Functions
 DLLEXP_EXTC void          createSatelliteAPI(Sim* sim, int particleInd, double altitude, bool upwardFacing, const char* name);
 DLLEXP_EXTC int           getNumberOfSatellitesAPI(Sim* sim);
-DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int msmtInd, int attributeInd);
+DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd, int attributeInd);
 DLLEXP_EXTC int           getPartIndOfSatAPI(Sim* sim, int satelliteInd);
 
 

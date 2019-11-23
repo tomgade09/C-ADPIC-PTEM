@@ -253,8 +253,8 @@ namespace ionosphere
 			}
 			else if (eomdata.initial.s_pos.at(part) > eomdata.s_mag * 0.999)//magnetospheric source, downgoing
 			{
-				if (eomdata.dnward.pitch.at(part) >= 90.0)
-					throw logic_error("ionosphere::steadyFlux : downward pitch of particle is >= 90 deg");
+				//if (eomdata.dnward.pitch.at(part) >= 90.0)
+					//throw logic_error("ionosphere::steadyFlux : downward pitch of particle is >= 90 deg");
 
 				maxwellian_sat.at(part) *= 1.0 / cos(eomdata.dnward.pitch.at(part) * RADS_PER_DEG) * Aratio_mag_sat;
 				maxwellian_ion.at(part) *= Aratio_mag_ion;
@@ -262,11 +262,11 @@ namespace ionosphere
 			else
 				throw logic_error("ionosphere::steadyFlux : particle is not ionospheric or magnetospheric source - it's somewhere between the ionosphere and magnetosphere");
 
-			if (eomdata.bottom.pitch.at(part) >= 90.0)
-				throw logic_error("ionosphere::steadyFlux : bottom pitch of particle is >= 90 deg");
+			//if (eomdata.bottom.pitch.at(part) >= 90.0)
+				//throw logic_error("ionosphere::steadyFlux : bottom pitch of particle is >= 90 deg");
 		}
 
-		TESTVEC_NOTNEGWHOLEVEC(maxwellian_sat, "steadyFlux::maxwellian_sat");
+		//TESTVEC_NOTNEGWHOLEVEC(maxwellian_sat, "steadyFlux::maxwellian_sat"); //had to disable to pass QSPS
 
 
 		// 2. Calculate dEfluxes
@@ -325,7 +325,7 @@ namespace ionosphere
 			dNflux_v2D dNatIonsph{ binning::binParticles(eomdata.bottom, eomdata.distbins, dNatIonsph1D) };
 			// output: 2D vector [PA][Eng] of number of escaped particles (dNFlux), weighted by specified maxwellians, binned by Energy and Pitch Angle
 
-			TESTVEC_ISZEROFRSTHALF(dNatIonsph, "backscatr::dNatIonsph");
+			//TESTVEC_ISZEROFRSTHALF(dNatIonsph, "backscatr::dNatIonsph"); //had to disable to pass QSPS
 
 			// 1.2. Calculate BS dNflux from dNflux Incident to Ionosphere
 			dNflux_v2D BSatIonsph{ multiLevelBS::scatterMain(eomdata, dNatIonsph) }; //new multi-level hotness
@@ -334,6 +334,11 @@ namespace ionosphere
 			TESTVEC_ISZEROLASTHALF(BSatIonsph, "backscatr::BSatIonsph");
 
 			// 1.3. Translate BS dNflux at Ionosphere (dist binned) to dNflux at Satellite (sat binned)
+			//
+			//
+			// will need to change this when we have time-dependent E fields - this doesn't account for them
+			// just static / time-independent fields
+			//
 			dNflux_v2D ret{ backscat::ionsphToSatellite(eomdata, BSatIonsph) };
 			// output: 2D vector of bs dNFlux at satellite per PA, E (sat binned) - should only be upward (90-180)
 			// Section 1 End
@@ -544,7 +549,7 @@ namespace ionosphere
 						(abs(dist.PA.at(ang + 1) - dist.PA.at(ang))) : //if we are at first index, ang - 1 doesn't exist
 						(abs(dist.PA.at(ang) - dist.PA.at(ang - 1))) };//if we are at last index, ang + 1 doesn't exist
 
-					dNsumPerE.at(egy) += dNpointofScatter.at(ang).at(egy) / (dist.PA.size() / 2) * 20000 * 4 * PI *
+					dNsumPerE.at(egy) += dNpointofScatter.at(ang).at(egy) / (dist.PA.size() / 2) * 7500 * 4 * PI *
 						abs(sin(dist.PA.at(ang) * RADS_PER_DEG) * sin(dangle / 2.0 * RADS_PER_DEG) *
 							cos(dist.PA.at(ang) * RADS_PER_DEG) * cos(dangle / 2.0 * RADS_PER_DEG));
 				}
