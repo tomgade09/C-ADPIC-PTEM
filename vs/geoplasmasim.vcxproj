@@ -43,7 +43,7 @@
     <ClCompile Include="..\src\utils\fileIO.cpp" />
     <ClCompile Include="..\src\utils\readIOclasses.cpp" />
     <ClCompile Include="..\src\utils\serializationHelpers.cpp" />
-    <ClCompile Include="..\src\utils\string.cpp" />
+    <ClCompile Include="..\src\utils\strings.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
     <ClCompile Include="..\src\utils\random.cpp" />
     <ClCompile Include="..\src\utils\writeIOclasses.cpp" />
@@ -81,10 +81,11 @@
     <ClInclude Include="..\include\utils\readIOclasses.h" />
     <ClInclude Include="..\include\utils\serializationHelpers.h" />
     <ClInclude Include="..\include\utils\silenceStreamMacros.h" />
-    <ClInclude Include="..\include\utils\string.h" />
+    <ClInclude Include="..\include\utils\strings.h" />
     <ClInclude Include="..\include\utils\loopmacros.h" />
     <ClInclude Include="..\include\utils\numerical.h" />
     <ClInclude Include="..\include\utils\random.h" />
+    <ClInclude Include="..\include\utils\unitsTypedefs.h" />
     <ClInclude Include="..\include\utils\writeIOclasses.h" />
   </ItemGroup>
   <ItemGroup>

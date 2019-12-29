@@ -48,14 +48,14 @@ void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts, s
 
 
 //Access functions
-const std::vector<std::vector<double>>& Simulation::getParticleData(unsigned int partInd, bool originalData)
+const std::vector<std::vector<double>>& Simulation::getParticleData(int partInd, bool originalData)
 {
 	if (partInd > (particles_m.size() - 1))
 		throw std::out_of_range("Simulation::getParticleData: no particle at the specifed index " + std::to_string(partInd));
 	return ((originalData) ? (particles_m.at(partInd)->data(true)) : (particles_m.at(partInd)->data(false)));
 }
 
-const std::vector<std::vector<double>>& Simulation::getSatelliteData(unsigned int satInd)
+const std::vector<std::vector<double>>& Simulation::getSatelliteData(int satInd)
 {
 	if (satInd > (satPartPairs_m.size() - 1))
 		throw std::out_of_range("Simulation::getSatelliteData: no satellite at the specifed index " + std::to_string(satInd));
@@ -123,14 +123,14 @@ void Simulation::createTempSat(std::string partName, double altitude, bool upwar
 	{
 		if (particle((int)partInd)->name() == partName)
 		{
-			createTempSat((unsigned int)partInd, altitude, upwardFacing, name);
+			createTempSat(partInd, altitude, upwardFacing, name);
 			return;
 		}
 	}
 	throw std::invalid_argument("Simulation::createTempSat: no particle of name " + name);
 }
 
-void Simulation::createTempSat(unsigned int partInd, double altitude, bool upwardFacing, std::string name)
+void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, std::string name)
 {//"Temp Sats" are necessary to ensure particles are created before their accompanying satellites
 	if (initialized_m)
 		throw std::runtime_error("Simulation::createTempSat: initializeSimulation has already been called, no satellite will be created of name " + name);
@@ -142,7 +142,7 @@ void Simulation::createTempSat(unsigned int partInd, double altitude, bool upwar
 
 void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
 {
-	unsigned int partInd{ tmpsat->particleInd };
+	int partInd{ tmpsat->particleInd };
 	double altitude{ tmpsat->altitude };
 	bool upwardFacing{ tmpsat->upwardFacing };
 	std::string name{ tmpsat->name };

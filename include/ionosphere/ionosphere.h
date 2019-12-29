@@ -34,7 +34,7 @@ namespace ionosphere
 	namespace multiLevelBS
 	{
 		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& dNionsphTop);
-		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, unsigned int level);
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, int level);
 		DLLEXP percent    scatterPct(percent sumCollideAbove, double Z, percm3 p, cm h, eV E, degrees PA);
 	}
 }

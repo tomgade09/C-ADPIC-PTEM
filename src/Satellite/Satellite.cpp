@@ -57,7 +57,7 @@ size_t Satellite::getAttrIndByName(string name)
 		if (name == attributeNames_m.at(attr))
 			return attr;
 	}
-
+	
 	throw invalid_argument("Satellite::getAttrIndByName: attribute name " + name + " doesn't exist.");
 }
 
@@ -85,7 +85,7 @@ vector<vector<double>> Satellite::removeZerosData()
 	copyDataToHost();
 
 	vector<vector<double>> dataCopy{ data_m }; //don't want to do this to the live data so create a copy
-	vector<double> timeCopy{ dataCopy.at(getAttrIndByName("t_esc")) }; //make a copy, because t_esc's zeroes are removed as well
+	vector<double> timeCopy{ dataCopy.at(getAttrIndByName("time")) }; //make a copy, because t_esc's zeroes are removed as well
 
 	for (auto& attr : dataCopy)
 	{//below searches time vector copy for -1.0 and removes the element if so (no negatives should exist except -1)
@@ -131,7 +131,7 @@ void Satellite::loadDataFromDisk(string folder)
 	else //expand into a sparse array
 	{
 		size_t index{ getAttrIndByName("index") };
-		size_t t_esc{ getAttrIndByName("t_esc") };
+		size_t t_esc{ getAttrIndByName("time") };
 
 		for (auto& attr : data_m) //add zeroes to the array where they are missing
 		{

@@ -11,9 +11,8 @@ typedef utils::fileIO::DistributionFromDisk DFD;
 DLLEXP_EXTC PD*  PDCreateAPI(const char* saveFolder, const char* attrNames, const char* particleName, double mass);
 DLLEXP_EXTC void PDAddEnergyRangeAPI(PD* pd, int energyBins, double Emin, double Emax, bool logE = true);
 DLLEXP_EXTC void PDAddPitchRangeAPI(PD* pd, int pitchBins, double PAmin, double PAmax, bool midBin = true);
-DLLEXP_EXTC void PDGenerateAPI(PD* pd, double s_ion, double s_mag);
-DLLEXP_EXTC void PDFillExtraAttrsAPI(PD* pd, const char* zeroesStr, const char* neg1sStr);
-DLLEXP_EXTC void PDWriteAPI(PD* pd);
+DLLEXP_EXTC void PDWriteAPI(PD* pd, double s_ion, double s_mag);
+DLLEXP_EXTC void PDDeleteAPI(PD* pd);
 
 //DistributionFromDisk functions
 DLLEXP_EXTC DFD*          DFDLoadAPI(const char* name, const char* loadFolder, const char* attrNames, const char* particleName, double mass);

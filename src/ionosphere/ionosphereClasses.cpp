@@ -143,13 +143,13 @@ namespace ionosphere
 	
 
 	//IonosphereSpecs
-	IonosphereSpecs::IonosphereSpecs(unsigned int numLayers, double s_max, double s_min)
+	IonosphereSpecs::IonosphereSpecs(int numLayers, double s_max, double s_min)
 	{
 		s = double_v1D(numLayers + 1);
 		h = double_v1D(numLayers + 1);
 		B = double_v1D(numLayers + 1);
 
-		for (unsigned int layer = 0; layer < numLayers + 1; layer++) //endpoint inclusive, adds one more at the bottom (sim needs)
+		for (int layer = 0; layer < numLayers + 1; layer++) //endpoint inclusive, adds one more at the bottom (sim needs)
 		{
 			s.at(layer) = s_max - layer * (s_max - s_min) / (numLayers - 1); //in m
 			h.at(layer) = 100 * (s_max - s_min) / (numLayers - 1); //in cm, hence * 100

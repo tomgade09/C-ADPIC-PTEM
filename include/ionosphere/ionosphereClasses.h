@@ -68,7 +68,7 @@ namespace ionosphere
 		double_v1D Z;         //atomic number
 		double_v2D p;         //density - outer = species, inner = level
 
-		IonosphereSpecs(unsigned int numLayers, double s_max, double s_min);
+		IonosphereSpecs(int numLayers, double s_max, double s_min);
 
 		void seth(double h_all);
 		void setB(BField* B, double t);

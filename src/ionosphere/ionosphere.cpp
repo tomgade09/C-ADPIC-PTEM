@@ -40,7 +40,7 @@ inline void printIonosphere(const ionosphere::IonosphereSpecs& ionsph)
 	cout << "===============================================================" << "\n";
 }
 
-inline void printLayer(const ionosphere::IonosphereSpecs& ionsph, unsigned int layer)
+inline void printLayer(const ionosphere::IonosphereSpecs& ionsph, int layer)
 {
 	cout << "Layer: " << layer << " / " << ionsph.s.size() - 2 << ", s: ";
 	cout << ionsph.s.at(layer) << ", B: " << ionsph.B.at(layer) << "\n";
@@ -643,9 +643,9 @@ namespace ionosphere
 			// >> level calculate
 			for (size_t level = 0; level < eom.ionsph.s.size() - 1; level++)
 			{//for now, depends on adding one extra level (to see if particles reflect somewhere within the last layer)
-				printLayer(eom.ionsph, (unsigned int)level);
+				printLayer(eom.ionsph, level);
 
-				dNflux_v2D bs_level{ bsAtLevel(eom, dNionsphTop, pctScattered, (unsigned int)level) };
+				dNflux_v2D bs_level{ bsAtLevel(eom, dNionsphTop, pctScattered, level) };
 
 				TESTVEC_ISZEROLASTHALF(bs_level, "scatterMain::bs_level");
 
@@ -682,7 +682,7 @@ namespace ionosphere
 			return binning::binParticles(particles, eom.distbins, particles.count);
 		}
 
-		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, unsigned int level)
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, int level)
 		{
 			//
 			//

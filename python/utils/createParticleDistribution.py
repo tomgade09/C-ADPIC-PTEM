@@ -22,10 +22,10 @@ PDptr = simDLL.PDCreateAPI(save_cstr, attr_cstr, part_cstr, MASS_ELEC)
 
 #Define and write the distribution to disk
 simDLL.PDAddEnergyRangeAPI(PDptr, 96, 0.5, 4.5, True)
-simDLL.PDAddPitchRangeAPI(PDptr, 36000, 179.9975, 0.0025, False)
+simDLL.PDAddPitchRangeAPI(PDptr, 36000, 180.0, 0.0, True)
+#simDLL.PDAddPitchRangeAPI(PDptr, 36000, 179.9975, 0.0025, False)
 #simDLL.PDAddPitchRangeAPI(PDptr, 18000, 16.0 - 8.0/18000.0, 8.0/18000.0, False)
-simDLL.PDGenerateAPI(PDptr, 628565.8510817, 19881647.2473464)
-simDLL.PDFillExtraAttrsAPI(PDptr, zero_cstr, neg1_cstr)
-simDLL.PDWriteAPI(PDptr)
+simDLL.PDWriteAPI(PDptr, 628565.8510817, 19881647.2473464)
+simDLL.PDDeleteAPI(PDptr)
 
 PDptr = None

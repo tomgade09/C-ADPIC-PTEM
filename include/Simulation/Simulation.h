@@ -20,12 +20,12 @@ protected:
 	//Structs and classes that fill various roles	
 	struct TempSat
 	{//Struct that holds data to create satellite - allows satellites to be added in any order, but ensure they are created before particles
-		unsigned int particleInd;
+		int particleInd;
 		double altitude;
 		bool upwardFacing;
 		std::string name;
 
-		TempSat(unsigned int partInd, double alt, bool upward, std::string nameStr) :
+		TempSat(int partInd, double alt, bool upward, std::string nameStr) :
 			particleInd{ partInd }, altitude{ alt }, upwardFacing{ upward }, name{ nameStr } {}
 	};
 
@@ -106,15 +106,15 @@ public:
 	EField*     Emodel()                    const { return EFieldModel_m.get(); }
 
 	#define VEC(T) std::vector<T> //quick, lazy stand-in, easier on the eyes
-	virtual const VEC(VEC(double))& getParticleData(unsigned int partInd, bool originalData);
-	virtual const VEC(VEC(double))& getSatelliteData(unsigned int satInd);
+	virtual const VEC(VEC(double))& getParticleData(int partInd, bool originalData);
+	virtual const VEC(VEC(double))& getSatelliteData(int satInd);
 	#undef VEC
 
 	///Forward decs for cpp file, or pure virtuals
 	//Class creation functions
 	virtual void createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir = "", bool save = true);
 	virtual void createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name);
-	virtual void createTempSat(unsigned int partInd, double altitude, bool upwardFacing, std::string name);
+	virtual void createTempSat(int partInd, double altitude, bool upwardFacing, std::string name);
 	virtual void setBFieldModel(std::string name, std::vector<double> args, bool save = true);
 	virtual void setBFieldModel(std::unique_ptr<BField> bfieldptr) { BFieldModel_m = std::move(bfieldptr); } //add API function for this
 	virtual void addEFieldModel(std::string name, std::vector<double> args, bool save = true);

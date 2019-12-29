@@ -1,22 +1,28 @@
-#include "utils/numerical.h"
 #include <cmath>
+
+#include "utils/numerical.h"
+
+using std::cout;
+using std::endl;
+using std::string;
+using std::to_string;
+using std::invalid_argument;
 
 namespace utils
 {
 	namespace numerical
 	{
-		DLLEXP void v2DtoEPitch(const std::vector<double>& vpara, const std::vector<double>& vperp, double mass, std::vector<double>& energies_eV, std::vector<double>& pitches_deg)
+		DLLEXP void v2DtoEPitch(const vector<double>& vpara, const vector<double>& vperp, double mass, vector<eV>& energies, vector<degrees>& pitches)
 		{
 			if (vpara.size() != vperp.size())
-				throw std::invalid_argument("utils::numerical::v2DtoEPitch: input vectors vpara and vperp are not the same size: " + std::to_string(vpara.size()) + ", " + std::to_string(vperp.size()));
+				throw invalid_argument("utils::numerical::v2DtoEPitch: input vectors vpara and vperp are not the same size: " + to_string(vpara.size()) + ", " + to_string(vperp.size()));
 
-			if (energies_eV.size() != vpara.size()) //resize output vectors to be as big as input
-				energies_eV.resize(vpara.size());
-			if (pitches_deg.size() != vpara.size())
-				pitches_deg.resize(vpara.size());
+			if (mass <= 0.0) throw invalid_argument("utils::numerical::v2DtoEPitch: mass is lessthan or equal to zero " + to_string(mass));
 
-			std::fill(energies_eV.begin(), energies_eV.end(), 0.0); //zeroes data in the return arrays
-			std::fill(pitches_deg.begin(), pitches_deg.end(), 0.0); //guarantees E/PA is 0 if vpara/vperp is zero
+			if (energies.size() != vpara.size()) //resize output vectors to be as big as input
+				energies.resize(vpara.size());
+			if (pitches.size() != vpara.size())
+				pitches.resize(vpara.size());
 
 			for (size_t part = 0; part < vpara.size(); part++)
 			{
@@ -24,38 +30,39 @@ namespace utils
 
 				if (nonZero) //check this or else the function can produce "NaN" in some indicies (I think atan2 is responsible) -> if false, the data at that index will be left 0
 				{
-					energies_eV.at(part) = (0.5 * mass * (vpara.at(part) * vpara.at(part) + vperp.at(part) * vperp.at(part)) / JOULE_PER_EV);
-					pitches_deg.at(part) = atan2(std::abs(vperp.at(part)), -vpara.at(part)) / RADS_PER_DEG;
+					energies.at(part) = (0.5 * mass * (vpara.at(part) * vpara.at(part) + vperp.at(part) * vperp.at(part)) / JOULE_PER_EV);
+					pitches.at(part) = std::atan2(std::abs(vperp.at(part)), -vpara.at(part)) / RADS_PER_DEG;
 				}
 			}
 		}
 
-		DLLEXP void EPitchTov2D(const std::vector<double>& energies_eV, const std::vector<double>& pitches_deg, double mass, std::vector<double>& vpara, std::vector<double>& vperp)
+		DLLEXP void EPitchTov2D(const vector<eV>& energies, const vector<degrees>& pitches, double mass, vector<double>& vpara, vector<double>& vperp)
 		{
-			if (energies_eV.size() != pitches_deg.size())
-				throw std::invalid_argument("utils::numerical::EPitchTov2D: input vectors vpara and vperp are not the same size: " + std::to_string(vpara.size()) + ", " + std::to_string(vperp.size()));
+			if (energies.size() != pitches.size())
+				throw invalid_argument("utils::numerical::EPitchTov2D: input vectors vpara and vperp are not the same size: " + to_string(vpara.size()) + ", " + to_string(vperp.size()));
 
-			if (energies_eV.size() != vpara.size()) //resize output vectors to be as big as input
-				vpara.resize(energies_eV.size());
-			if (energies_eV.size() != vperp.size())
-				vperp.resize(energies_eV.size());
+			if (mass <= 0.0) throw invalid_argument("utils::numerical::v2DtoEPitch: mass is lessthan or equal to zero " + to_string(mass));
 
-			std::fill(vpara.begin(), vpara.end(), 0.0); //zeroes data in the return arrays
-			std::fill(vperp.begin(), vperp.end(), 0.0); //guarantees E/PA is 0 if vpara/vperp is zero
+			if (energies.size() != vpara.size()) //resize output vectors to be as big as input
+				vpara.resize(energies.size());
+			if (energies.size() != vperp.size())
+				vperp.resize(energies.size());
 
-			for (size_t part = 0; part < energies_eV.size(); part++)
+			for (size_t part = 0; part < energies.size(); part++)
 			{
-				bool nonZero{ energies_eV.at(part) != 0.0 };
+				if (energies.at(part) < 0.0) throw invalid_argument("utils::numerical::EPitchTov2D: Energy is less than 0.  Some error has occurred.");
+
+				bool nonZero{ energies.at(part) != 0.0 };
 
 				if (nonZero) //check this or else the function can produce "NaN" in some indicies (I think atan2 is responsible) -> if false, the data at that index will be left 0
 				{
-					vpara.at(part) = -sqrt(2 * energies_eV.at(part) * JOULE_PER_EV / mass) * cos(pitches_deg.at(part) * RADS_PER_DEG);
-					vperp.at(part) =  sqrt(2 * energies_eV.at(part) * JOULE_PER_EV / mass) * sin(pitches_deg.at(part) * RADS_PER_DEG);
+					vpara.at(part) = -sqrt(2 * energies.at(part) * JOULE_PER_EV / mass) * cos(pitches.at(part) * RADS_PER_DEG);
+					vperp.at(part) =  sqrt(2 * energies.at(part) * JOULE_PER_EV / mass) * sin(pitches.at(part) * RADS_PER_DEG);
 				}
 			}
 		}
 
-		DLLEXP std::vector<double> generateSpacedValues(double start, double end, int number, bool logSpaced, bool endInclusive)
+		DLLEXP vector<double> generateSpacedValues(double start, double end, int number, bool logSpaced, bool endInclusive)
 		{
 			/*
 				**Note** if logSpaced is true, min and max have to be log(min) and log(max),
@@ -73,9 +80,9 @@ namespace utils
 			*/
 
 			if (number <= 0)
-				throw std::invalid_argument("utils::numerical::generateSpacedValues: number of values is less than / equal to zero");
+				throw invalid_argument("utils::numerical::generateSpacedValues: number of values is less than / equal to zero");
 
-			std::vector<double> ret(number);
+			vector<double> ret(number);
 
 			double dval{ (end - start) / ((endInclusive) ? (number - 1) : number) };
 			for (int iter = 0; iter < number; iter++)
@@ -84,7 +91,7 @@ namespace utils
 			return ret;
 		}
 
-		DLLEXP void normalize(std::vector<double>& normalizeMe, double normFactor, bool inverse) //inverse defaults to false
+		DLLEXP void normalize(vector<double>& normalizeMe, double normFactor, bool inverse) //inverse defaults to false
 		{
 			if (normFactor == 1.0)
 				return;
@@ -93,7 +100,7 @@ namespace utils
 				elem *= (inverse ? (normFactor) : (1 / normFactor));
 		}
 
-		DLLEXP double calcMean(const std::vector<double>& calcMyMean, bool absValue) //absValue defaults to false
+		DLLEXP double calcMean(const vector<double>& calcMyMean, bool absValue) //absValue defaults to false
 		{
 			double sum{ 0 };
 			for (size_t iii = 0; iii < calcMyMean.size(); iii++)
@@ -106,7 +113,7 @@ namespace utils
 			return sum / calcMyMean.size();
 		}
 
-		DLLEXP double calcStdDev(const std::vector<double>& calcMyStdDev)
+		DLLEXP double calcStdDev(const vector<double>& calcMyStdDev)
 		{
 			double stdDev{ 0 };
 			double mean{ calcMean(calcMyStdDev, false) };
@@ -118,10 +125,10 @@ namespace utils
 			return stdDev;
 		}
 
-		DLLEXP void coutMinMaxErr(const std::vector<double>& basevals, const std::vector<double>& testvals, std::string label, bool skipzeroes) //label defaults to "", skipzeroes to true
+		DLLEXP void coutMinMaxErr(const vector<double>& basevals, const vector<double>& testvals, string label, bool skipzeroes) //label defaults to "", skipzeroes to true
 		{
 			if (basevals.size() != testvals.size())
-				throw std::invalid_argument("coutMinMaxErr: vectors are not the same size");
+				throw invalid_argument("coutMinMaxErr: vectors are not the same size");
 
 			double maxerr{ 0.0 };
 			double minerr{ 1.0e300 };
@@ -134,13 +141,13 @@ namespace utils
 				if (err < minerr) { minerr = err; }
 			}
 
-			std::cout << label << " min err: " << minerr << ", max err: " << maxerr << std::endl;
+			cout << label << " min err: " << minerr << ", max err: " << maxerr << endl;
 		}
 
-		DLLEXP void coutNumAboveErrEps(const std::vector<double>& basevals, const std::vector<double>& testvals, double errEps, std::string label, bool skipzeroes) //label defaults to "", skipzeroes to true
+		DLLEXP void coutNumAboveErrEps(const vector<double>& basevals, const vector<double>& testvals, double errEps, string label, bool skipzeroes) //label defaults to "", skipzeroes to true
 		{
 			if (basevals.size() != testvals.size())
-				throw std::invalid_argument("coutNumAboveEps: vectors are not the same size");
+				throw invalid_argument("coutNumAboveEps: vectors are not the same size");
 
 			int above{ 0 };
 			for (size_t iii = 0; iii < basevals.size(); iii++)
@@ -150,7 +157,7 @@ namespace utils
 				if (std::abs((basevals.at(iii) - testvals.at(iii)) / basevals.at(iii)) > errEps) { above++; };
 			}
 
-			std::cout << label << " error above " << errEps << ": " << above << std::endl;
+			cout << label << " error above " << errEps << ": " << above << endl;
 		}
 	}
 }

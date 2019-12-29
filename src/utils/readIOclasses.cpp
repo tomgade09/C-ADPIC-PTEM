@@ -1,6 +1,6 @@
 #include "utils/readIOclasses.h"
 #include "utils/fileIO.h"
-#include "utils/string.h"
+#include "utils/strings.h"
 #include "utils/numerical.h"
 
 #include <iostream>
@@ -23,10 +23,10 @@ namespace utils
 			}
 
 			for (size_t attr = 0; attr < attrNames.size(); attr++)
-				if (attrNames_m.at(attr).size() < attrsize) { string::stringPadder(attrNames_m.at(attr), attrsize); }
+				if (attrNames_m.at(attr).size() < attrsize) { strings::stringPadder(attrNames_m.at(attr), attrsize); }
 		}
 
-		void DistributionFromDisk::print(unsigned int at) const
+		void DistributionFromDisk::print(int at) const
 		{
 			std::cout << name_m << " ";
 			for (size_t iii = 0; iii < attrNames_m.size(); iii++)
@@ -41,7 +41,7 @@ namespace utils
 			std::cout << "E, Pitch: " << E.at(0) << ", " << Pitch.at(0) << "\n";
 		}
 
-		void DistributionFromDisk::printdiff(DistributionFromDisk& other, unsigned int at) const
+		void DistributionFromDisk::printdiff(DistributionFromDisk& other, int at) const
 		{
 			size_t datasize{ data_m.size() };
 			if (data_m.size() != other.data().size())

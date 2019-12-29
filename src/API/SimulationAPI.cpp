@@ -1,13 +1,13 @@
 #include "API/SimulationAPI.h"
 
 #include "utils/writeIOclasses.h"
-#include "utils/string.h"
+#include "utils/strings.h"
 #include "ErrorHandling/simExceptionMacros.h"
 
 #include <cmath>
 
 using utils::fileIO::CSV;
-using utils::string::strToDblVec;
+using utils::strings::strToDblVec;
 
 //Simulation Management Functions
 DLLEXP_EXTC Sim* createSimulationAPI(double dt, double simMin, double simMax, const char* rootdir)

@@ -25,8 +25,8 @@ namespace utils
 
 			const std::vector<std::vector<double>>& data() const { return data_m; }
 			const std::string& name() const { return name_m; }
-			void print(unsigned int at) const;
-			void printdiff(DistributionFromDisk& other, unsigned int at) const;
+			void print(int at) const;
+			void printdiff(DistributionFromDisk& other, int at) const;
 			void zeroes() const;
 			void zeroes(std::vector<int>& zeroes, bool print = true) const;
 			void compare(const DistributionFromDisk& other) const;

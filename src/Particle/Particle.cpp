@@ -206,7 +206,7 @@ void Particle::serialize(string serialFolder)
 	string filename{ serialFolder + string("/Particle_") + name_m + string(".bin") };
 
 	if (std::filesystem::exists(filename))
-		cerr << "Particle::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.";
+		cerr << "Particle::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.\n";
 
 	ofstream out(filename, std::ofstream::binary);
 	if (!out) throw invalid_argument("Particle::serialize: unable to create file: " + filename);
@@ -230,7 +230,7 @@ void Particle::deserialize(string serialFolder, string name) //protected functio
 	ifstream in(filename, std::ifstream::binary);
 	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
 
-	Particle* part;
+	Particle* part{ nullptr };
 	vector<char> partchar(sizeof(Particle));
 
 	in.read(partchar.data(), sizeof(Particle));

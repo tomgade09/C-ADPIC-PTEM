@@ -1,8 +1,8 @@
 #include "Simulation/Simulation.h"
 
-#include "utils/string.h"
+#include "utils/strings.h"
 
-using utils::string::findAttrInd;
+using utils::strings::findAttrInd;
 
 Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }, /*simAttr_m{ std::make_unique<SimAttributes>(prevSimDir + "/Simulation.attr", true) },*/
 	logFile_m{ std::make_unique<LogFile>(saveRootDir_m + "/reload.log", 20) }

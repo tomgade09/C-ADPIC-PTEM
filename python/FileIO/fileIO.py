@@ -11,10 +11,10 @@ from time import sleep
 
 dllLocation = './fileIO.dll'
 
-#DLLEXPORT double* readDblBin(const std::string filename, unsigned int numOfDblsToRead)
+#DLLEXPORT double* readDblBin(const std::string filename, int numOfDblsToRead)
 def readBDataWrapper(filename, numDblsToRead):
     fileIO = ctypes.CDLL(dllLocation)
-    fileIO.readDblBin.argtypes = (ctypes.c_char_p, ctypes.c_uint)
+    fileIO.readDblBin.argtypes = (ctypes.c_char_p, ctypes.c_int)
     fileIO.readDblBin.restype = ctypes.POINTER(ctypes.c_double)
 
     return fileIO.readDblBin(filename, numDblsToRead)
@@ -54,11 +54,11 @@ def freeDataArrayMemory(dataArray, numDblsToRead):
 
     fileIO.clrDataMemory(dataArray)
 
-#DLLEXPORT unsigned int indexLambdaFcn(int xsteps, int ysteps, int zsteps, int xsize=(1+10/0.04), int ysize=(1+10/0.04), int zsize=(1+10/0.04))
+#DLLEXPORT int indexLambdaFcn(int xsteps, int ysteps, int zsteps, int xsize=(1+10/0.04), int ysize=(1+10/0.04), int zsize=(1+10/0.04))
 def indexFromSteps(xsteps, ysteps, zsteps):
     fileIO = ctypes.CDLL(dllLocation)
     fileIO.indexLambdaFcn.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int)
-    fileIO.indexLambdaFcn.restype = ctypes.c_ulong
+    fileIO.indexLambdaFcn.restype = ctypes.c_int
 
     return fileIO.indexLambdaFcn(xsteps, ysteps, zsteps, 251, 251, 251)
 

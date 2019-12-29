@@ -9,12 +9,10 @@ simDLL.PDAddEnergyRangeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_d
 simDLL.PDAddEnergyRangeAPI.restype = None
 simDLL.PDAddPitchRangeAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_bool)
 simDLL.PDAddPitchRangeAPI.restype = None
-simDLL.PDGenerateAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
-simDLL.PDGenerateAPI.restype = None
-simDLL.PDFillExtraAttrsAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
-simDLL.PDFillExtraAttrsAPI.restype = None
-simDLL.PDWriteAPI.argtypes = (ctypes.c_void_p,)
+simDLL.PDWriteAPI.argtypes = (ctypes.c_void_p, ctypes.c_double, ctypes.c_double)
 simDLL.PDWriteAPI.restype = None
+simDLL.PDDeleteAPI.argtypes = (ctypes.c_void_p,)
+simDLL.PDDeleteAPI.restype = None
 
 #DistributionFromDisk functions
 simDLL.DFDLoadAPI.argtypes = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_double)

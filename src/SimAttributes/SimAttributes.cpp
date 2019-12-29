@@ -3,11 +3,11 @@
 #include <iostream>
 
 #include "utils/fileIO.h"
-#include "utils/string.h"
+#include "utils/strings.h"
 
 using utils::fileIO::writeTxtFile;
 using utils::fileIO::readTxtFile;
-using utils::string::strToStrVec;
+using utils::strings::strToStrVec;
 
 SimAttributes::SimAttributes(std::string filename, bool readFile) : filename_m{ filename }, read_m{ readFile }//readFile defaults to false
 {

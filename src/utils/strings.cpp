@@ -1,16 +1,16 @@
-#include "utils/string.h"
+#include "utils/strings.h"
 #include <stdexcept>
 
 namespace utils
 {
-	namespace string
+	namespace strings
 	{
-		DLLEXP unsigned int findAttrInd(std::string attr, std::vector<std::string> allAttrs)
+		DLLEXP size_t findAttrInd(std::string attr, std::vector<std::string> allAttrs)
 		{
 			for (size_t ind = 0; ind < allAttrs.size(); ind++)
 			{
 				if (allAttrs.at(ind) == attr)
-					return (unsigned int)ind;
+					return ind;
 			}
 
 			std::string allAttrsStr;
@@ -63,7 +63,7 @@ namespace utils
 			return ret;
 		}
 
-		DLLEXP void stringPadder(std::string& in, size_t totalStrLen, unsigned int indEraseFrom) //indEraseFrom defaults to 0
+		DLLEXP void stringPadder(std::string& in, size_t totalStrLen, int indEraseFrom) //indEraseFrom defaults to 0
 		{
 			if (totalStrLen <= 0 || indEraseFrom < 0)
 				return;

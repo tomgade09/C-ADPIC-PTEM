@@ -3,10 +3,19 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <stdexcept>
 
 #include "dlldefines.h"
 #include "physicalconstants.h"
+#include "utils/unitsTypedefs.h"
+
+using std::string;
+using std::vector;
+using std::unique_ptr;
+using std::logic_error;
+
+#define STRVEC vector<string>
 
 namespace utils
 {
@@ -15,60 +24,67 @@ namespace utils
 		class CSV
 		{
 		private:
-			std::string filename_m;
+			string filename_m;
 			
-			std::vector<std::vector<double>> data_m;
-			std::vector<std::string> labels_m;
+			vector<vector<double>> data_m;
+			STRVEC labels_m;
 
 			void write(); //defined in cpp
 
 		public:
-			CSV(std::string filename) : filename_m{ filename } {}
+			CSV(string filename);
 			~CSV();
 
-			void add(std::vector<double> vec, std::string label);
-			void add(std::vector<std::vector<double>> vecs, std::vector<std::string> labels);
+			void add(vector<double> vec, string label);
+			void add(vector<vector<double>> vecs, vector<string> labels);
 			void addspace();
 
-			std::vector<std::vector<double>>& data() { return data_m; }
+			vector<vector<double>>& data();
 		};
 
 		class ParticleDistribution
 		{
-		private:
-			std::string saveFolder_m;
-			std::vector<std::string> attrNames_m;
-			std::string particleName_m;
+		public:
+			struct Range; //energy || pitchAngle, range min, range max, step
 
-			double mass_m;
+		protected:
+			//struct EPA;//consists of two vectors: Energy and Pitch Angle
 
-			std::vector<std::vector<std::vector<double>>> ranges_m; //[energy || pitch][range index][min, max, step]
-			std::vector<std::vector<double>> energyPitch_m; //[energy || pitch][energy/pitch index]
-			std::vector<double> padvals_m;
-			std::vector<std::vector<double>> data_m; //[vpara || vperp || s (|| time || index)][particle index]
+			string saveFolder_m;
+			STRVEC attrNames_m;
+			string particleName_m;
+			bool   write_m{ true }; //set to false if deserialized, used to prevent overwriting a valid file
+			double mass_m{ -1.0 };
 
-			double EPAtoV(double E_eV, double PA_deg, bool vpara);
-			void write();
+			vector<Range>  ranges_m;
+			vector<double> padvals_m; //pad values for each attribute (usually 0.0 or -1.0)
 
+			void deserialize(string serialFolder, string name);
 
 		public: //generate is dependent on vpara, vperp, and s being the first three attributes - if not, this will have to be modified
-			ParticleDistribution(std::string saveFolder = "./", std::vector<std::string> attrNames = { "vpara", "vperp", "s", "t_inc", "t_esc" }, std::string particleName = "elec", double mass = MASS_ELECTRON, std::vector<double> padvals = { 0.0, 0.0, 0.0, 0.0, -1.0});
+			ParticleDistribution(string saveFolder, vector<string> attrNames = { "vpara", "vperp", "s", "t_inc", "t_esc" }, string particleName = "elec", double mass = MASS_ELECTRON, vector<double> padvals = { 0.0, 0.0, 0.0, 0.0, -1.0});
+			ParticleDistribution(string serialFolder, string name);
+			ParticleDistribution(const ParticleDistribution& PD);
 			~ParticleDistribution(); //writes on destruction
-			ParticleDistribution(const ParticleDistribution&) = delete;
-			ParticleDistribution& operator=(const ParticleDistribution&) = delete;
 
-			const std::vector<std::vector<double>>& data() const { return data_m; }
-			const std::vector<std::vector<std::vector<double>>>& ranges() const { if (ranges_m.at(0).size() == 0 || ranges_m.at(1).size() == 0) throw std::logic_error("ParticleDistribution::ranges(): one or both ranges (PA, E) not specified"); return ranges_m; }
-			void setattr(std::vector<double>& attr, size_t ind);
-			void setattr(std::vector<double>& attr, std::string name);
-			void addEnergyRange(unsigned int energyBins, double E_start, double E_end, bool logE = true);
-			void addPitchRange(unsigned int pitchBins, double PA_start, double PA_end, bool midBin = true);
-			void addSpecificParticle(unsigned int numParticles, double energy, double pitch, double s, unsigned int padmult = 0);
-			void generate(double s_ion, double s_mag);
-			void generate(std::vector<double>& s);
-			void clear();
+			void   printRanges() const;
+			const vector<Range>& ranges() const;
+			string saveFolder() const;
+			STRVEC attrNames() const;
+			string particleName() const;
+			double mass() const;
+
+			void addEnergyRange(int energyBins, eV E_start, eV E_end, bool logE = true);
+			void addPitchRange(int pitchBins, degrees PA_start, degrees PA_end, bool midBin = true);
+			vector<vector<double>> generate(meters s_ion, meters s_mag) const;
+			vector<vector<double>> generate(vector<meters>& s) const;
+			void write(meters s_ion, meters s_mag) const;
+			void write(vector<meters>& s) const;
+			void serialize() const;
 		};
 	}
 }
+
+#undef STRVEC
 
 #endif /* !UTILS_IOCLASSES_WRITE_H */

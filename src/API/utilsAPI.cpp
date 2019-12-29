@@ -1,21 +1,25 @@
 #include "API/utilsAPI.h"
 
-#include "utils/string.h"
+#include "utils/strings.h"
 #include "ErrorHandling/simExceptionMacros.h"
 
-using utils::string::strToStrVec;
+using std::string;
+using std::vector;
+using std::invalid_argument;
+using utils::strings::strToStrVec;
 
 //ParticleDistribution functions
 DLLEXP_EXTC PD* PDCreateAPI(const char* saveFolder, const char* attrNames, const char* particleName, double mass)
 {
 	SIM_API_EXCEP_CHECK(
-		std::string save{ saveFolder };
-		std::vector<std::string> attrs{ strToStrVec(attrNames) };
-		std::string part{ particleName };
+		string save{ saveFolder };
+		vector<string> attrs{ strToStrVec(attrNames) };
+		string part{ particleName };
 
-		PD* ret;
-		if (save == "" && attrs.size() == 0 && part == "" && mass == 0.0)
-			ret = new PD();
+		PD* ret{ nullptr };
+		if (save == "") save = "./";
+		if (attrs.size() == 0 && part == "" && mass == 0.0)
+			ret = new PD(save);
 		else
 			ret = new PD(save, attrs, part, mass);
 
@@ -31,23 +35,10 @@ DLLEXP_EXTC void PDAddEnergyRangeAPI(PD* pd, int energyBins, double Emin, double
 DLLEXP_EXTC void PDAddPitchRangeAPI(PD* pd, int pitchBins, double PAmin, double PAmax, bool midBin) {
 	SIM_API_EXCEP_CHECK(pd->addPitchRange(pitchBins, PAmin, PAmax, midBin)); }
 
-DLLEXP_EXTC void PDGenerateAPI(PD* pd, double s_ion, double s_mag) {
-	SIM_API_EXCEP_CHECK(pd->generate(s_ion, s_mag)); }
+DLLEXP_EXTC void PDWriteAPI(PD* pd, double s_ion, double s_mag) {
+	pd->write(s_ion, s_mag); }
 
-DLLEXP_EXTC void PDFillExtraAttrsAPI(PD* pd, const char* zeroesStr, const char* neg1sStr)
-{
-	SIM_API_EXCEP_CHECK(
-		std::vector<double> zeroes(pd->data().at(0).size());
-		std::vector<double> neg_1s(pd->data().at(0).size(), -1.0);
-		
-		for (auto& zero_name : utils::string::strToStrVec(zeroesStr))
-			pd->setattr(zeroes, zero_name);
-		for (auto& neg1_name : utils::string::strToStrVec(neg1sStr))
-			pd->setattr(neg_1s, neg1_name);
-	);
-}
-
-DLLEXP_EXTC void PDWriteAPI(PD* pd) {
+DLLEXP_EXTC void PDDeleteAPI(PD* pd) {
 	delete pd; }
 
 

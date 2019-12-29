@@ -22,6 +22,8 @@ namespace utils
 	{
 		namespace serialize
 		{
+			size_t readSizetLength(ifstream& in);
+
 			stringbuf serializeString(const string& str);
 			stringbuf serializeDoubleVector(const vector<double>& vec);
 			stringbuf serializeStringVector(const vector<string>& vec);

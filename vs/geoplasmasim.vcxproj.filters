@@ -36,9 +36,6 @@
     <ClCompile Include="..\src\utils\random.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils\string.cpp">
-      <Filter>Source Files\utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp">
       <Filter>Source Files\SimAttributes</Filter>
     </ClCompile>
@@ -87,6 +84,9 @@
     <ClCompile Include="..\src\Satellite\Detector.cpp">
       <Filter>Source Files\Satellite</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\strings.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\physicalconstants.h">
@@ -132,9 +132,6 @@
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\include\utils\random.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\utils\string.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\include\ErrorHandling\cudaDeviceMacros.h">
@@ -198,6 +195,12 @@
       <Filter>Header Files\utils\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\include\utils\arrayUtilsGPU.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\unitsTypedefs.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\utils\strings.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>

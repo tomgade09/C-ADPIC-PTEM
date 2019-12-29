@@ -307,12 +307,12 @@ void Simulation::freeGPUMemory()
 
 	if (!dataOnGPU_m) { return; }
 
-	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
+	//logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
 
-	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->freeGPUMemory());
+	//LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->freeGPUMemory());
 
-	dataOnGPU_m = false;
-	logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
+	//dataOnGPU_m = false;
+	//logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
 
 	CUDA_API_ERRCHK(cudaProfilerStop()); //For profiling with the CUDA bundle
 }

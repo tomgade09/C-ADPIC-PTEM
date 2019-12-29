@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <functional>
 
+#include "utils/unitsTypedefs.h"
+
 using std::cout;
 using std::string;
 using std::vector;
@@ -14,23 +16,6 @@ using std::function;
 using std::to_string;
 
 //types to make function arguments more explicit
-typedef double eV;
-typedef double kg;
-typedef double cm;
-typedef double tesla;
-typedef double percm3;
-typedef double meters;
-typedef double dNflux;
-typedef double dEflux;
-typedef double degrees;
-typedef double coulomb;
-typedef double percent;
-typedef vector<double> degrees_v1D;
-typedef vector<double> dNflux_v1D;
-typedef vector<double> dEflux_v1D;
-typedef vector<vector<double>> dNflux_v2D;
-typedef vector<vector<double>> dEflux_v2D;
-
 typedef vector<double> double_v1D;
 typedef vector<vector<double>> double_v2D;
 //types to make function arguments more explicit

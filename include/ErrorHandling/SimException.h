@@ -44,7 +44,7 @@ public:
 
 	//~SimException() throw() {}
 
-	virtual const char* what()  const throw() { return error_m.c_str(); }
+	virtual const char* what()  const { return error_m.c_str(); }
 	virtual const char* where() const { return fileLine_m.c_str(); }
 	virtual const char* args()  const { return args_m.c_str(); }
 };

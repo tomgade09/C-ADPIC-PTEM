@@ -6,7 +6,6 @@ namespace utils
 	{
 		namespace serialize
 		{
-			// ================ file internal functions (not exposed) ================ //
 			size_t readSizetLength(ifstream& in)
 			{
 				vector<char> size(sizeof(size_t));
