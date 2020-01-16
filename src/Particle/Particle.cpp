@@ -203,7 +203,7 @@ void Particle::saveDataToDisk(string folder, bool orig) const
 
 void Particle::serialize(string serialFolder)
 { //saves necessary attributes about the particle to disk
-	string filename{ serialFolder + string("/Particle_") + name_m + string(".bin") };
+	string filename{ serialFolder + string("/Particle_") + name_m + string(".ser") };
 
 	if (std::filesystem::exists(filename))
 		cerr << "Particle::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.\n";
@@ -226,7 +226,7 @@ void Particle::serialize(string serialFolder)
 
 void Particle::deserialize(string serialFolder, string name) //protected function
 { //recreates a saved "serialization"
-	string filename{ serialFolder + string("/Particle_") + name + string(".bin") };
+	string filename{ serialFolder + string("/Particle_") + name + string(".ser") };
 	ifstream in(filename, std::ifstream::binary);
 	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
 

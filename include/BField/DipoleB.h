@@ -3,48 +3,49 @@
 
 #include "BField/BField.h"
 #include "physicalconstants.h"
+#include "utils/unitsTypedefs.h"
 
 class DipoleB : public BField
 {
 protected:
 	//Field simulation constants
-	double L_m{ 0.0 };
-	double L_norm_m{ 0.0 };
-	double s_max_m{ 0.0 };
+	meters  L_m{ 0.0 };
+	meters  L_norm_m{ 0.0 };
+	meters  s_max_m{ 0.0 };
 
 	//specified variables
-	double ILATDegrees_m{ 0.0 };
-	double ds_m{ 0.0 };
-	double errorTolerance_m{ 0.0 };
+	degrees ILAT_m{ 0.0 };
+	meters  ds_m{ 0.0 };
+	double  lambdaErrorTolerance_m{ 0.0 };
 
-	bool useGPU_m;
+	bool    useGPU_m{ true };
 
 	//protected functions
-	__host__            void   setupEnvironment() override;
-	__host__            void   deleteEnvironment() override;
-	__host__ __device__ double getSAtLambda(const double lambdaDegrees) const;
-	__host__ __device__ double getLambdaAtS(const double s) const;
+	__host__            void    setupEnvironment() override;
+	__host__            void    deleteEnvironment() override;
+	__host__            void    deserialize(string serialFolder) override;
+
+	__host__ __device__ meters  getSAtLambda(const degrees lambda) const;
+	__host__ __device__ degrees getLambdaAtS(const meters s) const;
 
 public:
-	__host__ __device__ DipoleB(double ILATDegrees, double errorTolerance = 1e-4, double ds = RADIUS_EARTH / 1000.0, bool useGPU = true);
-	__host__ __device__ ~DipoleB();
+	__host__ __device__ DipoleB(degrees ILAT, double lambdaErrorTolerance = 1e-4, meters ds = RADIUS_EARTH / 1000.0, bool useGPU = true);
+	__host__            DipoleB(string serialFolder);
+	__host__            ~DipoleB(); //device will have a default dtor created
 	__host__ __device__ DipoleB(const DipoleB&) = delete;
 	__host__ __device__ DipoleB& operator=(const DipoleB&) = delete;
 
 	//for testing
-	double ILAT()  const override { return ILATDegrees_m; }
-	double ds()    const { return ds_m; }
-	double L()     const { return L_m; }
-	double s_max() const { return s_max_m; }
+	__host__            degrees ILAT()  const override;
 
-	__host__            void setds(double ds) { ds_m = ds; }
+	__host__ __device__ tesla   getBFieldAtS(const meters s, const seconds t) const override;
+	__host__ __device__ double  getGradBAtS (const meters s, const seconds t) const override;
+	__host__ __device__ meters  getSAtAlt   (const meters alt_fromRe) const override;
 
-	__host__ __device__ double getBFieldAtS(const double s, const double t) const override;
-	__host__ __device__ double getGradBAtS (const double s, const double t) const override;
-	__host__ __device__ double getSAtAlt   (const double alt_fromRe) const override;
+	__host__            double getErrTol() const;
+	__host__            meters getds()     const;
 
-	__host__ double getErrTol() const { return errorTolerance_m; }
-	__host__ double getds()     const { return ds_m; }
+	__host__            void serialize(string serialFolder) const override;
 };
 
 #endif

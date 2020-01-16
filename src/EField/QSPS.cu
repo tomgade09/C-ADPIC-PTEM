@@ -1,10 +1,13 @@
 #include "EField/QSPS.h"
 
 #include "device_launch_parameters.h"
+#include "utils/serializationHelpers.h"
 #include "ErrorHandling/cudaErrorCheck.h"
 #include "ErrorHandling/cudaDeviceMacros.h"
 
-__global__ void setupEnvironmentGPU_QSPS(EElem** qsps, double* altMin, double* altMax, double* magnitude, int numRegions)
+using namespace utils::fileIO::serialize;
+
+__global__ void setupEnvironmentGPU_QSPS(EElem** qsps, meters* altMin, meters* altMax, double* magnitude, int numRegions)
 {
 	ZEROTH_THREAD_ONLY("setupEnvironmentGPU_QSPS", (*qsps) = new QSPS(altMin, altMax, magnitude, numRegions)); //this overloaded constructor is only compiled in the case where __CUDA_ARCH__ is defined
 }
@@ -15,12 +18,12 @@ __global__ void deleteEnvironmentGPU_QSPS(EElem** qsps)
 }
 
 #ifndef __CUDA_ARCH__ //host code
-__host__ const std::vector<double>& QSPS::altMin() const
+__host__ const std::vector<meters>& QSPS::altMin() const
 {
 	return altMin_m;
 }
 
-__host__ const std::vector<double>& QSPS::altMax() const 
+__host__ const std::vector<meters>& QSPS::altMax() const 
 {
 	return altMax_m;
 }
@@ -31,7 +34,7 @@ __host__ const std::vector<double>& QSPS::magnitude() const
 }
 #endif
 
-__host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std::vector<double> magnitude) :
+__host__ QSPS::QSPS(std::vector<meters> altMin, std::vector<meters> altMax, std::vector<double> magnitude) :
 	EElem("QSPS"), numRegions_m{ (int)magnitude.size() }
 {
 	if (magnitude.size() != altMin.size() || magnitude.size() != altMax.size())
@@ -44,10 +47,10 @@ __host__ QSPS::QSPS(std::vector<double> altMin, std::vector<double> altMax, std:
 	modelName_m = "QSPS";
 	#endif /* !__CUDA_ARCH__ */
 
-	setupEnvironment();
+	if (useGPU_m) setupEnvironment();
 }
 
-__device__ QSPS::QSPS(double* altMin, double* altMax, double* magnitude, int numRegions) :
+__device__ QSPS::QSPS(meters* altMin, meters* altMax, meters* magnitude, int numRegions) :
 	EElem("QSPS"), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions }
 {
 
@@ -56,7 +59,7 @@ __device__ QSPS::QSPS(double* altMin, double* altMax, double* magnitude, int num
 __host__ __device__ QSPS::~QSPS()
 {
 	#ifndef __CUDA_ARCH__ //host code
-	deleteEnvironment();
+	if (useGPU_m) deleteEnvironment();
 	#endif /* !__CUDA_ARCH__ */
 }
 
@@ -87,7 +90,7 @@ __host__ void QSPS::deleteEnvironment()
 	CUDA_API_ERRCHK(cudaFree(magnitude_d));
 }
 
-__host__ __device__ double QSPS::getEFieldAtS(const double s, const double t) const
+__host__ __device__ Vperm QSPS::getEFieldAtS(const meters s, const seconds t) const
 {
 	#ifndef __CUDA_ARCH__ //host code
 	for (int ind = 0; ind < magnitude_m.size(); ind++)
@@ -104,4 +107,52 @@ __host__ __device__ double QSPS::getEFieldAtS(const double s, const double t) co
 	#endif /* !__CUDA_ARCH__ */
 
 	return 0.0;
+}
+
+__host__ void serialize(string serialFolder) const override
+{
+	string filename{ serialFolder + string("EField_QSPS.ser") };
+
+	if (std::filesystem::exists(filename))
+		cerr << "QSPS::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.";
+	
+	ofstream out(filename, std::ofstream::binary);
+	if (!out) throw invalid_argument("QSPS::serialize: unable to create file: " + filename);
+	
+	auto writeStrBuf = [&](const stringbuf& sb)
+	{
+		out.write(sb.str().c_str(), sb.str().length());
+	};
+
+	// ======== write data to file ======== //
+	out.write(reinterpret_cast<const char*>(this), sizeof(QSPS));
+	writeStrBuf(serializeString(string(name_m)));
+	writeStrBuf(serializeDoubleVector(altMin_m));
+	writeStrBuf(serializeDoubleVector(altMax_m));
+	writeStrBuf(serializeDoubleVector(magnitude_m));
+
+	out.close();
+}
+
+__host__ void deserialize(string serialFolder, int nameIndex) override
+{
+	string filename{ serialFolder + string("EField_QSPS" + to_string(nameIndex) + ".ser") };
+	
+	ifstream in(filename, std::ifstream::binary);
+	if (!in) throw invalid_argument("QSPS::deserialize: unable to open file: " + filename);
+
+	QSPS* qsps{ nullptr };
+	vector<char> qspschar(sizeof(QSPS));
+
+	in.read(qspschar.data(), sizeof(QSPS));
+	dipb = reinterpret_cast<QSPS*>(qspschar.data());
+	
+	name_m = deserializeStr(in);
+	altMin_m = deserializeDoubleVector(in);
+	altMax_m = deserializeDoubleVector(in);
+	magnitude_m = deserializeDoubleVector(in);
+
+	useGPU_m = qsps->useGPU_m;
+
+	this_d = nullptr;
 }

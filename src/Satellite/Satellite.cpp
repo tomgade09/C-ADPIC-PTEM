@@ -211,10 +211,10 @@ long Satellite::getNumberOfParticles() const
 
 void Satellite::serialize(string serialFolder)
 {
-	string filename{ serialFolder + string("/Satellite_") + name_m + string(".bin") };
+	string filename{ serialFolder + string("/Satellite_") + name_m + string(".ser") };
 
 	if (std::filesystem::exists(filename))
-		cerr << "Particle::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.";
+		cerr << "Satellite::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.";
 
 	ofstream out(filename, std::ofstream::binary);
 	if (!out) throw invalid_argument("Satellite::serialize: unable to create file: " + filename);
@@ -233,7 +233,7 @@ void Satellite::serialize(string serialFolder)
 
 void Satellite::deserialize(string serialFolder, string name, double** particleData2D)
 {
-	string filename{ serialFolder + string("/Satellite_") + name + string(".bin") };
+	string filename{ serialFolder + string("/Satellite_") + name + string(".ser") };
 	ifstream in(filename, std::ifstream::binary);
 	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
 
