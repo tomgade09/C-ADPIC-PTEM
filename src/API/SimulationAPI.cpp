@@ -219,7 +219,7 @@ int main()
 	SIM_API_EXCEP_CHECK(
 		auto sim{ std::make_unique<Simulation>(0.01, 101322.378940846, 19881647.2473464, "./out/") };
 		setupExampleSimulationAPI(sim.get(), 3456000, "./../_in/data");
-		sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
+		//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 		sim->initializeSimulation();
 		sim->iterateSimulation(5000, 500);
 	); /* SIM_API_EXCEP_CHECK() */

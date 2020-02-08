@@ -10,6 +10,7 @@
 
 //Project includes
 #include "dlldefines.h"
+#include "utils/unitsTypedefs.h"
 
 using std::string;
 using std::vector;
@@ -20,7 +21,7 @@ class EElem //inherit from this class
 protected:
 	EElem** this_d{ nullptr }; //not really used on device
 	
-	const char* modelName_m;
+	const char* name_m;
 
 	__host__            virtual void setupEnvironment() = 0; //define this function in derived classes to assign a pointer to that function's B Field code to the location indicated by BFieldFcnPtr_d and gradBFcnPtr_d
 	__host__            virtual void deleteEnvironment() = 0;
@@ -49,7 +50,7 @@ private:
 	#ifndef __CUDA_ARCH__ //host code - need this since there is no CUDA device version of vectors
 	vector<unique_ptr<EElem>> Eelems_m; //Eelems pointers on host
 	vector<string> modelNames_m;        //holds names of elements - or could iterate over elements...
-	#endif /* !__CUDA_ARCH__ */
+	#endif /* !__CUDA_ARCH__ */  //the above vector references need these dev exclusion blocks or there is a cudaIllegalMemoryAccess error
 
 	//GPU container of EElems variables
 	EElem*** Eelems_d; //host: holds ptr to on GPU array, used to increase size, device: holds ptr to on GPU array, used to access elements

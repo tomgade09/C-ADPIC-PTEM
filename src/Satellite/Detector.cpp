@@ -6,7 +6,7 @@
 
 using std::runtime_error;
 
-void Satellite::iterateDetectorCPU(const vector<vector<double>>& particleData, double simtime, double dt)
+void Satellite::iterateDetectorCPU(const vector<vector<double>>& particleData, seconds simtime, seconds dt)
 {
 	if (data_m.at(0).size() != particleData.at(0).size())
 		throw runtime_error("Satellite::iterateDetectorCPU: data_m is improperly formed for Satellite named " + name_m);

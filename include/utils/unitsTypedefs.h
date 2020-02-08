@@ -10,6 +10,7 @@ typedef double kg;
 typedef double cm;
 typedef double Vperm;
 typedef double tesla;
+typedef double ratio;
 typedef double percm3;
 typedef double meters;
 typedef double dNflux;

@@ -6,10 +6,14 @@
 //CUDA includes
 #include "cuda_runtime.h"
 
+#include "utils/unitsTypedefs.h"
+
+using std::string;
+
 class BField
 {
 protected:
-	BField** this_d{ nullptr };
+	BField** this_d{ nullptr }; //pointer to device-side instance
 	
 	const char* name_m{ nullptr };
 
@@ -28,10 +32,10 @@ public:
 	__host__ __device__ virtual double getGradBAtS (const meters s, const seconds t) const = 0;
 	__host__ __device__ virtual meters getSAtAlt(const meters alt_fromRe) const = 0;
 
-	__host__            virtual double ILAT() const = 0;
+	__host__            virtual meters ILAT() const = 0;
 
-	__host__            virtual std::string name()   const;
-	__host__            virtual BField** getPtrGPU() const;//once returned, have to cast it to the appropriate type
+	__host__            virtual string name()   const;
+	__host__            virtual BField** getPtrGPU() const; //once returned, have to cast it to the appropriate type
 
 	__host__            virtual void serialize(string serialFolder) const = 0;
 };

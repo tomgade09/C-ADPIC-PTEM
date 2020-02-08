@@ -1,8 +1,8 @@
-# geoplasmasim
+# C-ADPIC-PTEM
 
 
 ### What is it?
-geoplasmasim (working title) is a simulation for generating test particle distributions as seen by a simulated satellite at a specified altitude under the influence of various B and E Field structures.
+C-ADPIC-PTEM is a simulation for generating test particle distributions as seen by a simulated satellite at a specified altitude under the influence of various B and E Field structures.
 
 
 ### Documentation

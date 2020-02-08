@@ -346,8 +346,8 @@ namespace utils
 		{
 			vector<vector<double>> data{ generate(s) };
 
-			cout << "Writing particle distribution:\n";
-			printRanges();
+			//cout << "Writing particle distribution:\n";
+			//printRanges();
 
 			try
 			{

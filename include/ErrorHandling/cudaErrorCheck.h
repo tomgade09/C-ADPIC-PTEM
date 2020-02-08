@@ -57,4 +57,11 @@ inline bool __cudaCheckError(const char* file, const int line, bool sync=false, 
 	return false;
 }
 
+inline void __cudaDeviceErrorCheck()
+{
+
+	cudaError_t err = cudaDeviceSynchronize();
+	std::cout << cudaGetErrorName(err) << ": " << cudaGetErrorString(err) << "\n";
+}
+
 #endif /* CUDAERRORCHECK_H */

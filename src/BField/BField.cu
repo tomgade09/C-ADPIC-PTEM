@@ -5,17 +5,17 @@ __host__ __device__ BField::BField(const char* modelName) : name_m{ modelName }
     
 }
 
-__host__ __device__ virtual BField::~BField()
+__host__ __device__ BField::~BField()
 {
 
 }
 
-__host__ virtual std::string BField::name() const
+__host__ string BField::name() const
 {
-    return modelName_m;
+    return name_m;
 }
 
-__host__ virtual BField** BField::getPtrGPU() const
+__host__ BField** BField::getPtrGPU() const
 {
     return this_d;
 }

@@ -1,6 +1,9 @@
+import os,sys
 import ctypes
-dllLoc = "./../../lib/geoplasmasim.dll"
-simDLL = ctypes.CDLL(dllLoc)
+
+sys.path.append(os.path.normpath('./../'))
+from __simulationvariables import *
+simDLL = ctypes.CDLL(DLLLOCATION)
 
 #ParticleDistribution functions
 simDLL.PDCreateAPI.argtypes = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_double)

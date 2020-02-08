@@ -25,9 +25,9 @@ protected:
 	
 	meters  simMin_m{ 0.0 };
 	meters  simMax_m{ 0.0 };
-	int     numMsmts_m{ 0 };
+	int     numMsmts_m{ 0 }; //used instead of size() because vectors aren't implemented on device
 
-	bool useGPU{ true };
+	bool useGPU_m{ true };
 
 	//protected functions
 	__host__ void setupEnvironment() override;
@@ -37,11 +37,12 @@ protected:
 
 public:
 	__host__ __device__ DipoleBLUT(degrees ILAT, meters simMin, meters simMax, meters ds_gradB, int numberOfMeasurements, bool useGPU = true);
-	__host__            ~DipoleBLUT(); //device will have a default dtor created
+	__host__            DipoleBLUT(string serialFolder);
+	__host__ __device__ ~DipoleBLUT();
 	__host__ __device__ DipoleBLUT(const DipoleBLUT&) = delete;
 	__host__ __device__ DipoleBLUT& operator=(const DipoleBLUT&) = delete;
 
-	__host__            degrees ILAT() const override;
+	__host__            degrees ILAT() const;
 
 	__host__ __device__ tesla   getBFieldAtS(const meters s, const seconds t) const override;
 	__host__ __device__ double  getGradBAtS(const meters s, const seconds t) const override;
@@ -50,8 +51,8 @@ public:
     __device__          void    setAltArray(double* altArray);
 	__device__          void    setMagArray(double* magArray);
 
-	__host__            double  getErrTol() const;
-	__host__            double  getds()     const;
+	__host__            ratio   getErrTol() const;
+	__host__            meters  getds()     const;
 
 	__host__            void    serialize(string serialFolder) const override;
 };

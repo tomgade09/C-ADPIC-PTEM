@@ -2,6 +2,7 @@ import numpy as np
 import math
 import os, sys, inspect
 import matplotlib.pyplot as plt
+from __simulationvariables import *
 
 pyscriptdir = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0)))
 sys.path.append(os.path.normpath(pyscriptdir + '/../'))
@@ -18,11 +19,10 @@ prevBinsDir = os.path.abspath(pyscriptdir + './../../_dataout/180716_14.09.22.or
 prevSimDir = os.path.abspath(prevBinsDir + './../') #Previous Simulation Root Dir
 os.chdir(prevSimDir)
 #print("Currently in directory: ", os.getcwd())
-dllLocation = os.path.abspath('./../../lib/geoplasmasim.dll')
 
 NUMPARTS = int(os.stat('./bins/particles_final/elec_vpara.bin').st_size/8)
 print("Number of particles read from files: ", NUMPARTS)
-sim = Simulation(dllLocation, prevSimDir)
+sim = Simulation(DLLLOCATION, prevSimDir)
 
 MASS_ELEC = 9.10938356e-31
 MASS_PROT = 1.67262190e-27

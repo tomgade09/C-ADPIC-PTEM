@@ -15,7 +15,7 @@ namespace ionosphere
 	{
 		DLLEXP dEflux_v2D satellite(const ParticleData& particles, const Bins& satBins, const dNflux_v1D& dNatSat);
 		DLLEXP dEflux_v2D backscatr(const EOMSimData& eomdata, const dNflux_v1D& dNatIonsph1D);
-		DLLEXP double newPA(const degrees PA_init, const tesla B_init, const tesla B_final);
+		DLLEXP degrees newPA(const degrees PA_init, const tesla B_init, const tesla B_final);
 	}
 
 	namespace binning

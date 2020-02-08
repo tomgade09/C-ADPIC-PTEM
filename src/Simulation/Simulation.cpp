@@ -172,7 +172,7 @@ void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool
 		throw std::invalid_argument("Simulation::setBFieldModel: no arguments passed in");
 	if (simAttr_m == nullptr)
 		save = false;
-
+	
 	std::vector<std::string> attrNames;
 
 	if (name == "DipoleB")
@@ -226,9 +226,9 @@ void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool
 	{
 		if (args.size() % 3 != 0) { throw std::invalid_argument("Simulation::addEFieldModel: QSPS: Argument vector is improperly formed.  Proper format is: { altMin, altMax, mag(, altMin, altMax, mag...) }"); }
 		
-		std::vector<double> altMin;
-		std::vector<double> altMax;
-		std::vector<double> mag;
+		std::vector<meters> altMin;
+		std::vector<meters> altMax;
+		std::vector<Vperm> mag;
 
 		for (size_t entry = 0; entry < args.size() / 3; entry++)
 		{
@@ -246,11 +246,11 @@ void Simulation::addEFieldModel(std::string name, std::vector<double> args, bool
 		std::cout << "AlfvenLUT not implemented quite yet.  Returning." << std::endl;
 		return;
 	}
-	else if (name == "AlfvenCompute")
+	/*else if (name == "AlfvenCompute")
 	{
 		std::cout << "AlfvenCompute not implemented quite yet.  Returning." << std::endl;
 		return;
-	}
+	}*/
 
 	if (save) { simAttr_m->addData("EField", name, {}, {}, attrNames, args); }
 }

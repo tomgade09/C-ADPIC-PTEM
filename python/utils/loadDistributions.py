@@ -5,8 +5,8 @@ MASS_ELEC = 9.10938356e-31
 
 name_orig = ctypes.create_string_buffer(bytes('orig dist', encoding='utf-8'))
 name_comp = ctypes.create_string_buffer(bytes('comp dist', encoding='utf-8'))
-fold_orig = ctypes.create_string_buffer(bytes('./../../_dataout/180716_14.09.22.origdist/bins/particles_init', encoding='utf-8'))
-fold_comp = ctypes.create_string_buffer(bytes('./../../python/utils/out', encoding='utf-8'))
+fold_orig = ctypes.create_string_buffer(bytes('./../../_dataout/190325_20.17.17.620km/bins/particles_final', encoding='utf-8'))
+fold_comp = ctypes.create_string_buffer(bytes('./../../_dataout/200211_23.11.23/bins/particles_final', encoding='utf-8'))
 #fold_orig = ctypes.create_string_buffer(bytes('./../../_dataout/180809_15.36.28/bins/particles_final', encoding='utf-8'))
 #fold_comp = ctypes.create_string_buffer(bytes('./../../_dataout/180813_15.46.10.CPUOpenMP/bins/particles_final', encoding='utf-8'))
 attrs = ctypes.create_string_buffer(bytes('vpara,vperp,s,t_inc,t_esc', encoding='utf-8'))

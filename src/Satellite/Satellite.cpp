@@ -23,7 +23,7 @@ using utils::fileIO::readDblBin;
 using utils::fileIO::writeDblBin;
 using namespace utils::fileIO::serialize;
 
-Satellite::Satellite(std::string name, std::vector<std::string> attributeNames, double altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr) :
+Satellite::Satellite(std::string name, std::vector<std::string> attributeNames, meters altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr) :
 	name_m{ name }, attributeNames_m{ attributeNames }, altitude_m{ altitude }, upwardFacing_m{ upwardFacing }, numberOfParticles_m{ numberOfParticles }, particleData2D_d{ partDataGPUPtr }
 {
 	data_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));

@@ -184,7 +184,7 @@ void Simulation::initializeSimulation()
 		throw SimFatalException("Simulation::initializeSimulation: no Magnetic Field model specified", __FILE__, __LINE__);
 	if (particles_m.size() == 0)
 		throw SimFatalException("Simulation::initializeSimulation: no particles in simulation, sim cannot be initialized without particles", __FILE__, __LINE__);
-
+	
 	if (EFieldModel_m == nullptr) //make sure an EField (even if empty) exists
 		EFieldModel_m = std::make_unique<EField>();
 	
@@ -214,8 +214,8 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	//
 	cudaDeviceProp gpuprop;
 	int dev{ -1 };
-	cudaGetDevice(&dev);
-	cudaGetDeviceProperties(&gpuprop, dev);
+	CUDA_API_ERRCHK(cudaGetDevice(&dev));
+	CUDA_API_ERRCHK(cudaGetDeviceProperties(&gpuprop, dev));
 	//
 	//
 	//
@@ -229,7 +229,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	
 	//convert particle vperp data to mu
 	for (auto& part : particles_m)
-		vperpMuConvert << < part->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >> > (part->getCurrDataGPUPtr(), BFieldModel_d, part->mass(), true);
+		vperpMuConvert <<< part->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (part->getCurrDataGPUPtr(), BFieldModel_d, part->mass(), true);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	//Setup on GPU variable that checks to see if any threads still have a particle in sim and if not, end iterations early

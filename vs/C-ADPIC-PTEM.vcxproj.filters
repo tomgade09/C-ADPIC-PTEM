@@ -25,6 +25,9 @@
     <CudaCompile Include="..\src\Satellite\Detector.cu">
       <Filter>Source Files\Satellite</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\BField\BField.cu">
+      <Filter>Source Files\BField</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\LogFile\LogFile.cpp">
@@ -86,6 +89,18 @@
     </ClCompile>
     <ClCompile Include="..\src\utils\strings.cpp">
       <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\BField\DipoleB.cpp">
+      <Filter>Source Files\BField</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\BField\DipoleBLUT.cpp">
+      <Filter>Source Files\BField</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\EField\EField.cpp">
+      <Filter>Source Files\EField</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\EField\QSPS.cpp">
+      <Filter>Source Files\EField</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

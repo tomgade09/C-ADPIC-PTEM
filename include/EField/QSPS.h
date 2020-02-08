@@ -11,7 +11,7 @@ protected:
 	#ifndef __CUDA_ARCH__ //host code
 	vector<meters> altMin_m;
 	vector<meters> altMax_m;
-	vector<double> magnitude_m;
+	vector<Vperm> magnitude_m;
 	#endif /* !__CUDA_ARCH__ */
 	
 	int numRegions_m{ 0 };
@@ -27,8 +27,9 @@ protected:
 	__host__ void deserialize(string serialFolder, int nameIndex) override;
 
 public:
-	__host__ QSPS(vector<meters> altMin, vector<meters> altMax, vector<double> magnitude);
-	__device__ QSPS(meters* altMin, meters* altMax, double* magnitude, int numRegions);
+	__host__ QSPS(vector<meters> altMin, vector<meters> altMax, vector<Vperm> magnitude);
+	__host__ QSPS(string serialFolder, int nameIndex);
+	__device__ QSPS(meters* altMin, meters* altMax, Vperm* magnitude, int numRegions);
 	__host__ __device__ ~QSPS();
 	__host__ __device__ QSPS(const QSPS&) = delete;
 	__host__ __device__ QSPS& operator=(const QSPS&) = delete;

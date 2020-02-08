@@ -5,6 +5,7 @@
 #include <string>
 
 #include "dlldefines.h"
+#include "utils/unitsTypedefs.h"
 
 using std::vector;
 using std::string;
@@ -20,7 +21,7 @@ protected:
 	string name_m;
 	STRVEC attributeNames_m;
 	
-	double altitude_m{ 0.0 };
+	meters altitude_m{ 0.0 };
 	bool   upwardFacing_m{ false };
 	bool   initializedGPU_m{ false };
 
@@ -37,7 +38,7 @@ protected:
 	virtual size_t getAttrIndByName(string name);
 
 public:
-	Satellite(string name, STRVEC attributeNames, double altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr);
+	Satellite(string name, STRVEC attributeNames, meters altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr);
 	Satellite(string serialFolder, string name, double** particleData2D);
 	virtual ~Satellite();
 	Satellite(const Satellite&) = delete;
@@ -45,7 +46,7 @@ public:
 
 	//Access functions
 	string        name() const;
-	double        altitude() const;
+	meters        altitude() const;
 	bool	      upward() const;
 	DBL2DV&       __data();
 	const DBL2DV& data() const;
@@ -56,7 +57,7 @@ public:
 
 	//Other functions
 	virtual void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
-	virtual void iterateDetectorCPU(const DBL2DV& particleData, double simtime, double dt);
+	virtual void iterateDetectorCPU(const DBL2DV& particleData, seconds simtime, seconds dt);
 	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
 	virtual void saveDataToDisk(string folder);
 	virtual void loadDataFromDisk(string folder);
