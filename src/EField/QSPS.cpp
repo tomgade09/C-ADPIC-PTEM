@@ -3,22 +3,28 @@
 #include <iostream>
 #include <filesystem>
 
-#include "utils/serializationHelpers.h"
-
 using std::cerr;
 using std::to_string;
 using std::invalid_argument;
 using namespace utils::fileIO::serialize;
 
-void QSPS::serialize(string serialFolder) const
+vector<double> QSPS::getAllAttributes() const
 {
-	string filename{ serialFolder + string("EField_QSPS.ser") };
+	vector<double> ret;
+	for (int iii = 0; iii < altMin_m.size(); iii++)
+	{//vectors are guaranteed to be the same size
+		ret.push_back(altMin_m.at(iii));
+		ret.push_back(altMax_m.at(iii));
+		ret.push_back(magnitude_m.at(iii));
+	}
 
-	if (std::filesystem::exists(filename))
-		cerr << "QSPS::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.";
+	return ret;
+}
 
-	ofstream out(filename, std::ofstream::binary);
-	if (!out) throw invalid_argument("QSPS::serialize: unable to create file: " + filename);
+stringbuf QSPS::serialize() const
+{
+	stringbuf sb;
+	ostream out(&sb);
 
 	auto writeStrBuf = [&](const stringbuf& sb)
 	{
@@ -26,34 +32,28 @@ void QSPS::serialize(string serialFolder) const
 	};
 
 	// ======== write data to file ======== //
+	//out.write(reinterpret_cast<char*>(type_m), sizeof(Type)); //written by EField
 	out.write(reinterpret_cast<const char*>(this), sizeof(QSPS));
-	writeStrBuf(serializeString(string(name_m)));
 	writeStrBuf(serializeDoubleVector(altMin_m));
 	writeStrBuf(serializeDoubleVector(altMax_m));
 	writeStrBuf(serializeDoubleVector(magnitude_m));
 
-	out.close();
+	return sb;
 }
 
-void QSPS::deserialize(string serialFolder, int nameIndex)
+void QSPS::deserialize(ifstream& in)
 {
-	string filename{ serialFolder + string("EField_QSPS" + to_string(nameIndex) + ".ser") };
+	vector<char> typechar(sizeof(Type), '\0');
+	in.read(typechar.data(), sizeof(Type));
 
-	ifstream in(filename, std::ifstream::binary);
-	if (!in) throw invalid_argument("QSPS::deserialize: unable to open file: " + filename);
-
-	QSPS* qsps{ nullptr };
-	vector<char> qspschar(sizeof(QSPS));
-
+	vector<char> qspschar(sizeof(QSPS), '\0');
 	in.read(qspschar.data(), sizeof(QSPS));
-	qsps = reinterpret_cast<QSPS*>(qspschar.data());
 
-	name_m = deserializeString(in).c_str();
 	altMin_m = deserializeDoubleVector(in);
 	altMax_m = deserializeDoubleVector(in);
 	magnitude_m = deserializeDoubleVector(in);
 
-	useGPU_m = qsps->useGPU_m;
-
+	useGPU_m = (*reinterpret_cast<QSPS*>(qspschar.data())).useGPU_m;
+	
 	this_d = nullptr;
 }

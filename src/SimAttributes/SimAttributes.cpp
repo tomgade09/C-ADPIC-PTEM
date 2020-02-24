@@ -1,6 +1,7 @@
 #include "SimAttributes/SimAttributes.h"
 
 #include <iostream>
+#include <exception>
 
 #include "utils/fileIO.h"
 #include "utils/strings.h"
@@ -53,7 +54,7 @@ void SimAttributes::addData(std::string classname, std::string name, VEC(std::st
 	invalidCharChk(doubleAttrLabels);
 
 	if (classname == "Simulation" && simAD.names_m.size() != 0) { throw std::invalid_argument("SimAttributes::addData: Simulation has already been specified"); }
-	if (classname == "BField" && BAD.names_m.size() != 0) { throw std::invalid_argument("SimAttributes::addData: BField has already been specified"); }
+	if (classname == "BField" && BAD.names_m.size() != 0) { throw std::invalid_argument("SimAttributes::addData: BModel has already been specified"); }
 
 	attrsData* adptr{ matchClassname(classname) };
 
@@ -81,21 +82,28 @@ std::string SimAttributes::generateString(attrsData& ad)
 	#define ATTRSWRAP(x) std::string("{{{{") + x + std::string("}}}}")
 	#define DBLSTRWRAP(x) std::string("$$$$") + x + std::string("#$^&")
 	std::string ret;
-
-	ret = CLASSWRAP(ad.classname_m);
-	for (size_t entry = 0; entry < ad.strLabels_m.size(); entry++) //iterates over entries
+	try
 	{
-		ret += NAMEWRAP(ad.names_m.at(entry));
-		ret += ATTRSWRAP(strVec1DToStr(ad.strLabels_m.at(entry)));
-		ret += ATTRSWRAP(strVec1DToStr(ad.strAttrs_m.at(entry)));
-		ret += ATTRSWRAP(strVec1DToStr(ad.dblLabels_m.at(entry)));
+		ret = CLASSWRAP(ad.classname_m);
+		for (size_t entry = 0; entry < ad.strLabels_m.size(); entry++) //iterates over entries
+		{
+			ret += NAMEWRAP(ad.names_m.at(entry));
+			ret += ATTRSWRAP(strVec1DToStr(ad.strLabels_m.at(entry)));
+			ret += ATTRSWRAP(strVec1DToStr(ad.strAttrs_m.at(entry)));
+			ret += ATTRSWRAP(strVec1DToStr(ad.dblLabels_m.at(entry)));
 
-		std::string tmp;
-		for (auto dbl = ad.dblAttrs_m.at(entry).begin(); dbl < ad.dblAttrs_m.at(entry).end(); dbl++)
-			tmp += DBLSTRWRAP(dblToExactStr(*dbl)) + ((dbl != ad.dblAttrs_m.at(entry).end() - 1) ? "," : "");
+			std::string tmp;
+			for (auto dbl = ad.dblAttrs_m.at(entry).begin(); dbl < ad.dblAttrs_m.at(entry).end(); dbl++)
+				tmp += DBLSTRWRAP(dblToExactStr(*dbl)) + ((dbl != ad.dblAttrs_m.at(entry).end() - 1) ? "," : "");
 
-		ret += ATTRSWRAP(tmp);
-		if (entry != ad.strLabels_m.size() - 1) { ret += ";;;;"; }
+			ret += ATTRSWRAP(tmp);
+			if (entry != ad.strLabels_m.size() - 1) { ret += ";;;;"; }
+		}
+	}
+	catch (std::exception & e)
+	{
+		std::cout << e.what() << "  " << __FILE__ << ":" << __LINE__ << "\n";
+		throw;
 	}
 
 	return ALLDATWRAP(ret);
@@ -152,7 +160,7 @@ void SimAttributes::read()
 		return ret;
 	};
 
-	auto exactStr2Dbl = [](std::string s) { double ret; for (int iii = 0; iii < 8; iii++) { reinterpret_cast<char*>(&ret)[iii] = s[iii]; } return ret; };
+	auto exactStr2Dbl = [](std::string s) { double ret{ 0.0 }; for (int iii = 0; iii < 8; iii++) { reinterpret_cast<char*>(&ret)[iii] = s[iii]; } return ret; };
 
 	auto strvToDblVec = [&](std::vector<std::vector<std::string>>& vec) { std::vector<std::vector<double>> ret;
 		for (size_t iii = 0; iii < vec.size(); iii++)
@@ -166,34 +174,41 @@ void SimAttributes::read()
 	//end lambdas - just for this function! (finally)
 
 	std::string saveString{ saveString_m };
-
-	std::vector<std::string> dataStrVec; //vector that holds data Classes at indicies - Simulation, BField...etc
-	dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Simulation
-	dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //BField
-	dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //EField
-	dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Particle
-	dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Satellite
-
-	for (auto datastr = dataStrVec.begin(); datastr < dataStrVec.end(); datastr++) //datastr is a data string that contains all data for a class
-	{ //iterates and pushes each Class to various functions resulting in attrsData having all the loaded data
-		attrsData* adptr{ matchClassname(findCutString(CLASSWRAP(""), (*datastr))) };
-		std::vector<std::vector<std::vector<std::string>>> allDataStr{ entrToAtrVec(splitEntries(";;;;", (*datastr))) };
-
-		for (auto name = allDataStr.at(0).begin(); name < allDataStr.at(0).end(); name++)
-			adptr->names_m.push_back((*name).at(0));
-		adptr->strLabels_m = allDataStr.at(1);
-		adptr->strAttrs_m = allDataStr.at(2);
-		adptr->dblLabels_m = allDataStr.at(3);
-		adptr->dblAttrs_m = strvToDblVec(allDataStr.at(4));
-	}
-
-	if (EAD.names_m.size() == 1 && EAD.names_m.at(0) == "")
+	try
 	{
-		EAD.names_m.clear();
-		EAD.strLabels_m.clear();
-		EAD.strAttrs_m.clear();
-		EAD.dblLabels_m.clear();
-		EAD.dblAttrs_m.clear();
+		std::vector<std::string> dataStrVec; //vector that holds data Classes at indicies - Simulation, BModel...etc
+		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Simulation
+		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //BModel
+		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //EField
+		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Particle
+		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Satellite
+
+		for (auto datastr = dataStrVec.begin(); datastr < dataStrVec.end(); datastr++) //datastr is a data string that contains all data for a class
+		{ //iterates and pushes each Class to various functions resulting in attrsData having all the loaded data
+			attrsData* adptr{ matchClassname(findCutString(CLASSWRAP(""), (*datastr))) };
+			std::vector<std::vector<std::vector<std::string>>> allDataStr{ entrToAtrVec(splitEntries(";;;;", (*datastr))) };
+
+			for (auto name = allDataStr.at(0).begin(); name < allDataStr.at(0).end(); name++)
+				adptr->names_m.push_back((*name).at(0));
+			adptr->strLabels_m = allDataStr.at(1);
+			adptr->strAttrs_m = allDataStr.at(2);
+			adptr->dblLabels_m = allDataStr.at(3);
+			adptr->dblAttrs_m = strvToDblVec(allDataStr.at(4));
+		}
+
+		if (EAD.names_m.size() == 1 && EAD.names_m.at(0) == "")
+		{
+			EAD.names_m.clear();
+			EAD.strLabels_m.clear();
+			EAD.strAttrs_m.clear();
+			EAD.dblLabels_m.clear();
+			EAD.dblAttrs_m.clear();
+		}
+	}
+	catch (std::exception & e)
+	{
+		std::cout << e.what() << "  " << __FILE__ << ":" << __LINE__ << "\n";
+		throw;
 	}
 }
 

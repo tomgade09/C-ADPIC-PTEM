@@ -27,7 +27,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\API\LogFileAPI.cpp" />
     <ClCompile Include="..\src\API\SimulationAPI.cpp" />
     <ClCompile Include="..\src\API\utilsAPI.cpp" />
     <ClCompile Include="..\src\BField\DipoleB.cpp" />
@@ -36,7 +35,7 @@
     <ClCompile Include="..\src\EField\QSPS.cpp" />
     <ClCompile Include="..\src\ionosphere\ionosphere.cpp" />
     <ClCompile Include="..\src\ionosphere\ionosphereClasses.cpp" />
-    <ClCompile Include="..\src\LogFile\LogFile.cpp" />
+    <ClCompile Include="..\src\Log\Log.cpp" />
     <ClCompile Include="..\src\Particle\Particle.cpp" />
     <ClCompile Include="..\src\Satellite\Satellite.cpp" />
     <ClCompile Include="..\src\Satellite\Detector.cpp" />
@@ -50,30 +49,29 @@
     <ClCompile Include="..\src\utils\strings.cpp" />
     <ClCompile Include="..\src\utils\numerical.cpp" />
     <ClCompile Include="..\src\utils\random.cpp" />
+    <ClCompile Include="..\src\utils\validation\PTEM.cpp" />
     <ClCompile Include="..\src\utils\writeIOclasses.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\API\LogFileAPI.h" />
     <ClInclude Include="..\include\API\SimulationAPI.h" />
     <ClInclude Include="..\include\API\utilsAPI.h" />
     <ClInclude Include="..\include\BField\allBModels.h" />
-    <ClInclude Include="..\include\BField\BField.h" />
+    <ClInclude Include="..\include\BField\BModel.h" />
     <ClInclude Include="..\include\BField\DipoleB.h" />
     <ClInclude Include="..\include\BField\DipoleBLUT.h" />
     <ClInclude Include="..\include\dlldefines.h" />
     <ClInclude Include="..\include\EField\allEModels.h" />
+    <ClInclude Include="..\include\EField\EModel.h" />
     <ClInclude Include="..\include\EField\EField.h" />
     <ClInclude Include="..\include\EField\QSPS.h" />
     <ClInclude Include="..\include\equalityOperators.h" />
     <ClInclude Include="..\include\ErrorHandling\cudaDeviceMacros.h" />
     <ClInclude Include="..\include\ErrorHandling\cudaErrorCheck.h" />
-    <ClInclude Include="..\include\ErrorHandling\SimException.h" />
     <ClInclude Include="..\include\ErrorHandling\simExceptionMacros.h" />
-    <ClInclude Include="..\include\ErrorHandling\SimFatalException.h" />
     <ClInclude Include="..\include\ionosphere\ionosphere.h" />
     <ClInclude Include="..\include\ionosphere\ionosphereClasses.h" />
     <ClInclude Include="..\include\ionosphere\ionosphereUtils.h" />
-    <ClInclude Include="..\include\LogFile\LogFile.h" />
+    <ClInclude Include="..\include\Log\Log.h" />
     <ClInclude Include="..\include\Particle\Particle.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\Satellite\Satellite.h" />
@@ -90,12 +88,15 @@
     <ClInclude Include="..\include\utils\numerical.h" />
     <ClInclude Include="..\include\utils\random.h" />
     <ClInclude Include="..\include\utils\unitsTypedefs.h" />
+    <ClInclude Include="..\include\utils\validation\ADPIC.h" />
+    <ClInclude Include="..\include\utils\validation\PTEM.h" />
     <ClInclude Include="..\include\utils\writeIOclasses.h" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\src\BField\BField.cu" />
+    <CudaCompile Include="..\src\BField\BModel.cu" />
     <CudaCompile Include="..\src\BField\DipoleB.cu" />
     <CudaCompile Include="..\src\BField\DipoleBLUT.cu" />
+    <CudaCompile Include="..\src\EField\EModel.cu" />
     <CudaCompile Include="..\src\EField\EField.cu" />
     <CudaCompile Include="..\src\EField\QSPS.cu" />
     <CudaCompile Include="..\src\Satellite\Detector.cu" />

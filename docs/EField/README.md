@@ -1,4 +1,4 @@
-# EField and EElem
+# EField and EModel
 
 
 ![EField Ownership Model](./Ownership.jpg)
@@ -9,11 +9,11 @@
 **`EField()`**
 
 **`protected:
-	EElem(const char* modelName)`**
+	EModel(const char* modelName)`**
 	
-EField is a container class which tracks (but does not manage - that is, creation and destruction) and consolidates the values of an arbitrary number of `EElem` derived classes.  This class is created upon instantiation of a [Simulation](./../Simulation/README.md), and destroyed upon its destruction.  `EElem` derived classes are created and added to the EField container through `EField:add(std::unique_ptr<EElem> elem)`.  Addition of the device instance of the `EElem` is handled automatically by `EField:add`.
+EField is a container class which tracks (but does not manage - that is, creation and destruction) and consolidates the values of an arbitrary number of `EModel` derived classes.  This class is created upon instantiation of a [Simulation](./../Simulation/README.md), and destroyed upon its destruction.  `EModel` derived classes are created and added to the EField container through `EField:add(std::unique_ptr<EModel> elem)`.  Addition of the device instance of the `EModel` is handled automatically by `EField:add`.
 
-EElem is an abstract base class that provides a common interface for a user specified E Field model.  EElem is the E Field equivalent of `BField` [abstract base class](./../BField/README.md), except with a different interface.  Derived models from EElem are responsible for creation and destruction of all host/device memory allocations.
+EModel is an abstract base class that provides a common interface for a user specified E Field model.  EModel is the E Field equivalent of `BModel` [abstract base class](./../BModel/README.md), except with a different interface.  Derived models from EModel are responsible for creation and destruction of all host/device memory allocations.
 
 
 ### Available Models
@@ -26,7 +26,7 @@ EElem is an abstract base class that provides a common interface for a user spec
 ---
 EField can be created with `std::make_unique<EField>()`.  It is also created automatically when a [Simulation](./../Simulation/README.md) is created.
 
-EElem is an abstract base class, and as such cannot be created on its own.  It will be created when a derived class is.  `QSPS` and `AlfvenLUT` derived classes can be created through the constructors below, or with `Simulation::addEFieldModel(std::string name, std::vector<double> args, bool save)` where `name` is either "QSPS" or "AlfvenLUT" (not available yet), and args is a vector of arguments fed in to the associated model's constructor.
+EModel is an abstract base class, and as such cannot be created on its own.  It will be created when a derived class is.  `QSPS` and `AlfvenLUT` derived classes can be created through the constructors below, or with `Simulation::addEFieldModel(std::string name, std::vector<double> args, bool save)` where `name` is either "QSPS" or "AlfvenLUT" (not available yet), and args is a vector of arguments fed in to the associated model's constructor.
 
 
 ### Constructors
@@ -77,7 +77,7 @@ __host__ __device__ double   getEFieldAtS(const double s, const double t) const
 
 
 #### Output:
-Sum of E Field strength of all tracked EElem instances, in Volts / meter.  This can be called from both host and device.
+Sum of E Field strength of all tracked EModel instances, in Volts / meter.  This can be called from both host and device.
 
 
 #### Side-Effects:
@@ -86,10 +86,10 @@ None
 
 ---
 ```
-__host__ void add(std::unique_ptr<EElem> elem)
+__host__ void add(std::unique_ptr<EModel> elem)
 ```
 #### Input:
-`elem` - a smart pointer to a host instance of an EElem-derived class
+`elem` - a smart pointer to a host instance of an EModel-derived class
 
 
 #### Output:
@@ -97,14 +97,14 @@ None
 
 
 #### Side-Effects:
-Adds `elem` to the host vector containing smart pointers to EElems.  Calls `getPtrGPU()` and adds the GPU pointer to the device instance associated with `elem` to the device instance of EField.  This allows the results of both host and device `getEFieldAtS` to be accurate.  This function also resizes the device array, if necessary, adding a capacity of 5 to the current capacity if the array is full.  `capacity()` and `size()` give the values associated with the function name, if the user desires to check them.
+Adds `elem` to the host vector containing smart pointers to EModels.  Calls `getPtrGPU()` and adds the GPU pointer to the device instance associated with `elem` to the device instance of EField.  This allows the results of both host and device `getEFieldAtS` to be accurate.  This function also resizes the device array, if necessary, adding a capacity of 5 to the current capacity if the array is full.  `capacity()` and `size()` give the values associated with the function name, if the user desires to check them.
 
 
 ---
 ```
 __host__ EField**    getPtrGPU() const
-__host__ EElem*      element(int ind) const
-__host__ std::string getEElemsStr() const
+__host__ EModel*      element(int ind) const
+__host__ std::string getEModelsStr() const
 __host__ __device__ int capacity()  const
 __host__ __device__ int size()      const
 ```
@@ -113,14 +113,14 @@ __host__ __device__ int size()      const
 
 
 #### Output:
-Outputs the pointer to device EField instance, pointer to *host* EElem instance, a string of EElems - comma separated, the capacity of the vector holding the EElems, and the size of the vector holding the EElems, respectively.
+Outputs the pointer to device EField instance, pointer to *host* EModel instance, a string of EModels - comma separated, the capacity of the vector holding the EModels, and the size of the vector holding the EModels, respectively.
 
 
 #### Side-Effects:
 None
 
 
-### Public Member Functions (EElem)
+### Public Member Functions (EModel)
 ---
 ```
 __host__ __device__ virtual double getEFieldAtS(const double s, const double t) const
@@ -142,14 +142,14 @@ None
 ---
 ```
 __host__ virtual std::string name()  const
-__host__ virtual EElem** getPtrGPU() const
+__host__ virtual EModel** getPtrGPU() const
 ```
 #### Input:
 None
 
 
 #### Output:
-Returns the name of the EElem as a string and the pointer to the GPU instance of the EElem, respectively.
+Returns the name of the EModel as a string and the pointer to the GPU instance of the EModel, respectively.
 
 
 #### Side-Effects:

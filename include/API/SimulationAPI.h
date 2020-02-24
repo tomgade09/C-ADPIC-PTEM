@@ -48,7 +48,6 @@ DLLEXP_EXTC int           getNumberOfParticlesAPI(Sim* sim, int partInd);
 DLLEXP_EXTC int           getNumberOfAttributesAPI(Sim* sim, int partInd);
 DLLEXP_EXTC const char*   getParticleNameAPI(Sim* sim, int partInd);
 DLLEXP_EXTC const char*   getSatelliteNameAPI(Sim* sim, int satInd);
-DLLEXP_EXTC LogFile*      getLogFilePointerAPI(Sim* sim);
 DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData);
 
 

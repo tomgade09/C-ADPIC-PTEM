@@ -1,4 +1,4 @@
-# BinToCDF
+# ADPIC
 
 Requires cdf library from https://cdf.gsfc.nasa.gov/
 

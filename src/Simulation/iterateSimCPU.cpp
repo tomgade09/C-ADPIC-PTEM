@@ -9,17 +9,23 @@
 #include "utils/loopmacros.h"
 #include "Simulation/Simulation.h"
 #include "ErrorHandling/cudaErrorCheck.h"
-#include "ErrorHandling/SimFatalException.h"
 
 //OpenMP
 #include <omp.h>
 #include <thread>
 
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::setw;
+using std::fixed;
+using std::to_string;
+
 //forward decls
 namespace physics
 {
-	void vperpMuConvert(const double vpara, double* vperpOrMu, const double s, const double t_convert, BField* bfield, const double mass, const bool vperpToMu);
-	void iterateParticle(double* vpara, double* mu, double* s, double* t_incident, double* t_escape, BField* bfield, EField* efield, const double simtime, const double dt, const double mass, const double charge, const double simmin, const double simmax);
+	void vperpMuConvert(const double vpara, double* vperpOrMu, const double s, const double t_convert, BModel* BModel, const double mass, const bool vperpToMu);
+	void iterateParticle(double* vpara, double* mu, double* s, double* t_incident, double* t_escape, BModel* BModel, EField* efield, const double simtime, const double dt, const double mass, const double charge, const double simmin, const double simmax);
 }
 
 void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
@@ -43,8 +49,8 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 	}
 
 	bool done{ false };
-	long cudaloopind{ 0 };
-	while (cudaloopind < numberOfIterations)
+	size_t initEntry{ log_m->createEntry("Iteration 1", false) };
+	for (long cudaloopind; cudaloopind < numberOfIterations; cudaloopind++)
 	{
 		if (cudaloopind % checkDoneEvery == 0) { done = true; }
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
@@ -70,20 +76,26 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 
 		if (cudaloopind % checkDoneEvery == 0)
 		{
-			std::stringstream out;
-			out << std::setw(std::to_string(numberOfIterations).size()) << cudaloopind;
-			std::cout << out.str() << " / " << numberOfIterations << "  |  Sim Time (s): ";
-			out.str(""); out.clear();
-			out << std::setw(std::to_string((int)(numberOfIterations)* dt_m).size()) << std::fixed << simTime_m;
-			std::cout << out.str() << "  |  Real Time Elapsed (s): ";
-			logFile_m->printTimeNowFromLastTS(); //need to add to log file as well?
-			std::cout << std::endl;
+			{
+				string loopStatus;
+				stringstream out;
+
+				out << setw(to_string(numberOfIterations).size()) << cudaloopind;
+				loopStatus = out.str() + " / " + to_string(numberOfIterations) + "  |  Sim Time (s): ";
+				out.str("");
+				out.clear();
+
+				out << setw(to_string((int)(numberOfIterations)*dt_m).size()) << fixed << simTime_m;
+				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(log_m->timeElapsedSinceEntry_s(initEntry));
+
+				log_m->createEntry("CPU: " + loopStatus);
+				cout << loopStatus << "\n";
+			}
 
 			if (done) { std::cout << "All particles finished early.  Breaking loop." << std::endl; break; }
 		}
 
 		incTime();
-		cudaloopind++;
 	}
 
 	for (auto part = particles_m.begin(); part < particles_m.end(); part++)
@@ -100,8 +112,7 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 	saveDataToDisk();
 	simTime_m = 0.0;
 
-	std::cout << "Total sim time: "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;
+	std::cout << "Total sim time: " << log_m->timeElapsedTotal_s() << " s" << std::endl;
 
-	logFile_m->createTimeStruct("End Iterate " + std::to_string(numberOfIterations));
-	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + std::to_string(numberOfIterations));
+	log_m->createEntry("End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }

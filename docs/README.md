@@ -12,9 +12,9 @@ Click the links below to read about the various components of this software:
 
 [1. Simulation](Simulation/README.md) - Container class that contains equation of motion for particles, as well as a number of control functions, access functions, and other useful things.  Manages lifetime of all of the below classes.
 
-[2. BField](BField/README.md) - Abstract class for interfacing with various implementations of B Field models.
+[2. BModel](BModel/README.md) - Abstract class for interfacing with various implementations of B Field models.
 
-[3. EField](EField/README.md) - Abstract class for interfacing with various implementations of E Field models.  Can track numerous `EElem`s - E Field Elements.
+[3. EField](EField/README.md) - Abstract class for interfacing with various implementations of E Field models.  Can track numerous `EModel`s - E Field Elements.
 
 [4. Particle](Particle/README.md) - Class that manages particles by tracking arrays of attributes, specified upon creation.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
 
@@ -28,7 +28,7 @@ Click the links below to read about the various components of this software:
 
 [9. SimAttributes](SimAttributes/README.md) - Class that handles saving Simulation attributes to a file for later reference/recreation of an identical Simulation
 
-[10. LogFile](LogFile/README.md) - A class with a number of member functions for writing a log file to disk along with elapsed time data.
+[10. Log](Log/README.md) - A class with a number of member functions for writing a log file to disk along with elapsed time data.
 
 [11. Examples](Examples/README.md) - Look here for examples of usage (Python and C++).
 

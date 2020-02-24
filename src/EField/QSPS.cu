@@ -14,14 +14,14 @@ using namespace utils::fileIO::serialize;
 
 namespace QSPS_d
 {
-	__global__ void setupEnvironmentGPU(EElem** qsps, meters* altMin, meters* altMax, double* magnitude, int numRegions)
+	__global__ void setupEnvironment_d(EModel** qsps, meters* altMin, meters* altMax, double* magnitude, int numRegions)
 	{
 		ZEROTH_THREAD_ONLY((*qsps) = new QSPS(altMin, altMax, magnitude, numRegions)); //this overloaded constructor is only compiled in the case where __CUDA_ARCH__ is defined
 	}
 
-	__global__ void deleteEnvironmentGPU(EElem** qsps)
+	__global__ void deleteEnvironment_d(EModel** qsps)
 	{
-		ZEROTH_THREAD_ONLY(delete ((QSPS*)(*qsps)));
+		ZEROTH_THREAD_ONLY(delete (*((QSPS**)qsps)));
 	}
 }
 
@@ -31,7 +31,7 @@ __host__ const vector<meters>& QSPS::altMin() const
 	return altMin_m;
 }
 
-__host__ const vector<meters>& QSPS::altMax() const 
+__host__ const vector<meters>& QSPS::altMax() const
 {
 	return altMax_m;
 }
@@ -42,30 +42,55 @@ __host__ const vector<double>& QSPS::magnitude() const
 }
 #endif
 
-__host__ QSPS::QSPS(vector<meters> altMin, vector<meters> altMax, vector<Vperm> magnitude) :
-	EElem("QSPS"), numRegions_m{ (int)magnitude.size() }
-{
-	if (magnitude.size() != altMin.size() || magnitude.size() != altMax.size())
-		throw invalid_argument(__func__ + string(": invalid parameters passed in magnitude, altMin, altMax: resolved vector lengths are not equal"));
 
+__host__ QSPS::QSPS(meters altMin, meters altMax, Vperm magnitude, int stepUpRegions) : EModel(Type::QSPS)
+{
 	#ifndef __CUDA_ARCH__ //host code
-	altMin_m = altMin;       //unfortunately this wrapping is necessary
-	altMax_m = altMax;       //as the vectors above also have to be wrapped
-	magnitude_m = magnitude; //in an ifndef/endif block so this will compile
-	#endif /* !__CUDA_ARCH__ */
+	altMin_m.push_back(altMin);       //unfortunately this wrapping is necessary
+	altMax_m.push_back(altMax);       //as the vectors above also have to be wrapped
+	magnitude_m.push_back(magnitude); //in an ifndef/endif block so this will compile
+
+	//step up regions allow the QSPS to gradually step up to full magnitude
+	//this avoids a "hard edge" to the QSPS, potentially leading to errors
+	if (stepUpRegions != 0)
+	{
+		constexpr ratio suSize{ 0.05 }; //use step up regions = 5% of QSPS size (arbitrary)
+
+		altMin_m.resize(2 * stepUpRegions + 1);
+		altMax_m.resize(2 * stepUpRegions + 1);
+		magnitude_m.resize(2 * stepUpRegions + 1);
+
+		altMin_m.at(stepUpRegions) = altMin;
+		altMax_m.at(stepUpRegions) = altMax;
+		magnitude_m.at(stepUpRegions) = magnitude;
+
+		meters size{ altMax - altMin };
+		
+		for (int iii = 0; iii < stepUpRegions; iii++)
+		{//step up regions at the bottom of the QSPS
+			altMin_m.at(iii) = altMin - (stepUpRegions - iii) * suSize * size;
+			altMax_m.at(iii) = altMin - (stepUpRegions - iii - 1) * suSize * size;
+			magnitude_m.at(iii) = magnitude * (iii + 1) / (stepUpRegions + 1);
+			altMin_m.at(stepUpRegions + 1 + iii) = altMax + iii * suSize * size;
+			altMax_m.at(stepUpRegions + 1 + iii) = altMax + (iii + 1) * suSize * size;
+			magnitude_m.at(stepUpRegions + 1 + iii) = magnitude * (stepUpRegions - iii) / (stepUpRegions + 1);
+		}
+		std::cout << magnitude_m.at(0) << "  " << magnitude_m.at(1) << "\n\n";
+	}
 
 	if (useGPU_m) setupEnvironment();
+	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ QSPS::QSPS(string serialFolder, int nameIndex) : EElem("QSPS")
+__host__ QSPS::QSPS(ifstream& in) : EModel(Type::QSPS)
 {
-	deserialize(serialFolder, nameIndex);
+	deserialize(in);
 	
 	if (useGPU_m) setupEnvironment();
 }
 
-__device__ QSPS::QSPS(meters* altMin, meters* altMax, Vperm* magnitude, int numRegions) :
-	EElem("QSPS"), altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions }
+__device__ QSPS::QSPS(meters* altMin, meters* altMax, Vperm* magnitude, int numRegions) : EModel(Type::QSPS),
+	altMin_d{ altMin }, altMax_d{ altMax }, magnitude_d{ magnitude }, numRegions_m{ numRegions }
 {
 
 }
@@ -80,7 +105,7 @@ __host__ __device__ QSPS::~QSPS()
 __host__ void QSPS::setupEnvironment()
 {
 	#ifndef __CUDA_ARCH__ //host code
-	CUDA_API_ERRCHK(cudaMalloc((void **)&this_d, sizeof(QSPS**))); //malloc for ptr to ptr to GPU QSPS Obj
+	CUDA_API_ERRCHK(cudaMalloc((void **)&this_d, sizeof(QSPS*))); //malloc for ptr to ptr to GPU QSPS Obj
 	CUDA_API_ERRCHK(cudaMalloc((void **)&altMin_d, altMin_m.size() * sizeof(meters))); //array of altitude min bounds
 	CUDA_API_ERRCHK(cudaMalloc((void **)&altMax_d, altMax_m.size() * sizeof(meters)));
 	CUDA_API_ERRCHK(cudaMalloc((void **)&magnitude_d, magnitude_m.size() * sizeof(Vperm))); //array of E magnitude between above min/max
@@ -88,14 +113,14 @@ __host__ void QSPS::setupEnvironment()
 	CUDA_API_ERRCHK(cudaMemcpy(altMax_d, altMax_m.data(), altMax_m.size() * sizeof(meters), cudaMemcpyHostToDevice));
 	CUDA_API_ERRCHK(cudaMemcpy(magnitude_d, magnitude_m.data(), magnitude_m.size() * sizeof(meters), cudaMemcpyHostToDevice));
 
-	QSPS_d::setupEnvironmentGPU <<< 1, 1 >>> (this_d, altMin_d, altMax_d, magnitude_d, (int)(magnitude_m.size()));
+	QSPS_d::setupEnvironment_d <<< 1, 1 >>> (this_d, altMin_d, altMax_d, magnitude_d, (int)(magnitude_m.size()));
 	CUDA_KERNEL_ERRCHK_WSYNC(); //creates GPU instance of QSPS
 	#endif /* !__CUDA_ARCH__ */
 }
 
 __host__ void QSPS::deleteEnvironment()
 {
-	QSPS_d::deleteEnvironmentGPU <<< 1, 1 >>> (this_d);
+	QSPS_d::deleteEnvironment_d <<< 1, 1 >>> (this_d);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	CUDA_API_ERRCHK(cudaFree(this_d));

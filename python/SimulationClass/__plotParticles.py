@@ -37,7 +37,7 @@ def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z,
     plt.figure(6)
     plotXY(v_i_para, z_i, 'Ions', 'Vpara (Re / s)', 'Z (Re)', 'z_vpra_ions.png')
 
-    os.chdir('./../EBfields')
+    os.chdir('./../EBModels')
 
     plt.figure(7)
     plotXY(B_E_z_dim, B_z, 'B Field', 'Z (Re)', 'B (T)', 'B(z).png')
@@ -50,8 +50,8 @@ def plotAllParticles(v_e_para, v_e_perp, z_e, v_i_para, v_i_perp, z_i, B_z, E_z,
     if showplot:
         plt.show()
 
-def plotFields(BField, EField, sGrid, norm=False):
-    os.chdir('./graphs/EBfields')
+def plotFields(BModel, EField, sGrid, norm=False):
+    os.chdir('./graphs/EBModels')
 
     if norm:
         units = ' (Re)'
@@ -59,7 +59,7 @@ def plotFields(BField, EField, sGrid, norm=False):
         units = ' (m)'
 
     plt.figure(1)
-    plotXY(sGrid, BField, 'B Field', 's' + units, 'B (T)', 'B(z).png')
+    plotXY(sGrid, BModel, 'B Field', 's' + units, 'B (T)', 'B(z).png')
 
     plt.figure(2)
     plotXY(sGrid, EField, 'E Field', 's' + units, 'E (V/m)', 'E(z).png')

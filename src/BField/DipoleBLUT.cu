@@ -19,17 +19,16 @@ constexpr double LAMBDAERRTOL{ 1.0e-10 }; //the error tolerance of DipoleB's lam
 //setup CUDA kernels
 namespace DipoleBLUT_d
 {
-	__global__ void setupEnvironmentGPU(BField** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)
+	__global__ void setupEnvironmentGPU(BModel** this_d, double ILATDeg, double simMin, double simMax, double ds_gradB, int numMsmts, double* altArray, double* magArray)
 	{
 		ZEROTH_THREAD_ONLY(
-			DipoleBLUT* tmp_d = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
-			tmp_d->setAltArray(altArray);
-			tmp_d->setMagArray(magArray);
-			(*this_d) = tmp_d;
+			*this_d = new DipoleBLUT(ILATDeg, simMin, simMax, ds_gradB, numMsmts);
+			((DipoleBLUT*)(*this_d))->setAltArray(altArray);
+			((DipoleBLUT*)(*this_d))->setMagArray(magArray);
 		);
 	}
 
-	__global__ void deleteEnvironmentGPU(BField** this_d)
+	__global__ void deleteEnvironmentGPU(BModel** this_d)
 	{
 		ZEROTH_THREAD_ONLY(delete ((DipoleBLUT*)(*this_d)));
 	}
@@ -40,17 +39,16 @@ namespace DipoleBLUT_d
 //DipoleBLUT protected member functions
 __host__ void DipoleBLUT::setupEnvironment()
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, errorTolerance ]
-	CUDA_API_ERRCHK(cudaMalloc((void**)&this_d, sizeof(BField**)));
+	CUDA_API_ERRCHK(cudaMalloc((void**)&this_d, sizeof(DipoleBLUT*)));
 	CUDA_API_ERRCHK(cudaMalloc((void**)&altitude_d, sizeof(meters) * numMsmts_m));
 	CUDA_API_ERRCHK(cudaMalloc((void**)&magnitude_d, sizeof(tesla) * numMsmts_m));
 
 	#ifndef __CUDA_ARCH__ //host code
-	CUDA_API_ERRCHK(cudaMemcpy(altitude_d, altitude_m.data(), sizeof(double) * numMsmts_m, cudaMemcpyHostToDevice));
-	CUDA_API_ERRCHK(cudaMemcpy(magnitude_d, magnitude_m.data(), sizeof(double) * numMsmts_m, cudaMemcpyHostToDevice));
+	CUDA_API_ERRCHK(cudaMemcpy(altitude_d, altitude_m.data(), sizeof(meters) * numMsmts_m, cudaMemcpyHostToDevice));
+	CUDA_API_ERRCHK(cudaMemcpy(magnitude_d, magnitude_m.data(), sizeof(meters) * numMsmts_m, cudaMemcpyHostToDevice));
 	#endif /* !__CUDA_ARCH__ */
 	
 	DipoleBLUT_d::setupEnvironmentGPU <<< 1, 1 >>> (this_d, ILAT_m, simMin_m, simMax_m, ds_gradB_m, numMsmts_m, altitude_d, magnitude_d);
-	
 	CUDA_KERNEL_ERRCHK_WSYNC();
 }
 
@@ -67,7 +65,7 @@ __host__ void DipoleBLUT::deleteEnvironment()
 
 //DipoleBLUT public member functions
 __host__ __device__ DipoleBLUT::DipoleBLUT(degrees ILAT, meters simMin, meters simMax, meters ds_gradB, int numberOfMeasurements, bool useGPU) :
-	BField("DipoleBLUT"), ILAT_m{ ILAT }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }, useGPU_m{ useGPU }
+	BModel(Type::DipoleBLUT), ILAT_m{ ILAT }, simMin_m{ simMin }, simMax_m{ simMax }, ds_gradB_m{ ds_gradB }, numMsmts_m{ numberOfMeasurements }, useGPU_m{ useGPU }
 {
 	ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
 
@@ -84,7 +82,7 @@ __host__ __device__ DipoleBLUT::DipoleBLUT(degrees ILAT, meters simMin, meters s
 	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ DipoleBLUT::DipoleBLUT(string serialFolder) : BField("DipoleBLUT")
+__host__ DipoleBLUT::DipoleBLUT(string serialFolder) : BModel(Type::DipoleBLUT)
 {
 	deserialize(serialFolder);
 	ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
@@ -113,7 +111,7 @@ __host__ __device__ tesla DipoleBLUT::getBFieldAtS(const meters s, const seconds
 		startInd = numMsmts_m - 2; //if s is above simMax, we interpolate based on the highest indicies ([numMsmts - 2] to [numMsmts - 1])
 	else
 		startInd = (int)((s - simMin_m) / ds_msmt_m); //c-style cast to int basically == floor()
-
+	
 	// deltaB_bin / deltas_bin^3 * (s'(dist up from altBin)) + B@altBin
 	#ifndef __CUDA_ARCH__ //host code
 	return (s - altitude_m.at(startInd)) * (magnitude_m.at(startInd + 1) - magnitude_m.at(startInd)) / ds_msmt_m + magnitude_m.at(startInd); //B = ms + b(0)

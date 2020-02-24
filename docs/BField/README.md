@@ -1,17 +1,17 @@
-# BField
+# BModel
 
 
-![BField Ownership Model](./Ownership.jpg)
+![BModel Ownership Model](./Ownership.jpg)
 
 
 ### What is it?
 ---
 **`protected:
-    BField(const char* modelName)`**
+    BModel(const char* modelName)`**
 
-BField is an abstract base class that represents a user-specified model of the simulation's Magnetic Field through a number of derived classes which implement different models.  BField contains a number of pure virtual functions which provide a standard interface for obtaining the B Field and gradient of B of the underlying model, as well as a pointer to the GPU implementation of the derived class.  See below for a list of options and descriptions of the various models.
+BModel is an abstract base class that represents a user-specified model of the simulation's Magnetic Field through a number of derived classes which implement different models.  BModel contains a number of pure virtual functions which provide a standard interface for obtaining the B Field and gradient of B of the underlying model, as well as a pointer to the GPU implementation of the derived class.  See below for a list of options and descriptions of the various models.
 
-All management of device instances of derived classes is handled by the host instance of the derived class and not BField itself.  This means if the user desires to create his own derived class, the host instance of the class is responsible for instantiating/deleting the device instance as well as allocating/freeing all device memory and does this automatically.  See how it's handled in [DipoleB.h](./../../include/BField/DipoleB.h) and [DipoleB.cu](./../../src/BField/DipoleB.cu) for an example of this.
+All management of device instances of derived classes is handled by the host instance of the derived class and not BModel itself.  This means if the user desires to create his own derived class, the host instance of the class is responsible for instantiating/deleting the device instance as well as allocating/freeing all device memory and does this automatically.  See how it's handled in [DipoleB.h](./../../include/BModel/DipoleB.h) and [DipoleB.cu](./../../src/BModel/DipoleB.cu) for an example of this.
 
 
 ### Available Models
@@ -22,7 +22,7 @@ All management of device instances of derived classes is handled by the host ins
 
 ### Use
 ---
-BField is not able to be created on its own and will be automatically created when a derived class is instantiated.  While `DipoleB` and `DipoleBLUT` derived classes are able to be created on their own (and are for tests), usually these will be managed entirely by the [Simulation](./../Simulation/README.md) function `Simulation::setBFieldModel(std::string name, std::vector<double> args, bool save)`.  `name` refers to either "DipoleB" or "DipoleBLUT" (case-sensitive).  `args` refers to the constructor arguments (listed below) in a double vector.
+BModel is not able to be created on its own and will be automatically created when a derived class is instantiated.  While `DipoleB` and `DipoleBLUT` derived classes are able to be created on their own (and are for tests), usually these will be managed entirely by the [Simulation](./../Simulation/README.md) function `Simulation::setBFieldModel(std::string name, std::vector<double> args, bool save)`.  `name` refers to either "DipoleB" or "DipoleBLUT" (case-sensitive).  `args` refers to the constructor arguments (listed below) in a double vector.
 
 
 ### Constructors
@@ -68,7 +68,7 @@ None
 New `DipoleBLUT` instance is created.
 
 
-### Public Member Functions (BField)
+### Public Member Functions (BModel)
 ---
 ```
 __host__ __device__ double getBFieldAtS(const double s, const double t) const
@@ -108,7 +108,7 @@ None
 ---
 ```
 __host__ virtual std::string name()   const
-__host__ virtual BField** getPtrGPU() const
+__host__ virtual BModel** getPtrGPU() const
 ```
 #### Input:
 None

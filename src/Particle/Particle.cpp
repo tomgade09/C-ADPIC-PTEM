@@ -231,7 +231,7 @@ void Particle::deserialize(string serialFolder, string name) //protected functio
 	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
 
 	Particle* part{ nullptr };
-	vector<char> partchar(sizeof(Particle));
+	vector<char> partchar(sizeof(Particle), '\0');
 
 	in.read(partchar.data(), sizeof(Particle));
 	part = reinterpret_cast<Particle*>(partchar.data());

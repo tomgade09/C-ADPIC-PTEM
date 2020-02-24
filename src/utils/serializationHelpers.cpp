@@ -8,7 +8,7 @@ namespace utils
 		{
 			size_t readSizetLength(ifstream& in)
 			{
-				vector<char> size(sizeof(size_t));
+				vector<char> size(sizeof(size_t), '\0');
 				size_t ret{ 0 };
 
 				in.read(size.data(), sizeof(size_t));
@@ -38,10 +38,10 @@ namespace utils
 
 				size_t size{ vec.size() };
 				out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
-
+				
 				for (auto& elem : vec)
 					out.write(reinterpret_cast<const char*>(&elem), sizeof(double));
-
+				
 				return sb;
 			}
 
@@ -64,7 +64,7 @@ namespace utils
 			{
 				size_t strlen{ readSizetLength(istr) };
 
-				vector<char> strchar(strlen);
+				vector<char> strchar(strlen, '\0');
 				istr.read(strchar.data(), strlen);
 
 				string ret(strchar.data(), strlen);
@@ -79,7 +79,7 @@ namespace utils
 
 				for (size_t elem = 0; elem < veclen; elem++)
 				{
-					vector<char> dblchar(sizeof(double));
+					vector<char> dblchar(sizeof(double), '\0');
 					istr.read(dblchar.data(), sizeof(double));
 					ret.push_back(*(reinterpret_cast<double*>(dblchar.data())));
 				}

@@ -133,33 +133,31 @@ void Satellite::loadDataFromDisk(string folder)
 		size_t index{ getAttrIndByName("index") };
 		size_t t_esc{ getAttrIndByName("time") };
 
-		for (auto& attr : data_m) //add zeroes to the array where they are missing
-		{
+		for (auto& attr : data_m) //add extra zeroes to make vectors the right size
 			attr.resize(numberOfParticles_m);
 
-			for (size_t part = numberOfParticles_m - 1; part >= 0; part--) //particles, iterating backwards
+		for (int part = numberOfParticles_m - 1; part >= 0; part--) //particles, iterating backwards
+		{
+			int originalParticleIndex{ (int)data_m.at(index).at(part) }; //original index of the particle
+			if (originalParticleIndex == 0 && data_m.at(0).at(part) == 0.0 && data_m.at(1).at(part) == 0.0)
 			{
-				int originalParticleIndex{ (int)data_m.at(index).at(part) }; //original index of the particle
+				data_m.at(t_esc).at(part) = -1;
+				data_m.at(index).at(part) = -1;
+			}
+			else if ((originalParticleIndex != part) && (originalParticleIndex != -1))
+			{
+				if ((int)data_m.at(0).at(originalParticleIndex) != 0.0)
+					throw runtime_error("Satellite::loadDataFromDisk: data is being overwritten in reconstructed array - something is wrong " + to_string(originalParticleIndex));
 
-				if (originalParticleIndex == 0 && (int)data_m.at(0).at(part) == 0 && (int)data_m.at(1).at(part) == 0)
+				for (size_t attr = 0; attr < data_m.size(); attr++)
 				{
-					data_m.at(t_esc).at(part) = -1;
-					data_m.at(index).at(part) = -1;
-				}
-				else if ((originalParticleIndex != part) && (originalParticleIndex != -1))
-				{
-					if ((int)data_m.at(0).at(originalParticleIndex) != 0.0)
-						throw runtime_error("Satellite::loadDataFromDisk: data is being overwritten in reconstructed array - something is wrong " + to_string(originalParticleIndex));
-					
-					for (size_t attr = 0; attr < data_m.size(); attr++)
-					{
-						data_m.at(attr).at(originalParticleIndex) = data_m.at(attr).at(part); //move attr at the current location in iteration - part - to the index where it should be - ind
-						
-						if (attr == index || attr == t_esc) data_m.at(attr).at(part) = -1.0;
-						else data_m.at(attr).at(part) = 0.0; //overwrite the old data with 0s and -1s
-					}
+					data_m.at(attr).at(originalParticleIndex) = data_m.at(attr).at(part); //move attr at the current location in iteration - part - to the index where it should be - ind
+
+					if (attr == index || attr == t_esc) data_m.at(attr).at(part) = -1.0;
+					else data_m.at(attr).at(part) = 0.0; //overwrite the old data with 0s and -1s
 				}
 			}
+
 		}
 	}
 }
@@ -238,7 +236,7 @@ void Satellite::deserialize(string serialFolder, string name, double** particleD
 	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
 
 	Satellite* sat;
-	vector<char> partchar(sizeof(Satellite));
+	vector<char> partchar(sizeof(Satellite), '\0');
 
 	in.read(partchar.data(), sizeof(Satellite));
 	sat = reinterpret_cast<Satellite*>(partchar.data());

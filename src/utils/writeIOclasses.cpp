@@ -145,7 +145,7 @@ namespace utils
 			{
 				auto readVal = [&](streamsize size)
 				{
-					vector<char> tmp(size);
+					vector<char> tmp(size, '\0');
 					in.read(tmp.data(), size);
 					return tmp;
 				};
@@ -398,7 +398,7 @@ namespace utils
 			attrNames_m = deserializeStringVector(in);
 			particleName_m = deserializeString(in);
 
-			vector<char> masschr(sizeof(double)); // read mass double value
+			vector<char> masschr(sizeof(double), '\0'); // read mass double value
 			in.read(masschr.data(), sizeof(double));
 			mass_m = *(reinterpret_cast<double*>(masschr.data()));
 

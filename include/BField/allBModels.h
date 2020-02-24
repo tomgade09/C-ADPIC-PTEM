@@ -1,9 +1,9 @@
-#ifndef BFIELD_ALLMODELS_H
-#define BFIELD_ALLMODELS_H
+#ifndef BMODEL_ALLMODELS_H
+#define BMODEL_ALLMODELS_H
 
 #include "BField/DipoleB.h"
 #include "BField/DipoleBLUT.h"
 //#include "BField/InvRCubed.h"
 //#include "BField/IGRF.h"
 
-#endif /* BFIELD_ALLMODELS_H */
+#endif /* BModel_ALLMODELS_H */

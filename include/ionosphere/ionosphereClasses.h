@@ -71,9 +71,9 @@ namespace ionosphere
 		IonosphereSpecs(int numLayers, double s_max, double s_min);
 
 		void seth(double h_all);
-		void setB(BField* B, double t);
+		void setB(BModel* B, double t);
 		void setB(double_v1D& B_vec);
-		void altToS(BField* B);
+		void altToS(BModel* B);
 
 		void addSpecies(string name, double Z, function<double(double)> density_s);
 

@@ -46,12 +46,12 @@ public:
 	Particle& operator=(const Particle& otherpart) = delete;
 
 	//Access functions
-	string        name()      const;
+	string        name()           const;
 	const STRVEC& attributeNames() const;
 	DBL2DV&       __data(bool orig);
-	const DBL2DV& data(bool orig) const;	
-	double        mass()      const;
-	double        charge()    const;
+	const DBL2DV& data(bool orig) const;
+	double        mass()          const;
+	double        charge()        const;
 	size_t        getNumberOfAttributes() const;
 	long          getNumberOfParticles()  const;
 	bool          getInitDataLoaded() const;

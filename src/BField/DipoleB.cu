@@ -11,21 +11,21 @@ constexpr double B0{ 3.12e-5 }; //B_0 for Earth dipole B model
 //setup CUDA kernels
 namespace DipoleB_d
 {
-	__global__ void setupEnvironmentGPU(BField** this_d, double ILATDeg, double errTol, double ds)
+	__global__ void setupEnvironmentGPU(BModel** this_d, degrees ILAT, ratio errTol, double ds)
 	{
-		ZEROTH_THREAD_ONLY((*this_d) = new DipoleB(ILATDeg, errTol, ds));
+		ZEROTH_THREAD_ONLY((*this_d) = new DipoleB(ILAT, errTol, ds));
 	}
 
-	__global__ void deleteEnvironmentGPU(BField** dipoleb)
+	__global__ void deleteEnvironmentGPU(BModel** this_d)
 	{
-		ZEROTH_THREAD_ONLY(delete ((DipoleB*)(*dipoleb)));
+		ZEROTH_THREAD_ONLY(delete ((DipoleB*)(*this_d)));
 	}
 }
 
 //DipoleB protected member functions
 void DipoleB::setupEnvironment()
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, lambdaErrorTolerance ]
-	CUDA_API_ERRCHK(cudaMalloc((void**)&this_d, sizeof(BField**)));
+	CUDA_API_ERRCHK(cudaMalloc((void**)&this_d, sizeof(DipoleB*)));
 	DipoleB_d::setupEnvironmentGPU <<< 1, 1 >>> (this_d, ILAT_m, lambdaErrorTolerance_m, ds_m);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 }
@@ -41,8 +41,8 @@ void DipoleB::deleteEnvironment()
 
 
 //DipoleB public member functions
-__host__ __device__ DipoleB::DipoleB(degrees ILAT, double lambdaErrorTolerance, meters ds, bool useGPU) :
-	BField("DipoleB"), ILAT_m{ ILAT }, ds_m{ ds }, lambdaErrorTolerance_m{ lambdaErrorTolerance }, useGPU_m{ useGPU }
+__host__ __device__ DipoleB::DipoleB(degrees ILAT, ratio lambdaErrorTolerance, meters ds, bool useGPU) : BModel(Type::DipoleB),
+	ILAT_m{ ILAT }, ds_m{ ds }, lambdaErrorTolerance_m{ lambdaErrorTolerance }, useGPU_m{ useGPU }
 {
 	L_m = RADIUS_EARTH / pow(cos(ILAT_m * RADS_PER_DEG), 2);
 	L_norm_m = L_m / RADIUS_EARTH;
@@ -53,7 +53,7 @@ __host__ __device__ DipoleB::DipoleB(degrees ILAT, double lambdaErrorTolerance, 
 	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ DipoleB::DipoleB(string serialFolder) : BField("DipoleB")
+__host__ DipoleB::DipoleB(string serialFolder) : BModel(Type::DipoleB)
 {
 	deserialize(serialFolder);
 	if (useGPU_m) setupEnvironment();
@@ -85,7 +85,7 @@ __host__ __device__ degrees DipoleB::getLambdaAtS(const meters s) const
 	degrees lambda_tmp{ (-ILAT_m / s_max_m) * s + ILAT_m }; //-ILAT / s_max * s + ILAT
 	meters  s_tmp{ s_max_m - getSAtLambda(lambda_tmp) };
 	degrees dlambda{ 1.0 };
-	bool   over{ 0 };
+	bool    over{ 0 };
 
 	while (abs((s_tmp - s) / s) > lambdaErrorTolerance_m)
 	{
@@ -117,10 +117,10 @@ __host__ __device__ degrees DipoleB::getLambdaAtS(const meters s) const
 
 __host__ __device__ tesla DipoleB::getBFieldAtS(const meters s, const seconds simtime) const
 {// consts: [ ILATDeg, L, L_norm, s_max, ds, lambdaErrorTolerance ]
-	double lambda_deg{ getLambdaAtS(s) };
-	double rnorm{ L_norm_m * cospi(lambda_deg / 180.0) * cospi(lambda_deg / 180.0) };
+	degrees lambda{ getLambdaAtS(s) };
+	meters  rnorm{ L_norm_m * cospi(lambda / 180.0) * cospi(lambda / 180.0) };
 
-	return -B0 / (rnorm * rnorm * rnorm) * sqrt(1.0 + 3 * sinpi(lambda_deg / 180.0) * sinpi(lambda_deg / 180.0));
+	return -B0 / (rnorm * rnorm * rnorm) * sqrt(1.0 + 3 * sinpi(lambda / 180.0) * sinpi(lambda / 180.0));
 }
 
 __host__ __device__ double DipoleB::getGradBAtS(const meters s, const seconds simtime) const
@@ -130,7 +130,7 @@ __host__ __device__ double DipoleB::getGradBAtS(const meters s, const seconds si
 
 __host__ __device__ meters DipoleB::getSAtAlt(const meters alt_fromRe) const
 {
-	double lambda{ acos(sqrt((alt_fromRe + RADIUS_EARTH) / L_m)) / RADS_PER_DEG };
+	degrees lambda{ acos(sqrt((alt_fromRe + RADIUS_EARTH) / L_m)) / RADS_PER_DEG };
 	return s_max_m - getSAtLambda(lambda);
 }
 

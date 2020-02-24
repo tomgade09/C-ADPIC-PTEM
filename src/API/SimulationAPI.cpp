@@ -171,12 +171,6 @@ DLLEXP_EXTC const char* getSatelliteNameAPI(Sim* sim, int satInd)
 	return nullptr; //if above fails
 }
 
-DLLEXP_EXTC LogFile* getLogFilePointerAPI(Sim* sim)
-{
-	SIM_API_EXCEP_CHECK(return sim->log());
-	return nullptr; //if above fails
-}
-
 DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData)
 {
 	SIM_API_EXCEP_CHECK(return sim->getParticleData(partIndex, originalData).at(attrIndex).data());

@@ -30,11 +30,7 @@ def simulationRunMain():
     for iii in range(len(fields[0])):
         fields[0][iii] *= 1e9 #Displays B Field in nT
 
-    sim.logWriteEntry('Python: Done getting data.  Plotting.')
-
     plotFields(fields[0], fields[1], fields[2], True)
-
-    sim.logWriteEntry('Python: Done plotting data.  Terminating simulation.')
 
     return
 

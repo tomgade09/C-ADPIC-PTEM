@@ -2,11 +2,11 @@
 #define DIPOLEBLUT_BFIELD_H
 
 #include <vector>
-#include "BField/BField.h"
+#include "BField/BModel.h"
 #include "physicalconstants.h"
 #include "utils/unitsTypedefs.h"
 
-class DipoleBLUT : public BField
+class DipoleBLUT : public BModel
 {
 protected:
 	//specified variables
@@ -40,7 +40,6 @@ public:
 	__host__            DipoleBLUT(string serialFolder);
 	__host__ __device__ ~DipoleBLUT();
 	__host__ __device__ DipoleBLUT(const DipoleBLUT&) = delete;
-	__host__ __device__ DipoleBLUT& operator=(const DipoleBLUT&) = delete;
 
 	__host__            degrees ILAT() const;
 
@@ -54,7 +53,8 @@ public:
 	__host__            ratio   getErrTol() const;
 	__host__            meters  getds()     const;
 
+	__host__            vector<double> getAllAttributes() const override;
 	__host__            void    serialize(string serialFolder) const override;
 };
 
-#endif /* !DIPOLEBLUT_BFIELD_H */
+#endif /* !DIPOLEBLUT_BMODEL_H */

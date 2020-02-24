@@ -1,8 +1,9 @@
 //Standard Library includes
-#include <string>
 #include <cmath>
+#include <string>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 //CUDA includes
 #include "cuda_runtime.h"
@@ -13,8 +14,17 @@
 #include "physicalconstants.h"
 #include "utils/loopmacros.h"
 #include "Simulation/Simulation.h"
+#include "ionosphere/ionosphere.h"
 #include "ErrorHandling/cudaErrorCheck.h"
-#include "ErrorHandling/SimFatalException.h"
+
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::setw;
+using std::fixed;
+using std::to_string;
+using std::make_unique;
+using std::stringstream;
 
 //CUDA Variables
 // For Geforce 960M (author's computer) - maximum 1024 threads per block - for whatever reason, 256 threads per block is optimal for this code on GTX 1080
@@ -25,13 +35,13 @@ extern const int SIMCHARSIZE{ 3 * sizeof(double) };
 
 namespace physics
 {
-	__global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double mass, bool vperpToMu, int timeInd = 4)
+	__global__ void vperpMuConvert_d(double** dataToConvert, BModel** BModel, double mass, bool vperpToMu, int timeInd = 4)
 	{//dataToConvert[0] = vpara, [1] = vperp, [2] = s, [3] = t_incident, [4] = t_escape
 		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
 		
 		if (dataToConvert[1][thdInd] != 0.0)
 		{
-			double B_s{ (*bfield)->getBFieldAtS(dataToConvert[2][thdInd], dataToConvert[timeInd][thdInd]) };
+			double B_s{ (*BModel)->getBFieldAtS(dataToConvert[2][thdInd], dataToConvert[timeInd][thdInd]) };
 			if (vperpToMu)
 				dataToConvert[1][thdInd] = 0.5 * mass * dataToConvert[1][thdInd] * dataToConvert[1][thdInd] / B_s;
 			else
@@ -39,11 +49,11 @@ namespace physics
 		}
 	}
 
-	__host__ void vperpMuConvert(const double vpara, double* vperpOrMu, const double s, const double t_convert, BField* bfield, const double mass, const bool vperpToMu)
+	__host__ void vperpMuConvert(const double vpara, double* vperpOrMu, const double s, const double t_convert, BModel* BModel, const double mass, const bool vperpToMu)
 	{//dataToConvert[0] = vpara, [1] = vperp, [2] = s, [3] = t_incident, [4] = t_escape
 		if (*vperpOrMu != 0.0)
 		{
-			double B_s{ bfield->getBFieldAtS(s, t_convert) };
+			double B_s{ BModel->getBFieldAtS(s, t_convert) };
 			if (vperpToMu)
 				*vperpOrMu = 0.5 * mass * (*vperpOrMu) * (*vperpOrMu) / B_s;
 			else
@@ -51,39 +61,39 @@ namespace physics
 		}
 	}
 
-	__device__ __host__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args, BField** bfield, EField** efield) //made to pass into 1D Fourth Order Runge Kutta code
+	__device__ __host__ double accel1dCUDA(const double vs_RK, const double t_RK, const double* args, BModel** bmodel, EField* efield) //made to pass into 1D Fourth Order Runge Kutta code
 	{//args array: [s_0, mu, q, m, simtime]
 		double F_lor, F_mir, stmp;
 		stmp = args[0] + vs_RK * t_RK; //ps_0 + vs_RK * t_RK
 
 		//Mirror force
-		F_mir = -args[1] * (*bfield)->getGradBAtS(stmp, t_RK + args[4]); //-mu * gradB(pos, runge-kutta time + simtime)
+		F_mir = -args[1] * (*bmodel)->getGradBAtS(stmp, t_RK + args[4]); //-mu * gradB(pos, runge-kutta time + simtime)
 
 		//Lorentz force - simply qE - v x B is taken care of by mu - results in kg.m/s^2 - to convert to Re equivalent - divide by Re
-		F_lor = args[2] * (*efield)->getEFieldAtS(stmp, t_RK + args[4]); //q * EFieldatS
+		F_lor = args[2] * efield->getEFieldAtS(stmp, t_RK + args[4]); //q * EFieldatS
 
 		return (F_lor + F_mir) / args[3];
 	}//returns an acceleration in the parallel direction to the B Field
 
-	__device__ __host__ double foRungeKuttaCUDA(const double y_0, const double h, const double* funcArg, BField** bfield, EField** efield)
+	__device__ __host__ double foRungeKuttaCUDA(const double y_0, const double h, const double* funcArg, BModel** bmodel, EField* efield)
 	{
 		// dy / dt = f(t, y), y(t_0) = y_0
 		// funcArgs are whatever you need to pass to the equation
 		// args array: [s_0, mu, q, m, simtime]
 		double k1, k2, k3, k4; double y{ y_0 }; double t_RK{ 0.0 };
 		
-		k1 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k1 = f(t_n, y_n), returns units of dy / dt
+		k1 = accel1dCUDA(y, t_RK, funcArg, bmodel, efield); //k1 = f(t_n, y_n), returns units of dy / dt
 
 		t_RK = h / 2;
 		y = y_0 + k1 * t_RK;
-		k2 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k2 = f(t_n + h/2, y_n + h/2 * k1)
+		k2 = accel1dCUDA(y, t_RK, funcArg, bmodel, efield); //k2 = f(t_n + h/2, y_n + h/2 * k1)
 
 		y = y_0 + k2 * t_RK;
-		k3 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k3 = f(t_n + h/2, y_n + h/2 * k2)
+		k3 = accel1dCUDA(y, t_RK, funcArg, bmodel, efield); //k3 = f(t_n + h/2, y_n + h/2 * k2)
 
 		t_RK = h;
 		y = y_0 + k3 * t_RK;
-		k4 = accel1dCUDA(y, t_RK, funcArg, bfield, efield); //k4 = f(t_n + h, y_n + h k3)
+		k4 = accel1dCUDA(y, t_RK, funcArg, bmodel, efield); //k4 = f(t_n + h, y_n + h k3)
 
 		return (k1 + 2 * k2 + 2 * k3 + k4) * h / 6; //returns delta y, not dy / dt, not total y
 	}
@@ -107,7 +117,7 @@ namespace physics
 		}
 	}
 
-	__global__ void iterateParticle(double** currData_d, BField** bfield, EField** efield,
+	__global__ void iterateParticle(double** currData_d, BModel** bmodel, EField* efield,
 		const double simtime, const double dt, const double mass, const double charge, const double simmin, const double simmax)
 	{
 		unsigned int thdInd{ blockIdx.x * blockDim.x + threadIdx.x };
@@ -146,11 +156,11 @@ namespace physics
 		//hence the /2 factor below - FYI, this was checked by the particle's energy (steady state, no E Field) remaining the same throughout the simulation
 		double v_orig{ v_d[thdInd] };
 		s0_d[thdInd] = s_d[thdInd];
-		v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], dt, args, bfield, efield);
+		v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], dt, args, bmodel, efield);
 		s_d[thdInd] += (v_d[thdInd] + v_orig) / 2 * dt;
 	}
 
-	__host__ void iterateParticle(double* vpara, double* mu, double* s, double* t_incident, double* t_escape, BField* bfield, EField* efield,
+	__host__ void iterateParticle(double* vpara, double* mu, double* s, double* t_incident, double* t_escape, BModel* bmodel, EField* efield,
 		const double simtime, const double dt, const double mass, const double charge, const double simmin, const double simmax)
 	{
 		if (simtime == 0.0) { *t_escape = -1.0; }
@@ -172,7 +182,7 @@ namespace physics
 		const double args[]{ *s, *mu, charge, mass, simtime };
 
 		double v_orig{ *vpara };
-		*vpara += foRungeKuttaCUDA(*vpara, dt, args, &bfield, &efield);
+		*vpara += foRungeKuttaCUDA(*vpara, dt, args, &bmodel, efield);
 		*s += (*vpara + v_orig) / 2 * dt;
 	}
 }
@@ -181,21 +191,19 @@ namespace physics
 void Simulation::initializeSimulation()
 {
 	if (BFieldModel_m == nullptr)
-		throw SimFatalException("Simulation::initializeSimulation: no Magnetic Field model specified", __FILE__, __LINE__);
+		throw logic_error("Simulation::initializeSimulation: no Earth Magnetic Field model specified");
 	if (particles_m.size() == 0)
-		throw SimFatalException("Simulation::initializeSimulation: no particles in simulation, sim cannot be initialized without particles", __FILE__, __LINE__);
+		throw logic_error("Simulation::initializeSimulation: no particles in simulation, sim cannot be initialized without particles");
 	
 	if (EFieldModel_m == nullptr) //make sure an EField (even if empty) exists
-		EFieldModel_m = std::make_unique<EField>();
+		EFieldModel_m = make_unique<EField>();
 	
-	EFieldModel_d = EFieldModel_m->getPtrGPU();
-
 	if (tempSats_m.size() > 0)
 	{//create satellites 
 		LOOP_OVER_1D_ARRAY(tempSats_m.size(), createSatellite(tempSats_m.at(iii).get()));
 	}
 	else
-		std::cerr << "Simulation::initializeSimulation: warning: no satellites created" << std::endl;
+		cerr << "Simulation::initializeSimulation: warning: no satellites created" << endl;
 
 	initialized_m = true;
 }
@@ -205,7 +213,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	using namespace physics;
 	
 	if (!initialized_m)
-		throw SimFatalException("Simulation::iterateSimulation: sim not initialized with initializeSimulation()", __FILE__, __LINE__);
+		throw logic_error("Simulation::iterateSimulation: sim not initialized with initializeSimulation()");
 	
 	//
 	// Quick fix to show active GPU name.
@@ -224,12 +232,11 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 
 	printSimAttributes(numberOfIterations, checkDoneEvery, gpuprop.name);
 	
-	logFile_m->createTimeStruct("Start Iterate " + std::to_string(numberOfIterations));
-	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: Start Iteration of Sim:  " + std::to_string(numberOfIterations));
+	log_m->createEntry("Start Iteration of Sim:  " + to_string(numberOfIterations));
 	
 	//convert particle vperp data to mu
 	for (auto& part : particles_m)
-		vperpMuConvert <<< part->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (part->getCurrDataGPUPtr(), BFieldModel_d, part->mass(), true);
+		vperpMuConvert_d <<< part->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> (part->getCurrDataGPUPtr(), BFieldModel_m->this_dev(), part->mass(), true);
 	CUDA_KERNEL_ERRCHK_WSYNC();
 
 	//Setup on GPU variable that checks to see if any threads still have a particle in sim and if not, end iterations early
@@ -237,14 +244,14 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	CUDA_API_ERRCHK(cudaMalloc((void**)&simDone_d, sizeof(bool)));
 
 	//Loop code
-	long cudaloopind{ 0 };
-	while (cudaloopind < numberOfIterations)
+	size_t initEntry{ log_m->createEntry("Iteration 1", false) };
+	for (long cudaloopind = 0; cudaloopind < numberOfIterations; cudaloopind++)
 	{	
 		if (cudaloopind % checkDoneEvery == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in this iter (every checkDoneEvery iterations), set to true
 		
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
 		{
-			iterateParticle <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, EFieldModel_d,
+			iterateParticle <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_m->this_dev(), EFieldModel_m->this_dev(),
 				simTime_m, dt_m, (*part)->mass(), (*part)->charge(), simMin_m, simMax_m);
 			
 			//kernel will set boolean to false if at least one particle is still in sim
@@ -259,32 +266,42 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 		
 		if (cudaloopind % checkDoneEvery == 0)
 		{
-			std::stringstream out;
-			out << std::setw(std::to_string(numberOfIterations).size()) << cudaloopind;
-			std::cout << out.str() << " / " << numberOfIterations << "  |  Sim Time (s): ";
-			out.str(""); out.clear();
-			out << std::setw(std::to_string((int)(numberOfIterations) * dt_m).size()) << std::fixed << simTime_m;
-			std::cout << out.str() << "  |  Real Time Elapsed (s): ";
-			logFile_m->printTimeNowFromLastTS(); //need to add to log file as well?
-			std::cout << std::endl;
+			{
+				string loopStatus;
+				stringstream out;
+
+				out << setw(to_string(numberOfIterations).size()) << cudaloopind;
+				loopStatus = out.str() + " / " + to_string(numberOfIterations) + "  |  Sim Time (s): ";
+				out.str("");
+				out.clear();
+
+				out << setw(to_string((int)(numberOfIterations)*dt_m).size()) << fixed << simTime_m;
+				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(log_m->timeElapsedSinceEntry_s(initEntry));
+
+				log_m->createEntry(loopStatus);
+				cout << loopStatus << "\n";
+			}
 
 			bool done{ false };
 			CUDA_API_ERRCHK(cudaMemcpy(&done, simDone_d, sizeof(bool), cudaMemcpyDeviceToHost));
-			if (done) { std::cout << "All particles finished early.  Breaking loop." << std::endl; break; }
+			if (done)
+			{
+				cout << "All particles finished early.  Breaking loop.\n";
+				break;
+			}
 		}
 
 		incTime();
-		cudaloopind++;
 	}
 
 	CUDA_API_ERRCHK(cudaFree(simDone_d));
 
 	//Convert particle, satellite mu data to vperp
 	for (auto part = particles_m.begin(); part < particles_m.end(); part++)
-		vperpMuConvert <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_d, (*part)->mass(), false); //nullptr will need to be changed if B ever becomes time dependent, would require loop to record when it stops tracking the particle
+		vperpMuConvert_d <<< (*part)->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>> ((*part)->getCurrDataGPUPtr(), BFieldModel_m->this_dev(), (*part)->mass(), false); //nullptr will need to be changed if B ever becomes time dependent, would require loop to record when it stops tracking the particle
 
 	for (auto sat = satPartPairs_m.begin(); sat < satPartPairs_m.end(); sat++)
-		vperpMuConvert <<< (*sat)->particle->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>>  ((*sat)->satellite->get2DDataGPUPtr(), BFieldModel_d, (*sat)->particle->mass(), false, 3);
+		vperpMuConvert_d <<< (*sat)->particle->getNumberOfParticles() / BLOCKSIZE, BLOCKSIZE >>>  ((*sat)->satellite->get2DDataGPUPtr(), BFieldModel_m->this_dev(), (*sat)->particle->mass(), false, 3);
 
 	//Copy data back to host
 	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->copyDataToHost());
@@ -294,25 +311,19 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	saveDataToDisk();
 	simTime_m = 0.0;
 
-	std::cout << "Total sim time: "; logFile_m->printTimeNowFromFirstTS(); std::cout << " s" << std::endl;
+	cout << "Total sim time: " << log_m->timeElapsedTotal_s() << " s" << endl;
 
-	logFile_m->createTimeStruct("End Iterate " + std::to_string(numberOfIterations));
-	logFile_m->writeLogFileEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + std::to_string(numberOfIterations));
+	log_m->createEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + to_string(numberOfIterations));
 }
 
 void Simulation::freeGPUMemory()
 {//used to free the memory on the GPU that's no longer needed
 	if (!initialized_m)
-		throw SimFatalException("Simulation::freeGPUMemory: simulation not initialized with initializeSimulation()", __FILE__, __LINE__);
+		throw logic_error("Simulation::freeGPUMemory: simulation not initialized with initializeSimulation()");
+
+	log_m->createEntry("Free GPU Memory");
 
 	if (!dataOnGPU_m) { return; }
-
-	//logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: Start free GPU Memory.");
-
-	//LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->freeGPUMemory());
-
-	//dataOnGPU_m = false;
-	//logFile_m->writeLogFileEntry("Simulation::freeGPUMemory: End free GPU Memory.");
 
 	CUDA_API_ERRCHK(cudaProfilerStop()); //For profiling with the CUDA bundle
 }

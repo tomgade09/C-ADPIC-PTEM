@@ -26,11 +26,9 @@ class Simulation(_Simulation._SimulationCDLL):
 
         savedir_c = ctypes.create_string_buffer(bytes(self.savedir_m, encoding='utf-8'))
         self.cppSimPtr_m = ctypes.c_void_p
-        self.logFilePtr_m = ctypes.c_void_p
 
         if dt is not None:
             self.cppSimPtr_m = self.simDLL_m.createSimulationAPI(dt, simMin, simMax, savedir_c)
-            self.logFilePtr_m = self.simDLL_m.getLogFilePointerAPI(self.cppSimPtr_m)
         else:
             self.cppSimPtr_m = self.simDLL_m.loadCompletedSimDataAPI(savedir_c)
             self.__getSimChars()
@@ -235,18 +233,7 @@ class Simulation(_Simulation._SimulationCDLL):
             self.satPartInd_m.append(self.simDLL_m.getPartIndOfSatAPI(self.cppSimPtr_m, sat))
     
 
-    ## Log File and CSV Functions
-    def logWriteEntry(self, logMessage):
-        logMessCbuf = ctypes.create_string_buffer(bytes(logMessage, encoding='utf-8'))
-        self.simDLL_m.writeLogFileEntryAPI(self.logFilePtr_m, logMessCbuf)
-
-    def logWriteTimeDiffFromNow(self, startTSind, nowLabel):
-        nowLabCbuf = ctypes.create_string_buffer(bytes(nowLabel, encoding='utf-8'))
-        self.simDLL_m.writeTimeDiffFromNowAPI(self.logFilePtr_m, startTSind, nowLabCbuf)
-
-    def logWriteTimeDiff(self, startTSind, endTSind):
-        self.simDLL_m.writeTimeDiffAPI(self.logFilePtr_m, startTSind, endTSind)
-
+    ## CSV Function
     def writeCommonCSV(self):
         self.simDLL_m.writeCommonCSVAPI(self.self.cppSimPtr_m)
 

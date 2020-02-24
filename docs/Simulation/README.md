@@ -10,7 +10,7 @@
 
 **`Simulation(std::string prevSimDir)`**
 
-Simulation is a container class that integrates functionality from: [Particle](./../Particle/README.md), [Satellite](./../Satellite/README.md), [BField](./../BField/README.md) derived models, [EField](./../EField/README.md) derived models, and [LogFile](./../LogFile/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
+Simulation is a container class that integrates functionality from: [Particle](./../Particle/README.md), [Satellite](./../Satellite/README.md), [BModel](./../BModel/README.md) derived models, [EField](./../EField/README.md) derived models, and [Log](./../Log/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
 
 *Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particle](./../Particle/README.md) refers to the class itself or an instance of the class which manages a large number of simulated physical particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
 
@@ -49,7 +49,7 @@ None
 
 
 #### Side-Effects:
-New [SimAttributes](./../SimAttributes/README.md) Class is created, new [LogFile](./../LogFile/README.md) class is created with name: `Simulation.log`, `cerr` is redirected to a file within the folder structure above: `errors.log`
+New [SimAttributes](./../SimAttributes/README.md) Class is created, new [Log](./../Log/README.md) class is created with name: `Simulation.log`, `cerr` is redirected to a file within the folder structure above: `errors.log`
 
 
 ---
@@ -65,7 +65,7 @@ None
 
 
 #### Side-Effects:
-Simulation is recreated exactly as it was run to produce the data in the folder indicated by `prevSimDir`.  This includes the [BField](./../BField/README.md) model specified for the previous Simulation, as well as all [EField](./../EField/README.md) models, [Particles](./../Particle/README.md) along with associated initial and final data, and [Satellites](./../Satellite/README.md) along with their measurement data.  This constructor overload relies on loading `Simulation.attr` in the root of that folder and will throw an exception if that file cannot be found.
+Simulation is recreated exactly as it was run to produce the data in the folder indicated by `prevSimDir`.  This includes the [BModel](./../BModel/README.md) model specified for the previous Simulation, as well as all [EField](./../EField/README.md) models, [Particles](./../Particle/README.md) along with associated initial and final data, and [Satellites](./../Satellite/README.md) along with their measurement data.  This constructor overload relies on loading `Simulation.attr` in the root of that folder and will throw an exception if that file cannot be found.
 
 
 ### Public Member Functions
@@ -81,12 +81,12 @@ size_t      getNumberOfParticles(int partInd)
 size_t      getNumberOfAttributes(int partInd)
 std::string getParticleName(int partInd)
 std::string getSatelliteName(int satInd)
-LogFile*    log()
+Log*    log()
 Particle*   particle(int partInd)
 Particle*   particle(std::string name)
 Satellite*  satellite(int satInd)
 Satellite*  satellite(std::string name)
-BField*     Bmodel()
+BModel*     Bmodel()
 EField*     Emodel()
 const std::vector<std::vector<double>>& getParticleData(int partInd, bool originalData);
 const std::vector<std::vector<std::vector<double>>>& getSatelliteData(int satInd);
@@ -161,17 +161,17 @@ Creates a [Satellite](./../Satellite/README.md) instance with specified attribut
 ---
 ```
 void Simulation::setBFieldModel(std::string name, std::vector<double> args, bool save)
-void setBFieldModel(std::unique_ptr<BField> bfieldptr)
+void setBFieldModel(std::unique_ptr<BModel> BModelptr)
 ```
 **Note: only one B model can be specified per Simulation as of now and an exception will be thrown if one exists when calling this function**
 #### Input:
-`name` - name of [BField](./../BField/README.md) model; see docs for more info on the available models
+`name` - name of [BModel](./../BModel/README.md) model; see docs for more info on the available models
 
 `args` - vector of arguments to create specified model; must have the appropriate number of arguments to instantiate a class of specified B model type; see docs above for more info on the model required arguments
 
 `save` - specifies whether the data from the B model is added to the savefile; defaults to true and is best to leave this alone
 
-`bfieldptr` - std::unique_ptr to a BField instance specified by the user; make sure to properly move with std::move
+`BModelptr` - std::unique_ptr to a BModel instance specified by the user; make sure to properly move with std::move
 
 
 #### Output:
@@ -179,13 +179,13 @@ None
 
 
 #### Side-Effects:
-Creates a [BField](./../BField/README.md) model, depending on the user's specification and stores it in the Simulation instance for management.
+Creates a [BModel](./../BModel/README.md) model, depending on the user's specification and stores it in the Simulation instance for management.
 
 
 ---
 ```
 void Simulation::addEFieldModel(std::string name, std::vector<std::vector<double>> args, bool save)
-void addEFieldModel(std::unique_ptr<EElem> eelemptr)
+void addEFieldModel(std::unique_ptr<EModel> EModelptr)
 ```
 #### Input:
 `name` - name of [EField](./../EField/README.md) model; see docs for more info on the available models
@@ -194,7 +194,7 @@ void addEFieldModel(std::unique_ptr<EElem> eelemptr)
 
 `save` - specifies whether the data from the B model is added to the savefile; defaults to true and is best to leave this alone
 
-`eelemptr` - std::unique_ptr to a [EElem](./../EField/README.md) instance specified by the user; make sure to properly move with std::move
+`EModelptr` - std::unique_ptr to a [EModel](./../EField/README.md) instance specified by the user; make sure to properly move with std::move
 
 
 #### Output:
@@ -255,7 +255,7 @@ None
 
 
 #### Side-Effects:
-Iterate all particles in Simulation through [B](./../BField/README.md)/[E](./../EField/README.md) Field models for specified number of iterations, modifying position and velocity until the particle escapes or until `numberOfIterations` has elapsed. Runs [Satellite](./../Satellite/README.md) detection kernel for each specified [Satellite](./../Satellite/README.md) at each time step.  Also manages copying data to GPU at the start, converting vperp<>mu on both ends (vperp->mu before, mu->vperp after), and copying back to host (from GPU) once complete.  `simTime_m` is also reset to zero.
+Iterate all particles in Simulation through [B](./../BModel/README.md)/[E](./../EField/README.md) Field models for specified number of iterations, modifying position and velocity until the particle escapes or until `numberOfIterations` has elapsed. Runs [Satellite](./../Satellite/README.md) detection kernel for each specified [Satellite](./../Satellite/README.md) at each time step.  Also manages copying data to GPU at the start, converting vperp<>mu on both ends (vperp->mu before, mu->vperp after), and copying back to host (from GPU) once complete.  `simTime_m` is also reset to zero.
 
 
 ---
@@ -303,19 +303,19 @@ None
 
 
 #### Side-Effects:
-Destroys all [Satellites](./../Satellite/README.md) and [Particles](./../Particle/README.md), as well as [BField](./../BField/README.md) model, and [EField](./../EField/README.md) model(s) if `fields` is `true`.  Used to reset the simulation without having to destroy the entire instance of this class and associated data.  This is useful when, for example, generating a backscatter distribution and rerunning to add to the prior data.
+Destroys all [Satellites](./../Satellite/README.md) and [Particles](./../Particle/README.md), as well as [BModel](./../BModel/README.md) model, and [EField](./../EField/README.md) model(s) if `fields` is `true`.  Used to reset the simulation without having to destroy the entire instance of this class and associated data.  This is useful when, for example, generating a backscatter distribution and rerunning to add to the prior data.
 
 
 ### CUDA Kernels
 ---
 ```
-__global__ void computeKernel(double** currData_d, BField** bfield, EField** efield,
+__global__ void computeKernel(double** currData_d, BModel** BModel, EField** efield,
 	const double simtime, const double dt, const double mass, const double charge, const double simmin, const double simmax)
 ```
 #### Inputs:
 `currData_d` - pointer to 2D particle data array that will be iterated; indicies refer to `currData_d[attribute][particle ind]` where `attribute` is ordered `{ vpara, mu, s, t_incident, t_escaped }`
 
-`bfield` - pointer to (pointer to) on-GPU [BField](./../BField/README.md) instance
+`BModel` - pointer to (pointer to) on-GPU [BModel](./../BModel/README.md) instance
 
 `efield` - pointer to (pointer to) on-GPU [EField](./../EField/README.md) instance
 
@@ -337,17 +337,17 @@ None
 
 
 #### Side-Effects:
-On GPU particle data array is changed according to the equation of motion (Fourth Order Runge Kutta mirror and Lorentz forces) - particle is skipped if it is outside simulation.  No changes occur to instances referred to by `bfield` and `efield`.
+On GPU particle data array is changed according to the equation of motion (Fourth Order Runge Kutta mirror and Lorentz forces) - particle is skipped if it is outside simulation.  No changes occur to instances referred to by `BModel` and `efield`.
 
 
 ---
 ```
-__global__ void vperpMuConvert(double** dataToConvert, BField** bfield, double mass, bool vperpToMu)
+__global__ void vperpMuConvert(double** dataToConvert, BModel** BModel, double mass, bool vperpToMu)
 ```
 #### Inputs:
 `dataToConvert` - on-GPU 2D array pointer with dimensions ordered the same as `computeKernel`
 
-`bfield` - pointer to on-GPU [BField](./../BField/README.md) instance
+`BModel` - pointer to on-GPU [BModel](./../BModel/README.md) instance
 
 `mass` - particle mass in kg
 

@@ -181,11 +181,11 @@ namespace ionosphere
 		}
 	}
 
-	void IonosphereSpecs::setB(BField* Bfield, double t)
+	void IonosphereSpecs::setB(BModel* BModel, double t)
 	{
 		for (size_t s_layer = 0; s_layer < s.size(); s_layer++)
 		{
-			B.at(s_layer) = Bfield->getBFieldAtS(s.at(s_layer), t);
+			B.at(s_layer) = BModel->getBFieldAtS(s.at(s_layer), t);
 		}
 	}
 
@@ -195,7 +195,7 @@ namespace ionosphere
 		B = B_vec;
 	}
 
-	void IonosphereSpecs::altToS(BField* B)
+	void IonosphereSpecs::altToS(BModel* B)
 	{
 		for (size_t s_ind = 0; s_ind < s.size(); s_ind++)
 			s.at(s_ind) = B->getSAtAlt(s.at(s_ind));

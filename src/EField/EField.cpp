@@ -8,9 +8,12 @@
 #include "utils/serializationHelpers.h"
 
 using std::cerr;
+using std::move;
 using std::string;
 using std::to_string;
+using std::make_unique;
 using std::stringstream;
+using std::runtime_error;
 using std::invalid_argument;
 using namespace utils::fileIO::serialize;
 
@@ -29,37 +32,15 @@ void EField::serialize(string serialFolder) const
 		out.write(sb.str().c_str(), sb.str().length());
 	};
 
-	size_t size{ Eelems_m.size() };
-	out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+	out.write(reinterpret_cast<const char*>(this), sizeof(EField));
+	
+	size_t numModels{ emodels_m.size() };
+	out.write(reinterpret_cast<char*>(&numModels), sizeof(size_t));
 
-	int QSPScnt{ 0 };
-	int ALUTcnt{ 0 };
-	for (const auto& elem : Eelems_m)
+	for (const auto& emodel : emodels_m)
 	{
-		if (elem->name() == "QSPS") ++QSPScnt;//writeStrBuf(serializeString(string(elem.name()) + to_string(++QSPScnt)));
-		else if (elem->name() == "AlfvenLUT") ++ALUTcnt;//writeStrBuf(serializeString(string(elem.name()) + to_string(++ALUTcnt)));
-		else throw invalid_argument("EField::serialize: element does not have a recognized name: " + string(elem->name()));
-	}
-
-	out.write(reinterpret_cast<char*>(&QSPScnt), sizeof(int));
-	out.write(reinterpret_cast<char*>(&ALUTcnt), sizeof(int));
-
-	for (const auto& elem : Eelems_m)
-	{
-		elem->serialize(serialFolder);
-		//need to verify use of filename::exists and filename::move below
-		if (elem->name() == "QSPS" && std::filesystem::exists("EField_QSPS.ser"))
-		{
-			int iter{ 0 };
-			while (std::filesystem::exists("EField_QSPS" + to_string(iter) + ".ser")) iter++;
-			std::filesystem::rename("EField_QSPS.ser", "EField_QSPS" + to_string(iter) + ".ser");
-		}
-		else if (elem->name() == "AlfvenLUT" && std::filesystem::exists("EField_AlfvenLUT.ser"))
-		{
-			int iter{ 0 };
-			while (std::filesystem::exists("EField_AlfvenLUT" + to_string(iter) + ".ser")) iter++;
-			std::filesystem::rename("EField_AlfvenLUT.ser", "EField_AlfvenLUT" + to_string(iter) + ".ser");
-		}
+		out.write(reinterpret_cast<char*>(&(emodel->type_m)), sizeof(EModel::Type)); //write type of emodel
+		writeStrBuf(emodel->serialize());
 	}
 
 	out.close();
@@ -71,17 +52,20 @@ void EField::deserialize(string serialFolder)
 	ifstream in(filename, std::ifstream::binary);
 	if (!in) throw invalid_argument("EField::deserialize: unable to open file: " + filename);
 
-	size_t elemcnt{ readSizetLength(in) };
+	vector<char> efieldchar(sizeof(EField), '\0');
+	in.read(reinterpret_cast<char*>(efieldchar.data()), sizeof(EField));
+	
+	useGPU_m = (*reinterpret_cast<EField*>(efieldchar.data())).useGPU_m;
+	
+	size_t len{ readSizetLength(in) };
+	
+	for (size_t emodel = 0; emodel < len; emodel++)
+	{
+		EModel::Type type{ -1 };
+		in.read(reinterpret_cast<char*>(&type), sizeof(EModel::Type));
 
-	int QSPScnt{ 0 };
-	int ALUTcnt{ 0 };
-
-	in.read(reinterpret_cast<char*>(&QSPScnt), sizeof(int));
-	in.read(reinterpret_cast<char*>(&ALUTcnt), sizeof(int));
-
-	for (size_t elem = 0; elem < QSPScnt; elem++)
-		Eelems_m.push_back(std::move(std::make_unique<QSPS>(serialFolder, elem)));
-
-	//for (size_t elem = 0; elem < ALUTcnt; elem++)
-		//Eelems_m.push_back(std::move(std::make_unique<AlfvenLUT>(serialFolder, elem)));
+		if (type == EModel::Type::QSPS) emodels_m.push_back(move(make_unique<QSPS>(in)));
+		//else if (type == EModel::Type::AlfvenLUT) elements_m.push_back(move(make_unique<AlfvenLUT>(in)));
+		else throw runtime_error("EField::deserialize: unknown EModel Type");
+	}
 }

@@ -57,93 +57,63 @@ inline bool operator==(const Satellite& x, const Satellite& y)
 	}
 }
 
-inline bool operator==(const BField& x, const BField& y)
+inline bool operator==(const BModel& x, const BModel& y)
 {
 	try
 	{
+		if (x.getAllAttributes() != y.getAllAttributes())
+			return false;
+
 		if (!(
-			(x.name() == y.name()) &&
 			(x.getBFieldAtS(4.0e6, 0.0) == y.getBFieldAtS(4.0e6, 0.0)) &&
 			(x.getGradBAtS(4.0e6, 0.0) == y.getGradBAtS(4.0e6, 0.0))
 			))
-			throw std::invalid_argument("");
-
-		if (x.name() == "DipoleB")
-		{
-			if (((DipoleB*)&x)->getErrTol() != ((DipoleB*)&y)->getErrTol())
-				throw std::invalid_argument("");
-			if (((DipoleB*)&x)->getds() != ((DipoleB*)&y)->getds())
-				throw std::invalid_argument("");
-		}
-		else if (x.name() == "DipoleBLUT")
-		{
-			if (((DipoleBLUT*)&x)->getErrTol() != ((DipoleBLUT*)&y)->getErrTol())
-				throw std::invalid_argument("");
-			if (((DipoleBLUT*)&x)->getds() != ((DipoleBLUT*)&y)->getds())
-				throw std::invalid_argument("");
-		}
-		else
-			std::invalid_argument("");
-
-		return true;
+			return false;
 	}
 	catch (...)
 	{
-		std::cout << "caught something: BField\n";
 		return false;
 	}
+
+	return true;
 }
 
-inline bool operator==(const EElem& x, const EElem& y)
+inline bool operator==(const EModel& x, const EModel& y)
 {
 	try
 	{
-		if (x.name() != y.name())
-			throw std::invalid_argument(""); //just throwing to return false
-
-		if (x.name() == "QSPS")
+		if (x.getAllAttributes() != y.getAllAttributes())
 		{
-			if (((QSPS*)&x)->altMin() != ((QSPS*)&y)->altMin())
-				throw std::invalid_argument("");
-
-			if (((QSPS*)&x)->altMax() != ((QSPS*)&y)->altMax())
-				throw std::invalid_argument("");
-
-			if (((QSPS*)&x)->magnitude() != ((QSPS*)&y)->magnitude())
-				throw std::invalid_argument("");
+			return false;
 		}
-		else
-			throw std::invalid_argument(""); //later need to implement other classes (once added)
-
-		return true;
 	}
 	catch (...)
 	{
 		return false;
 	}
+
+	return true;
 }
 
 inline bool operator==(const EField& x, const EField& y)
 {
 	try
 	{
-		if (!(
-			(x.capacity() == y.capacity()) &&
-			(x.size() == y.size()) &&
-			(x.getEFieldAtS(4.0e6, 0.0) == y.getEFieldAtS(4.0e6, 0.0))
-			))
-			throw std::invalid_argument("");
-
-		for (int eelem = 0; eelem < x.size(); eelem++) //maybe shouldn't check elems here??
-			if (!(*(x.element(eelem)) == *(y.element(eelem)))) //if the elements (references) are not equal - operator defined above
-				throw std::invalid_argument("");
-
-		return true;
+		for (int emodel = 0; emodel < x.size(); emodel++) //maybe shouldn't check elems here??
+		{
+			EModel& xm{ *(x.emodel(emodel)) };
+			EModel& ym{ *(y.emodel(emodel)) };
+			
+			if (!(xm == ym)) //if the elements (references) are not equal - operator defined above
+				return false;
+		}
 	}
 	catch (...)
 	{
 		return false;
 	}
+
+	return true;
 }
 
 #endif

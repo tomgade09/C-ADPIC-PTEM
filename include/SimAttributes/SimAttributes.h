@@ -42,7 +42,7 @@ private:
 
 public: //all this is public so callers can access the raw data (so I don't have to write equally many access functions which doesn't make sense)
 	attrsData simAD{ "Simulation" }; //Simulation attributes
-	attrsData BAD{ "BField" }; //BField attributes
+	attrsData BAD{ "BField" }; //BModel attributes
 	attrsData EAD{ "EField" }; //EField attributes
 	attrsData partAD{ "Particle" }; //Particle attributes
 	attrsData satAD{ "Satellite" }; //Satellite attributes

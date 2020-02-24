@@ -75,19 +75,8 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.getParticleNameAPI.restype = ctypes.c_char_p
         self.simDLL_m.getSatelliteNameAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getSatelliteNameAPI.restype = ctypes.c_char_p
-        self.simDLL_m.getLogFilePointerAPI.argtypes = (ctypes.c_void_p,)
-        self.simDLL_m.getLogFilePointerAPI.restype = ctypes.c_void_p
         self.simDLL_m.getPointerToParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
         self.simDLL_m.getPointerToParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
-
-        
-        #Log File Functions
-        self.simDLL_m.writeLogFileEntryAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
-        self.simDLL_m.writeLogFileEntryAPI.restype = None
-        self.simDLL_m.writeTimeDiffFromNowAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p)
-        self.simDLL_m.writeTimeDiffFromNowAPI.restype = None
-        self.simDLL_m.writeTimeDiffAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
-        self.simDLL_m.writeTimeDiffAPI.restype = None
 
 
         #CSV

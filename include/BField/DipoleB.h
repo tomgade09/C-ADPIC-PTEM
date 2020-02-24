@@ -1,11 +1,11 @@
 #ifndef DIPOLEB_BFIELD_H
 #define DIPOLEB_BFIELD_H
 
-#include "BField/BField.h"
+#include "BField/BModel.h"
 #include "physicalconstants.h"
 #include "utils/unitsTypedefs.h"
 
-class DipoleB : public BField
+class DipoleB : public BModel
 {
 protected:
 	//Field simulation constants
@@ -29,11 +29,10 @@ protected:
 	__host__ __device__ degrees getLambdaAtS(const meters s) const;
 
 public:
-	__host__ __device__ DipoleB(degrees ILAT, double lambdaErrorTolerance = 1.0e-4, meters ds = RADIUS_EARTH / 1000.0, bool useGPU = true);
+	__host__ __device__ DipoleB(degrees ILAT, ratio lambdaErrorTolerance = 1.0e-4, meters ds = RADIUS_EARTH / 1000.0, bool useGPU = true);
 	__host__            DipoleB(string serialFolder);
 	__host__ __device__ ~DipoleB();
 	__host__ __device__ DipoleB(const DipoleB&) = delete;
-	__host__ __device__ DipoleB& operator=(const DipoleB&) = delete;
 
 	__host__            degrees ILAT()  const;
 
@@ -44,6 +43,7 @@ public:
 	__host__            ratio  getErrTol() const;
 	__host__            meters getds()     const;
 
+	__host__            vector<double> getAllAttributes() const override;
 	__host__            void serialize(string serialFolder) const override;
 };
 
