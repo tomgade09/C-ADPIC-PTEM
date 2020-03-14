@@ -25,11 +25,11 @@ private:
 	__host__ void setupEnvironment();
 	__host__ void deleteEnvironment();
 
-	__host__ void deserialize(string serialFolder);
+	__host__ void deserialize(ifstream& in);
 
 public:
 	__host__ __device__ EField();
-	__host__            EField(string serialFolder);
+	__host__            EField(ifstream& in);
 	__host__ __device__ ~EField();
 
 	__host__            void add(unique_ptr<EModel> emodel);
@@ -47,7 +47,7 @@ public:
 	__host__            EModel* emodel(int ind) const;
 	__host__            string getElementNames() const;
 
-	__host__            void serialize(string serialFolder) const;
+	__host__            void serialize(ofstream& out) const;
 };
 
 #endif /* EFIELD_H */

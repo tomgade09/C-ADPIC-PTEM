@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\ErrorHandling\simExceptionMacros.h" />
+    <ClInclude Include="..\..\..\include\utils\strings.h" />
     <ClInclude Include="..\lib\include\cdf.h" />
     <ClInclude Include="..\src\CDFFileClass.h" />
   </ItemGroup>

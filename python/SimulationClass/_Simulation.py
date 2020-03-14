@@ -40,9 +40,9 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.addEFieldModelAPI.restype = None
 
 
-        #Particle Management Functions
-        self.simDLL_m.createParticleTypeAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_long, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_char_p)
-        self.simDLL_m.createParticleTypeAPI.restype = None
+        #Particles Management Functions
+        self.simDLL_m.createParticlesTypeAPI.argtypes = (ctypes.c_void_p, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_long, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_char_p)
+        self.simDLL_m.createParticlesTypeAPI.restype = None
 
 
         #Satellite Management Functions
@@ -71,12 +71,12 @@ class _SimulationCDLL: #acts as parent class for actual Simulation class - remov
         self.simDLL_m.getNumberOfParticlesAPI.restype = ctypes.c_int
         self.simDLL_m.getNumberOfAttributesAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getNumberOfAttributesAPI.restype = ctypes.c_int
-        self.simDLL_m.getParticleNameAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
-        self.simDLL_m.getParticleNameAPI.restype = ctypes.c_char_p
+        self.simDLL_m.getParticlesNameAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
+        self.simDLL_m.getParticlesNameAPI.restype = ctypes.c_char_p
         self.simDLL_m.getSatelliteNameAPI.argtypes = (ctypes.c_void_p, ctypes.c_int)
         self.simDLL_m.getSatelliteNameAPI.restype = ctypes.c_char_p
-        self.simDLL_m.getPointerToParticleAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
-        self.simDLL_m.getPointerToParticleAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
+        self.simDLL_m.getPointerToParticlesAttributeArrayAPI.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool)
+        self.simDLL_m.getPointerToParticlesAttributeArrayAPI.restype = ctypes.POINTER(ctypes.c_double)
 
 
         #CSV

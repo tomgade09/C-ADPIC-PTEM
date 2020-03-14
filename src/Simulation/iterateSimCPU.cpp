@@ -43,13 +43,13 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 
 		#pragma omp parallel for
 		for (int ind = 0; ind < (*part)->getNumberOfParticles(); ind++)
-		{//convert vperp to mu in Particle memory
+		{//convert vperp to mu in Particles memory
 			vperpMuConvert(data.at(0).at(ind), &data.at(1).at(ind), data.at(2).at(ind), data.at(4).at(ind), BFieldModel_m.get(), (*part)->mass(), true);
 		}
 	}
 
 	bool done{ false };
-	size_t initEntry{ log_m->createEntry("Iteration 1", false) };
+	size_t initEntry{ Log_m->createEntry("Iteration 1", false) };
 	for (long cudaloopind; cudaloopind < numberOfIterations; cudaloopind++)
 	{
 		if (cudaloopind % checkDoneEvery == 0) { done = true; }
@@ -86,9 +86,9 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 				out.clear();
 
 				out << setw(to_string((int)(numberOfIterations)*dt_m).size()) << fixed << simTime_m;
-				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(log_m->timeElapsedSinceEntry_s(initEntry));
+				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(Log_m->timeElapsedSinceEntry_s(initEntry));
 
-				log_m->createEntry("CPU: " + loopStatus);
+				Log_m->createEntry("CPU: " + loopStatus);
 				cout << loopStatus << "\n";
 			}
 
@@ -102,7 +102,7 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 	{
 		std::vector<std::vector<double>> tmp{ (*part)->data(false) };
 		for (int ind = 0; ind < (*part)->getNumberOfParticles(); ind++)
-		{//convert mu to vperp in Particle memory
+		{//convert mu to vperp in Particles memory
 			vperpMuConvert(tmp.at(0).at(ind), &tmp.at(1).at(ind), tmp.at(2).at(ind), tmp.at(4).at(ind), BFieldModel_m.get(), (*part)->mass(), false);
 		}
 		(*part)->loadDataFromMem(tmp, false);
@@ -112,7 +112,7 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 	saveDataToDisk();
 	simTime_m = 0.0;
 
-	std::cout << "Total sim time: " << log_m->timeElapsedTotal_s() << " s" << std::endl;
+	std::cout << "Total sim time: " << Log_m->timeElapsedTotal_s() << " s" << std::endl;
 
-	log_m->createEntry("End Iteration of Sim:  " + std::to_string(numberOfIterations));
+	Log_m->createEntry("End Iteration of Sim:  " + std::to_string(numberOfIterations));
 }

@@ -1,14 +1,15 @@
 #include <memory>
-#include "ionosphere/ionosphere.h"
-#include "ionosphere/ionosphereUtils.h"
-#include "CDFFileClass.h"
-#include "ErrorHandling/simExceptionMacros.h"
-#include "utils/numerical.h"
 #include <sstream>
 #include <algorithm>
 #include <iterator>
 #include <iostream>
 #include <iomanip>
+#include "ionosphere/ionosphere.h"
+#include "ionosphere/ionosphereUtils.h"
+#include "CDFFileClass.h"
+#include "ErrorHandling/simExceptionMacros.h"
+#include "utils/numerical.h"
+#include "utils/strings.h"
 
 constexpr int CDFNEBINS       { 48 };
 constexpr int CDFNANGLEBINS   { 18 };
@@ -29,6 +30,8 @@ using ionosphere::ParticleData;
 using ionosphere::MaxwellianSpecs;
 using ionosphere::IonosphereSpecs;
 using utils::numerical::generateSpacedValues;
+
+using namespace std::chrono;
 
 #define DUALREGIONLOGLINEFIT(bound, logm_upper, logb_upper, logm_lower, logb_lower) [](double s){ if (s > bound) return pow(10.0, logm_upper * s + logb_upper); else return pow(10.0, logm_lower * s + logb_lower); }
 
@@ -422,7 +425,7 @@ int main(int argc, char* argv[])
 				cntArray2D[ang][eng] = fluxData.at(ang).at(eng);
 
 		/* Create CDF file and setup with appropriate variables, write data */
-		std::unique_ptr<CDFFileClass> cdf = std::make_unique<CDFFileClass>("4e6Altitude");
+		std::unique_ptr<CDFFileClass> cdf{ std::make_unique<CDFFileClass>(args.simdatadir + utils::strings::getCurrentTimeString("%y%m%d.%H%M")) };
 
 		cdf->writeNewZVar("Mid-Bin Energies (eV)", CDF_DOUBLE, { CDFNEBINS - 3 }, (void*)eomdata.satbins.E.data());
 		cdf->writeNewZVar("Mid-Bin Angles (Degrees)", CDF_DOUBLE, { CDFNANGLEBINS }, (void*)satbins.PA.data());

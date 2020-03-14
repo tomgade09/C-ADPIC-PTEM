@@ -1,5 +1,7 @@
 #include "utils/serializationHelpers.h"
 
+#include <iostream>
+
 namespace utils
 {
 	namespace fileIO
@@ -17,14 +19,23 @@ namespace utils
 				return ret;
 			}
 
+			void writeSizetLength(ofstream& out, size_t size)
+			{
+				out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+			}
+
+			void writeSizetLength(ostream& out, size_t size)
+			{
+				out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+			}
+
 			// ================ serialize functions ================ //
 			stringbuf serializeString(const string& str)
 			{
 				stringbuf sb;
 				ostream out(&sb);
 
-				size_t size{ str.size() };
-				out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+				writeSizetLength(out, str.size());
 
 				out << str;
 
@@ -36,8 +47,7 @@ namespace utils
 				stringbuf sb;
 				ostream out(&sb);
 
-				size_t size{ vec.size() };
-				out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+				writeSizetLength(out, vec.size());
 				
 				for (auto& elem : vec)
 					out.write(reinterpret_cast<const char*>(&elem), sizeof(double));
@@ -50,8 +60,7 @@ namespace utils
 				stringbuf sb;
 				ostream out(&sb);
 
-				size_t size{ vec.size() };
-				out.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+				writeSizetLength(out, vec.size());
 
 				for (auto& str : vec)
 					out << serializeString(str).str();
@@ -71,12 +80,12 @@ namespace utils
 
 				return ret;
 			}
-
+			
 			vector<double> deserializeDoubleVector(ifstream& istr)
 			{
 				size_t veclen{ readSizetLength(istr) };
 				vector<double> ret;
-
+				
 				for (size_t elem = 0; elem < veclen; elem++)
 				{
 					vector<char> dblchar(sizeof(double), '\0');

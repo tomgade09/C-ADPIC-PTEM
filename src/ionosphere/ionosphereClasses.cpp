@@ -225,7 +225,7 @@ namespace ionosphere
 		std::unique_ptr<Simulation> sim;
 		SILENCE_COUT(SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(dir_simdata)));
 		
-		Particle* particle{ sim->particle(name_particle) };
+		Particles* particle{ sim->particle(name_particle) };
 		Satellite* sat_btm{ sim->satellite(name_btmsat) };
 		Satellite* sat_dng{ sim->satellite(name_dngsat) };
 		Satellite* sat_upg{ sim->satellite(name_upgsat) };

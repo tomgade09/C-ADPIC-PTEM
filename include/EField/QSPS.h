@@ -39,7 +39,7 @@ public:
 	__host__ const vector<Vperm>&  magnitude() const;
 	
 	__host__ vector<double> getAllAttributes() const override;
-	__host__ stringbuf serialize() const override;
+	__host__ void serialize(ofstream& out) const override;
 };
 
 #endif /* !QSPS_EFIELD_H */

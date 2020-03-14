@@ -79,7 +79,7 @@ class Simulation(_Simulation._SimulationCDLL):
         partdbl = []
         for iii in range(self.numPartTypes_m):
             for jjj in range(self.numAttrs_m[iii]):
-                partdbl_c = self.simDLL_m.getPointerToParticleAttributeArrayAPI(self.cppSimPtr_m, iii, jjj, origData)
+                partdbl_c = self.simDLL_m.getPointerToParticlesAttributeArrayAPI(self.cppSimPtr_m, iii, jjj, origData)
                 for kk in range(self.numParts_m[iii]):
                    partdbl.append(partdbl_c[kk])
                 partattr.append(partdbl)
@@ -184,15 +184,15 @@ class Simulation(_Simulation._SimulationCDLL):
         self.simDLL_m.addEFieldModelAPI(self.cppSimPtr_m, name_c, doublesString_c)
 
 
-    ## Particle Management Functions
-    def createParticle(self, name, attrNames, mass, charge, numParts, posDims, velDims, normFactor, loadFileDir=""):
+    ## Particles Management Functions
+    def createParticles(self, name, attrNames, mass, charge, numParts, posDims, velDims, normFactor, loadFileDir=""):
         nameBuf = ctypes.create_string_buffer(bytes(name, encoding='utf-8'))
         attrNamesBuf = ctypes.create_string_buffer(bytes(attrNames, encoding='utf-8'))
         loadFileDirBuf = ctypes.create_string_buffer(bytes(loadFileDir, encoding='utf-8'))
 
-        self.simDLL_m.createParticleTypeAPI(self.cppSimPtr_m, nameBuf, attrNamesBuf, mass, charge, numParts, posDims, velDims, normFactor, loadFileDirBuf)
+        self.simDLL_m.createParticlesTypeAPI(self.cppSimPtr_m, nameBuf, attrNamesBuf, mass, charge, numParts, posDims, velDims, normFactor, loadFileDirBuf)
 
-        self.numPartTypes_m += 1 #eventually check to see that C++ has created properly by calling Particle access functions or don't create a python one
+        self.numPartTypes_m += 1 #eventually check to see that C++ has created properly by calling Particles access functions or don't create a python one
         self.numAttrs_m.append(posDims + velDims)
         self.numParts_m.append(numParts)
         self.nameParts_m.append(name)
@@ -225,7 +225,7 @@ class Simulation(_Simulation._SimulationCDLL):
         for part in range(self.numPartTypes_m):
             self.numAttrs_m.append(self.simDLL_m.getNumberOfAttributesAPI(self.cppSimPtr_m, part))
             self.numParts_m.append(self.simDLL_m.getNumberOfParticlesAPI(self.cppSimPtr_m, part))
-            self.nameParts_m.append(self.simDLL_m.getParticleNameAPI(self.cppSimPtr_m, part))
+            self.nameParts_m.append(self.simDLL_m.getParticlesNameAPI(self.cppSimPtr_m, part))
         
         self.numSats_m = self.simDLL_m.getNumberOfSatellitesAPI(self.cppSimPtr_m)
         for sat in range(self.numSats_m):

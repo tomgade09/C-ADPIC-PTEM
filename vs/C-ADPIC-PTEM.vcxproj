@@ -36,7 +36,7 @@
     <ClCompile Include="..\src\ionosphere\ionosphere.cpp" />
     <ClCompile Include="..\src\ionosphere\ionosphereClasses.cpp" />
     <ClCompile Include="..\src\Log\Log.cpp" />
-    <ClCompile Include="..\src\Particle\Particle.cpp" />
+    <ClCompile Include="..\src\Particles\Particles.cpp" />
     <ClCompile Include="..\src\Satellite\Satellite.cpp" />
     <ClCompile Include="..\src\Satellite\Detector.cpp" />
     <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp" />
@@ -72,7 +72,7 @@
     <ClInclude Include="..\include\ionosphere\ionosphereClasses.h" />
     <ClInclude Include="..\include\ionosphere\ionosphereUtils.h" />
     <ClInclude Include="..\include\Log\Log.h" />
-    <ClInclude Include="..\include\Particle\Particle.h" />
+    <ClInclude Include="..\include\Particles\Particles.h" />
     <ClInclude Include="..\include\physicalconstants.h" />
     <ClInclude Include="..\include\Satellite\Satellite.h" />
     <ClInclude Include="..\include\SimAttributes\SimAttributes.h" />
@@ -108,7 +108,7 @@
     <None Include="..\docs\BField\README.md" />
     <None Include="..\docs\EField\README.md" />
     <None Include="..\docs\ErrorHandling\README.md" />
-    <None Include="..\docs\Particle\README.md" />
+    <None Include="..\docs\Particles\README.md" />
     <None Include="..\docs\README.md" />
     <None Include="..\docs\Satellite\README.md" />
     <None Include="..\docs\Simulation\README.md" />
@@ -129,7 +129,7 @@
   <ItemGroup>
     <Image Include="..\docs\BField\Ownership.jpg" />
     <Image Include="..\docs\EField\Ownership.jpg" />
-    <Image Include="..\docs\Particle\Particle.jpg" />
+    <Image Include="..\docs\Particles\Particles.jpg" />
     <Image Include="..\docs\Satellite\Ownership.jpg" />
     <Image Include="..\docs\Simulation\Simulation.jpg" />
   </ItemGroup>

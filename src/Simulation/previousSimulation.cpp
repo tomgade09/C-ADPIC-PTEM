@@ -5,13 +5,14 @@
 
 using utils::strings::findAttrInd;
 
-Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }/*, simAttr_m{ std::make_unique<SimAttributes>(prevSimDir + "/Simulation.attr", true) },*/
+Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }
 {
 	std::cout << "Start Sim Load\n";
 
 	if (prevSimDir == std::string("..\\_dataout\\190202_11.37.17.620km.dtDivBy10\\\\") ||
 		prevSimDir == std::string("..\\_dataout\\190325_23.03.53.620km.dtDivBy10\\\\") ||
-		prevSimDir == std::string("..\\_dataout\\191103_23.03.48.QSPS.100eV.dtDivBy10\\\\"))
+		prevSimDir == std::string("..\\_dataout\\191103_23.03.48.QSPS.100eV.dtDivBy10\\\\") ||
+		prevSimDir == std::string("..\\_dataout\\200311_20.36.57.dtdivby10\\\\"))
 	{ //hacky work around of a bug in the saved sim attributes file for the above sim results (0.0001s dt)
 		std::cout << "special case\n";
 
@@ -21,7 +22,7 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }/*, 
 
 		setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 }, false);
 
-		createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, 3456000, prevSimDir + "/bins/particles_init/", false);
+		createParticlesType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, 3456000, prevSimDir + "/bins/particles_init/", false);
 		particles_m.at(0)->loadDataFromDisk(prevSimDir + "/bins/particles_final/", false);
 
 		std::unique_ptr<TempSat> btmElec{ std::make_unique<TempSat>(0, simMin_m * 0.999, true, "btmElec") };
@@ -94,7 +95,7 @@ Simulation::Simulation(std::string prevSimDir) : saveRootDir_m{ prevSimDir }/*, 
 			//Load Particles
 			for (size_t part = 0; part < simAttr_m->partAD.names_m.size(); part++)
 			{
-				createParticleType(
+				createParticlesType(
 					simAttr_m->partAD.names_m.at(part),
 					simAttr_m->partAD.dblAttrs_m.at(part).at(findAttrInd("mass", simAttr_m->partAD.dblLabels_m.at(part))),
 					simAttr_m->partAD.dblAttrs_m.at(part).at(findAttrInd("charge", simAttr_m->partAD.dblLabels_m.at(part))),

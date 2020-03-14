@@ -16,7 +16,7 @@ Click the links below to read about the various components of this software:
 
 [3. EField](EField/README.md) - Abstract class for interfacing with various implementations of E Field models.  Can track numerous `EModel`s - E Field Elements.
 
-[4. Particle](Particle/README.md) - Class that manages particles by tracking arrays of attributes, specified upon creation.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
+[4. Particles](Particles/README.md) - Class that manages particles by tracking arrays of attributes, specified upon creation.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
 
 [5. Satellite](Satellite/README.md) - Class that tracks whether or not a particle has passed a certain altitude from above or below.  Also manages on GPU data, including cudaMalloc/cudaFree on initialization/destruction respectively.
 
@@ -32,4 +32,4 @@ Click the links below to read about the various components of this software:
 
 [11. Examples](Examples/README.md) - Look here for examples of usage (Python and C++).
 
-*Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particle](Particle/README.md) refers to the class itself or an instance of the class which manages a large number of particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
+*Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particles](Particles/README.md) refers to the class itself or an instance of the class which manages a large number of particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*

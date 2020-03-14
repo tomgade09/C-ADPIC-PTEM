@@ -58,9 +58,9 @@ __host__ __device__ EField::EField()/*bool useGPU) : useGPU_m{ useGPU }*/
 	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ EField::EField(string serialFolder)
+__host__ EField::EField(ifstream& in)
 {
-	deserialize(serialFolder);
+	deserialize(in);
 	if(useGPU_m) setupEnvironment();
 }
 
@@ -104,9 +104,6 @@ __host__ void EField::setupEnvironment()
 
 __host__ void EField::deleteEnvironment()
 {
-	//EField_d::deleteEnvironment_d <<< 1, 1 >>> (this_d);
-	//CUDA_KERNEL_ERRCHK_WSYNC();
-
 	CUDA_API_ERRCHK(cudaFree(this_d));
 	CUDA_API_ERRCHK(cudaFree(emodels_d));
 }

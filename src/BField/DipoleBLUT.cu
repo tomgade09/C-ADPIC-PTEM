@@ -82,9 +82,9 @@ __host__ __device__ DipoleBLUT::DipoleBLUT(degrees ILAT, meters simMin, meters s
 	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ DipoleBLUT::DipoleBLUT(string serialFolder) : BModel(Type::DipoleBLUT)
+__host__ DipoleBLUT::DipoleBLUT(ifstream& in) : BModel(Type::DipoleBLUT)
 {
-	deserialize(serialFolder);
+	deserialize(in);
 	ds_msmt_m = (simMax_m - simMin_m) / (numMsmts_m - 1);
 
 	if (useGPU_m) setupEnvironment();

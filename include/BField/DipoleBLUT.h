@@ -33,11 +33,11 @@ protected:
 	__host__ void setupEnvironment() override;
 	__host__ void deleteEnvironment() override;
 
-	__host__ void deserialize(string serialFolder) override;
+	__host__ void deserialize(ifstream& in) override;
 
 public:
 	__host__ __device__ DipoleBLUT(degrees ILAT, meters simMin, meters simMax, meters ds_gradB, int numberOfMeasurements, bool useGPU = true);
-	__host__            DipoleBLUT(string serialFolder);
+	__host__            DipoleBLUT(ifstream& in);
 	__host__ __device__ ~DipoleBLUT();
 	__host__ __device__ DipoleBLUT(const DipoleBLUT&) = delete;
 
@@ -54,7 +54,7 @@ public:
 	__host__            meters  getds()     const;
 
 	__host__            vector<double> getAllAttributes() const override;
-	__host__            void    serialize(string serialFolder) const override;
+	__host__            void           serialize(ofstream& out) const override;
 };
 
 #endif /* !DIPOLEBLUT_BMODEL_H */

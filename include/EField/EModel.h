@@ -49,7 +49,7 @@ public:
 	__host__            string name() const;
 
 	__host__            virtual vector<double> getAllAttributes() const = 0;
-	__host__            virtual stringbuf serialize() const = 0;
+	__host__            virtual void serialize(ofstream& out) const = 0;
 };
 
 #endif /* !EFIELD_EMODEL_H */

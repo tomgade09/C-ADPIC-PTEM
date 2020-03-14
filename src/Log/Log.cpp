@@ -23,9 +23,7 @@ Log::Entry::Entry(std::chrono::steady_clock::time_point time, string message, bo
 
 void Log::save()
 {
-	ofstream logFile;
-
-	logFile.open(logFilePath_m);
+	ofstream logFile(logFilePath_m, std::ios::trunc); //overwrites old log - specifically for reloading sims
 	logFile << string("[  Time (ms)  ] : Log Message\n");
 
 	auto writeEntry = [&](const Entry& entry)

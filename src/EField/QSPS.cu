@@ -75,7 +75,6 @@ __host__ QSPS::QSPS(meters altMin, meters altMax, Vperm magnitude, int stepUpReg
 			altMax_m.at(stepUpRegions + 1 + iii) = altMax + (iii + 1) * suSize * size;
 			magnitude_m.at(stepUpRegions + 1 + iii) = magnitude * (stepUpRegions - iii) / (stepUpRegions + 1);
 		}
-		std::cout << magnitude_m.at(0) << "  " << magnitude_m.at(1) << "\n\n";
 	}
 
 	if (useGPU_m) setupEnvironment();
@@ -85,7 +84,6 @@ __host__ QSPS::QSPS(meters altMin, meters altMax, Vperm magnitude, int stepUpReg
 __host__ QSPS::QSPS(ifstream& in) : EModel(Type::QSPS)
 {
 	deserialize(in);
-	
 	if (useGPU_m) setupEnvironment();
 }
 

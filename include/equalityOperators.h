@@ -19,7 +19,7 @@ inline bool operator==(const Simulation& x, const Simulation& y)
 	}
 }
 
-inline bool operator==(const Particle& x, const Particle& y)
+inline bool operator==(const Particles& x, const Particles& y)
 {
 	try
 	{

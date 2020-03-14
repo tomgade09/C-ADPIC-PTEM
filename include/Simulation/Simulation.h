@@ -7,7 +7,7 @@
 #include "dlldefines.h"
 #include "BField/allBModels.h"
 #include "EField/allEModels.h"
-#include "Particle/Particle.h"
+#include "Particles/Particles.h"
 #include "Satellite/Satellite.h"
 #include "Log/Log.h"
 #include "SimAttributes/SimAttributes.h"
@@ -21,12 +21,12 @@ class Simulation
 {
 protected:
 	//Structs and classes that fill various roles	
-	enum class SimComp
+	enum class Component
 	{
 		BField,
 		EField,
 		Log,
-		Particle,
+		Particles,
 		Satellite
 	};
 
@@ -44,9 +44,9 @@ protected:
 	struct SatandPart
 	{//Satellite needs particle-specific data associated with it, so this struct holds a shared_ptr to the particle
 		unique_ptr<Satellite> satellite;
-		shared_ptr<Particle>  particle;
+		shared_ptr<Particles> particle;
 
-		SatandPart(unique_ptr<Satellite> sat, shared_ptr<Particle> part) :
+		SatandPart(unique_ptr<Satellite> sat, shared_ptr<Particles> part) :
 			satellite{ std::move(sat) }, particle{ std::move(part) } {}
 	};
 
@@ -57,31 +57,31 @@ protected:
 	string saveRootDir_m{ "./" };
 	double simTime_m{ 0.0 };
 
+	//Flags
+	bool initialized_m{ false };
+	bool dataOnGPU_m{ false };
+	bool saveReady_m{ false };
+
 	//Simulation-specific classes tracked by Simulation
-	vector<shared_ptr<Particle>>   particles_m;
 	unique_ptr<BModel>             BFieldModel_m;
 	unique_ptr<EField>             EFieldModel_m;
+	unique_ptr<Log>                Log_m;
+	vector<shared_ptr<Particles>>  particles_m;
 	vector<unique_ptr<TempSat>>    tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
 	vector<unique_ptr<SatandPart>> satPartPairs_m;
 
-	//Flags
-	bool initialized_m{ false };
-	bool dataOnGPU_m  { false };
-	bool saveReady_m  { false };
-
 	//Attribute saving, Log, and Error Handling
 	unique_ptr<SimAttributes> simAttr_m;
-	unique_ptr<Log> log_m;
 
 	//Protected functions
 	virtual void createSatellite(TempSat* tmpsat, bool save = true);
-	void incTime();
+	virtual void incTime();
 	virtual void printSimAttributes(int numberOfIterations, int itersBtwCouts, string GPUName);
-
+	virtual void load(string saveRootDir);
 
 public:
 	Simulation(double dt, double simMin, double simMax, string saveRootDir);
-	Simulation(string prevSimDir); //for loading previous simulation data
+	Simulation(string saveRootDir); //for loading previous simulation data
 	virtual ~Simulation();
 
 	Simulation(const Simulation&) = delete;
@@ -99,12 +99,12 @@ public:
 	int    getNumberOfSatellites()            const;
 	int    getNumberOfParticles(int partInd)  const;
 	int    getNumberOfAttributes(int partInd) const;
-	string getParticleName(int partInd)       const;
+	string getParticlesName(int partInd)       const;
 	string getSatelliteName(int satInd)       const;
 	int    getPartIndOfSat(int satInd)        const;
 
-	Particle*  particle(int partInd)  const;
-	Particle*  particle(string name)  const; //search for name, return particle
+	Particles*  particle(int partInd)  const;
+	Particles*  particle(string name)  const; //search for name, return particle
 	Satellite* satellite(int satInd)  const;
 	Satellite* satellite(string name) const; //search for name, return satellite
 	BModel*    Bmodel()               const;
@@ -115,7 +115,7 @@ public:
 
 	///Forward decs for cpp file, or pure virtuals
 	//Class creation functions
-	virtual void createParticleType(string name, double mass, double charge, long numParts, string loadFilesDir = "", bool save = true);
+	virtual void createParticlesType(string name, double mass, double charge, long numParts, string loadFilesDir = "", bool save = true);
 	virtual void createTempSat(string partName, double altitude, bool upwardFacing, string name);
 	virtual void createTempSat(int partInd, double altitude, bool upwardFacing, string name);
 	virtual void setBFieldModel(string name, vector<double> args, bool save = true);
@@ -137,5 +137,6 @@ public:
 	virtual void saveDataToDisk();
 	virtual void freeGPUMemory();
 	virtual void resetSimulation(bool fields = false);
+	virtual void save() const;
 };//end class
 #endif //end header guard

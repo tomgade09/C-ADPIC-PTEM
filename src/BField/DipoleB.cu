@@ -53,9 +53,9 @@ __host__ __device__ DipoleB::DipoleB(degrees ILAT, ratio lambdaErrorTolerance, m
 	#endif /* !__CUDA_ARCH__ */
 }
 
-__host__ DipoleB::DipoleB(string serialFolder) : BModel(Type::DipoleB)
+__host__ DipoleB::DipoleB(ifstream& in) : BModel(Type::DipoleB)
 {
-	deserialize(serialFolder);
+	deserialize(in);
 	if (useGPU_m) setupEnvironment();
 }
 

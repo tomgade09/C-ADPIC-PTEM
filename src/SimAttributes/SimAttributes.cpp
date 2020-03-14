@@ -32,7 +32,7 @@ SimAttributes::~SimAttributes()
 	;;;; separates entries
 	$$$$ #$^& encapsulates double values converted to string
 
-	example: <<<<[[[[Particle]]]]((((elec)))){{attrLbl,attrLbl,attrLbl,attrLbl}}{{vpara,vperp,s,tincd}}{{numparticles,somethingelse}}{{$$$$doublehere$$$$,$$$$doublehere$$$$}};;;;
+	example: <<<<[[[[Particles]]]]((((elec)))){{attrLbl,attrLbl,attrLbl,attrLbl}}{{vpara,vperp,s,tincd}}{{numparticles,somethingelse}}{{$$$$doublehere$$$$,$$$$doublehere$$$$}};;;;
 		((elecbs)){{strhere,strhere}}{{strattr,strattr}}{{strdbl,strdbl}}{{$$$$doublehere$$$$,$$$$doublehere$$$$}}>>>>
 */
 
@@ -180,7 +180,7 @@ void SimAttributes::read()
 		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Simulation
 		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //BModel
 		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //EField
-		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Particle
+		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Particles
 		dataStrVec.push_back(findCutString(ALLDATWRAP(""), saveString)); //Satellite
 
 		for (auto datastr = dataStrVec.begin(); datastr < dataStrVec.end(); datastr++) //datastr is a data string that contains all data for a class

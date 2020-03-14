@@ -1,10 +1,9 @@
 #include <fstream>
-#include <filesystem>
 
 //CUDA includes
 #include "ErrorHandling/simExceptionMacros.h"
 
-#include "Particle/Particle.h"
+#include "Particles/Particles.h"
 #include "utils/fileIO.h"
 #include "utils/arrayUtilsGPU.h"
 #include "utils/serializationHelpers.h"
@@ -23,7 +22,7 @@ using utils::fileIO::readDblBin;
 using utils::fileIO::writeDblBin;
 using namespace utils::fileIO::serialize;
 
-Particle::Particle(string name, vector<string> attributeNames, double mass, double charge, long numParts) :
+Particles::Particles(string name, vector<string> attributeNames, double mass, double charge, long numParts) :
 	name_m{ name }, attributeNames_m{ attributeNames }, mass_m{ mass }, charge_m{ charge }, numberOfParticles_m{ numParts }
 {
 	origData_m = vector<vector<double>>(attributeNames.size(), vector<double>(numParts));
@@ -33,44 +32,47 @@ Particle::Particle(string name, vector<string> attributeNames, double mass, doub
 	initializeGPU();
 }
 
-Particle::Particle(string serialFolder, string name)
+Particles::Particles(ifstream& in)
 { //for loading serialzed class
-	deserialize(serialFolder, name);
+	deserialize(in);
+
+	origData_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));
+	currData_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));
 	initializeGPU();
 }
 
-Particle::~Particle()
+Particles::~Particles()
 {
 	freeGPUMemory(); //don't forget to free on multiple GPUs - probably do same as initializing
 }
 
-// ================ Particle - protected ================ //
-void Particle::initializeGPU()
+// ================ Particles - protected ================ //
+void Particles::initializeGPU()
 {
 	utils::GPU::setup2DArray(&currData1D_d, &currData2D_d, attributeNames_m.size() + 1, numberOfParticles_m);
 	initializedGPU_m = true;
 }
 
-void Particle::copyDataToGPU(bool origToGPU)
+void Particles::copyDataToGPU(bool origToGPU)
 {
 	if (!initializedGPU_m)
-		throw logic_error("Particle::copyDataToGPU: GPU memory has not been initialized yet for particle " + name_m);
+		throw logic_error("Particles::copyDataToGPU: GPU memory has not been initialized yet for particle " + name_m);
 	if (!initDataLoaded_m)
-		throw logic_error("Particle::copyDataToGPU: data not loaded from disk with Particle::loadDataFromDisk or generated with Particle::generateRandomParticles " + name_m);
+		throw logic_error("Particles::copyDataToGPU: data not loaded from disk with Particles::loadDataFromDisk or generated with Particles::generateRandomParticles " + name_m);
 
 	if (origToGPU) utils::GPU::copy2DArray(origData_m, &currData1D_d, true); //sending to orig(host) -> data(GPU)
 	else           utils::GPU::copy2DArray(currData_m, &currData1D_d, true); //sending to curr(host) -> data(GPU)
 }
 
-void Particle::copyDataToHost()
+void Particles::copyDataToHost()
 {
 	if (!initializedGPU_m)
-		throw logic_error("Particle::copyDataToHost: GPU memory has not been initialized yet for particle " + name_m);
+		throw logic_error("Particles::copyDataToHost: GPU memory has not been initialized yet for particle " + name_m);
 
 	utils::GPU::copy2DArray(currData_m, &currData1D_d, false); //coming back data(GPU) -> curr(host)
 }
 
-void Particle::freeGPUMemory()
+void Particles::freeGPUMemory()
 {
 	if (!initializedGPU_m) return;
 
@@ -87,79 +89,79 @@ void Particle::freeGPUMemory()
 	catch(...)                            { throw; }
 
 
-// ================ Particle - public ================ //
+// ================ Particles - public ================ //
 
-vector<vector<double>>& Particle::__data(bool orig)
+vector<vector<double>>& Particles::__data(bool orig)
 { //returns a non-const version of data
 	return ((orig) ? origData_m : currData_m);
 }
 
-const vector<vector<double>>& Particle::data(bool orig) const
+const vector<vector<double>>& Particles::data(bool orig) const
 { //returns a const version of data
 	return ((orig) ? origData_m : currData_m);
 }
 
-const vector<string>& Particle::attributeNames() const
+const vector<string>& Particles::attributeNames() const
 {
 	return attributeNames_m;
 }
 
-string Particle::name() const
+string Particles::name() const
 {
 	return name_m;
 }
 
-double Particle::mass() const
+double Particles::mass() const
 {
 	return mass_m;
 }
 
-double Particle::charge() const
+double Particles::charge() const
 {
 	return charge_m;
 }
 
-long Particle::getNumberOfParticles() const
+long Particles::getNumberOfParticles() const
 {
 	return numberOfParticles_m;
 }
 
-size_t Particle::getNumberOfAttributes() const
+size_t Particles::getNumberOfAttributes() const
 {
 	return attributeNames_m.size();
 }
 
-bool Particle::getInitDataLoaded() const
+bool Particles::getInitDataLoaded() const
 {
 	return initDataLoaded_m;
 }
 
-double** Particle::getCurrDataGPUPtr() const
+double** Particles::getCurrDataGPUPtr() const
 {
 	return currData2D_d;
 }
 
-size_t Particle::getAttrIndByName(string searchName) const
+size_t Particles::getAttrIndByName(string searchName) const
 {
 	for (size_t name = 0; name < attributeNames_m.size(); name++)
 		if (searchName == attributeNames_m.at(name))
 			return name;
 
-	throw invalid_argument("Particle::getDimensionIndByName: specified name is not present in name array: " + searchName);
+	throw invalid_argument("Particles::getDimensionIndByName: specified name is not present in name array: " + searchName);
 }
 
-string Particle::getAttrNameByInd(size_t searchIndx) const
+string Particles::getAttrNameByInd(size_t searchIndx) const
 {
 	if (!(searchIndx <= (attributeNames_m.size() - 1) && (searchIndx >= 0)))
-		throw invalid_argument("Particle::getDimensionNameByInd: specified index is invalid: " + to_string(searchIndx));
+		throw invalid_argument("Particles::getDimensionNameByInd: specified index is invalid: " + to_string(searchIndx));
 
 	return attributeNames_m.at(searchIndx);
 }
 
-void Particle::setParticleSource_s(double s_ion, double s_mag)
+void Particles::setParticlesSource_s(double s_ion, double s_mag)
 {
-	cout << "Particle::setParticleSource_s: This function is being depreciated and will be removed in a future release.\n";
-	//need to create a ParticleDistribution and load into Particle::origData_m before I get rid of this
+	cout << "Particles::setParticlesSource_s: This function is being depreciated and will be removed in a future release.\n";
+	//need to create a ParticleDistribution and load into Particles::origData_m before I get rid of this
 	size_t s_ind{ getAttrIndByName("s") };
 	size_t v_ind{ getAttrIndByName("vpara") };
 
@@ -170,13 +172,13 @@ void Particle::setParticleSource_s(double s_ion, double s_mag)
 		else if (origData_m.at(v_ind).at(ind) < 0.0)
 			origData_m.at(s_ind).at(ind) = s_mag;
 		else
-			throw std::logic_error("Particle::setParticleSource_s: vpara value is exactly 0.0 - load data to the origData_m array first.  Aborting.  index: " + std::to_string(ind));
+			throw std::logic_error("Particles::setParticlesSource_s: vpara value is exactly 0.0 - load data to the origData_m array first.  Aborting.  index: " + std::to_string(ind));
 	}
 
 	copyDataToGPU();
 }
 
-void Particle::loadDataFromMem(vector<vector<double>> data, bool orig) //orig defaults to true
+void Particles::loadDataFromMem(vector<vector<double>> data, bool orig) //orig defaults to true
 {
 	((orig) ? origData_m = data : currData_m = data);
 	numberOfParticles_m = ((orig) ? (int)origData_m.at(0).size() : (int)currData_m.at(0).size());
@@ -186,7 +188,7 @@ void Particle::loadDataFromMem(vector<vector<double>> data, bool orig) //orig de
 }
 
 
-void Particle::loadDataFromDisk(string folder, bool orig) //orig defaults to true
+void Particles::loadDataFromDisk(string folder, bool orig) //orig defaults to true
 {
 	for (int attrs = 0; attrs < attributeNames_m.size(); attrs++)
 		FILE_RDWR_EXCEP_CHECK(readDblBin((orig ? origData_m.at(attrs) : currData_m.at(attrs)), folder + "/" + name_m + "_" + attributeNames_m.at(attrs) + ".bin", numberOfParticles_m));
@@ -195,54 +197,38 @@ void Particle::loadDataFromDisk(string folder, bool orig) //orig defaults to tru
 	if (orig) copyDataToGPU();
 }
 
-void Particle::saveDataToDisk(string folder, bool orig) const
+void Particles::saveDataToDisk(string folder, bool orig) const
 {
 	for (int attrs = 0; attrs < attributeNames_m.size(); attrs++)
 		FILE_RDWR_EXCEP_CHECK(writeDblBin((orig ? origData_m.at(attrs) : currData_m.at(attrs)), folder + "/" + name_m + "_" + attributeNames_m.at(attrs) + ".bin", numberOfParticles_m));
 }
 
-void Particle::serialize(string serialFolder)
+void Particles::serialize(ofstream& out) const
 { //saves necessary attributes about the particle to disk
-	string filename{ serialFolder + string("/Particle_") + name_m + string(".ser") };
-
-	if (std::filesystem::exists(filename))
-		cerr << "Particle::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.\n";
-
-	ofstream out(filename, std::ofstream::binary);
-	if (!out) throw invalid_argument("Particle::serialize: unable to create file: " + filename);
-
 	auto writeStrBuf = [&](const stringbuf& sb)
 	{
 		out.write(sb.str().c_str(), sb.str().length());
 	};
 
 	// ======== write data to file ======== //
-	out.write(reinterpret_cast<const char*>(this), sizeof(Particle));
 	writeStrBuf(serializeString(name_m));
 	writeStrBuf(serializeStringVector(attributeNames_m));
-
-	out.close();
+	
+	out.write(reinterpret_cast<const char*>(&initDataLoaded_m), sizeof(bool));
+	out.write(reinterpret_cast<const char*>(&initializedGPU_m), sizeof(bool));
+	out.write(reinterpret_cast<const char*>(&numberOfParticles_m), sizeof(long));
+	out.write(reinterpret_cast<const char*>(&mass_m), sizeof(double));
+	out.write(reinterpret_cast<const char*>(&charge_m), sizeof(double));
 }
 
-void Particle::deserialize(string serialFolder, string name) //protected function
+void Particles::deserialize(ifstream& in) //protected function
 { //recreates a saved "serialization"
-	string filename{ serialFolder + string("/Particle_") + name + string(".ser") };
-	ifstream in(filename, std::ifstream::binary);
-	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
-
-	Particle* part{ nullptr };
-	vector<char> partchar(sizeof(Particle), '\0');
-
-	in.read(partchar.data(), sizeof(Particle));
-	part = reinterpret_cast<Particle*>(partchar.data());
-
 	name_m = deserializeString(in);
 	attributeNames_m = deserializeStringVector(in);
 
-	numberOfParticles_m = part->getNumberOfParticles();
-	mass_m = part->mass();
-	charge_m = part->charge();
-
-	origData_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));
-	currData_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));
+	in.read(reinterpret_cast<char*>(&initDataLoaded_m), sizeof(bool));
+	in.read(reinterpret_cast<char*>(&initializedGPU_m), sizeof(bool));
+	in.read(reinterpret_cast<char*>(&numberOfParticles_m), sizeof(long));
+	in.read(reinterpret_cast<char*>(&mass_m), sizeof(double));
+	in.read(reinterpret_cast<char*>(&charge_m), sizeof(double));
 }

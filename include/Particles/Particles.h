@@ -8,12 +8,14 @@
 
 using std::vector;
 using std::string;
+using std::ifstream;
+using std::ofstream;
 
 #define STRVEC vector<string>
 #define DBLVEC vector<double>
 #define DBL2DV vector<vector<double>>
 
-class Particle
+class Particles
 {
 protected:
 	string name_m; //name of particle
@@ -36,14 +38,14 @@ protected:
 	virtual void initializeGPU(); //need to modify all of these below to account for multi GPU
 	virtual void copyDataToGPU(bool origToGPU = true);
 	virtual void freeGPUMemory();
-	virtual void deserialize(string serialFolder, string name);
+	virtual void deserialize(ifstream& in);
 
 public:
-	Particle(string name, vector<string> attributeNames, double mass, double charge, long numParts);
-	Particle(string serialFolder, string name);
-	virtual ~Particle();
-	Particle(const Particle&) = delete;
-	Particle& operator=(const Particle& otherpart) = delete;
+	Particles(string name, vector<string> attributeNames, double mass, double charge, long numParts);
+	Particles(ifstream& in);
+	virtual ~Particles();
+	Particles(const Particles&) = delete;
+	Particles& operator=(const Particles& otherpart) = delete;
 
 	//Access functions
 	string        name()           const;
@@ -61,13 +63,13 @@ public:
 	string        getAttrNameByInd(size_t searchIndx) const;
 
 	//Other functions
-	void setParticleSource_s(double s_ion, double s_mag);
+	void setParticlesSource_s(double s_ion, double s_mag);
 
 	void loadDataFromMem(vector<vector<double>> data, bool orig = true);
 	void loadDataFromDisk(string folder, bool orig = true);
 	void saveDataToDisk(string folder, bool orig) const;
-	void copyDataToHost(); //needs to be public because Particle doesn't know when things are done modifying GPU data
-	void serialize(string serialFolder);
+	void copyDataToHost(); //needs to be public because Particles doesn't know when things are done modifying GPU data
+	void serialize(ofstream& out) const;
 };
 
 #undef STRVEC

@@ -232,7 +232,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 
 	printSimAttributes(numberOfIterations, checkDoneEvery, gpuprop.name);
 	
-	log_m->createEntry("Start Iteration of Sim:  " + to_string(numberOfIterations));
+	Log_m->createEntry("Start Iteration of Sim:  " + to_string(numberOfIterations));
 	
 	//convert particle vperp data to mu
 	for (auto& part : particles_m)
@@ -244,7 +244,7 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	CUDA_API_ERRCHK(cudaMalloc((void**)&simDone_d, sizeof(bool)));
 
 	//Loop code
-	size_t initEntry{ log_m->createEntry("Iteration 1", false) };
+	size_t initEntry{ Log_m->createEntry("Iteration 1", false) };
 	for (long cudaloopind = 0; cudaloopind < numberOfIterations; cudaloopind++)
 	{	
 		if (cudaloopind % checkDoneEvery == 0) { CUDA_API_ERRCHK(cudaMemset(simDone_d, true, sizeof(bool))); } //if it's going to be checked in this iter (every checkDoneEvery iterations), set to true
@@ -276,9 +276,9 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 				out.clear();
 
 				out << setw(to_string((int)(numberOfIterations)*dt_m).size()) << fixed << simTime_m;
-				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(log_m->timeElapsedSinceEntry_s(initEntry));
+				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(Log_m->timeElapsedSinceEntry_s(initEntry));
 
-				log_m->createEntry(loopStatus);
+				Log_m->createEntry(loopStatus);
 				cout << loopStatus << "\n";
 			}
 
@@ -311,9 +311,9 @@ void Simulation::iterateSimulation(int numberOfIterations, int checkDoneEvery)
 	saveDataToDisk();
 	simTime_m = 0.0;
 
-	cout << "Total sim time: " << log_m->timeElapsedTotal_s() << " s" << endl;
+	cout << "Total sim time: " << Log_m->timeElapsedTotal_s() << " s" << endl;
 
-	log_m->createEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + to_string(numberOfIterations));
+	Log_m->createEntry("Simulation::iterateSimulation: End Iteration of Sim:  " + to_string(numberOfIterations));
 }
 
 void Simulation::freeGPUMemory()
@@ -321,7 +321,7 @@ void Simulation::freeGPUMemory()
 	if (!initialized_m)
 		throw logic_error("Simulation::freeGPUMemory: simulation not initialized with initializeSimulation()");
 
-	log_m->createEntry("Free GPU Memory");
+	Log_m->createEntry("Free GPU Memory");
 
 	if (!dataOnGPU_m) { return; }
 

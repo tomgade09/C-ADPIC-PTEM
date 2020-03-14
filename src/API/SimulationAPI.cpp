@@ -47,14 +47,14 @@ DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* l
 		//sim->setBFieldModel("DipoleB", { 72.0 });
 		//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 
-		sim->createParticleType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
+		sim->createParticlesType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 
 		sim->createTempSat(0, sim->simMin(), true, "btmElec");
 		sim->createTempSat(0, sim->simMax(), false, "topElec");
 		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
 		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
 
-		sim->particle(0)->setParticleSource_s(sim->simMin(), sim->simMax());
+		sim->particle(0)->setParticlesSource_s(sim->simMin(), sim->simMax());
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
@@ -88,9 +88,9 @@ DLLEXP_EXTC double getEFieldAtSAPI(Sim* sim, double s, double time)
 }
 
 
-//Particle Management Functions
-DLLEXP_EXTC void createParticleTypeAPI(Sim* sim, const char* name, double mass, double charge, long numParts, const char* loadFileDir) {
-	SIM_API_EXCEP_CHECK(sim->createParticleType(name, mass, charge, numParts, loadFileDir)); }
+//Particles Management Functions
+DLLEXP_EXTC void createParticlesTypeAPI(Sim* sim, const char* name, double mass, double charge, long numParts, const char* loadFileDir) {
+	SIM_API_EXCEP_CHECK(sim->createParticlesType(name, mass, charge, numParts, loadFileDir)); }
 
 
 //Satellite Management Functions
@@ -159,9 +159,9 @@ DLLEXP_EXTC int getNumberOfAttributesAPI(Sim* sim, int partInd)
 	return -1; //if above fails
 }
 
-DLLEXP_EXTC const char* getParticleNameAPI(Sim* sim, int partInd)
+DLLEXP_EXTC const char* getParticlesNameAPI(Sim* sim, int partInd)
 {
-	SIM_API_EXCEP_CHECK(return sim->getParticleName(partInd).c_str());
+	SIM_API_EXCEP_CHECK(return sim->getParticlesName(partInd).c_str());
 	return nullptr; //if above fails
 }
 
@@ -171,7 +171,7 @@ DLLEXP_EXTC const char* getSatelliteNameAPI(Sim* sim, int satInd)
 	return nullptr; //if above fails
 }
 
-DLLEXP_EXTC const double* getPointerToParticleAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData)
+DLLEXP_EXTC const double* getPointerToParticlesAttributeArrayAPI(Sim* sim, int partIndex, int attrIndex, bool originalData)
 {
 	SIM_API_EXCEP_CHECK(return sim->getParticleData(partIndex, originalData).at(attrIndex).data());
 	return nullptr; //if above fails

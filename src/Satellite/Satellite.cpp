@@ -2,7 +2,6 @@
 #include <iterator> //for back_inserter
 #include <algorithm>
 #include <fstream>
-#include <filesystem>
 
 //Project specific includes
 #include "Satellite/Satellite.h"
@@ -30,12 +29,11 @@ Satellite::Satellite(std::string name, std::vector<std::string> attributeNames, 
 	initializeGPU();
 }
 
-Satellite::Satellite(string serialFolder, string name, double** particleData2D)
+Satellite::Satellite(ifstream& in, double** particleData2D) : particleData2D_d{ particleData2D }
 {
-	deserialize(serialFolder, name, particleData2D);
-	
+	deserialize(in);
+
 	data_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));
-	
 	initializeGPU();
 }
 
@@ -207,47 +205,30 @@ long Satellite::getNumberOfParticles() const
 	return numberOfParticles_m;
 }
 
-void Satellite::serialize(string serialFolder)
+void Satellite::serialize(ofstream& out) const
 {
-	string filename{ serialFolder + string("/Satellite_") + name_m + string(".ser") };
-
-	if (std::filesystem::exists(filename))
-		cerr << "Satellite::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.";
-
-	ofstream out(filename, std::ofstream::binary);
-	if (!out) throw invalid_argument("Satellite::serialize: unable to create file: " + filename);
-
 	auto writeStrBuf = [&](const stringbuf& sb)
 	{
 		out.write(sb.str().c_str(), sb.str().length());
 	};
 
-	out.write(reinterpret_cast<const char*>(this), sizeof(Satellite));
 	writeStrBuf(serializeString(name_m));
 	writeStrBuf(serializeStringVector(attributeNames_m));
 
-	out.close();
+	out.write(reinterpret_cast<const char*>(&altitude_m), sizeof(meters));
+	out.write(reinterpret_cast<const char*>(&upwardFacing_m), sizeof(bool));
+	out.write(reinterpret_cast<const char*>(&initializedGPU_m), sizeof(bool));
+	out.write(reinterpret_cast<const char*>(&numberOfParticles_m), sizeof(long));
 }
 
-void Satellite::deserialize(string serialFolder, string name, double** particleData2D)
+void Satellite::deserialize(ifstream& in)
 {
-	string filename{ serialFolder + string("/Satellite_") + name + string(".ser") };
-	ifstream in(filename, std::ifstream::binary);
-	if (!in) throw invalid_argument("Particle::deserialize: unable to open file: " + filename);
-
-	Satellite* sat;
-	vector<char> partchar(sizeof(Satellite), '\0');
-
-	in.read(partchar.data(), sizeof(Satellite));
-	sat = reinterpret_cast<Satellite*>(partchar.data());
 
 	name_m = deserializeString(in);
 	attributeNames_m = deserializeStringVector(in);
 
-	altitude_m = sat->altitude();
-	upwardFacing_m = sat->upward();
-
-	numberOfParticles_m = sat->getNumberOfParticles();
-
-	particleData2D_d = particleData2D;
+	in.read(reinterpret_cast<char*>(&altitude_m), sizeof(meters));
+	in.read(reinterpret_cast<char*>(&upwardFacing_m), sizeof(bool));
+	in.read(reinterpret_cast<char*>(&initializedGPU_m), sizeof(bool));
+	in.read(reinterpret_cast<char*>(&numberOfParticles_m), sizeof(long));
 }

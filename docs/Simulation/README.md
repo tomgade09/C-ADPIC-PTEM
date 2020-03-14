@@ -10,9 +10,9 @@
 
 **`Simulation(std::string prevSimDir)`**
 
-Simulation is a container class that integrates functionality from: [Particle](./../Particle/README.md), [Satellite](./../Satellite/README.md), [BModel](./../BModel/README.md) derived models, [EField](./../EField/README.md) derived models, and [Log](./../Log/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
+Simulation is a container class that integrates functionality from: [Particles](./../Particles/README.md), [Satellite](./../Satellite/README.md), [BModel](./../BModel/README.md) derived models, [EField](./../EField/README.md) derived models, and [Log](./../Log/README.md), managing the lifetime of instances through the use of smart pointers (with the exception of through the extern c API).  Simulation also contains the CUDA code that runs the core of the simulation (Fourth Order Runge Kutta, equation of motion, and a container function that manages early exiting (if the particle is not in simulation).  From outside C++, can be manipulated by numerous [API functions](./../API/README.md), including `createSimulationAPI` and `terminateSimulationAPI` as examples.
 
-*Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particle](./../Particle/README.md) refers to the class itself or an instance of the class which manages a large number of simulated physical particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
+*Note: In this documentation, uppercase (and usually linked) names refer to classes, while lowercase names refer to non-class things.  For example: [Particles](./../Particles/README.md) refers to the class itself or an instance of the class which manages a large number of simulated physical particles (lowercase).  particle(s) usually refers to a collection of attributes (ex: v_para, v_perp or mu, and s, as well as maybe time, index, etc) that represents a `real-world physical particle`.*
 
 
 ### Use
@@ -65,7 +65,7 @@ None
 
 
 #### Side-Effects:
-Simulation is recreated exactly as it was run to produce the data in the folder indicated by `prevSimDir`.  This includes the [BModel](./../BModel/README.md) model specified for the previous Simulation, as well as all [EField](./../EField/README.md) models, [Particles](./../Particle/README.md) along with associated initial and final data, and [Satellites](./../Satellite/README.md) along with their measurement data.  This constructor overload relies on loading `Simulation.attr` in the root of that folder and will throw an exception if that file cannot be found.
+Simulation is recreated exactly as it was run to produce the data in the folder indicated by `prevSimDir`.  This includes the [BModel](./../BModel/README.md) model specified for the previous Simulation, as well as all [EField](./../EField/README.md) models, [Particles](./../Particles/README.md) along with associated initial and final data, and [Satellites](./../Satellite/README.md) along with their measurement data.  This constructor overload relies on loading `Simulation.attr` in the root of that folder and will throw an exception if that file cannot be found.
 
 
 ### Public Member Functions
@@ -79,11 +79,11 @@ size_t      getNumberOfParticleTypes()
 size_t      getNumberOfSatellites()
 size_t      getNumberOfParticles(int partInd)
 size_t      getNumberOfAttributes(int partInd)
-std::string getParticleName(int partInd)
+std::string getParticlesName(int partInd)
 std::string getSatelliteName(int satInd)
 Log*    log()
-Particle*   particle(int partInd)
-Particle*   particle(std::string name)
+Particles*   particle(int partInd)
+Particles*   particle(std::string name)
 Satellite*  satellite(int satInd)
 Satellite*  satellite(std::string name)
 BModel*     Bmodel()
@@ -109,7 +109,7 @@ None for all functions
 
 ---
 ```
-void Simulation::createParticleType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir="", bool save=true)
+void Simulation::createParticlesType(std::string name, double mass, double charge, long numParts, std::string loadFilesDir="", bool save=true)
 ```
 #### Input:
 `name` - name of the particle; this can be any valid string that can comprise a filename - it will be used to save files to disk
@@ -118,11 +118,11 @@ void Simulation::createParticleType(std::string name, double mass, double charge
 
 `charge` - charge of the particle, in C (for the purpose of this Simulation)
 
-`numParts` - number of particles that this instance of [Particle](./../Particle/README.md) will track
+`numParts` - number of particles that this instance of [Particles](./../Particles/README.md) will track
 
-`loadFilesDir` - if you wish to load a distribution, specify the folder where the `.bin` files are located here; files must be saved in double binary format and saved with the name `[name]_[attr].bin` where `[attr]` refers to `{ vpara, vperp, s, t_inc, t_esc }` for the purposes of this Simulation; defaults to "", which will load nothing into the [Particle](./../Particle/README.md) instance; non-fatal exception is thrown (and caught/output to `errors.log`) if files don't exist according to name specified and attributes listed above, and array is left as zeroes for the attribute that wasn't found
+`loadFilesDir` - if you wish to load a distribution, specify the folder where the `.bin` files are located here; files must be saved in double binary format and saved with the name `[name]_[attr].bin` where `[attr]` refers to `{ vpara, vperp, s, t_inc, t_esc }` for the purposes of this Simulation; defaults to "", which will load nothing into the [Particles](./../Particles/README.md) instance; non-fatal exception is thrown (and caught/output to `errors.log`) if files don't exist according to name specified and attributes listed above, and array is left as zeroes for the attribute that wasn't found
 
-`save` - specifies whether or not this [Particle's](./../Particle/README.md) instance is added to the savefile that specifies the Simulation; defaults to `true` and should be left the default value, or when loading the Simulation later, this instance will not be recreated in the loaded Simulation
+`save` - specifies whether or not this [Particles's](./../Particles/README.md) instance is added to the savefile that specifies the Simulation; defaults to `true` and should be left the default value, or when loading the Simulation later, this instance will not be recreated in the loaded Simulation
 
 
 #### Output:
@@ -130,7 +130,7 @@ None
 
 
 #### Side-Effects:
-Creates a [Particle](./../Particle/README.md) instance with specified attributes and stores in the Simulation instance for management.
+Creates a [Particles](./../Particles/README.md) instance with specified attributes and stores in the Simulation instance for management.
 
 
 ---
@@ -139,9 +139,9 @@ void Simulation::createTempSat(int partInd, double altitude, bool upwardFacing, 
 void Simulation::createTempSat(std::string partName, double altitude, bool upwardFacing, std::string name)
 ```
 #### Input:
-`partInd` - index of the [Particle](./../Particle/README.md) that this [Satellite](./../Satellite/README.md) instance is tracking (they only track one at a time, as detailed in the docs for that class)
+`partInd` - index of the [Particles](./../Particles/README.md) that this [Satellite](./../Satellite/README.md) instance is tracking (they only track one at a time, as detailed in the docs for that class)
 
-`partName` - name of the associated [Particle](./../Particle/README.md)
+`partName` - name of the associated [Particles](./../Particles/README.md)
 
 `altitude` - location `s` (in m for this Simulation) along the specified B field line from the surface of the Earth; **note: this is not `r`, the distance from the center of the Earth, nor the traditional sense of altitude - the distance from the surface of the Earth at its nearest point (or sea level)**
 
@@ -271,7 +271,7 @@ None
 
 
 #### Side-Effects:
-Calls saveDataToDisk of [Particles](./../Particle/README.md) and [Satellites](./../Satellite/README.md) managed by Simulation.  This implies that all the side-effects of those functions are incurred.  In addition, [SimAttributes](./../SimAttributes/README.md) is destroyed (hence, saving the associated attributes file to disk), and means that no further classes can be saved to disk in this Simulation instance.  This function is called automatically by `iterateSimulation` once iterations are complete.
+Calls saveDataToDisk of [Particles](./../Particles/README.md) and [Satellites](./../Satellite/README.md) managed by Simulation.  This implies that all the side-effects of those functions are incurred.  In addition, [SimAttributes](./../SimAttributes/README.md) is destroyed (hence, saving the associated attributes file to disk), and means that no further classes can be saved to disk in this Simulation instance.  This function is called automatically by `iterateSimulation` once iterations are complete.
 
 
 ---
@@ -287,7 +287,7 @@ None
 
 
 #### Side-Effects:
-Frees GPU memory for all classes.  Call if freeing GPU memory is desired prior to destructors being called (classes all free their own GPU memory on destruction).  Keep in mind that once this happens, you won't be able to use on GPU memory for [Particles](./../Particle/README.md) and [Satellites](./../Satellite/README.md) unless you destroy them and create new ones (memory is automatically allocated upon initialization).  At this time, there is no function to reallocate GPU memory for these classes once freed (hence having to destroy/recreate).
+Frees GPU memory for all classes.  Call if freeing GPU memory is desired prior to destructors being called (classes all free their own GPU memory on destruction).  Keep in mind that once this happens, you won't be able to use on GPU memory for [Particles](./../Particles/README.md) and [Satellites](./../Satellite/README.md) unless you destroy them and create new ones (memory is automatically allocated upon initialization).  At this time, there is no function to reallocate GPU memory for these classes once freed (hence having to destroy/recreate).
 
 
 ---
@@ -303,7 +303,7 @@ None
 
 
 #### Side-Effects:
-Destroys all [Satellites](./../Satellite/README.md) and [Particles](./../Particle/README.md), as well as [BModel](./../BModel/README.md) model, and [EField](./../EField/README.md) model(s) if `fields` is `true`.  Used to reset the simulation without having to destroy the entire instance of this class and associated data.  This is useful when, for example, generating a backscatter distribution and rerunning to add to the prior data.
+Destroys all [Satellites](./../Satellite/README.md) and [Particles](./../Particles/README.md), as well as [BModel](./../BModel/README.md) model, and [EField](./../EField/README.md) model(s) if `fields` is `true`.  Used to reset the simulation without having to destroy the entire instance of this class and associated data.  This is useful when, for example, generating a backscatter distribution and rerunning to add to the prior data.
 
 
 ### CUDA Kernels
@@ -389,13 +389,13 @@ protected:
 struct SatandPart
 {
 	std::unique_ptr<Satellite> satellite;
-	std::shared_ptr<Particle>  particle;
+	std::shared_ptr<Particles>  particle;
 	/*
 	   ...
 	*/
 }	
 ```
-Stores smart pointers to [Satellite](./../Satellite/README.md) instance and associated [Particle](./../Particle/README.md).  This oddity is unfortunately necessary due to the fact that [Particle](./../Particle/README.md) data is inseparably tied to [Satellite](./../Satellite/README.md).  **This will never have to be created manually.  Lifetime (including creation) is managed by Simulation.**
+Stores smart pointers to [Satellite](./../Satellite/README.md) instance and associated [Particles](./../Particles/README.md).  This oddity is unfortunately necessary due to the fact that [Particles](./../Particles/README.md) data is inseparably tied to [Satellite](./../Satellite/README.md).  **This will never have to be created manually.  Lifetime (including creation) is managed by Simulation.**
 
 
 **_Other protected data and functions not documented here._**

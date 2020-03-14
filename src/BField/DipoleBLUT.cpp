@@ -2,7 +2,6 @@
 #include "BField/DipoleBLUT.h"
 
 #include <iostream>
-#include <filesystem>
 #include "utils/serializationHelpers.h"
 
 using std::cerr;
@@ -23,56 +22,32 @@ vector<double> DipoleBLUT::getAllAttributes() const
 	return ret;
 }
 
-void DipoleBLUT::serialize(string serialFolder) const
+void DipoleBLUT::serialize(ofstream& out) const
 {
-	string filename{ serialFolder + string("BModel_DipoleBLUT.ser") };
-
-	if (std::filesystem::exists(filename))
-		cerr << __func__ << ": Warning: filename exists: " << filename << " You are overwriting an existing file.";
-	
-	ofstream out(filename, std::ofstream::binary);
-	if (!out) throw invalid_argument(__func__ + string(": unable to create file: ") + filename);
-
 	auto writeStrBuf = [&](const stringbuf& sb)
 	{
 		out.write(sb.str().c_str(), sb.str().length());
 	};
 
 	// ======== write data to file ======== //
-	out.write(reinterpret_cast<const char*>(this), sizeof(DipoleBLUT));
-	
+	writeStrBuf(serializeDoubleVector(getAllAttributes()));
 	writeStrBuf(serializeDoubleVector(altitude_m));
 	writeStrBuf(serializeDoubleVector(magnitude_m));
-	
-	out.close();
+	out.write(reinterpret_cast<const char*>(&numMsmts_m), sizeof(int));
+	out.write(reinterpret_cast<const char*>(&useGPU_m), sizeof(bool));
 }
 
-void DipoleBLUT::deserialize(string serialFolder)
+void DipoleBLUT::deserialize(ifstream& in)
 {
-	string filename{ serialFolder + string("/BModel_DipoleBLUT.ser") };
-	ifstream in(filename, std::ifstream::binary);
-	if (!in) throw invalid_argument(__func__ + string(": unable to open file: ") + filename);
-
-	DipoleBLUT* dipb{ nullptr };
-	vector<char> dipbchar(sizeof(DipoleBLUT), '\0');
-
-	in.read(dipbchar.data(), sizeof(DipoleBLUT));
-	dipb = reinterpret_cast<DipoleBLUT*>(dipbchar.data());
-
-	this_d = nullptr;
-
-	ILAT_m = dipb->ILAT_m;
-	//ds_msmt_m = dipb->ds_msmt_m; //is calculated in the ctor
-	ds_gradB_m = dipb->ds_gradB_m;
-
+	vector<double> attrs{ deserializeDoubleVector(in) };
+	ILAT_m = attrs.at(0);
+	ds_msmt_m = attrs.at(1);
+	ds_gradB_m = attrs.at(2);
+	simMin_m = attrs.at(3);
+	simMax_m = attrs.at(4);
 	altitude_m = deserializeDoubleVector(in);
 	magnitude_m = deserializeDoubleVector(in);
-	altitude_d = nullptr;
-	magnitude_d = nullptr;
+	in.read(reinterpret_cast<char*>(&numMsmts_m), sizeof(int));
+	in.read(reinterpret_cast<char*>(&useGPU_m), sizeof(bool));
 
-	simMin_m = dipb->simMin_m;
-	simMax_m = dipb->simMax_m;
-	numMsmts_m = dipb->numMsmts_m;
-
-	useGPU_m = dipb->useGPU_m;
 }

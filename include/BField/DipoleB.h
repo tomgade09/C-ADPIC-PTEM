@@ -23,14 +23,14 @@ protected:
 	//protected functions
 	__host__            void    setupEnvironment() override;
 	__host__            void    deleteEnvironment() override;
-	__host__            void    deserialize(string serialFolder) override;
+	__host__            void    deserialize(ifstream& in) override;
 
 	__host__ __device__ meters  getSAtLambda(const degrees lambda) const;
 	__host__ __device__ degrees getLambdaAtS(const meters s) const;
 
 public:
 	__host__ __device__ DipoleB(degrees ILAT, ratio lambdaErrorTolerance = 1.0e-4, meters ds = RADIUS_EARTH / 1000.0, bool useGPU = true);
-	__host__            DipoleB(string serialFolder);
+	__host__            DipoleB(ifstream& in);
 	__host__ __device__ ~DipoleB();
 	__host__ __device__ DipoleB(const DipoleB&) = delete;
 
@@ -44,7 +44,7 @@ public:
 	__host__            meters getds()     const;
 
 	__host__            vector<double> getAllAttributes() const override;
-	__host__            void serialize(string serialFolder) const override;
+	__host__            void serialize(ofstream& out) const override;
 };
 
 #endif

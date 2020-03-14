@@ -42,7 +42,7 @@ namespace validation
 		Simulation sim(simDataDir);
 		//if (sim.Emodel()->size() != 0) throw logic_error("validation::PTEM_dist_noE: sim loaded has a non-zero E Field.  Results will not be accurate.");
 
-		Particle*  particle{ sim.particle(0) };
+		Particles*  particle{ sim.particle(0) };
 		BModel*    bmodel{ sim.Bmodel() };
 
 		ratio maxPAerr{ 0.0 };

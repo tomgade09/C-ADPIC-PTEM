@@ -21,39 +21,24 @@ vector<double> QSPS::getAllAttributes() const
 	return ret;
 }
 
-stringbuf QSPS::serialize() const
+void QSPS::serialize(ofstream& out) const
 {
-	stringbuf sb;
-	ostream out(&sb);
-
 	auto writeStrBuf = [&](const stringbuf& sb)
 	{
 		out.write(sb.str().c_str(), sb.str().length());
 	};
 
 	// ======== write data to file ======== //
-	//out.write(reinterpret_cast<char*>(type_m), sizeof(Type)); //written by EField
-	out.write(reinterpret_cast<const char*>(this), sizeof(QSPS));
 	writeStrBuf(serializeDoubleVector(altMin_m));
 	writeStrBuf(serializeDoubleVector(altMax_m));
 	writeStrBuf(serializeDoubleVector(magnitude_m));
-
-	return sb;
+	out.write(reinterpret_cast<const char*>(&useGPU_m), sizeof(bool));
 }
 
 void QSPS::deserialize(ifstream& in)
 {
-	vector<char> typechar(sizeof(Type), '\0');
-	in.read(typechar.data(), sizeof(Type));
-
-	vector<char> qspschar(sizeof(QSPS), '\0');
-	in.read(qspschar.data(), sizeof(QSPS));
-
 	altMin_m = deserializeDoubleVector(in);
 	altMax_m = deserializeDoubleVector(in);
 	magnitude_m = deserializeDoubleVector(in);
-
-	useGPU_m = (*reinterpret_cast<QSPS*>(qspschar.data())).useGPU_m;
-	
-	this_d = nullptr;
+	in.read(reinterpret_cast<char*>(&useGPU_m), sizeof(bool));
 }

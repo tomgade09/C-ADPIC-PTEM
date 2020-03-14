@@ -78,9 +78,6 @@
     <ClCompile Include="..\src\utils\serializationHelpers.cpp">
       <Filter>Source Files\utils\IO</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Particle\Particle.cpp">
-      <Filter>Source Files\Particle</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Satellite\Detector.cpp">
       <Filter>Source Files\Satellite</Filter>
     </ClCompile>
@@ -104,6 +101,9 @@
     </ClCompile>
     <ClCompile Include="..\src\Log\Log.cpp">
       <Filter>Source Files\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Particles\Particles.cpp">
+      <Filter>Source Files\Particles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -151,9 +151,6 @@
     </ClInclude>
     <ClInclude Include="..\include\API\SimulationAPI.h">
       <Filter>Header Files\API</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Particle\Particle.h">
-      <Filter>Header Files\Particle</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Satellite\Satellite.h">
       <Filter>Header Files\Satellite</Filter>
@@ -221,6 +218,9 @@
     <ClInclude Include="..\include\Log\Log.h">
       <Filter>Header Files\Log</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Particles\Particles.h">
+      <Filter>Header Files\Particles</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\python\__simulationvariables.py">
@@ -274,14 +274,14 @@
     <None Include="..\docs\EField\README.md">
       <Filter>Documentation\EField</Filter>
     </None>
-    <None Include="..\docs\Particle\README.md">
-      <Filter>Documentation\Particle</Filter>
-    </None>
     <None Include="..\python\__setup.py">
       <Filter>Python Files</Filter>
     </None>
     <None Include="..\python\utils\loadDistributions.py">
       <Filter>Python Files\utils</Filter>
+    </None>
+    <None Include="..\docs\Particles\README.md">
+      <Filter>Documentation\Particles</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -300,9 +300,6 @@
     <Filter Include="Header Files\Satellite">
       <UniqueIdentifier>{5b6c793a-800a-41a3-8fa6-3c6535b1af47}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Particle">
-      <UniqueIdentifier>{84b230f3-9fbf-436d-9b04-b5cd37ee6fdc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\EField">
       <UniqueIdentifier>{523d7121-b52c-4601-81f2-a5ba317588d5}</UniqueIdentifier>
     </Filter>
@@ -311,9 +308,6 @@
     </Filter>
     <Filter Include="Source Files\EField">
       <UniqueIdentifier>{0fdaec53-8f12-47b3-b3ed-858680093151}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Particle">
-      <UniqueIdentifier>{f082d824-4f6c-4e35-9272-e3931f9c9df2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Simulation">
       <UniqueIdentifier>{36fedd8d-4452-445f-ba98-9d41dfa68bcc}</UniqueIdentifier>
@@ -341,9 +335,6 @@
     </Filter>
     <Filter Include="Python Files\utils">
       <UniqueIdentifier>{4867c70b-910f-44e6-9722-5c6c9cc82b9f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\SimAttributes">
-      <UniqueIdentifier>{44059e51-f061-48eb-8602-b28f335fa151}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\SimAttributes">
       <UniqueIdentifier>{3a2e37d9-9e12-47e3-a7ec-78a4b77075f7}</UniqueIdentifier>
@@ -374,9 +365,6 @@
     </Filter>
     <Filter Include="Documentation\LogFile">
       <UniqueIdentifier>{9983e1b8-28c0-47c9-b2ec-1cf18fcec318}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Documentation\Particle">
-      <UniqueIdentifier>{17ef3db8-a974-44ea-a3b3-1df7534570f1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Documentation\Satellite">
       <UniqueIdentifier>{e7e19a3b-61d3-4fc8-adda-f94ead151877}</UniqueIdentifier>
@@ -423,6 +411,18 @@
     <Filter Include="Source Files\Log">
       <UniqueIdentifier>{6d5cdd2f-af6b-4d89-9818-df241cdb4ea2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Particles">
+      <UniqueIdentifier>{84b230f3-9fbf-436d-9b04-b5cd37ee6fdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Particles">
+      <UniqueIdentifier>{f082d824-4f6c-4e35-9272-e3931f9c9df2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SimAttributes">
+      <UniqueIdentifier>{44059e51-f061-48eb-8602-b28f335fa151}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Particles">
+      <UniqueIdentifier>{17ef3db8-a974-44ea-a3b3-1df7534570f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\docs\Simulation\Simulation.jpg">
@@ -437,8 +437,8 @@
     <Image Include="..\docs\EField\Ownership.jpg">
       <Filter>Documentation\EField</Filter>
     </Image>
-    <Image Include="..\docs\Particle\Particle.jpg">
-      <Filter>Documentation\Particle</Filter>
+    <Image Include="..\docs\Particles\Particles.jpg">
+      <Filter>Documentation\Particles</Filter>
     </Image>
   </ItemGroup>
 </Project>

@@ -25,3 +25,8 @@ __host__ string BModel::name() const
     else if (type_m == Type::Other) return "Unknown";
     else throw runtime_error("BModel::name: unknown type");
 }
+
+__host__ BModel::Type BModel::type() const
+{
+    return type_m;
+}

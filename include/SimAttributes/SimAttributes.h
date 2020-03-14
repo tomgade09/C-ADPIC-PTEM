@@ -35,7 +35,7 @@ private:
 		if (check == "Simulation") return &simAD;
 		else if (check == "BField") return &BAD;
 		else if (check == "EField")	return &EAD;
-		else if (check == "Particle") return &partAD;
+		else if (check == "Particles") return &partAD;
 		else if (check == "Satellite") return &satAD;
 		else throw std::invalid_argument("SimAttributes::addData: invalid argument - no class of name " + check); };
 
@@ -44,7 +44,7 @@ public: //all this is public so callers can access the raw data (so I don't have
 	attrsData simAD{ "Simulation" }; //Simulation attributes
 	attrsData BAD{ "BField" }; //BModel attributes
 	attrsData EAD{ "EField" }; //EField attributes
-	attrsData partAD{ "Particle" }; //Particle attributes
+	attrsData partAD{ "Particles" }; //Particles attributes
 	attrsData satAD{ "Satellite" }; //Satellite attributes
 
 	SimAttributes(std::string filename, bool readFile = false);

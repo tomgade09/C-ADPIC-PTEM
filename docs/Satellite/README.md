@@ -39,7 +39,7 @@ protected:
 	struct SatandPart
 	{//Satellite needs particle-specific data associated with it, so this struct holds a shared_ptr to the particle
 		std::unique_ptr<Satellite> satellite;
-		std::shared_ptr<Particle>  particle;
+		std::shared_ptr<Particles>  particle;
 		/*
 		   ...
 		*/
@@ -49,7 +49,7 @@ protected:
 	*/
 };
 ```
-`Simulation::createTempSat` and `createSatelliteAPI` create a `struct TempSat` which stores the data necessary to create the Satellite later on.  Once `Simulation::initializeSimulation` is called, `TempSats` are converted to `SatandParts`.  A struct to hold a pointer to both a Satellite and a [Particle](./../Particle/README.md) is necessary, because there are many times where modifying or understanding the data of a Satellite requires knowing various attributes about the associated [Particle](./../Particle/README.md) (ex: mass).  As you can guess, `TempSat.particleInd` must be a valid index to a [Particle](./../Particle/README.md) before calling `Simulation::initializeSimulation` or an exception will be thrown in that function.  It's ok if the [Particles](./../Particle/README.md) are created after the `TempSat` (and is the reason `TempSat` exists - to allow the user to create things in any order they want, as long as everything is created before `Simulation::initializeSimulation`).
+`Simulation::createTempSat` and `createSatelliteAPI` create a `struct TempSat` which stores the data necessary to create the Satellite later on.  Once `Simulation::initializeSimulation` is called, `TempSats` are converted to `SatandParts`.  A struct to hold a pointer to both a Satellite and a [Particles](./../Particles/README.md) is necessary, because there are many times where modifying or understanding the data of a Satellite requires knowing various attributes about the associated [Particles](./../Particles/README.md) (ex: mass).  As you can guess, `TempSat.particleInd` must be a valid index to a [Particles](./../Particles/README.md) before calling `Simulation::initializeSimulation` or an exception will be thrown in that function.  It's ok if the [Particles](./../Particles/README.md) are created after the `TempSat` (and is the reason `TempSat` exists - to allow the user to create things in any order they want, as long as everything is created before `Simulation::initializeSimulation`).
 
 
 ### Constructors

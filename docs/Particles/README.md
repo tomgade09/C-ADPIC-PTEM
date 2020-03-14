@@ -1,32 +1,32 @@
-# Particle
+# Particles
 
 
-![Particle Diagram](./Particle.jpg)
+![Particles Diagram](./Particles.jpg)
 
 
 ### What is it?
 ---
-Particle is a class designed to manage arrays of data associated with simulation particles.  Several 2D arrays are created on both device and host that track the initial state of particles, as well as their real-time data according to "attributes" specified on creation of an instance of the class.
+Particles is a class designed to manage arrays of data associated with simulation particles.  Several 2D arrays are created on both device and host that track the initial state of particles, as well as their real-time data according to "attributes" specified on creation of an instance of the class.
 
 In the 2D arrays, the first dimension refers to the attribute number, and the second dimension refers to the particle number.  "Attributes" refer to anything the user wishes to track about the particle as the simulation is executed.  This is commonly velocity and position, but could also refer to just about anything that is useful to the physics of the simulation.  Although it's recommended that "Attributes" don't refer to anything that is constant through the simulation, or constant amongst all particles, as this would be an inefficient use of space, it is technically possible to use them this way.
 
-Particle also manages copying data back and forth to/from the GPU, as well as saving/loading data to/from disk, if desired.  If data saving/loading functions are called, `attributeNames` and `name` is used to generate the name of the files under which the data is saved, suffixed with ".bin".
+Particles also manages copying data back and forth to/from the GPU, as well as saving/loading data to/from disk, if desired.  If data saving/loading functions are called, `attributeNames` and `name` is used to generate the name of the files under which the data is saved, suffixed with ".bin".
 
-Particle allocates and frees all memory associated with in on instantiation and destruction, respectively, unless `freeGPUMemory` is called before destruction.
+Particles allocates and frees all memory associated with in on instantiation and destruction, respectively, unless `freeGPUMemory` is called before destruction.
 
 
 ### Use
 ---
-After creating a [Simulation](./../Simulation/README.md), use the function `Simulation::createParticleType` directly or use the [API function](./../API/README.md) `createParticleAPI` to create a (or several) Particle instance(s).  A Particle can also be created through its constructor (below).
+After creating a [Simulation](./../Simulation/README.md), use the function `Simulation::createParticlesType` directly or use the [API function](./../API/README.md) `createParticlesAPI` to create a (or several) Particles instance(s).  A Particles can also be created through its constructor (below).
 
 
 ### Constructors
 ---
 ```
-Particle(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts)
+Particles(std::string name, std::vector<std::string> attributeNames, double mass, double charge, long numParts)
 ```
 #### Input:
-`name` - name of the Particle; this is used for saving/loading/printing on screen and needs to have all filesystem-safe characters
+`name` - name of the Particles; this is used for saving/loading/printing on screen and needs to have all filesystem-safe characters
 
 `mass` - mass of the particles in kg
 
@@ -40,7 +40,7 @@ None
 
 
 #### Side-Effects:
-Creates a Particle instance with 2x 2D arrays # Attributes x # Particles in size on both host and device.  Generally size is not an issue for host, as system memory is often somewhere around an order of magnitude higher than GPU memory; however, for the aforementioned reason, arrays too big won't fit in the GPU memory, so plan accordingly.
+Creates a Particles instance with 2x 2D arrays # Attributes x # Particles in size on both host and device.  Generally size is not an issue for host, as system memory is often somewhere around an order of magnitude higher than GPU memory; however, for the aforementioned reason, arrays too big won't fit in the GPU memory, so plan accordingly.
 
 
 ### Public Member Functions

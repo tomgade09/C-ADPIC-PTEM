@@ -1,11 +1,19 @@
 #include "utils/strings.h"
 #include <stdexcept>
+#include <ctime>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
+using std::stringstream;
+using std::invalid_argument;
+using namespace std::chrono;
 
 namespace utils
 {
 	namespace strings
 	{
-		DLLEXP size_t findAttrInd(std::string attr, std::vector<std::string> allAttrs)
+		DLLEXP size_t findAttrInd(string attr, vector<string> allAttrs)
 		{
 			for (size_t ind = 0; ind < allAttrs.size(); ind++)
 			{
@@ -13,22 +21,22 @@ namespace utils
 					return ind;
 			}
 
-			std::string allAttrsStr;
+			string allAttrsStr;
 			for (size_t attr = 0; attr < allAttrs.size(); attr++)
 				allAttrsStr += allAttrs.at(attr);
 
-			throw std::invalid_argument("utils::string::findAttrInd: cannot find attribute " + attr + " in string " + allAttrsStr);
+			throw invalid_argument("utils::string::findAttrInd: cannot find attribute " + attr + " in string " + allAttrsStr);
 		}
 
-		DLLEXP std::vector<std::string> strToStrVec(std::string str, const char delim) //delim defaults to ','
+		DLLEXP vector<string> strToStrVec(string str, const char delim) //delim defaults to ','
 		{
-			std::vector<std::string> strVec;
+			vector<string> strVec;
 
 			if (str == "")
 				return strVec;
 
 			size_t loc{ 0 };
-			while (loc != std::string::npos)
+			while (loc != string::npos)
 			{
 				loc = str.find(delim);
 				strVec.push_back(str.substr(0, loc));
@@ -40,19 +48,19 @@ namespace utils
 			return strVec;
 		}
 
-		DLLEXP std::string strVecToStr(std::vector<std::string> strVec, const char delim) //delim defaults to ','
+		DLLEXP string strVecToStr(vector<string> strVec, const char delim) //delim defaults to ','
 		{
-			std::string ret;
+			string ret;
 			for (auto& str : strVec)
-				ret += str + ((str != strVec.back()) ? std::string{ delim } : "");
+				ret += str + ((str != strVec.back()) ? string{ delim } : "");
 
 			return ret;
 		}
 
-		DLLEXP std::vector<double> strToDblVec(std::string str, const char delim) //delim defaults to ','
+		DLLEXP vector<double> strToDblVec(string str, const char delim) //delim defaults to ','
 		{
-			std::vector<std::string> strVec{ strToStrVec(str, delim) };
-			std::vector<double> ret;
+			vector<string> strVec{ strToStrVec(str, delim) };
+			vector<double> ret;
 
 			if (strVec.size() == 0)
 				return ret;
@@ -63,7 +71,7 @@ namespace utils
 			return ret;
 		}
 
-		DLLEXP void stringPadder(std::string& in, size_t totalStrLen, int indEraseFrom) //indEraseFrom defaults to 0
+		DLLEXP void stringPadder(string& in, size_t totalStrLen, int indEraseFrom) //indEraseFrom defaults to 0
 		{
 			if (totalStrLen <= 0 || indEraseFrom < 0)
 				return;
@@ -77,6 +85,17 @@ namespace utils
 			}
 			else
 				in.erase(indEraseFrom, txtlen - totalStrLen);
+		}
+
+		DLLEXP string getCurrentTimeString(string put_time_format)
+		{
+			std::time_t cdftime{ system_clock::to_time_t(system_clock::now()) };
+			std::tm     tm{ *std::localtime(&cdftime) };
+
+			stringstream filename;
+			filename << std::put_time(&tm, put_time_format.c_str());
+
+			return filename.str();
 		}
 	}
 }

@@ -9,9 +9,10 @@
 
 using std::vector;
 using std::string;
+using std::ifstream;
+using std::ofstream;
 
 #define STRVEC vector<string>
-#define DBLVEC vector<double>
 #define DBL2DV vector<vector<double>>
 #define DBL3DV vector<vector<vector<double>>>
 
@@ -34,12 +35,12 @@ protected:
 
 	virtual void   initializeGPU();
 	virtual void   freeGPUMemory();
-	virtual void   deserialize(string serialFolder, string name, double** particleData2D);
+	virtual void   deserialize(ifstream& in);
 	virtual size_t getAttrIndByName(string name);
 
 public:
 	Satellite(string name, STRVEC attributeNames, meters altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr);
-	Satellite(string serialFolder, string name, double** particleData2D);
+	Satellite(ifstream& in, double** particleData2D);
 	virtual ~Satellite();
 	Satellite(const Satellite&) = delete;
 	Satellite& operator=(const Satellite&) = delete;
@@ -63,7 +64,7 @@ public:
 	virtual void loadDataFromDisk(string folder);
 
 	virtual DBL2DV removeZerosData();
-	virtual void serialize(string serialFolder);
+	virtual void serialize(ofstream& out) const;
 };
 
 #undef STRVEC
