@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "Log/Log.h"
+#include "errorHandling/simExceptionMacros.h"
 
 using std::cout;
 using std::cerr;
@@ -15,18 +16,21 @@ using std::invalid_argument;
 
 using namespace std::chrono;
 
+#define WRITE_LOCK(x) \
+	while (writing_m) std::this_thread::sleep_for(milliseconds(1)); \
+	writing_m = true; \
+	x; \
+	writing_m = false;
+
 Log::Entry::Entry(std::chrono::steady_clock::time_point time, string message, bool write, bool error) :
 	time_m{ time }, message_m{ message }, write_m{ write }, error_m{ error }
 {
-
+	
 }
 
-void Log::save()
+void Log::saveEntry(const Entry& ent)
 {
-	ofstream logFile(logFilePath_m, std::ios::trunc); //overwrites old log - specifically for reloading sims
-	logFile << string("[  Time (ms)  ] : Log Message\n");
-
-	auto writeEntry = [&](const Entry& entry)
+	auto writeEntry = [&](const Entry& entry, ofstream& logFile)
 	{
 		if (!entry.write_m) return;
 
@@ -44,10 +48,14 @@ void Log::save()
 		logFile << writeTxt;
 	};
 
-	for (const auto& entr : entries_m)
-		writeEntry(entr);
+	WRITE_LOCK(
+	ofstream logFile(logFilePath_m, std::ios::app);
+	if (!logFile) throw invalid_argument("Log::saveEntry: unable to open log");
+
+	writeEntry(ent, logFile);
 
 	logFile.close();
+	);
 }
 
 void Log::cerrCheck()
@@ -64,6 +72,8 @@ void Log::cerrCheck()
 			entries_m.push_back(Entry(steady_clock::now(), cerr_m.str(), true, true));
 			cerr_m.str(string());
 			cerr_m.clear();
+
+			saveEntry(entries_m.back());
 		}
 
 		std::this_thread::sleep_for(milliseconds(10)); //check cerr every __ <<
@@ -74,6 +84,13 @@ Log::Log(string logFilePath) : logFilePath_m{ logFilePath }
 {
 	cerr.rdbuf(cerr_m.rdbuf()); //set cerr read buffer to this class' stringstream
 
+	WRITE_LOCK(
+	ofstream logFile(logFilePath_m, std::ios::trunc); //overwrites old log - specifically for reloading sims
+	if (!logFile) throw invalid_argument("Log::Log: unable to create log");
+	logFile << string("[  Time (ms)  ] : Log Message\n");
+	logFile.close();
+	);
+
 	cerrReadThread_m = std::thread([&]() { cerrCheck(); });
 
 	createEntry("Simulation initialized");
@@ -82,15 +99,17 @@ Log::Log(string logFilePath) : logFilePath_m{ logFilePath }
 Log::~Log()
 {
 	check_m = false;
-	cerrReadThread_m.join();
+
+	SIM_API_EXCEP_CHECK(cerrReadThread_m.join());
 
 	cerr.rdbuf(cerrBufferBackup_m); //restore cerr to normal
-	save();
 }
 
 size_t Log::createEntry(string label, bool write)
 {
 	entries_m.push_back(Entry(steady_clock::now(), label, write));
+
+	saveEntry(entries_m.back());
 
 	return entries_m.size() - 1;
 }

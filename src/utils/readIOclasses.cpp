@@ -10,13 +10,13 @@ namespace utils
 {
 	namespace fileIO
 	{
-		DistributionFromDisk::DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames, double mass) : 
+		DistributionFromDisk::DistributionFromDisk(string name, string folder, string partName, vector<string> attrNames, double mass) : 
 			name_m{ name }, attrNames_m{ attrNames }, mass_m{ mass }
 		{
 			size_t attrsize{ 0 };
 			for (size_t attr = 0; attr < attrNames.size(); attr++)
 			{
-				std::vector<double> read;
+				vector<double> read;
 				fileIO::readDblBin(read, folder + "/" + partName + "_" + attrNames.at(attr) + ".bin");
 				data_m.push_back(read);
 				if (attrNames_m.at(attr).size() > attrsize) { attrsize = attrNames_m.at(attr).size(); }
@@ -35,8 +35,8 @@ namespace utils
 				std::cout << data_m.at(iii).at(at) << ((iii != data_m.size() - 1) ? ", " : "");
 			std::cout << std::endl;
 
-			std::vector<double> E{ { 0.0 } };
-			std::vector<double> Pitch{ { 0.0 } };
+			vector<double> E{ { 0.0 } };
+			vector<double> Pitch{ { 0.0 } };
 			numerical::v2DtoEPitch({ data_m.at(0).at(at) }, { data_m.at(1).at(at) }, mass_m, E, Pitch);
 			std::cout << "E, Pitch: " << E.at(0) << ", " << Pitch.at(0) << "\n";
 		}
@@ -51,7 +51,7 @@ namespace utils
 				datasize = ((data_m.size() < other.data().size()) ? (data_m.size()) : (other.data().size()));
 			}
 
-			std::vector<double> err(datasize);
+			vector<double> err(datasize);
 			for (size_t attr = 0; attr < datasize; attr++)
 			{
 				err.at(attr) = std::abs((data_m.at(attr).at(at) - other.data().at(attr).at(at)) / data_m.at(attr).at(at));
@@ -62,11 +62,11 @@ namespace utils
 
 		void DistributionFromDisk::zeroes() const
 		{
-			std::vector<int> tmp;
+			vector<int> tmp;
 			zeroes(tmp, true);
 		}
 
-		void DistributionFromDisk::zeroes(std::vector<int>& zeroes, bool print) const //print defaults to true
+		void DistributionFromDisk::zeroes(vector<int>& zeroes, bool print) const //print defaults to true
 		{
 			if (zeroes.size() != data_m.size())
 			{
@@ -90,7 +90,7 @@ namespace utils
 
 		void DistributionFromDisk::compare(const DistributionFromDisk& other) const
 		{
-			const std::vector<std::vector<double>>& data_other{ other.data() };
+			const vector<vector<double>>& data_other{ other.data() };
 			int datasize{ (int)data_m.size() };
 			if (data_m.size() != data_other.size())
 			{
@@ -99,15 +99,15 @@ namespace utils
 				datasize = (data_m.size() < data_other.size()) ? ((int)data_m.size()) : ((int)data_other.size());
 			}
 
-			std::vector<int> zeroes_this;
-			std::vector<int> zeroes_other;
+			vector<int> zeroes_this;
+			vector<int> zeroes_other;
 			zeroes(zeroes_this, false);
 			other.zeroes(zeroes_other, false);
 
-			std::vector<double> mean_this;
-			std::vector<double> mean_other;
-			std::vector<double> stdDev_this;
-			std::vector<double> stdDev_other;
+			vector<double> mean_this;
+			vector<double> mean_other;
+			vector<double> stdDev_this;
+			vector<double> stdDev_other;
 
 			for (int iii = 0; iii < datasize; iii++)
 			{
@@ -117,10 +117,10 @@ namespace utils
 				stdDev_other.push_back(numerical::calcStdDev(data_other.at(iii)));
 			}
 
-			std::vector<int> notsame(datasize);
-			std::vector<double> avgErr(datasize);
-			std::vector<double> minErr(datasize);
-			std::vector<double> maxErr(datasize);
+			vector<int> notsame(datasize);
+			vector<double> avgErr(datasize);
+			vector<double> minErr(datasize);
+			vector<double> maxErr(datasize);
 			for (int attr = 0; attr < datasize; attr++)
 			{
 				int partsize{ (int)data_m.at(attr).size() };

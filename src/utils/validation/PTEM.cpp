@@ -42,14 +42,14 @@ namespace validation
 		Simulation sim(simDataDir);
 		//if (sim.Emodel()->size() != 0) throw logic_error("validation::PTEM_dist_noE: sim loaded has a non-zero E Field.  Results will not be accurate.");
 
-		Particles*  particle{ sim.particle(0) };
+		Particles* particles{ sim.particles(0) };
 		BModel*    bmodel{ sim.Bmodel() };
 
 		ratio maxPAerr{ 0.0 };
 		ratio maxEerr{ 0.0 };
 
-		const vector<vector<double>>& orig{ particle->data(true) };
-		const vector<vector<double>>& curr{ particle->data(false) };
+		const vector<vector<double>>& orig{ particles->data(true) };
+		const vector<vector<double>>& curr{ particles->data(false) };
 		vector<vector<double>> origEPA(2);
 		vector<vector<double>> currEPA(2);
 		utils::numerical::v2DtoEPitch(orig.at(0), orig.at(1), MASS_ELECTRON, origEPA.at(0), origEPA.at(1));

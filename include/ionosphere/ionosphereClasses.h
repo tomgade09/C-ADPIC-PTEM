@@ -24,7 +24,7 @@ namespace ionosphere
 
 		ParticleData(); //empty constructor for making an empty ParticleData
 		ParticleData(size_t size, bool EPA_only = true);
-		ParticleData(double_v1D& v_para, double_v1D& v_perp, double mass);
+		ParticleData(double_v1D& v_para, double_v1D& v_perp, double mass); //calculates E, Pitch automagically
 		
 		void clear();
 	};
@@ -83,6 +83,8 @@ namespace ionosphere
 
 	struct DLLCLEXP EOMSimData
 	{
+		unique_ptr<Simulation> sim{ nullptr };
+
 		meters s_ion;      //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
 		meters s_sat;      //distance **along the field line** (in m from Re) where the satellite resides
 		meters s_mag;      //distance **along the field line** (in m from Re) representing outer limit of the sim

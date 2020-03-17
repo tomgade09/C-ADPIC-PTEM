@@ -22,8 +22,8 @@ namespace utils
 			}
 
 			string allAttrsStr;
-			for (size_t attr = 0; attr < allAttrs.size(); attr++)
-				allAttrsStr += allAttrs.at(attr);
+			for (size_t ind = 0; ind < allAttrs.size(); ind++)
+				allAttrsStr += allAttrs.at(ind);
 
 			throw invalid_argument("utils::string::findAttrInd: cannot find attribute " + attr + " in string " + allAttrsStr);
 		}
@@ -65,8 +65,8 @@ namespace utils
 			if (strVec.size() == 0)
 				return ret;
 
-			for (size_t str = 0; str < strVec.size(); str++)
-				ret.push_back(atof(strVec.at(str).c_str()));
+			for (size_t ind = 0; ind < strVec.size(); ind++)
+				ret.push_back(atof(strVec.at(ind).c_str()));
 
 			return ret;
 		}

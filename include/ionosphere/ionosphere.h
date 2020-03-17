@@ -5,8 +5,6 @@
 #include "dlldefines.h"
 #include "ionosphere/ionosphereClasses.h"
 
-#define TRYCATCHSTDEXP(x) try{ x; }catch(std::exception& e){ std::cout << e.what() << " -> exiting." <<  std::endl; exit(1); }
-
 namespace ionosphere
 {
 	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata);
@@ -34,7 +32,7 @@ namespace ionosphere
 	namespace multiLevelBS
 	{
 		DLLEXP dNflux_v2D scatterMain(const EOMSimData& eom, const dNflux_v2D& dNionsphTop);
-		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, int level);
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, size_t level);
 		DLLEXP percent    scatterPct(percent sumCollideAbove, double Z, percm3 p, cm h, eV E, degrees PA);
 	}
 }

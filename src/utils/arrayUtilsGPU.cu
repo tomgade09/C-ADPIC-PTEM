@@ -32,7 +32,7 @@ namespace utils
 			
 			CUDA_API_ERRCHK(cudaMemset(*data1D_d, 0, outerDim * innerDim * sizeof(double)));
 
-			setup2DArray <<< 1, 1 >>> (*data1D_d, *data2D_d, outerDim, innerDim);
+			setup2DArray <<< 1, 1 >>> (*data1D_d, *data2D_d, static_cast<int>(outerDim), static_cast<int>(innerDim));
 			CUDA_KERNEL_ERRCHK_WSYNC();
 		}
 

@@ -20,17 +20,15 @@ void EField::serialize(ofstream& out) const
 		out.write(reinterpret_cast<char*>(&(emodel->type_m)), sizeof(EModel::Type)); //write type of emodel
 		emodel->serialize(out);
 	}
-
-	out.close();
 }
 
 void EField::deserialize(ifstream& in)
 {
 	size_t len{ readSizetLength(in) };
-	
+
 	for (size_t emodel = 0; emodel < len; emodel++)
 	{
-		EModel::Type type{ -1 };
+		EModel::Type type{ 6 };
 		in.read(reinterpret_cast<char*>(&type), sizeof(EModel::Type));
 
 		if (type == EModel::Type::QSPS) emodels_m.push_back(move(make_unique<QSPS>(in)));

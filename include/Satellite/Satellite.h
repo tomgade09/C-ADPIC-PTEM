@@ -33,15 +33,15 @@ protected:
 	double** satCaptrData2D_d{ nullptr }; //2D satellite capture data on GPU
 	double** particleData2D_d{ nullptr };
 
-	virtual void   initializeGPU();
-	virtual void   freeGPUMemory();
-	virtual void   deserialize(ifstream& in);
-	virtual size_t getAttrIndByName(string name);
+	void   initializeGPU();
+	void   freeGPUMemory();
+	void   deserialize(ifstream& in);
+	size_t getAttrIndByName(string name);
 
 public:
 	Satellite(string name, STRVEC attributeNames, meters altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr);
 	Satellite(ifstream& in, double** particleData2D);
-	virtual ~Satellite();
+	~Satellite();
 	Satellite(const Satellite&) = delete;
 	Satellite& operator=(const Satellite&) = delete;
 
@@ -57,14 +57,14 @@ public:
 	long    getNumberOfParticles()  const;
 
 	//Other functions
-	virtual void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
-	virtual void iterateDetectorCPU(const DBL2DV& particleData, seconds simtime, seconds dt);
-	virtual void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
-	virtual void saveDataToDisk(string folder);
-	virtual void loadDataFromDisk(string folder);
+	void iterateDetector(double simtime, double dt, int blockSize); //increment time, track overall sim time, or take an argument??
+	void iterateDetectorCPU(const DBL2DV& particleData, seconds simtime, seconds dt);
+	void copyDataToHost(); //some sort of sim time check to verify I have iterated for the current sim time??
+	void saveDataToDisk(string folder);
+	void loadDataFromDisk(string folder);
 
-	virtual DBL2DV removeZerosData();
-	virtual void serialize(ofstream& out) const;
+	DBL2DV removeZerosData();
+	void serialize(ofstream& out) const;
 };
 
 #undef STRVEC

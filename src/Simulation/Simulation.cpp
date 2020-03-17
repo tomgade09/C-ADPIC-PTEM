@@ -22,15 +22,23 @@ using namespace utils::fileIO::serialize;
 
 Simulation::Simulation(double dt, double simMin, double simMax, string saveRootDir) :
 	dt_m{ dt }, simMin_m{ simMin }, simMax_m{ simMax }, saveRootDir_m{ saveRootDir + "/" },
-	simAttr_m{ make_unique<SimAttributes>(saveRootDir + "/Simulation.attr") },
-	Log_m{ make_unique<Log>(saveRootDir_m + "/simulation.log") }
+	Log_m{ make_unique<Log>(saveRootDir_m + "simulation.log") }
 {
-	simAttr_m->addData("Simulation", "", {}, {}, { "dt", "simMin", "simMax" }, { dt_m, simMin_m, simMax_m });
+
+}
+
+Simulation::Simulation(string saveRootDir) : saveRootDir_m{ saveRootDir + "/" },
+Log_m{ make_unique<Log>(saveRootDir_m + "reload.log") }, previousSim_m{ true }
+{
+	SIM_API_EXCEP_CHECK(loadSimulation(saveRootDir_m));
+	loadDataFromDisk();
 }
 
 Simulation::~Simulation()
 {
+	SIM_API_EXCEP_CHECK(if (!previousSim_m) saveSimulation());
 	if (saveReady_m) saveDataToDisk(); //save data if it hasn't been done
+	else if (!previousSim_m) cerr << "Warning: Simulation::~Simulation: saveReady_m is false.";
 	Log_m->createEntry("End simulation");
 }
 
@@ -62,7 +70,10 @@ void Simulation::incTime()
 	simTime_m += dt_m;
 }
 
-//Access functions
+
+//
+//======== Simulation Access Functions ========//
+//
 double Simulation::simtime() const
 {
 	return simTime_m;
@@ -83,6 +94,8 @@ double Simulation::simMax() const
 	return simMax_m;
 }
 
+
+//Class data
 int Simulation::getNumberOfParticleTypes() const
 {
 	return (int)particles_m.size();
@@ -113,16 +126,51 @@ string Simulation::getSatelliteName(int satInd) const
 	return satPartPairs_m.at(satInd)->satellite->name();
 }
 
-int Simulation::getPartIndOfSat(int satInd) const
+int Simulation::getParticleIndexOfSat(int satInd) const
 {
 	return tempSats_m.at(satInd)->particleInd;
 }
 
-Particles* Simulation::particle(int partInd) const
+
+//Class pointers
+Particles* Simulation::particles(int partInd) const
 {
 	return particles_m.at(partInd).get();
 }
 
+Particles* Simulation::particles(string name) const
+{
+	for (auto& part : particles_m)
+		if (part->name() == name)
+			return part.get();
+	throw invalid_argument("Simulation::particle: no particle of name " + name);
+}
+
+Satellite* Simulation::satellite(int satInd) const
+{
+	return satPartPairs_m.at(satInd)->satellite.get();
+}
+
+Satellite* Simulation::satellite(string name) const
+{
+	for (auto& satPart : satPartPairs_m)
+		if (satPart->satellite->name() == name)
+			return satPart->satellite.get();
+	throw invalid_argument("Simulation::satellite: no satellite of name " + name);
+}
+
+BModel* Simulation::Bmodel() const
+{
+	return BFieldModel_m.get();
+}
+
+EField* Simulation::Emodel() const
+{
+	return EFieldModel_m.get();
+}
+
+
+//Simulation data
 const vector<vector<double>>& Simulation::getParticleData(int partInd, bool originalData)
 {
 	if (partInd > (particles_m.size() - 1))
@@ -137,22 +185,7 @@ const vector<vector<double>>& Simulation::getSatelliteData(int satInd)
 	return satellite(satInd)->data();
 }
 
-Particles* Simulation::particle(string name) const
-{
-	for (auto& part : particles_m)
-		if (part->name() == name)
-			return part.get();
-	throw invalid_argument("Simulation::particle: no particle of name " + name);
-}
-
-Satellite* Simulation::satellite(string name) const
-{
-	for (auto& satPart : satPartPairs_m)
-		if (satPart->satellite->name() == name)
-			return satPart->satellite.get();
-	throw invalid_argument("Simulation::satellite: no satellite of name " + name);
-}
-
+//Fields data
 double Simulation::getBFieldAtS(double s, double time) const
 {
 	return BFieldModel_m->getBFieldAtS(s, time);
@@ -163,27 +196,12 @@ double Simulation::getEFieldAtS(double s, double time) const
 	return EFieldModel_m->getEFieldAtS(s, time);
 }
 
-Satellite* Simulation::satellite(int satInd) const
-{
-	return satPartPairs_m.at(satInd)->satellite.get();
-}
 
-BModel* Simulation::Bmodel() const
-{
-	return BFieldModel_m.get();
-}
-
-EField* Simulation::Emodel() const
-{
-	return EFieldModel_m.get();
-}
-
-//Class creation functions
+//
+//======== Class Creation Functions ========//
+//
 void Simulation::createParticlesType(string name, double mass, double charge, long numParts, string loadFilesDir, bool save)
 {
-	if (simAttr_m == nullptr)
-		save = false;
-
 	for (size_t part = 0; part < particles_m.size(); part++)
 		if (name == particles_m.at(part).get()->name())
 			throw invalid_argument("Simulation::createParticlesType: particle already exists with the name: " + name);
@@ -202,7 +220,6 @@ void Simulation::createParticlesType(string name, double mass, double charge, lo
 		
 		vector<string> namesCopy{ attrNames };
 		namesCopy.push_back(loadFilesDir);
-		simAttr_m->addData("Particles", name, attrLabels, namesCopy, { "mass", "charge", "numParts" }, { mass, charge, (double)numParts });
 	}
 
 	shared_ptr<Particles> newPart{ make_unique<Particles>(name, attrNames, mass, charge, numParts) };
@@ -218,7 +235,7 @@ void Simulation::createTempSat(string partName, double altitude, bool upwardFaci
 {
 	for (size_t partInd = 0; partInd < particles_m.size(); partInd++)
 	{
-		if (particle((int)partInd)->name() == partName)
+		if (particles((int)partInd)->name() == partName)
 		{
 			createTempSat(partInd, altitude, upwardFacing, name);
 			return;
@@ -248,16 +265,12 @@ void Simulation::createSatellite(TempSat* tmpsat, bool save) //protected
 		throw out_of_range("createSatellite: no particle at the specifed index " + to_string(partInd));
 	if (particles_m.at(partInd)->getCurrDataGPUPtr() == nullptr)
 		throw runtime_error("createSatellite: pointer to GPU data is a nullptr of particle " + particles_m.at(partInd)->name() + " - that's just asking for trouble");
-	if (simAttr_m == nullptr)
-		save = false;
-
-	if (save) { simAttr_m->addData("Satellite", name, {}, {}, { "partInd", "altitude", "upwardFacing" }, { (double)partInd, altitude, (double)upwardFacing }); }
 
 	Log_m->createEntry("Created Satellite: " + name + ", Particles tracked: " + particles_m.at(partInd)->name()
 		+ ", Altitude: " + to_string(altitude) + ", " + ((upwardFacing) ? "Upward" : "Downward") + " Facing Detector");
 
 	vector<string> attrNames{ "vpara", "vperp", "s", "time", "index" };
-	shared_ptr<Particles>  part{ particles_m.at(partInd) };
+	shared_ptr<Particles> part{ particles_m.at(partInd) };
 	unique_ptr<Satellite> sat{ make_unique<Satellite>(name, attrNames, altitude, upwardFacing, part->getNumberOfParticles(), part->getCurrDataGPUPtr()) };
 	satPartPairs_m.push_back(make_unique<SatandPart>(move(sat), move(part)));
 }
@@ -268,8 +281,6 @@ void Simulation::setBFieldModel(string name, vector<double> args, bool save)
 		throw invalid_argument("Simulation::setBFieldModel: trying to assign B Field Model when one is already assigned - existing: " + BFieldModel_m->name() + ", attempted: " + name);
 	if (args.empty())
 		throw invalid_argument("Simulation::setBFieldModel: no arguments passed in");
-	if (simAttr_m == nullptr)
-		save = false;
 	
 	vector<string> attrNames;
 
@@ -306,8 +317,6 @@ void Simulation::setBFieldModel(string name, vector<double> args, bool save)
 		args.at(1) = ((DipoleB*)BFieldModel_m.get())->getds();
 		attrNames = { "ILAT", "ds", "errTol" };
 	}
-
-	if (save) { simAttr_m->addData("BField", name, {}, {}, attrNames, args); }
 }
 
 void Simulation::setBFieldModel(unique_ptr<BModel> BModelptr)
@@ -319,8 +328,6 @@ void Simulation::addEFieldModel(string name, vector<double> args, bool save)
 {
 	if (EFieldModel_m == nullptr)
 		EFieldModel_m = make_unique<EField>();
-	if (simAttr_m == nullptr)
-		save = false;
 	
 	vector<string> attrNames;
 
@@ -354,8 +361,6 @@ void Simulation::addEFieldModel(string name, vector<double> args, bool save)
 		cout << "AlfvenCompute not implemented quite yet.  Returning." << endl;
 		return;
 	}*/
-
-	if (save) { simAttr_m->addData("EField", name, {}, {}, attrNames, args); }
 }
 
 
@@ -371,8 +376,17 @@ void Simulation::saveDataToDisk()
 	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->saveDataToDisk(saveRootDir_m + "/bins/particles_final/", false));
 	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->saveDataToDisk(saveRootDir_m + "/bins/satellites/"));
 
-	simAttr_m = nullptr;
 	saveReady_m = false;
+}
+
+void Simulation::loadDataFromDisk()
+{
+	if (initialized_m)
+		cerr << "Simulation::loadDataFromDisk: simulation initialized.  Loading data at this point may result in unexpected behavior";
+
+	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->loadDataFromDisk(saveRootDir_m + "bins/particles_init/", true));
+	LOOP_OVER_1D_ARRAY(getNumberOfParticleTypes(), particles_m.at(iii)->loadDataFromDisk(saveRootDir_m + "bins/particles_final/", false));
+	LOOP_OVER_1D_ARRAY(getNumberOfSatellites(), satellite(iii)->loadDataFromDisk(saveRootDir_m + "bins/satellites/"));
 }
 
 void Simulation::resetSimulation(bool fields)
@@ -389,12 +403,15 @@ void Simulation::resetSimulation(bool fields)
 	}
 }
 
-void Simulation::save() const
+void Simulation::saveSimulation() const
 {
 	string filename{ saveRootDir_m + string("/simulation.ser") };
 
 	if (std::filesystem::exists(filename))
-		cerr << __func__ << ": Warning: filename exists: " << filename << " You are overwriting an existing file.";
+	{
+		cerr << __func__ << ": Warning: filename exists: " << filename << " Returning without saving.";
+		return;
+	}
 
 	ofstream out(filename, std::ofstream::binary);
 	if (!out) throw invalid_argument(__func__ + string(": unable to create file: ") + filename);
@@ -445,32 +462,34 @@ void Simulation::save() const
 				out.write(reinterpret_cast<const char*>(&part), sizeof(size_t));
 		sat->satellite->serialize(out);
 	}
+
+	out.close();
 }
 
-void Simulation::load(string saveRootDir)
+void Simulation::loadSimulation(string saveRootDir)
 {
 	string filename{ saveRootDir + string("/simulation.ser") };
 	ifstream in(filename, std::ifstream::binary);
 	if (!in) throw invalid_argument(__func__ + string(": unable to open file: ") + filename);
-
+	
 	in.read(reinterpret_cast<char*>(&dt_m), sizeof(double));
 	in.read(reinterpret_cast<char*>(&simMin_m), sizeof(double));
 	in.read(reinterpret_cast<char*>(&simMax_m), sizeof(double));
-	saveRootDir_m = deserializeString(in);
+	/*saveRootDir_m = */deserializeString(in);
 	in.read(reinterpret_cast<char*>(&simTime_m), sizeof(double));
-
+	
 	while (true)
 	{
 		Component comp{ 6 };
 		in.read(reinterpret_cast<char*>(&comp), sizeof(Component));
-
+		
 		if (in.eof()) break;
-
+		
 		if (comp == Component::BField)
 		{
-			BModel::Type type{ BFieldModel_m->type() };
+			BModel::Type type{ BModel::Type::Other };
 			in.read(reinterpret_cast<char*>(&type), sizeof(BModel::Type));
-
+			
 			if (type == BModel::Type::DipoleB)
 				BFieldModel_m = make_unique<DipoleB>(in);
 			else if (type == BModel::Type::DipoleBLUT)

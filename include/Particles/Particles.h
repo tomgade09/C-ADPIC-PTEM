@@ -35,15 +35,15 @@ protected:
 	double*  currData1D_d{ nullptr }; //make vectors for handling multiple GPUs
 	double** currData2D_d{ nullptr };
 
-	virtual void initializeGPU(); //need to modify all of these below to account for multi GPU
-	virtual void copyDataToGPU(bool origToGPU = true);
-	virtual void freeGPUMemory();
-	virtual void deserialize(ifstream& in);
+	void initializeGPU(); //need to modify all of these below to account for multi GPU
+	void copyDataToGPU(bool origToGPU = true);
+	void freeGPUMemory();
+	void deserialize(ifstream& in);
 
 public:
 	Particles(string name, vector<string> attributeNames, double mass, double charge, long numParts);
 	Particles(ifstream& in);
-	virtual ~Particles();
+	~Particles();
 	Particles(const Particles&) = delete;
 	Particles& operator=(const Particles& otherpart) = delete;
 

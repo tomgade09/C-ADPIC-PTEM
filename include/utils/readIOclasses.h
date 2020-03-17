@@ -6,6 +6,9 @@
 
 #include "dlldefines.h"
 
+using std::vector;
+using std::string;
+
 namespace utils
 {
 	namespace fileIO
@@ -13,22 +16,22 @@ namespace utils
 		class DistributionFromDisk
 		{
 		private:
-			std::string name_m;
-			std::vector<std::string> attrNames_m;
-			std::vector<std::vector<double>> data_m;
+			string name_m;
+			vector<string> attrNames_m;
+			vector<vector<double>> data_m;
 			double mass_m;
 
 
 		public:
-			DistributionFromDisk(std::string name, std::string folder, std::string partName, std::vector<std::string> attrNames, double mass);
+			DistributionFromDisk(string name, string folder, string partName, vector<string> attrNames, double mass);
 			~DistributionFromDisk() {}
 
-			const std::vector<std::vector<double>>& data() const { return data_m; }
-			const std::string& name() const { return name_m; }
+			const vector<vector<double>>& data() const { return data_m; }
+			const string& name() const { return name_m; }
 			void print(int at) const;
 			void printdiff(DistributionFromDisk& other, int at) const;
 			void zeroes() const;
-			void zeroes(std::vector<int>& zeroes, bool print = true) const;
+			void zeroes(vector<int>& zeroes, bool print = true) const;
 			void compare(const DistributionFromDisk& other) const;
 		};
 	}

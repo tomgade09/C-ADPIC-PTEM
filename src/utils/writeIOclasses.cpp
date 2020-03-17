@@ -367,7 +367,7 @@ namespace utils
 			if (std::filesystem::exists(filename))
 				cerr << "ParticleDistribution::serialize: Warning: filename exists: " << filename << " You are overwriting an existing file.\n";
 
-			ofstream out(filename, std::ifstream::binary);
+			ofstream out(filename, std::ofstream::binary);
 			if (!out) throw invalid_argument("ParticleDistribution::serialize: unable to create file: " + filename);
 
 			auto writeStrBuf = [&](const stringbuf& sb)
@@ -386,6 +386,8 @@ namespace utils
 				writeStrBuf(range.serialize());
 
 			writeStrBuf(serializeDoubleVector(padvals_m));
+
+			out.close();
 		}
 
 		void ParticleDistribution::deserialize(string serialFolder, string name)
@@ -407,6 +409,8 @@ namespace utils
 				ranges_m.push_back(std::move(Range(in)));
 
 			padvals_m = deserializeDoubleVector(in);
+
+			in.close();
 		}
 
 	} /* end namespace utils::write */

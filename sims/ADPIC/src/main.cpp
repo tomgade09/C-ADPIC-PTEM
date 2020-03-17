@@ -4,6 +4,7 @@
 #include <iterator>
 #include <iostream>
 #include <iomanip>
+#include <filesystem>
 #include "ionosphere/ionosphere.h"
 #include "ionosphere/ionosphereUtils.h"
 #include "CDFFileClass.h"
@@ -401,15 +402,14 @@ int main(int argc, char* argv[])
 	//Ionosphere ionsph(2, 620000.0, 619999.9999);
 	//ionsph.addSpecies("ScatterAll", 1.0e6, [](double s) { return 1.0e30; });
 	/* End test ionosphere */
-
 	
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
-
+	
 	//debug::setIdealSatDists(eomdata); //set non-time dependent equation - calculated distribution
 	debug::setRealMaxwellians(eomdata);
 
-
+	
 	// Run Post Process Code
 	std::vector<std::vector<double>> fluxData;
 	SIM_API_EXCEP_CHECK(fluxData = steadyFlux(eomdata));

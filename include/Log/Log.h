@@ -37,8 +37,9 @@ private:
 	streambuf*   cerrBufferBackup_m{ std::cerr.rdbuf() };
 	std::thread  cerrReadThread_m;
 	bool         check_m{ true };
+	bool         writing_m{ false };
 
-	void save();
+	void saveEntry(const Entry& entr);
 	void cerrCheck();
 
 public:

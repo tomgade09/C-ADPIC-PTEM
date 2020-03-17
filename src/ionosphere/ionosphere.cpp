@@ -40,7 +40,7 @@ inline void printIonosphere(const ionosphere::IonosphereSpecs& ionsph)
 	cout << "===============================================================" << "\n";
 }
 
-inline void printLayer(const ionosphere::IonosphereSpecs& ionsph, int layer)
+inline void printLayer(const ionosphere::IonosphereSpecs& ionsph, size_t layer)
 {
 	cout << "Layer: " << layer << " / " << ionsph.s.size() - 2 << ", s: ";
 	cout << ionsph.s.at(layer) << ", B: " << ionsph.B.at(layer) << "\n";
@@ -163,6 +163,67 @@ namespace ionosphere
 
 	DLLEXP dEflux_v2D steadyFlux(const EOMSimData& eomdata)
 	{
+		{
+			vector<double> qspstopUpward;
+			utils::fileIO::readDblBin(qspstopUpward, eomdata.datadir + "bins/satellites/QSPSTopUpg_vpara.bin");
+
+			double minvpara{ 10000000.0 };
+
+			for (auto elec : qspstopUpward)
+				if (elec < minvpara) minvpara = elec;
+
+			std::cout << std::setprecision(10) << "min vpara upward: " << minvpara << " m/s\n";
+		}
+
+		{
+			Satellite* qspsbtmUpg{ eomdata.sim->satellite("QSPSBtmUpg") };
+			Satellite* qspsbtmDng{ eomdata.sim->satellite("QSPSBtmDng") };
+
+			vector<double> qspsbtmUpgVpara{ qspsbtmUpg->data().at(0) };
+			vector<double> qspsbtmUpgVperp{ qspsbtmUpg->data().at(1) };
+			vector<double> qspsbtmDngVpara{ qspsbtmDng->data().at(0) };
+			vector<double> qspsbtmDngVperp{ qspsbtmDng->data().at(1) };
+
+			ParticleData qspsbtmUpgPD(qspsbtmUpgVpara, qspsbtmUpgVperp, MASS_ELECTRON);
+			ParticleData qspsbtmDngPD(qspsbtmDngVpara, qspsbtmDngVperp, MASS_ELECTRON);
+
+			auto err = [](double base, double dev)
+			{//returns % error
+				return std::abs((base - dev) / base);
+			};
+
+			double min_err{ 0.0001 };
+			double max_err{ 0 };
+			size_t max_ind{ 0 };
+
+			vector<size_t> err_ind;
+			for (size_t ind = 0; ind < qspsbtmUpgPD.energy.size(); ind++)
+			{
+				if (qspsbtmUpgPD.vpara.at(ind) == 0 || qspsbtmDngPD.vpara.at(ind) == 0) continue;
+
+				double PA_err{ err(180.0 - qspsbtmUpgPD.pitch.at(ind), qspsbtmDngPD.pitch.at(ind)) };
+				double E_err{ err(qspsbtmUpgPD.energy.at(ind), qspsbtmDngPD.energy.at(ind)) };
+
+				if (E_err > min_err)
+					err_ind.push_back(ind);
+				else if (PA_err > min_err)
+					err_ind.push_back(ind);
+
+				if (PA_err > max_err) { max_err = PA_err; max_ind = ind; }
+				if (E_err > max_err)  { max_err = E_err;  max_ind = ind; }
+			}
+
+			std::cout << "Num err: " << err_ind.size() << "\n";
+			std::cout << "Max err: " << max_err << "\n";
+			std::cout << "Err ind: " << max_ind << "\n";
+			std::cout << "Upg PA : " << qspsbtmUpgPD.pitch.at(max_ind) << "\n";
+			std::cout << "Dng PA : " << 180.0 - qspsbtmDngPD.pitch.at(max_ind) << " (" << qspsbtmDngPD.pitch.at(max_ind) << ")\n";
+			std::cout << "Upg E  : " << qspsbtmUpgPD.energy.at(max_ind) << "\n";
+			std::cout << "Dng E  : " << qspsbtmDngPD.energy.at(max_ind) << "\n";
+		}
+		
+		exit(1);
+
 		//
 		//
 		// Spit out csv files (for diagnostics)
@@ -682,7 +743,7 @@ namespace ionosphere
 			return binning::binParticles(particles, eom.distbins, particles.count);
 		}
 
-		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, int level)
+		DLLEXP dNflux_v2D bsAtLevel(const EOMSimData& eom, const dNflux_v2D& dNionsphTop, double_v2D& pctScatteredAbove, size_t level)
 		{
 			//
 			//

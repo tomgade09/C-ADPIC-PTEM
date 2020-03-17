@@ -7,7 +7,7 @@ __host__ __device__ BModel::BModel(Type type) : type_m{ type }
 {
 
 }
-
+#include <iostream>
 __host__ __device__ BModel::~BModel()
 {
 

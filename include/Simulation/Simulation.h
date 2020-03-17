@@ -10,7 +10,6 @@
 #include "Particles/Particles.h"
 #include "Satellite/Satellite.h"
 #include "Log/Log.h"
-#include "SimAttributes/SimAttributes.h"
 
 using std::string;
 using std::vector;
@@ -61,6 +60,7 @@ protected:
 	bool initialized_m{ false };
 	bool dataOnGPU_m{ false };
 	bool saveReady_m{ false };
+	bool previousSim_m{ false };
 
 	//Simulation-specific classes tracked by Simulation
 	unique_ptr<BModel>             BFieldModel_m;
@@ -70,14 +70,12 @@ protected:
 	vector<unique_ptr<TempSat>>    tempSats_m; //holds data until the GPU data arrays are allocated, allows the user more flexibility of when to call createSatellitesAPI
 	vector<unique_ptr<SatandPart>> satPartPairs_m;
 
-	//Attribute saving, Log, and Error Handling
-	unique_ptr<SimAttributes> simAttr_m;
-
 	//Protected functions
-	virtual void createSatellite(TempSat* tmpsat, bool save = true);
-	virtual void incTime();
-	virtual void printSimAttributes(int numberOfIterations, int itersBtwCouts, string GPUName);
-	virtual void load(string saveRootDir);
+	void createSatellite(TempSat* tmpsat, bool save = true);
+	void incTime();
+	void printSimAttributes(int numberOfIterations, int itersBtwCouts, string GPUName);
+	void loadSimulation(string saveRootDir);
+	void loadDataFromDisk();
 
 public:
 	Simulation(double dt, double simMin, double simMax, string saveRootDir);
@@ -89,54 +87,58 @@ public:
 
 	class Environment;
 
-	///One liner functions (usually access)
+	//
+	//======== Simulation Access Functions ========//
+	//
 	double simtime() const;
 	double dt()      const;
 	double simMin()  const;
 	double simMax()  const;
 
+	//Class data
 	int    getNumberOfParticleTypes()         const;
 	int    getNumberOfSatellites()            const;
 	int    getNumberOfParticles(int partInd)  const;
 	int    getNumberOfAttributes(int partInd) const;
-	string getParticlesName(int partInd)       const;
+	string getParticlesName(int partInd)      const;
 	string getSatelliteName(int satInd)       const;
-	int    getPartIndOfSat(int satInd)        const;
+	int    getParticleIndexOfSat(int satInd)  const;
 
-	Particles*  particle(int partInd)  const;
-	Particles*  particle(string name)  const; //search for name, return particle
+	//Class pointers
+	Particles* particles(int partInd) const;
+	Particles* particles(string name) const; //search for name, return particle
 	Satellite* satellite(int satInd)  const;
 	Satellite* satellite(string name) const; //search for name, return satellite
 	BModel*    Bmodel()               const;
 	EField*    Emodel()               const;
 
-	virtual const vector<vector<double>>& getParticleData(int partInd, bool originalData);
-	virtual const vector<vector<double>>& getSatelliteData(int satInd);
+	//Simulation data
+	const vector<vector<double>>& getParticleData(int partInd, bool originalData);
+	const vector<vector<double>>& getSatelliteData(int satInd);
 
-	///Forward decs for cpp file, or pure virtuals
-	//Class creation functions
-	virtual void createParticlesType(string name, double mass, double charge, long numParts, string loadFilesDir = "", bool save = true);
-	virtual void createTempSat(string partName, double altitude, bool upwardFacing, string name);
-	virtual void createTempSat(int partInd, double altitude, bool upwardFacing, string name);
-	virtual void setBFieldModel(string name, vector<double> args, bool save = true);
-	virtual void setBFieldModel(unique_ptr<BModel> BModelptr);
-	virtual void addEFieldModel(string name, vector<double> args, bool save = true);
-	//virtual void addEFieldModel(unique_ptr<EModel> EModelptr) { EFieldModel_m->add(std::move(EModelptr)); }
-	//virtual void clearEFieldModels(){ EFieldModel_m = std::make_unique<EField>(); }
-	
+	//Fields data
+	double getBFieldAtS(double s, double time) const;
+	double getEFieldAtS(double s, double time) const;
 
-	//Fields
-	virtual double getBFieldAtS(double s, double time) const;
-	virtual double getEFieldAtS(double s, double time) const;
+	//
+	//======== Class Creation Functions ========//
+	//
+	void createParticlesType(string name, double mass, double charge, long numParts, string loadFilesDir = "", bool save = true);
+	void createTempSat(string partName, double altitude, bool upwardFacing, string name);
+	void createTempSat(int partInd, double altitude, bool upwardFacing, string name);
+	void setBFieldModel(string name, vector<double> args, bool save = true);
+	void setBFieldModel(unique_ptr<BModel> BModelptr);
+	void addEFieldModel(string name, vector<double> args, bool save = true);
 
-
-	//Simulation management functions
-	virtual void initializeSimulation();
-	virtual void __iterateSimCPU(int numberOfIterations, int checkDoneEvery);
-	virtual void iterateSimulation(int numberOfIterations, int itersBtwCouts);
-	virtual void saveDataToDisk();
-	virtual void freeGPUMemory();
-	virtual void resetSimulation(bool fields = false);
-	virtual void save() const;
+	//
+	//======== Simulation Management Functions ========//
+	//
+	void initializeSimulation();
+	void __iterateSimCPU(int numberOfIterations, int checkDoneEvery);
+	void iterateSimulation(int numberOfIterations, int itersBtwCouts);
+	void saveDataToDisk();
+	void freeGPUMemory();
+	void resetSimulation(bool fields = false);
+	void saveSimulation() const;
 };//end class
 #endif //end header guard

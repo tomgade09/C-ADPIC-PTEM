@@ -74,7 +74,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)..\lib\include;$(SolutionDir)..\..\..\include;$(SolutionDir)..\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lib;$(SolutionDir)..\..\..\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\..\bin\</OutDir>
+    <OutDir>$(SolutionDir)..\..\..\lib\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|x64'">
     <IncludePath>$(SolutionDir)..\lib\include;$(SolutionDir)..\..\..\include;$(SolutionDir)..\src;$(IncludePath)</IncludePath>

@@ -54,7 +54,7 @@ DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* l
 		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
 		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
 
-		sim->particle(0)->setParticlesSource_s(sim->simMin(), sim->simMax());
+		sim->particles(0)->setParticlesSource_s(sim->simMin(), sim->simMax());
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
@@ -62,8 +62,8 @@ DLLEXP_EXTC void setupSingleElectronAPI(Sim* sim, double vpara, double vperp, do
 { //check that satellites and B/E fields have been created here??
 	SIM_API_EXCEP_CHECK(
 		std::vector<std::vector<double>> attrs{ std::vector<std::vector<double>>({ { vpara },{ vperp },{ s },{ 0.0 },{ t_inc } }) };
-		sim->particle("elec")->loadDataFromMem(attrs, true);
-		sim->particle("elec")->loadDataFromMem(attrs, false);
+		sim->particles("elec")->loadDataFromMem(attrs, true);
+		sim->particles("elec")->loadDataFromMem(attrs, false);
 	); /* SIM_API_EXCEP_CHECK() */
 }
 
@@ -111,7 +111,7 @@ DLLEXP_EXTC const double* getSatelliteDataPointersAPI(Sim* sim, int satelliteInd
 
 DLLEXP_EXTC int getPartIndOfSatAPI(Sim* sim, int satelliteInd)
 {
-	SIM_API_EXCEP_CHECK(return sim->getPartIndOfSat(satelliteInd));
+	SIM_API_EXCEP_CHECK(return sim->getParticleIndexOfSat(satelliteInd));
 	return -1; //if above fails
 }
 
@@ -210,13 +210,15 @@ DLLEXP_EXTC void writeCommonCSVAPI(Sim* sim)
 #ifdef _DEBUG
 int main()
 {
-	SIM_API_EXCEP_CHECK(
+	/*SIM_API_EXCEP_CHECK(
 		auto sim{ std::make_unique<Simulation>(0.01, 101322.378940846, 19881647.2473464, "./out/") };
 		setupExampleSimulationAPI(sim.get(), 3456000, "./../_in/data");
 		//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 		sim->initializeSimulation();
 		sim->iterateSimulation(5000, 500);
-	); /* SIM_API_EXCEP_CHECK() */
+	);*/ /* SIM_API_EXCEP_CHECK() */
+
+	auto sim{ "../_dataout/200314_11.10.53/" };
 
 	return 0;
 }

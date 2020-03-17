@@ -222,44 +222,44 @@ namespace ionosphere
 	EOMSimData::EOMSimData(IonosphereSpecs& ionosphere, MaxwellianSpecs& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat) :
 		ionsph{ std::move(ionosphere) }, distbins{ std::move(distribution) }, satbins{ std::move(satellite) }, datadir{ dir_simdata }
 	{
-		std::unique_ptr<Simulation> sim;
-		SILENCE_COUT(SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(dir_simdata)));
+		//std::unique_ptr<Simulation> sim;
+		/*SILENCE_COUT(*/SIM_API_EXCEP_CHECK(sim = std::make_unique<Simulation>(dir_simdata))/*)*/;
 		
-		Particles* particle{ sim->particle(name_particle) };
+		Particles* particle{ sim->particles(name_particle) };
 		Satellite* sat_btm{ sim->satellite(name_btmsat) };
 		Satellite* sat_dng{ sim->satellite(name_dngsat) };
 		Satellite* sat_upg{ sim->satellite(name_upgsat) };
-
+		
 		SIM_API_EXCEP_CHECK(
-			s_ion = sim->simMin();
-			s_sat = sat_upg->altitude();
-			s_mag = sim->simMax();
+		s_ion = sim->simMin();
+		s_sat = sat_upg->altitude();
+		s_mag = sim->simMax();
 
-			B_ion = sim->getBFieldAtS(s_ion, 0.0);
-			B_sat = sim->getBFieldAtS(s_sat, 0.0);
-			B_mag = sim->getBFieldAtS(s_mag, 0.0);
+		B_ion = sim->getBFieldAtS(s_ion, 0.0);
+		B_sat = sim->getBFieldAtS(s_sat, 0.0);
+		B_mag = sim->getBFieldAtS(s_mag, 0.0);
 
-			mass = particle->mass();
-			charge = particle->charge();
+		mass = particle->mass();
+		charge = particle->charge();
 
-			size_t vparaind{ particle->getAttrIndByName("vpara") };
-			size_t vperpind{ particle->getAttrIndByName("vperp") };
-			size_t sind{ particle->getAttrIndByName("s") };
-
-			initial = ParticleData(particle->__data(true).at(vparaind), particle->__data(true).at(vperpind), mass);
-			initial.s_pos = particle->__data(true).at(sind);
-			bottom = ParticleData(sat_btm->__data().at(vparaind), sat_btm->__data().at(vperpind), mass);
-			bottom.s_pos = std::move(sat_btm->__data().at(sind));
-			upward = ParticleData(sat_upg->__data().at(vparaind), sat_upg->__data().at(vperpind), mass);
-			upward.s_pos = std::move(sat_upg->__data().at(sind));
-			dnward = ParticleData(sat_dng->__data().at(vparaind), sat_dng->__data().at(vperpind), mass);
-			dnward.s_pos = std::move(sat_dng->__data().at(sind));
-
-			DipoleB dip(sim->Bmodel()->ILAT(), 1.0e-10, RADIUS_EARTH / 1000.0, false);
-			ionsph.altToS(&dip);
-			ionsph.setB(&dip, 0.0);
+		size_t vparaind{ particle->getAttrIndByName("vpara") };
+		size_t vperpind{ particle->getAttrIndByName("vperp") };
+		size_t sind{ particle->getAttrIndByName("s") };
+		
+		initial = ParticleData(particle->__data(true).at(vparaind), particle->__data(true).at(vperpind), mass);
+		initial.s_pos = particle->__data(true).at(sind);
+		bottom = ParticleData(sat_btm->__data().at(vparaind), sat_btm->__data().at(vperpind), mass);
+		bottom.s_pos = std::move(sat_btm->__data().at(sind));
+		upward = ParticleData(sat_upg->__data().at(vparaind), sat_upg->__data().at(vperpind), mass);
+		upward.s_pos = std::move(sat_upg->__data().at(sind));
+		dnward = ParticleData(sat_dng->__data().at(vparaind), sat_dng->__data().at(vperpind), mass);
+		dnward.s_pos = std::move(sat_dng->__data().at(sind));
+		
+		DipoleB dip(sim->Bmodel()->ILAT(), 1.0e-10, RADIUS_EARTH / 1000.0, false);
+		ionsph.altToS(&dip);
+		ionsph.setB(&dip, 0.0);
 		); //end SIM_API_EXCEP_CHECK
-
+		
 		maxwellian = maxspecs.dNfluxAtE(initial, s_ion, s_mag);
 
 		//make sure EOMSimData has been properly formed

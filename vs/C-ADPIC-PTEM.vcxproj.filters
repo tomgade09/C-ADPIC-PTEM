@@ -39,14 +39,8 @@
     <ClCompile Include="..\src\utils\random.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SimAttributes\SimAttributes.cpp">
-      <Filter>Source Files\SimAttributes</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\API\SimulationAPI.cpp">
       <Filter>Source Files\API</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Simulation\previousSimulation.cpp">
-      <Filter>Source Files\Simulation</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Simulation\Simulation.cpp">
       <Filter>Source Files\Simulation</Filter>
@@ -142,9 +136,6 @@
     </ClInclude>
     <ClInclude Include="..\include\ErrorHandling\cudaDeviceMacros.h">
       <Filter>Header Files\errorHandling</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\SimAttributes\SimAttributes.h">
-      <Filter>Header Files\SimAttributes</Filter>
     </ClInclude>
     <ClInclude Include="..\include\dlldefines.h">
       <Filter>Header Files</Filter>
@@ -336,9 +327,6 @@
     <Filter Include="Python Files\utils">
       <UniqueIdentifier>{4867c70b-910f-44e6-9722-5c6c9cc82b9f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\SimAttributes">
-      <UniqueIdentifier>{3a2e37d9-9e12-47e3-a7ec-78a4b77075f7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\API">
       <UniqueIdentifier>{378b2f1b-b363-4fb8-8b0b-c76bcede227b}</UniqueIdentifier>
     </Filter>
@@ -416,9 +404,6 @@
     </Filter>
     <Filter Include="Source Files\Particles">
       <UniqueIdentifier>{f082d824-4f6c-4e35-9272-e3931f9c9df2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\SimAttributes">
-      <UniqueIdentifier>{44059e51-f061-48eb-8602-b28f335fa151}</UniqueIdentifier>
     </Filter>
     <Filter Include="Documentation\Particles">
       <UniqueIdentifier>{17ef3db8-a974-44ea-a3b3-1df7534570f1}</UniqueIdentifier>

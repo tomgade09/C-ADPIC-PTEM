@@ -15,7 +15,7 @@ namespace utils
 {
 	namespace fileIO
 	{
-		DLLEXP void readDblBin(std::vector<double>& arrayToReadInto, std::string filename)
+		DLLEXP void readDblBin(vector<double>& arrayToReadInto, string filename)
 		{
 			std::ifstream binFile{ filename, std::ios::binary };
 			if (!binFile.is_open())
@@ -32,10 +32,10 @@ namespace utils
 			readDblBin(arrayToReadInto, filename, length);
 		}
 
-		DLLEXP void readDblBin(std::vector<double>& arrayToReadInto, std::string filename, size_t numOfDblsToRead)
+		DLLEXP void readDblBin(vector<double>& arrayToReadInto, string filename, size_t numOfDblsToRead)
 		{
 			if (arrayToReadInto.size() < numOfDblsToRead)
-				throw std::invalid_argument("fileIO::readDblBin: std::vector is not big enough to contain the data being read from file " + filename);
+				throw std::invalid_argument("fileIO::readDblBin: vector is not big enough to contain the data being read from file " + filename);
 
 			std::ifstream binFile{ filename, std::ios::binary };
 			if (!binFile.is_open())
@@ -57,35 +57,35 @@ namespace utils
 			binFile.close();
 		}
 
-		DLLEXP void read2DCSV(std::vector<std::vector<double>>& array2DToReadInto, std::string filename, size_t numofentries, size_t numofcols, const char delim)
+		DLLEXP void read2DCSV(vector<vector<double>>& array2DToReadInto, string filename, size_t numofentries, size_t numofcols, const char delim)
 		{
 			std::ifstream csv{ filename };
 			if (!csv.is_open())
 				throw std::invalid_argument("fileIO::read2DCSV: could not open file " + filename + " for reading");
 			if (array2DToReadInto.size() < numofcols)
-				throw std::invalid_argument("fileIO::read2DCSV: std::vector outer vector is not big enough to contain the data being read from file " + filename);
+				throw std::invalid_argument("fileIO::read2DCSV: vector outer vector is not big enough to contain the data being read from file " + filename);
 			if (array2DToReadInto.size() > numofcols)
-				std::cerr << "fileIO::read2DCSV: std::vector outer vector is bigger than numofcols, some data in the vector will remain unmodified" << std::endl;
+				std::cerr << "fileIO::read2DCSV: vector outer vector is bigger than numofcols, some data in the vector will remain unmodified" << std::endl;
 			for (size_t col = 0; col < array2DToReadInto.size(); col++)
 			{
 				if (array2DToReadInto.at(col).size() < numofentries)
-					throw std::invalid_argument("fileIO::read2DCSV: std::vector inner vector is not big enough to contain the data being read from file " + filename);
+					throw std::invalid_argument("fileIO::read2DCSV: vector inner vector is not big enough to contain the data being read from file " + filename);
 				if (array2DToReadInto.at(col).size() > numofentries)
-					std::cerr << "fileIO::read2DCSV: std::vector inner vector is bigger than numofentries, some data in the vector will remain unmodified" << std::endl;
+					std::cerr << "fileIO::read2DCSV: vector inner vector is bigger than numofentries, some data in the vector will remain unmodified" << std::endl;
 			}
 
 			try
 			{
 				for (size_t iii = 0; iii < numofentries; iii++)
 				{
-					std::string in;
+					string in;
 					std::getline(csv, in);
 
 					std::stringstream in_ss(in);
 
 					for (size_t jjj = 0; jjj < numofcols; jjj++)
 					{
-						std::string val;
+						string val;
 						std::getline(in_ss, val, delim);
 						std::stringstream convert(val);
 						convert >> array2DToReadInto.at(jjj).at(iii);
@@ -101,7 +101,7 @@ namespace utils
 			csv.close();
 		}
 
-		DLLEXP void readTxtFile(std::string& readInto, std::string filename)
+		DLLEXP void readTxtFile(string& readInto, string filename)
 		{
 			std::ifstream txt(filename);
 			if (!txt.is_open())
@@ -119,7 +119,7 @@ namespace utils
 
 
 		//write functions
-		DLLEXP void writeDblBin(const std::vector<double>& dataarray, std::string filename, size_t numelements, bool overwrite)//overwrite defaults to true
+		DLLEXP void writeDblBin(const vector<double>& dataarray, string filename, size_t numelements, bool overwrite)//overwrite defaults to true
 		{
 			std::ofstream binfile{ filename, std::ios::binary | (overwrite ? (std::ios::trunc) : (std::ios::app)) };
 			if (!binfile.is_open())
@@ -134,7 +134,7 @@ namespace utils
 			binfile.close();
 		}
 
-		DLLEXP void write2DCSV(const std::vector<std::vector<double>>& dataarray, std::string filename, size_t numofentries, size_t numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
+		DLLEXP void write2DCSV(const vector<vector<double>>& dataarray, string filename, size_t numofentries, size_t numofcols, const char delim, bool overwrite, int precision)//overwrite defaults to true, precision to 20
 		{
 			std::ofstream csv(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 			if (!csv.is_open())
@@ -163,11 +163,9 @@ namespace utils
 			}
 
 			csv.close();
-
-			return;
 		}
 
-		DLLEXP void writeTxtFile(std::string textToWrite, std::string filename, bool overwrite)//overwrite defaults to false
+		DLLEXP void writeTxtFile(string textToWrite, string filename, bool overwrite)//overwrite defaults to false
 		{
 			std::ofstream txt(filename, overwrite ? (std::ios::trunc) : (std::ios::app));
 			if (!txt.is_open())

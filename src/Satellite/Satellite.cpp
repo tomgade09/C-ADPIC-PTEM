@@ -22,7 +22,7 @@ using utils::fileIO::readDblBin;
 using utils::fileIO::writeDblBin;
 using namespace utils::fileIO::serialize;
 
-Satellite::Satellite(std::string name, std::vector<std::string> attributeNames, meters altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr) :
+Satellite::Satellite(string name, vector<string> attributeNames, meters altitude, bool upwardFacing, long numberOfParticles, double** partDataGPUPtr) :
 	name_m{ name }, attributeNames_m{ attributeNames }, altitude_m{ altitude }, upwardFacing_m{ upwardFacing }, numberOfParticles_m{ numberOfParticles }, particleData2D_d{ partDataGPUPtr }
 {
 	data_m = vector<vector<double>>(attributeNames_m.size(), vector<double>(numberOfParticles_m));
@@ -103,7 +103,7 @@ void Satellite::saveDataToDisk(string folder) //move B and mass to getConsolidat
 	vector<vector<double>> results{ removeZerosData() };
 
 	for (int attr = 0; attr < results.size(); attr++)
-		writeDblBin(results.at(attr), folder + name_m + "_" + attributeNames_m.at(attr) + ".bin", (int)results.at(attr).size());
+		writeDblBin(results.at(attr), folder + name_m + "_" + attributeNames_m.at(attr) + ".bin", results.at(attr).size());
 }
 
 void Satellite::loadDataFromDisk(string folder)
@@ -223,7 +223,6 @@ void Satellite::serialize(ofstream& out) const
 
 void Satellite::deserialize(ifstream& in)
 {
-
 	name_m = deserializeString(in);
 	attributeNames_m = deserializeStringVector(in);
 

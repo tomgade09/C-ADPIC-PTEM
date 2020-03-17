@@ -50,7 +50,7 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 
 	bool done{ false };
 	size_t initEntry{ Log_m->createEntry("Iteration 1", false) };
-	for (long cudaloopind; cudaloopind < numberOfIterations; cudaloopind++)
+	for (long cudaloopind = 0; cudaloopind < numberOfIterations; cudaloopind++)
 	{
 		if (cudaloopind % checkDoneEvery == 0) { done = true; }
 		for (auto part = particles_m.begin(); part < particles_m.end(); part++)
@@ -85,7 +85,7 @@ void Simulation::__iterateSimCPU(int numberOfIterations, int checkDoneEvery)
 				out.str("");
 				out.clear();
 
-				out << setw(to_string((int)(numberOfIterations)*dt_m).size()) << fixed << simTime_m;
+				out << setw(to_string((numberOfIterations)*dt_m).size()) << fixed << simTime_m;
 				loopStatus += out.str() + "  |  Real Time Elapsed (s): " + to_string(Log_m->timeElapsedSinceEntry_s(initEntry));
 
 				Log_m->createEntry("CPU: " + loopStatus);
