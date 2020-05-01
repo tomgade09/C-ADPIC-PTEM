@@ -32,7 +32,6 @@ NUMITER = 50000
 ITERBTWCOUTS = 500
 
 #Distribution Quantities
-#RANDOM = True
 LOADDIST = True
 DISTINFOLDER = os.path.abspath(ROOTDIR + '/_in/data/')
 

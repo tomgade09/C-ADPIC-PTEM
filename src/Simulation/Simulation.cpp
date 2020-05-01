@@ -37,7 +37,7 @@ Log_m{ make_unique<Log>(saveRootDir_m + "reload.log") }, previousSim_m{ true }
 Simulation::~Simulation()
 {
 	SIM_API_EXCEP_CHECK(if (!previousSim_m) saveSimulation());
-	if (saveReady_m) saveDataToDisk(); //save data if it hasn't been done
+	if (!previousSim_m && saveReady_m) saveDataToDisk(); //save data if it hasn't been done
 	else if (!previousSim_m) cerr << "Warning: Simulation::~Simulation: saveReady_m is false.";
 	Log_m->createEntry("End simulation");
 }
@@ -46,17 +46,19 @@ Simulation::~Simulation()
 void Simulation::printSimAttributes(int numberOfIterations, int itersBtwCouts, string GPUName) //protected
 {
 	//Sim Header (folder) printed from Python - move here eventually
-	cout << "GPU Name:       " << GPUName << "\n";
+	cout << "GPU Name:       " << GPUName << endl;
 	cout << "Sim between:    " << simMin_m << "m - " << simMax_m << "m" << endl;
 	cout << "dt:             " << dt_m << "s" << endl;
 	cout << "BModel Model:   " << BFieldModel_m->name() << endl;
-	cout << "EField Elems:   " << EFieldModel_m->getElementNames() << endl;
+	cout << "EField Elems:   " << ((Efield()->qspsCount() > 0) ? "QSPS: " + to_string(Efield()->qspsCount()) : "") << endl;
 	cout << "Particles:      ";
-	for (size_t iii = 0; iii < particles_m.size(); iii++) {
+	for (size_t iii = 0; iii < particles_m.size(); iii++)
+	{
 		cout << ((iii != 0) ? "                " : "") << particles_m.at(iii)->name() << ": #: " << particles_m.at(iii)->getNumberOfParticles() << ", loaded files?: " << (particles_m.at(iii)->getInitDataLoaded() ? "true" : "false") << std::endl;
 	}
 	cout << "Satellites:     ";
-	for (int iii = 0; iii < getNumberOfSatellites(); iii++) {
+	for (int iii = 0; iii < getNumberOfSatellites(); iii++)
+	{
 		cout << ((iii != 0) ? "                " : "") << satellite(iii)->name() << ": alt: " << satellite(iii)->altitude() << " m, upward?: " << (satellite(iii)->upward() ? "true" : "false") << std::endl;
 	}
 	cout << "Iterations:     " << numberOfIterations << endl;
@@ -146,6 +148,14 @@ Particles* Simulation::particles(string name) const
 	throw invalid_argument("Simulation::particle: no particle of name " + name);
 }
 
+Particles* Simulation::particles(Satellite* satellite) const
+{
+	for (auto& satPart : satPartPairs_m)
+		if (satPart->satellite.get() == satellite)
+			return satPart->particle.get();
+	throw invalid_argument("Simulation::particle: no satellite " + satellite->name());
+}
+
 Satellite* Simulation::satellite(int satInd) const
 {
 	return satPartPairs_m.at(satInd)->satellite.get();
@@ -164,7 +174,7 @@ BModel* Simulation::Bmodel() const
 	return BFieldModel_m.get();
 }
 
-EField* Simulation::Emodel() const
+EField* Simulation::Efield() const
 {
 	return EFieldModel_m.get();
 }
@@ -350,6 +360,7 @@ void Simulation::addEFieldModel(string name, vector<double> args, bool save)
 		}
 		cout << "QSPS temporary fix - instantiates with [vector].at(0)\n";
 		EFieldModel_m->add(make_unique<QSPS>(altMin.at(0), altMax.at(0), mag.at(0)));
+		Log_m->createEntry("Added QSPS");
 	}
 	else if (name == "AlfvenLUT")
 	{

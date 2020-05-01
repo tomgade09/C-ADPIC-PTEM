@@ -19,7 +19,7 @@ using std::unique_ptr;
 
 class EModel //inherit from this class
 {
-protected:
+public:
 	enum class Type
 	{
 		QSPS,
@@ -27,9 +27,10 @@ protected:
 		Other
 	};
 
-	EModel** this_d{ nullptr }; //not really used on device
-
 	Type type_m{ Type::Other };
+
+protected:
+	EModel** this_d{ nullptr }; //not really used on device
 
 	__host__            virtual void setupEnvironment() = 0; //define this function in derived classes to assign a pointer to that function's B Field code to the location indicated by BModelFcnPtr_d and gradBFcnPtr_d
 	__host__            virtual void deleteEnvironment() = 0;

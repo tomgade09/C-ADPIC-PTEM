@@ -13,6 +13,7 @@ def setupFolders():
         os.makedirs(savedir + '/bins/particles_final')
         os.makedirs(savedir + '/bins/satellites')
         os.makedirs(savedir + '/graphs/EBModels')
+        os.makedirs(savedir + '/ADPIC')
     os.chdir(savedir)
 
     srcfile = PYROOTDIR + '/__simulationvariables.py' #change this

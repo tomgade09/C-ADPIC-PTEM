@@ -85,20 +85,22 @@ namespace ionosphere
 	{
 		unique_ptr<Simulation> sim{ nullptr };
 
-		meters s_ion;      //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
-		meters s_sat;      //distance **along the field line** (in m from Re) where the satellite resides
-		meters s_mag;      //distance **along the field line** (in m from Re) representing outer limit of the sim
+		int qspsCount{ 0 };
 
-		tesla  B_ion;      //B Field strength at ionospheric source
-		tesla  B_sat;      //B Field strength at satellite
-		tesla  B_mag;      //B Field strength at magnetospheric source
+		meters  s_ion{ 0.0 };    //distance **along the field line** (in m from Re) representing the top limit of the ionosphere (particle source)
+		meters  s_sat{ 0.0 };    //distance **along the field line** (in m from Re) where the satellite resides
+		meters  s_mag{ 0.0 };    //distance **along the field line** (in m from Re) representing outer limit of the sim
 
-		kg      mass;
-		coulomb charge;
+		tesla   B_ion{ 0.0 };    //B Field strength at ionospheric source
+		tesla   B_sat{ 0.0 };    //B Field strength at satellite
+		tesla   B_mag{ 0.0 };    //B Field strength at magnetospheric source
 
-		Bins distbins;     //Original Distribution Bins - represents the binning of the equ of motion simulation
-		Bins satbins;      //Satellite Bins - represents how the data is binned and output from the satellite
-		IonosphereSpecs ionsph; //Ionosphere Parameters (for multi-level scattering)
+		kg      mass{ 0.0 };
+		coulomb charge{ 0.0 };
+
+		Bins distbins;           //Original Distribution Bins - represents the binning of the equ of motion simulation
+		Bins satbins;            //Satellite Bins - represents how the data is binned and output from the satellite
+		IonosphereSpecs ionsph;  //Ionosphere Parameters (for multi-level scattering)
 
 		//Satellite and Maxwellian Data
 		dEflux_v1D   maxwellian; //maxwellian weights - "number of particles represented by the particle at same index"

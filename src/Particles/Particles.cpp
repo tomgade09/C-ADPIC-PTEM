@@ -49,7 +49,7 @@ Particles::~Particles()
 // ================ Particles - protected ================ //
 void Particles::initializeGPU()
 {
-	utils::GPU::setup2DArray(&currData1D_d, &currData2D_d, attributeNames_m.size() + 1, numberOfParticles_m);
+	utils::GPU::setup2DArray(&currData1D_d, &currData2D_d, attributeNames_m.size() + 2, numberOfParticles_m);
 	initializedGPU_m = true;
 }
 

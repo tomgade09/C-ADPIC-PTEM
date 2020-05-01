@@ -126,6 +126,7 @@ namespace physics
 		const double* t_incident_d{ currData_d[3] };
 		double* t_escape_d{ currData_d[4] };
 		double* s0_d{ currData_d[5] };
+		double* v0_d{ currData_d[6] };
 
 		if (t_escape_d[thdInd] >= 0.0) //particle has escaped, t_escape is >= 0 iff it has both entered previously and is currently outside the sim boundaries
 			return;
@@ -154,10 +155,10 @@ namespace physics
 		//if we use the ds = (v0 * dt), s will be lower down than where it would end up really (due to the fact that the mirror force acting along ds
 		//will slow v down as the particle travels along ds), so I take the average of the two and it seems close enough s = (v0 + (v0 + dv)) / 2 * dt = v0 + dv/2 * dt
 		//hence the /2 factor below - FYI, this was checked by the particle's energy (steady state, no E Field) remaining the same throughout the simulation
-		double v_orig{ v_d[thdInd] };
 		s0_d[thdInd] = s_d[thdInd];
+		v0_d[thdInd] = v_d[thdInd];
 		v_d[thdInd] += foRungeKuttaCUDA(v_d[thdInd], dt, args, bmodel, efield);
-		s_d[thdInd] += (v_d[thdInd] + v_orig) / 2 * dt;
+		s_d[thdInd] += (v_d[thdInd] + v0_d[thdInd]) / 2 * dt;
 	}
 
 	__host__ void iterateParticle(double* vpara, double* mu, double* s, double* t_incident, double* t_escape, BModel* bmodel, EField* efield,

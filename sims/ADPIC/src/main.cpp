@@ -17,7 +17,7 @@ constexpr int CDFNANGLEBINS   { 18 };
 constexpr int DSTNEBINS       { 96 };
 constexpr int DSTNANGLEBINS   { 36000 };
 constexpr double NFLUXIONRATIO{ 90.0 / 90.0 }; //numerator (90) is normal range (0-90), denominator is the range of the distribution
-constexpr double NFLUXMAGRATIO{ 90.0 / 90.0 }; //so here, the distribution is from 16 degrees to zero (not 90 to 0), meaning the dist has more particles per angle
+constexpr double NFLUXMAGRATIO{ /*90.0*/16.0 / 90.0 }; //so here, the distribution is from 16 degrees to zero (not 90 to 0), meaning the dist has more particles per angle
 const std::string PARTNAME    { "elec" };
 const std::string BTMSATNM    { "btmElec" };
 const std::string UPGSATNM    { "4e6ElecUpg" };
@@ -78,6 +78,8 @@ namespace debug
 {
 	void setIdealSatDists(EOMSimData& eomdata)
 	{
+		if (eomdata.qspsCount > 0) throw logic_error("ADPIC::debug::setIdealSatDists: QSPS exists.  This function does not work with QSPS.");
+
 		ParticleData btm(eomdata.bottom.energy.size());
 		ParticleData upw(eomdata.upward.energy.size());
 		ParticleData dnw(eomdata.dnward.energy.size());
@@ -366,7 +368,7 @@ int main(int argc, char* argv[])
 	
 	// Form Postprocessing Data
 	Bins distbins(generateSpacedValues(0.5, 4.5, DSTNEBINS, true, true), generateSpacedValues(179.9975, 0.0025, DSTNANGLEBINS, false, true));
-	Bins satbins (generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(/*5.0, 175.0*/180.0 / (CDFNANGLEBINS) / 2,180.0 - 180.0 / (CDFNANGLEBINS) / 2, CDFNANGLEBINS, false, true));
+	Bins satbins (generateSpacedValues(0.5, 4.5, CDFNEBINS, true, true), generateSpacedValues(/*5.0, 175.0*/180.0 / (CDFNANGLEBINS) / 2, 180.0 - 180.0 / (CDFNANGLEBINS) / 2, CDFNANGLEBINS, false, true));
 	
 	//
 	//
@@ -405,11 +407,23 @@ int main(int argc, char* argv[])
 	
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
-	
-	//debug::setIdealSatDists(eomdata); //set non-time dependent equation - calculated distribution
+
+	try
+	{
+		if (eomdata.qspsCount > 0 && abs(1.0 - NFLUXMAGRATIO) > FLT_EPSILON)
+			throw logic_error("ADPIC::main:  QSPS exists, but NFLUXMAGRATIO is not adjusted to 1.0");
+		else if (eomdata.qspsCount == 0 && !(NFLUXMAGRATIO < 1.0 - FLT_EPSILON))
+			throw logic_error("ADPIC::main:  QSPS does not exist, but NFLUXMAGRATIO is 1.0");
+	}
+	catch (logic_error& e)
+	{
+		cout << e.what() << "\nexiting\n";
+		exit(1);
+	}
+
+	debug::setIdealSatDists(eomdata); //set non-time dependent equation - calculated distribution
 	debug::setRealMaxwellians(eomdata);
 
-	
 	// Run Post Process Code
 	std::vector<std::vector<double>> fluxData;
 	SIM_API_EXCEP_CHECK(fluxData = steadyFlux(eomdata));
@@ -417,6 +431,22 @@ int main(int argc, char* argv[])
 
 	if (args.cdf)
 	{
+		if (!std::filesystem::exists(args.simdatadir + "/ADPIC/"))
+			std::filesystem::create_directory(args.simdatadir + "/ADPIC/");
+		
+		string timestring{ utils::strings::getCurrentTimeString("%y%m%d.%H%M") };
+		string ADPICdir{ args.simdatadir + "/ADPIC/" + timestring };
+		
+		try
+		{
+			std::filesystem::create_directory(ADPICdir);
+			std::filesystem::copy(args.simdatadir + "../../src/ionosphere/ionosphere.cpp", ADPICdir);
+		}
+		catch (std::exception & e)
+		{
+			std::cout << e.what();
+		}
+
 		/* Prep Data for CDF - For some reason, array of vector.data() doesn't work */
 		double cntArray2D[CDFNANGLEBINS][CDFNEBINS - 3];
 
@@ -425,7 +455,7 @@ int main(int argc, char* argv[])
 				cntArray2D[ang][eng] = fluxData.at(ang).at(eng);
 
 		/* Create CDF file and setup with appropriate variables, write data */
-		std::unique_ptr<CDFFileClass> cdf{ std::make_unique<CDFFileClass>(args.simdatadir + utils::strings::getCurrentTimeString("%y%m%d.%H%M")) };
+		std::unique_ptr<CDFFileClass> cdf{ std::make_unique<CDFFileClass>(ADPICdir + "/" + timestring) };
 
 		cdf->writeNewZVar("Mid-Bin Energies (eV)", CDF_DOUBLE, { CDFNEBINS - 3 }, (void*)eomdata.satbins.E.data());
 		cdf->writeNewZVar("Mid-Bin Angles (Degrees)", CDF_DOUBLE, { CDFNANGLEBINS }, (void*)satbins.PA.data());

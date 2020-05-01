@@ -56,18 +56,18 @@ __host__ QSPS::QSPS(meters altMin, meters altMax, Vperm magnitude, int stepUpReg
 	{
 		constexpr ratio suSize{ 0.05 }; //use step up regions = 5% of QSPS size (arbitrary)
 
-		altMin_m.resize(2 * stepUpRegions + 1);
+		altMin_m.resize(2 * stepUpRegions + 1); //step up regions on either side of the QSPS, as well as the QSPS itself
 		altMax_m.resize(2 * stepUpRegions + 1);
 		magnitude_m.resize(2 * stepUpRegions + 1);
 
-		altMin_m.at(stepUpRegions) = altMin;
+		altMin_m.at(stepUpRegions) = altMin; //middle index
 		altMax_m.at(stepUpRegions) = altMax;
 		magnitude_m.at(stepUpRegions) = magnitude;
 
 		meters size{ altMax - altMin };
 		
 		for (int iii = 0; iii < stepUpRegions; iii++)
-		{//step up regions at the bottom of the QSPS
+		{//step up regions starting with the bottom of the QSPS ranging to the top
 			altMin_m.at(iii) = altMin - (stepUpRegions - iii) * suSize * size;
 			altMax_m.at(iii) = altMin - (stepUpRegions - iii - 1) * suSize * size;
 			magnitude_m.at(iii) = magnitude * (iii + 1) / (stepUpRegions + 1);

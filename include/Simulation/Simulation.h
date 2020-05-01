@@ -107,10 +107,11 @@ public:
 	//Class pointers
 	Particles* particles(int partInd) const;
 	Particles* particles(string name) const; //search for name, return particle
+	Particles* particles(Satellite* satellite) const;
 	Satellite* satellite(int satInd)  const;
 	Satellite* satellite(string name) const; //search for name, return satellite
 	BModel*    Bmodel()               const;
-	EField*    Emodel()               const;
+	EField*    Efield()               const;
 
 	//Simulation data
 	const vector<vector<double>>& getParticleData(int partInd, bool originalData);

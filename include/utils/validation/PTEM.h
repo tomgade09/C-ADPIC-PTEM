@@ -1,12 +1,8 @@
 #ifndef VALIDATION_PTEM_H
 #define VALIDATION_PTEM_H
 
-#include <functional>
-
 #include "BField/BModel.h"
 #include "Simulation/Simulation.h"
-
-using std::function;
 
 namespace validation
 {
@@ -16,6 +12,8 @@ namespace validation
 	
 	meters particleIdealMirrorAltitude(BModel* bmodel, meters sinit, degrees PAinit);
 	//bool PTEM_rungeKutta(double maxError); //validate low error for the RK - "(old + new) / 2" factor I used
+
+	void generateIdealDistributionAtSat(Simulation* simulation, string upwardSatName, string dnwardSatName, string bottomSatName);
 }
 
 #endif

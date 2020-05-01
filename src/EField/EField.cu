@@ -10,6 +10,7 @@
 #include "ErrorHandling/cudaDeviceMacros.h"
 
 using std::string;
+using std::bad_cast;
 using std::to_string;
 using std::stringstream;
 using std::runtime_error;
@@ -75,7 +76,7 @@ __host__ __device__ EField::~EField()
 }
 
 //EField functions
-__host__ string EField::getElementNames() const
+/*__host__ string EField::getElementNames() const
 {
 	stringstream out;
 	
@@ -87,9 +88,24 @@ __host__ string EField::getElementNames() const
 		else out << "Unknown";
 		out << ", ";
 	}
-	#endif /* !__CUDA_ARCH__ */
+	#endif *//* !__CUDA_ARCH__ *//*
 	
 	return out.str();
+}*/
+
+__host__ int EField::qspsCount() const
+{
+	return qsps_m;
+}
+
+__host__ int EField::alutCount() const
+{
+	return alut_m;
+}
+
+__host__ bool EField::timeDependent() const
+{
+	return alut_m > 0;
 }
 
 __host__ void EField::setupEnvironment()
@@ -138,22 +154,24 @@ __host__ void EField::add(unique_ptr<EModel> emodel)
 		size_d++;
 	}
 
-	auto checkIfDerived = [](const EModel* emodel)
+	auto checkIfDerived = [](const EModel* model)
 	{
 		try
 		{//uses the fact that dynamic_cast<derived>(base) throws if base is not of type derived
-			const QSPS* der = dynamic_cast<const QSPS*>(emodel);
+			const QSPS* der = dynamic_cast<const QSPS*>(model);
 			if (der == nullptr) return false;
 			return true;
 		}
-		catch (std::bad_cast & e)
+		catch (bad_cast & e)
 		{
 			return false;
 		}
 	};
 
 	//add elem to host
-	emodels_m.push_back(std::move(emodel));
+	if (checkIfDerived(emodel.get())) qsps_m++;
+	//need to add alut_m++ condition, maybe make lambda a template?
+	emodels_m.push_back(move(emodel));
 }
 #endif /* !__CUDA_ARCH__ */
 
