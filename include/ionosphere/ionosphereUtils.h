@@ -15,11 +15,6 @@ using std::vector;
 using std::function;
 using std::to_string;
 
-//types to make function arguments more explicit
-typedef vector<double> double_v1D;
-typedef vector<vector<double>> double_v2D;
-//types to make function arguments more explicit
-
 #define TESTVEC_ISZEROFRSTHALF(vec, name) vecTest(vec, [](double cnt) { return (cnt != 0.0); }, true, name, 0, (int)vec.size() / 2);
 #define TESTVEC_ISZEROLASTHALF(vec, name) vecTest(vec, [](double cnt) { return (cnt != 0.0); }, true, name, (int)vec.size() / 2);
 #define TESTVEC_ISZEROWHOLEVEC(vec, name) vecTest(vec, [](double cnt) { return (cnt != 0.0); }, true, name);

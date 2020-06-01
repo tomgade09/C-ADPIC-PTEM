@@ -4,7 +4,7 @@
 #include "utils/numerical.h"
 
 using std::runtime_error;
-using ionosphere::ParticleData;
+using ionosphere::ParticleList;
 using ionosphere::dEFlux::newPA;
 using utils::numerical::EPitchTov2D;
 using utils::numerical::v2DtoEPitch;
@@ -150,7 +150,7 @@ namespace validation
 		Satellite* dnwardsat{ nullptr };
 		Satellite* bottomsat{ nullptr };
 		Particles* particles{ nullptr };
-		ParticleData orig;
+		ParticleList orig;
 
 		try
 		{
@@ -182,7 +182,7 @@ namespace validation
 			}
 
 			vector<vector<double>> data{ particles->data(true) };
-			orig = ParticleData(data.at(0), data.at(1), particles->mass());
+			orig = ParticleList(data.at(0), data.at(1), particles->mass());
 		}
 		catch (const std::exception& e)
 		{

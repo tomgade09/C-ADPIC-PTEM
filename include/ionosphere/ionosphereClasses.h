@@ -13,21 +13,59 @@ using std::function;
 
 namespace ionosphere
 {
-	struct DLLCLEXP ParticleData
-	{
-		double_v1D  vpara;
-		double_v1D  vperp;
-		double_v1D  energy;
-		degrees_v1D pitch;
-		double_v1D  t_esc;
-		double_v1D  s_pos;
+	struct DLLCLEXP Bins; //need this forward decls because I use it in ParticlesBinned
 
-		ParticleData(); //empty constructor for making an empty ParticleData
-		ParticleData(size_t size, bool EPA_only = true);
-		ParticleData(double_v1D& v_para, double_v1D& v_perp, double mass); //calculates E, Pitch automagically
-		
+	struct DLLCLEXP ParticleList //1D particle data structure
+	{
+		vector<mpers>   vpara;
+		vector<mpers>   vperp;
+		vector<eV>      energy;
+		vector<degrees> pitch;
+		vector<seconds> t_esc;
+		vector<meters>  s_pos;
+
+		ParticleList(); //empty constructor for making an empty ParticleList
+		ParticleList(size_t size, bool EPA_only = true);
+		ParticleList(double_v1D& v_para, double_v1D& v_perp, double mass); //calculates E, Pitch automagically
+
 		void clear();
 	};
+
+
+	template <typename T>
+	struct DLLCLEXP ParticlesBinned //2D particle data (binned) structure
+	{
+		Bins bins; //bins corresponding to the 2D data below
+		vector<vector<T>> binnedData;
+
+		ParticlesBinned<T>& operator+=(const ParticlesBinned<T>& rhs);
+	};
+
+
+	struct DLLCLEXP Bins
+	{ //defines discrete bins (by the center value of that bin)
+	protected:
+		Bins(); //usually don't want to be able to create an empty bin, but it's necessary for an empty ParticleList
+
+		friend class ParticleList;
+		template <typename T>
+		friend class ParticlesBinned;
+
+	public:
+		vector<eV>      E;
+		vector<degrees> PA;
+
+		Bins(vector<eV>& E_bins, vector<degrees>& PA_bins);
+		Bins(const Bins& copy);
+
+		bool operator==(const Bins& other) const;
+		bool operator!=(const Bins& other) const;
+
+		template <typename T>
+		ParticlesBinned<T> binParticleList(const ParticleList& particles, const vector<T>& weightPerParticle,
+			const function<bool(T)>& conditionCheck = [](T a) { return true; }) const;
+	};
+
 
 	struct DLLCLEXP MaxwellianSpecs
 	{ //at some point, needs to take in distribution data to generate weights/etc
@@ -46,17 +84,9 @@ namespace ionosphere
 		void push_back_ion(eV E_peak, dEflux dE_magnitude, int partsAtE);
 		void push_back_mag(eV E_peak, dEflux dE_magnitude, int partsAtE);
 		
-		dNflux_v1D dNfluxAtE(ParticleData& init, meters s_ion, meters s_mag);
+		dNflux_v1D dNfluxAtE(ParticleList& init, meters s_ion, meters s_mag);
 	};
 
-	struct DLLCLEXP Bins
-	{
-		double_v1D  E;
-		degrees_v1D PA;
-
-		Bins(double_v1D& E_bins, degrees_v1D& PA_bins);
-		Bins(const Bins& copy); //copy constructor
-	};
 
 	struct DLLCLEXP IonosphereSpecs
 	{
@@ -64,7 +94,7 @@ namespace ionosphere
 		double_v1D h;         //layer height (in cm)
 		double_v1D B;         //magnetic field strength at each layer
 
-		vector<string> names; //name - i.e. H, He, O2, etc
+		vector<string> names; //atomic species name - i.e. H, He, O2, etc
 		double_v1D Z;         //atomic number
 		double_v2D p;         //density - outer = species, inner = level
 
@@ -81,9 +111,12 @@ namespace ionosphere
 		void seth();
 	};
 
+
 	struct DLLCLEXP EOMSimData
 	{
 		unique_ptr<Simulation> sim{ nullptr };
+
+		string datadir;          //directory where sim data is stored
 
 		int qspsCount{ 0 };
 
@@ -98,18 +131,20 @@ namespace ionosphere
 		kg      mass{ 0.0 };
 		coulomb charge{ 0.0 };
 
+		//eventually get rid of distbins and replace with the bins held in ParticleList
 		Bins distbins;           //Original Distribution Bins - represents the binning of the equ of motion simulation
 		Bins satbins;            //Satellite Bins - represents how the data is binned and output from the satellite
 		IonosphereSpecs ionsph;  //Ionosphere Parameters (for multi-level scattering)
 
-		//Satellite and Maxwellian Data
-		dEflux_v1D   maxwellian; //maxwellian weights - "number of particles represented by the particle at same index"
-		ParticleData initial;    //initial particle data
-		ParticleData bottom;     //data on particles that escape out the bottom
-		ParticleData upward;     //data on particles that are upgoing at satellite
-		ParticleData dnward;     //data on particles that are downgoing at satellite
+		dEflux_v1D maxwellian;   //maxwellian weights - "number of particles represented by the particle at same index"
 
-		string datadir;          //directory where sim data is stored
+		//Satellite Data
+		ParticleList initial;    //initial particle data
+		ParticleList ionosph;    //data of particles that escape to the ionosphere (bottom of PTEM)
+		ParticleList upgoing;    //data of particles that are upgoing at satellite
+		ParticleList dngoing;    //data of particles that are downgoing at satellite
+
+		ParticlesBinned<size_t> initial1DToDistbins2DMapping;
 
 		EOMSimData(IonosphereSpecs& ionosphere, MaxwellianSpecs& maxspecs, Bins& distribution, Bins& satellite, string dir_simdata, string name_particle, string name_btmsat, string name_upgsat, string name_dngsat);
 	};

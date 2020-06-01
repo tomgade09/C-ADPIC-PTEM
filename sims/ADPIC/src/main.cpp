@@ -27,7 +27,7 @@ using std::string;
 using std::logic_error;
 using ionosphere::Bins;
 using ionosphere::EOMSimData;
-using ionosphere::ParticleData;
+using ionosphere::ParticleList;
 using ionosphere::MaxwellianSpecs;
 using ionosphere::IonosphereSpecs;
 using utils::numerical::generateSpacedValues;
@@ -80,9 +80,9 @@ namespace debug
 	{
 		if (eomdata.qspsCount > 0) throw logic_error("ADPIC::debug::setIdealSatDists: QSPS exists.  This function does not work with QSPS.");
 
-		ParticleData btm(eomdata.bottom.energy.size());
-		ParticleData upw(eomdata.upward.energy.size());
-		ParticleData dnw(eomdata.dnward.energy.size());
+		ParticleList btm(eomdata.ionosph.energy.size());
+		ParticleList upw(eomdata.upgoing.energy.size());
+		ParticleList dnw(eomdata.dngoing.energy.size());
 
 		for (int part = 0; part < eomdata.initial.energy.size(); part++)
 		{
@@ -123,9 +123,9 @@ namespace debug
 			}
 		}
 
-		eomdata.bottom = btm;
-		eomdata.upward = upw;
-		eomdata.dnward = dnw;
+		eomdata.ionosph = btm;
+		eomdata.upgoing = upw;
+		eomdata.dngoing = dnw;
 	}
 
 	void setRealMaxwellians(EOMSimData& eomdata)
@@ -404,7 +404,7 @@ int main(int argc, char* argv[])
 	//Ionosphere ionsph(2, 620000.0, 619999.9999);
 	//ionsph.addSpecies("ScatterAll", 1.0e6, [](double s) { return 1.0e30; });
 	/* End test ionosphere */
-	
+
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
 
@@ -425,7 +425,7 @@ int main(int argc, char* argv[])
 	debug::setRealMaxwellians(eomdata);
 
 	// Run Post Process Code
-	std::vector<std::vector<double>> fluxData;
+	vector<vector<double>> fluxData;
 	SIM_API_EXCEP_CHECK(fluxData = steadyFlux(eomdata));
 
 
