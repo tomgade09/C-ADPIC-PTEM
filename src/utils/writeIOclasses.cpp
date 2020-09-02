@@ -161,15 +161,15 @@ namespace utils
 
 
 		// ======== ParticleDistribution::Public ======== //
-		ParticleDistribution::ParticleDistribution(string saveFolder, vector<string> attrNames, string particleName, double mass, vector<double> padvals) :
-			saveFolder_m{ saveFolder }, attrNames_m{ attrNames }, particleName_m{ particleName }, mass_m{ mass }, padvals_m{ padvals }
+		ParticleDistribution::ParticleDistribution(string saveFolder, vector<string> attrNames, string particleName, double mass, vector<double> padvals, bool write) :
+			saveFolder_m{ saveFolder }, attrNames_m{ attrNames }, particleName_m{ particleName }, mass_m{ mass }, padvals_m{ padvals }, write_m{ write }
 		{//ctor(default) for shorthand
 			if (attrNames.size() == 0) throw invalid_argument("ParticleDistribution::ctor(default): invalid attributes - none specified");
 			if (particleName == "") throw invalid_argument("ParticleDistribution::ctor(default): invalid name - none specified");
 			if (mass <= 0.0) throw invalid_argument("ParticleDistribution::ctor(default): invalid mass - <= 0.0");
 		}
 
-		ParticleDistribution::ParticleDistribution(string serialFolder, string name) : write_m{ false }//, epabins_m{ make_unique<EPA>() }
+		ParticleDistribution::ParticleDistribution(string serialFolder, string name) : write_m{ false }
 		{//ctor(deserialize) for shorthand
 			deserialize(serialFolder, name);
 		}
@@ -229,20 +229,22 @@ namespace utils
 			return mass_m;
 		}
 
-		void ParticleDistribution::addEnergyRange(int energyBins, eV E_start, eV E_end, bool logE) //logE defaults to true
+		void ParticleDistribution::addEnergyRange(size_t energyBins, eV E_start, eV E_end, bool logE) //logE defaults to true
 		{ //if logE is true, pass in logE_start and logE_end for E_start and E_end
 		  //also E bins are mid bin and end point inclusive - |-x-|-x-|-x-|
 		  //                                            E_start ^       ^ E_end
 
+			if (energyBins == 0) throw invalid_argument("ParticleDistribution::addPitchRange: pitchBins is zero");
 			double E_binsize{ (E_end - E_start) / (double)(energyBins - 1) }; //minus 1 because E bins are end point inclusive
 			ranges_m.push_back(std::move(Range(Range::Type::energy, E_start, E_end, E_binsize, energyBins, logE)));
 		}
 
-		void ParticleDistribution::addPitchRange(int pitchBins, degrees PA_start, degrees PA_end, bool midBin) //midBin defaults to true
+		void ParticleDistribution::addPitchRange(size_t pitchBins, degrees PA_start, degrees PA_end, bool midBin) //midBin defaults to true
 		{ //regardless of whether or not midBin is specified, pass in PAs as edges of the whole range
 		  //          x---x---x---|          or          |-x-|-x-|-x-|
 		  // PA_start ^           ^ PA_end      PA_start ^           ^ PA_end
-
+			
+			if (pitchBins == 0) throw invalid_argument("ParticleDistribution::addPitchRange: pitchBins is zero");
 			double PA_binsize{ (PA_end - PA_start) / (double)pitchBins }; //no minus 1 because start and end are bin edges - not end point inclusive
 			ranges_m.push_back(std::move(Range(Range::Type::pitchAngle, PA_start, PA_end, PA_binsize, pitchBins, midBin)));
 		}
@@ -273,7 +275,7 @@ namespace utils
 					else if (range.type_m == Range::Type::pitchAngle)
 					{
 						degrees PA_start{ range.min_m };
-						degrees PA_end{ range.max_m };
+						degrees PA_end  { range.max_m };
 
 						if (range.optn_m) //optn_m is midBin
 						{ //if mid bin values are desired, adjust start and end range, and set endInclusive in generateSpacedValues
@@ -345,9 +347,6 @@ namespace utils
 		void ParticleDistribution::write(vector<meters>& s) const
 		{
 			vector<vector<double>> data{ generate(s) };
-
-			//cout << "Writing particle distribution:\n";
-			//printRanges();
 
 			try
 			{

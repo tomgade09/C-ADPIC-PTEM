@@ -178,6 +178,55 @@ void Particles::setParticlesSource_s(double s_ion, double s_mag)
 	copyDataToGPU();
 }
 
+void Particles::generateDist(size_t numEbins, eV E_min, eV E_max, size_t numPAbins, degrees PA_min, degrees PA_max, meters s_ion, meters s_mag)
+{
+	std::clog << "Particles::generateDist(numEbins: " << to_string(numEbins) << ", E_min: " << E_min << ", E_max: "
+		<< E_max << ", numPAbins: " << numPAbins << ", PA_min: " << PA_min << ", PA_max: " << PA_max << ", s_ion: "
+		<< s_ion << ", s_mag: " << s_mag << ")";
+
+	ParticleDistribution dist{ "./", attributeNames_m, name_m, mass_m, { 0.0, 0.0, 0.0, 0.0, -1.0 }, false };
+	dist.addEnergyRange(numEbins, E_min, E_max);   //defaults to log spaced bins, mid bin
+	dist.addPitchRange(numPAbins, PA_min, PA_max); //defaults to linear spaced bins, mid bin
+	origData_m = dist.generate(s_ion, s_mag);
+
+	initDataLoaded_m = true;
+	copyDataToGPU();
+}
+
+void Particles::loadDistFromPD(const ParticleDistribution& pd, meters s_ion, meters s_mag)
+{
+	std::clog << "Particles::loadDistFromPD(ParticleDistribution, s_ion: " << s_ion << ", s_mag: " << s_mag << ")";
+
+	origData_m = pd.generate(s_ion, s_mag);
+
+	initDataLoaded_m = true;
+	copyDataToGPU();
+}
+
+void Particles::loadDistFromPD(const ParticleDistribution& pd, vector<meters>& s)
+{
+	std::clog << "Particles::loadDistFromPD(ParticleDistribution, s vector)";
+
+	origData_m = pd.generate(s);
+
+	initDataLoaded_m = true;
+	copyDataToGPU();
+}
+
+void Particles::loadDistFromDisk(string folder, string distName, meters s_ion, meters s_mag)
+{
+	utils::fileIO::ParticleDistribution dist{ folder, distName };
+	
+	if (attributeNames_m != dist.attrNames())
+		throw logic_error("Particles::loadDistFromDisk: Particles attribute \
+			names do not match ParticleDistribution attribute names");
+	
+	origData_m = dist.generate(s_ion, s_mag);
+	
+	initDataLoaded_m = true;
+	copyDataToGPU();
+}
+
 void Particles::loadDataFromMem(vector<vector<double>> data, bool orig) //orig defaults to true
 {
 	((orig) ? origData_m = data : currData_m = data);

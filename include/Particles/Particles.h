@@ -5,11 +5,14 @@
 #include <string>
 
 #include "dlldefines.h"
+#include "utils/unitsTypedefs.h"
+#include "utils/writeIOclasses.h"
 
 using std::vector;
 using std::string;
 using std::ifstream;
 using std::ofstream;
+using utils::fileIO::ParticleDistribution;
 
 #define STRVEC vector<string>
 #define DBLVEC vector<double>
@@ -65,6 +68,10 @@ public:
 	//Other functions
 	void setParticlesSource_s(double s_ion, double s_mag);
 
+	void generateDist(size_t numEbins, eV E_min, eV E_max, size_t numPAbins, degrees PA_min, degrees PA_max, meters s_ion, meters s_mag);
+	void loadDistFromPD(const ParticleDistribution& pd, meters s_ion, meters s_mag);
+	void loadDistFromPD(const ParticleDistribution& pd, vector<meters>& s);
+	void loadDistFromDisk(string folder, string distName, meters s_ion, meters s_mag);
 	void loadDataFromMem(vector<vector<double>> data, bool orig = true);
 	void loadDataFromDisk(string folder, bool orig = true);
 	void saveDataToDisk(string folder, bool orig) const;

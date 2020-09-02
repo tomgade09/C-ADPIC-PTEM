@@ -48,8 +48,6 @@ namespace utils
 			struct Range; //energy || pitchAngle, range min, range max, step
 
 		protected:
-			//struct EPA;//consists of two vectors: Energy and Pitch Angle
-
 			string saveFolder_m;
 			STRVEC attrNames_m;
 			string particleName_m;
@@ -62,7 +60,7 @@ namespace utils
 			void deserialize(string serialFolder, string name);
 
 		public: //generate is dependent on vpara, vperp, and s being the first three attributes - if not, this will have to be modified
-			ParticleDistribution(string saveFolder, vector<string> attrNames = { "vpara", "vperp", "s", "t_inc", "t_esc" }, string particleName = "elec", double mass = MASS_ELECTRON, vector<double> padvals = { 0.0, 0.0, 0.0, 0.0, -1.0});
+			ParticleDistribution(string saveFolder, vector<string> attrNames = { "vpara", "vperp", "s", "t_inc", "t_esc" }, string particleName = "elec", double mass = MASS_ELECTRON, vector<double> padvals = { 0.0, 0.0, 0.0, 0.0, -1.0}, bool write = true);
 			ParticleDistribution(string serialFolder, string name);
 			ParticleDistribution(const ParticleDistribution& PD);
 			~ParticleDistribution(); //writes on destruction
@@ -74,8 +72,8 @@ namespace utils
 			string particleName() const;
 			double mass() const;
 
-			void addEnergyRange(int energyBins, eV E_start, eV E_end, bool logE = true);
-			void addPitchRange(int pitchBins, degrees PA_start, degrees PA_end, bool midBin = true);
+			void addEnergyRange(size_t energyBins, eV E_start, eV E_end, bool logE = true);
+			void addPitchRange(size_t pitchBins, degrees PA_start, degrees PA_end, bool midBin = true);
 			vector<vector<double>> generate(meters s_ion, meters s_mag) const;
 			vector<vector<double>> generate(vector<meters>& s) const;
 			void write(meters s_ion, meters s_mag) const;

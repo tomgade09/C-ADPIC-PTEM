@@ -26,7 +26,7 @@ namespace ionosphere
 
 		ParticleList(); //empty constructor for making an empty ParticleList
 		ParticleList(size_t size, bool EPA_only = true);
-		ParticleList(double_v1D& v_para, double_v1D& v_perp, double mass); //calculates E, Pitch automagically
+		ParticleList(const double_v1D& v_para, const double_v1D& v_perp, double mass);
 
 		void clear();
 	};
@@ -47,15 +47,42 @@ namespace ionosphere
 	protected:
 		Bins(); //usually don't want to be able to create an empty bin, but it's necessary for an empty ParticleList
 
-		friend class ParticleList;
+		//friend class ParticleList;
 		template <typename T>
 		friend class ParticlesBinned;
 
+		template <typename T>
+		struct binBounds
+		{
+			T lower{ 0.0 };
+			T mid{ 0.0 };
+			T upper{ 0.0 };
+		};
+
 	public:
+		//bin boundaries
+		//vector<eV>      E_min;
+		//vector<degrees> PA_min;
 		vector<eV>      E;
 		vector<degrees> PA;
+		//vector<eV>      E_max;
+		//vector<degrees> PA_max;
 
-		Bins(vector<eV>& E_bins, vector<degrees>& PA_bins);
+		vector<binBounds<eV>>      E_bounds;
+		vector<binBounds<degrees>> PA_bounds;
+
+		//dist between bins
+		eV      dlogE_bin{ 0.0 };
+		degrees dangle_bin{ 0.0 };
+
+		//bins ascending or descending?
+		bool E_ascending{ false };
+		bool A_ascending{ false };
+
+		//maybe add machinery to (force) create the bins through this class instead feeding in preformed vectors
+		//this would ensure distance between bins is even
+
+		Bins(const vector<eV>& E_bins, const vector<degrees>& PA_bins);
 		Bins(const Bins& copy);
 
 		bool operator==(const Bins& other) const;

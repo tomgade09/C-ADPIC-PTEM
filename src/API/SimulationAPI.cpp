@@ -42,20 +42,31 @@ DLLEXP_EXTC void terminateSimulationAPI(Sim* sim) {
 
 DLLEXP_EXTC void setupExampleSimulationAPI(Sim* sim, int numParts, const char* loadFileDir)
 {
-	SIM_API_EXCEP_CHECK(
-		sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
-		//sim->setBFieldModel("DipoleB", { 72.0 });
-		//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
+	//SIM_API_EXCEP_CHECK(
+	sim->setBFieldModel("DipoleBLUT", { 72.0, 637.12, 1000000 });
+	//sim->setBFieldModel("DipoleB", { 72.0 });
+	//sim->addEFieldModel("QSPS", { 3185500.0, 6185500.0, 0.02, 6556500.0, 9556500.0, 0.04 });
 
-		sim->createParticlesType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
+	sim->createParticlesType("elec", MASS_ELECTRON, -1 * CHARGE_ELEM, numParts, loadFileDir);
 
-		sim->createTempSat(0, sim->simMin(), true, "btmElec");
-		sim->createTempSat(0, sim->simMax(), false, "topElec");
-		sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
-		sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
+	sim->createTempSat(0, sim->simMin(), true, "btmElec");
+	sim->createTempSat(0, sim->simMax(), false, "topElec");
+	sim->createTempSat(0, 4071307.04106411, false, "4e6ElecUpg");
+	sim->createTempSat(0, 4071307.04106411, true, "4e6ElecDng");
 
-		sim->particles(0)->setParticlesSource_s(sim->simMin(), sim->simMax());
-	); /* SIM_API_EXCEP_CHECK() */
+	//sim->particles(0)->setParticlesSource_s(sim->simMin(), sim->simMax());
+	//std::cout << "\n\nIn setupExampleSimulationAPI - Particles::generateDist(96, 0.5, 4.5, 36000, 180.0, 0.0, sim->simMin(), sim->simMax())\n\n\n";
+	//sim->particles(0)->generateDist(96, 0.5, 4.5, 36000, 180.0, 0.0, sim->simMin(), sim->simMax());
+
+	ParticleDistribution pd{ "./", sim->particles(0)->attributeNames(), sim->particles(0)->name(),
+		sim->particles(0)->mass(), { 0.0, 0.0, 0.0, 0.0, -1.0 }, false };
+	pd.addEnergyRange(96, 0.5, 4.5);
+	pd.addPitchRange(18000, 180.0, 90.0);
+	pd.addPitchRange(18000, 16.0, 0.0);
+	//pd.addPitchRange(36000, 180.0, 0.0);
+
+	sim->particles(0)->loadDistFromPD(pd, sim->simMin(), sim->simMax());
+	//); /* SIM_API_EXCEP_CHECK() */
 }
 
 DLLEXP_EXTC void setupSingleElectronAPI(Sim* sim, double vpara, double vperp, double s, double t_inc)

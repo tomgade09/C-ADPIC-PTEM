@@ -373,11 +373,25 @@ int main(int argc, char* argv[])
 	//
 	//
 	// Remove ~3.1 to 5ish eV bins (to more closely approximate FAST)
-	vector<double> newEsatbin;
-	for (size_t bin = 3; bin < satbins.E.size(); bin++)
-		newEsatbin.push_back(satbins.E.at(bin));
-
-	satbins.E = newEsatbin;
+	try
+	{
+		for (size_t delbin = 0; delbin < satbins.E.size(); delbin++)
+		{
+			if (satbins.E.at(delbin) > 5.0) break;
+			if (delbin > 2)
+			{
+				cout << "ADPIC::main(): more than 3 bins are being deleted.  Maybe this is expected, maybe not.  Look into it.  Breaking loop.\n";
+				break;
+			}
+			satbins.E.erase(satbins.E.begin());
+			satbins.E_bounds.erase(satbins.E_bounds.begin());
+		}
+	}
+	catch (std::exception& e)
+	{
+		cout << e.what();
+		exit(1);
+	}
 	//
 	//
 	//
@@ -407,7 +421,7 @@ int main(int argc, char* argv[])
 
 	EOMSimData eomdata{ ionsph, maxwellian, distbins, satbins,
 		args.simdatadir, PARTNAME, BTMSATNM, UPGSATNM, DNGSATNM };
-
+	
 	try
 	{
 		if (eomdata.qspsCount > 0 && abs(1.0 - NFLUXMAGRATIO) > FLT_EPSILON)

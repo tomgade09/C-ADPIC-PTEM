@@ -20,8 +20,17 @@ using ionosphere::Bins;
 using ionosphere::ParticlesBinned;
 using ionosphere::IonosphereSpecs;
 
-
+//diagnostic things
+//remove later
 vector<ParticlesBinned<dNflux>> UPWARDDATA_G;
+vector<eV> EBINS_DIAG{ generateSpacedValues(0.5, 4.5, 5, true, true) };
+//vector<degrees> PABINS_DIAG{ generateSpacedValues(2.5, 177.5, 36, false, true) };
+//vector<degrees> PABINS_DIAG{ generateSpacedValues(1.25, 178.75, 72, false, true) };
+//vector<degrees> PABINS_DIAG{ generateSpacedValues(0.625, 179.375, 144, false, true) };
+//vector<degrees> PABINS_DIAG{ generateSpacedValues(90.0 / 216.0, 180.0 - 90.0 / 216.0, 216, false, true) };
+vector<degrees> PABINS_DIAG{ generateSpacedValues(0.3125, 179.6875, 288, false, true) };
+//
+//
 
 inline void printIonosphere(const IonosphereSpecs& ionsph)
 {
@@ -189,7 +198,7 @@ namespace ionosphere
 		
 		TESTVEC_NOTNEGWHOLEVEC(eomdata.maxwellian, "Maxwellian distribution");
 		
-		cout << "\n\nusing nasty global.  Make sure to remove after diagnostics.\n\n\n";
+		cout << "\n\nUsing nasty global.  Make sure to remove after diagnostics.\n\n\n";
 
 		// 2. Calculate dEfluxes
 		ParticlesBinned<dEflux> ptemflux{ dEFlux::satellite(eomdata) }; // dE flux due to PTEM simulation
@@ -249,12 +258,11 @@ namespace ionosphere
 
 			TESTVEC_NOTNEGWHOLEVEC(distribution_sat, "satellite::maxwellian_sat");
 
-
 			// Section 2 - Get dEflux at Satellite - upward and downward
 			// 1. Bin Particles by Satellite Detector PA, Energy Bins
 			ParticlesBinned<dEflux> upgoing{ eomdata.satbins.binParticleList(eomdata.upgoing, distribution_sat) };
 			ParticlesBinned<dEflux> dngoing{ eomdata.satbins.binParticleList(eomdata.dngoing, distribution_sat) };
-
+			
 			TESTVEC_ISZEROFRSTHALF(upgoing.binnedData, "satellite::upgoing");
 			TESTVEC_ISZEROLASTHALF(dngoing.binnedData, "satellite::dngoing");
 
@@ -345,18 +353,6 @@ namespace ionosphere
 			BS'_scnd(x) = d_sec / (scnd_logm + 1) * x ^ (scnd_logm + 1)
 			BS'_prim(x) = d_pri / (prim_logm + 1) * x ^ (prim_logm + 1), if x > E_incident, BS_scnd||prim = 0
 		*/
-
-		//constexpr double EVANS_PRIM_LOGM{ 1.5 };  //obtained by log linefitting Evans, 1974 - these seem closest
-		//constexpr double EVANS_PRIM_LOGB{ -4.0 };
-		//constexpr double EVANS_SECD_LOGM{ -2.1 };
-		//constexpr double EVANS_SECD_LOGB{ 0.3 };
-
-		//constexpr double JOHND_PRIM_LOGM{ 1.132 };
-		//constexpr double JOHND_PRIM_LOGB{ -4.90 };
-		//constexpr double JOHND_SECD_LOGM_LT10{ -1.0 };
-		//constexpr double JOHND_SECD_LOGB_LT10{ -2.5 };
-		//constexpr double JOHND_SECD_LOGM_GT10{ -2.245 };
-		//constexpr double JOHND_SECD_LOGB_GT10{  0.153 };
 
 		constexpr double JOHND_PRIM_LOGM{ 0.505 };
 		constexpr double JOHND_PRIM_LOGB{ -5.16 };
@@ -539,9 +535,7 @@ namespace ionosphere
 			// diagnostics
 			// mirror / sum all below layers, output to csv
 			{
-				vector<eV> Ebins{ generateSpacedValues(0.5, 4.5, 5, true, true) };
-				vector<degrees> PAbins{ generateSpacedValues(1.25, 178.75, 72, false, true) };
-				Bins diagbins(Ebins, PAbins);
+				Bins diagbins(EBINS_DIAG, PABINS_DIAG);
 
 				ParticlesBinned<dNflux> lastLayer;
 				lastLayer.binnedData = vector<vector<dNflux>>(eom.distbins.PA.size(), vector<dNflux>(eom.distbins.E.size()));
@@ -783,23 +777,26 @@ namespace ionosphere
 			debug::outputVectorsToCSV("debug/level dN/refl_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
 				reflBinned.binnedData, eom.distbins.PA, 1, 17500, 18000); //should be very close to 90 degrees
 			
+			if (level == 0) cout << "\n\n================\n\nNeed constructor to force ParticlesBinned to take a Bins instance\n\n================\n\n";
+
 			{
 				ParticleList refldiag;
 				ParticleList scatdiag;
 				ParticleList upwddiag;
 				ParticleList downdiag;
+				ParticleList initial_ionsph_top;
 				
 				for (size_t ang = 0; ang < eom.distbins.PA.size(); ang++)
 				{
 					for (size_t eny = 0; eny < eom.distbins.E.size(); eny++)
 					{
-						refldiag.energy.push_back(eom.distbins.E.at(eny));
-						refldiag.pitch.push_back(eom.distbins.PA.at(ang));
-						refldiag.count.push_back(reflBinned.binnedData.at(ang).at(eny) * eom.distbins.E.at(eny));
+						refldiag.energy.push_back(reflBinned.bins.E.at(eny));
+						refldiag.pitch.push_back(reflBinned.bins.PA.at(ang));
+						refldiag.count.push_back(reflBinned.binnedData.at(ang).at(eny) * reflBinned.bins.E.at(eny));
 
-						scatdiag.energy.push_back(eom.distbins.E.at(eny));
-						scatdiag.pitch.push_back(eom.distbins.PA.at(ang));
-						scatdiag.count.push_back(scatBinned.binnedData.at(ang).at(eny) * eom.distbins.E.at(eny));
+						scatdiag.energy.push_back(scatBinned.bins.E.at(eny));
+						scatdiag.pitch.push_back(scatBinned.bins.PA.at(ang));
+						scatdiag.count.push_back(scatBinned.binnedData.at(ang).at(eny) * scatBinned.bins.E.at(eny));
 						
 						upwddiag.energy.push_back(eom.distbins.E.at(eny));
 						upwddiag.pitch.push_back(eom.distbins.PA.at(ang));
@@ -822,31 +819,44 @@ namespace ionosphere
 
 						if (downwardNewPA < 0.0) continue;
 						if (diagcopyPctScatteredAbove.at(ang).at(eny) > (1.0 - FLT_EPSILON)) continue;
-
-						downdiag.energy.push_back(eom.distbins.E.at(eny));
+						
+						downdiag.energy.push_back(dNionsphTop.bins.E.at(eny));
 						downdiag.pitch.push_back(downwardNewPA);
 						downdiag.count.push_back((1.0 - diagcopyPctScatteredAbove.at(ang).at(eny))
-							* dNionsphTop.binnedData.at(ang).at(eny)* eom.distbins.E.at(eny));// / abs(cos(eom.distbins.PA.at(ang) * RADS_PER_DEG)));
+							* dNionsphTop.binnedData.at(ang).at(eny)* dNionsphTop.bins.E.at(eny));// / abs(cos(eom.distbins.PA.at(ang) * RADS_PER_DEG)));
+						
+						if (level == 0)
+						{
+							initial_ionsph_top.energy.push_back(eom.distbins.E.at(eny));
+							initial_ionsph_top.pitch.push_back(eom.distbins.PA.at(ang));
+							initial_ionsph_top.count.push_back(dNionsphTop.binnedData.at(ang).at(eny) * eom.distbins.E.at(eny));
+						}
 					}
 				}
 
-				vector<eV> Ebins{ generateSpacedValues(0.5, 4.5, 5, true, true) };
-				vector<degrees> PAbins{ generateSpacedValues(1.25, 178.75, 72, false, true) };
-				Bins diagbins(Ebins, PAbins);
+				Bins diagbins(EBINS_DIAG, PABINS_DIAG);
 
 				ParticlesBinned<dNflux> reflbin{ diagbins.binParticleList(refldiag, refldiag.count) };
 				ParticlesBinned<dNflux> scatbin{ diagbins.binParticleList(scatdiag, scatdiag.count) };
 				ParticlesBinned<dNflux> downbin{ diagbins.binParticleList(downdiag, downdiag.count) };
 				ParticlesBinned<dNflux> upwdbin{ diagbins.binParticleList(upwddiag, upwddiag.count) };
 
+				if (level == 0)
+				{
+					cout << "_ionsph_top.csv\n";
+					ParticlesBinned<dNflux> top_ionsph_downward{ diagbins.binParticleList(initial_ionsph_top, initial_ionsph_top.count) };
+					debug::outputVectorsToCSV("debug/_forjohn/dEvsPA/_ionsph_top.csv", top_ionsph_downward.binnedData, top_ionsph_downward.bins.PA);
+					cout << "complete\n";
+				}
+
 				debug::outputVectorsToCSV("debug/_forjohn/dEvsPA/dn_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
-					downbin.binnedData, diagbins.PA);
+					downbin.binnedData, downbin.bins.PA);
 				debug::outputVectorsToCSV("debug/_forjohn/dEvsPA/up_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
-					upwdbin.binnedData, diagbins.PA);
+					upwdbin.binnedData, upwdbin.bins.PA);
 				debug::outputVectorsToCSV("debug/_forjohn/dEvsPA/scat_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
-					scatbin.binnedData, diagbins.PA);
+					scatbin.binnedData, scatbin.bins.PA);
 				debug::outputVectorsToCSV("debug/_forjohn/dEvsPA/refl_" + to_string((int)eom.ionsph.s.at(level)) + ".csv",
-					reflbin.binnedData, diagbins.PA);
+					reflbin.binnedData, reflbin.bins.PA);
 			}
 			
 			// End spit out csv files

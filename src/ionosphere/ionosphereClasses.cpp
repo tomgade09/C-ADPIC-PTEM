@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <iterator>
 
-
 #include "ionosphere/ionosphere.h"
 #include "utils/numerical.h"
 #include "utils/silenceStreamMacros.h"
@@ -23,8 +22,8 @@ namespace ionosphere
 		//creates an empty ParticleList with vectors of size 0
 	}
 
-	ParticleList::ParticleList(double_v1D& v_para, double_v1D& v_perp, double mass) :
-		vpara{ move(v_para) }, vperp{ move(v_perp) } //auto calculate E, Pitch
+	ParticleList::ParticleList(const double_v1D& v_para, const double_v1D& v_perp, double mass) :
+		vpara{ v_para }, vperp{ v_perp }
 	{
 		utils::numerical::v2DtoEPitch(vpara, vperp, mass, energy, pitch);
 	}
@@ -84,22 +83,68 @@ namespace ionosphere
 	//
 	//Bins
 	//
-	Bins::Bins() //protected
+	Bins::Bins() : E{ vector<eV>() }, PA{ vector<degrees>() } //protected
 	{
-		E = vector<eV>();
-		PA = vector<degrees>();
+		E_bounds = vector<binBounds<eV>>();
+		PA_bounds = vector<binBounds<degrees>>();
 	}
 
-	Bins::Bins(vector<eV>& E_bins, vector<degrees>& PA_bins) :
-		E{ E_bins }, PA{ PA_bins }
+	Bins::Bins(const vector<eV>& E_midbins, const vector<degrees>& PA_midbins) :
+		E{ E_midbins }, PA{ PA_midbins }
 	{
+		dlogE_bin = std::abs(log10(E_midbins.at(1)) - log10(E_midbins.at(0)));
+		dangle_bin = std::abs(PA_midbins.at(1) - PA_midbins.at(0));
 
+		E_ascending = E_midbins.back() > E_midbins.front();
+		A_ascending = PA_midbins.back() > PA_midbins.front();
+
+		for (size_t eny = 0; eny < E_midbins.size(); eny++)
+		{
+			E_bounds.push_back(binBounds<eV>());
+			E_bounds.at(eny).mid = E_midbins.at(eny);
+
+			if (E_ascending)
+			{ //calculate bin boundaries, set next lower bound to prev upper bound
+				E_bounds.at(eny).upper = pow(10, log10(E_bounds.at(eny).mid) + (0.5 * dlogE_bin));
+				
+				if (eny == 0) E_bounds.at(eny).lower = pow(10, log10(E_bounds.at(eny).mid) - (0.5 * dlogE_bin));
+				else          E_bounds.at(eny).lower = E_bounds.at(eny - 1).upper;
+			}
+			else
+			{ //calculate bin boundaries, set next upper bound to prev lower bound
+				E_bounds.at(eny).lower = pow(10, log10(E_bounds.at(eny).mid) - (0.5 * dlogE_bin));
+				
+				if (eny == 0) E_bounds.at(eny).upper = pow(10, log10(E_bounds.at(eny).mid) + (0.5 * dlogE_bin));
+				else          E_bounds.at(eny).upper = E_bounds.at(eny - 1).lower;
+			}
+		}
+
+		for (size_t ang = 0; ang < PA_midbins.size(); ang++)
+		{
+			PA_bounds.push_back(binBounds<degrees>());
+			PA_bounds.at(ang).mid = PA_midbins.at(ang);
+
+			if (A_ascending)
+			{ //calculate bin boundaries, set next lower bound to prev upper bound
+				PA_bounds.at(ang).upper = PA_bounds.at(ang).mid + (0.5 * dangle_bin);
+
+				if (ang == 0) PA_bounds.at(ang).lower = PA_bounds.at(ang).mid - (0.5 * dangle_bin);
+				else          PA_bounds.at(ang).lower = PA_bounds.at(ang - 1).upper;
+			}
+			else
+			{ //calculate bin boundaries, set next upper bound to prev lower bound
+				PA_bounds.at(ang).lower = PA_bounds.at(ang).mid - (0.5 * dangle_bin);
+
+				if (ang == 0) PA_bounds.at(ang).upper = PA_bounds.at(ang).mid + (0.5 * dangle_bin);
+				else          PA_bounds.at(ang).upper = PA_bounds.at(ang - 1).lower;
+			}
+		}
 	}
 
-	Bins::Bins(const Bins& copy)
+	Bins::Bins(const Bins& copy) : E{ copy.E }, PA{ copy.PA }, E_bounds{ copy.E_bounds }, PA_bounds{ copy.PA_bounds },
+		dlogE_bin{ copy.dlogE_bin }, dangle_bin{ copy.dangle_bin }, E_ascending{ copy.E_ascending }, A_ascending{ copy.A_ascending }
 	{
-		E = copy.E;
-		PA = copy.PA;
+		
 	}
 
 	template <typename T>
@@ -110,92 +155,185 @@ namespace ionosphere
 		
 		ParticlesBinned<T> ret;
 		ret.binnedData = vector<vector<T>>(PA.size(), vector<T>(E.size()));
+		ret.bins = *this;
 
-		bool Eascending{ (E.back() > E.front()) };   //determines whether or not bin E's ascend from less E to more E as ind increases
-		bool Aascending{ (PA.back() > PA.front()) }; //same for angle
-
-		double Emax{ Eascending ? E.back() : E.front() };
-		double Emin{ !Eascending ? E.back() : E.front() };
-		double Amax{ Aascending ? PA.back() : PA.front() };
-		double Amin{ !Aascending ? PA.back() : PA.front() };
-
-		double dlogE_bin{ std::abs(log10(E.at(1)) - log10(E.at(0))) };
-		double dangle_bin{ std::abs(PA.at(1) - PA.at(0)) };
+		//overall boundaries
+		eV      E_max{ E_ascending ? E_bounds.back().upper : E_bounds.front().upper };
+		eV      E_min{ E_ascending ? E_bounds.front().lower : E_bounds.back().lower };
+		degrees A_max{ A_ascending ? PA_bounds.back().upper : PA_bounds.front().upper };
+		degrees A_min{ A_ascending ? PA_bounds.front().lower : PA_bounds.back().lower };
 
 		int outsideLimits{ 0 };
+		int FPE{ 0 };
 
 		for (size_t part = 0; part < particles.energy.size(); part++) //iterate over particles
 		{
-			eV      partEnerg{ particles.energy.at(part) };
-			degrees partPitch{ particles.pitch.at(part) };
-
+			const eV      partEnerg{ particles.energy.at(part) };
+			const degrees partPitch{ particles.pitch.at(part) };
+			
 			if ((partEnerg == 0.0 && partPitch == 0.0) || weightPerParticle.at(part) == 0.0)
-				continue;                                               //guards - if particle E, PA is zero, it wasnt detected - just skip it
-			if (partEnerg > pow(10, log10(Emax) + (0.5 * dlogE_bin)) || //if particle is outside E, PA measured limits - skip it
-				partEnerg < pow(10, log10(Emin) - (0.5 * dlogE_bin)) || //PA shouldn't be an issue, there just in case
-				partPitch > Amax + (0.5 * dangle_bin) ||                //also, code counts how many are outside limits for diagnostics
-				partPitch < Amin - (0.5 * dangle_bin))
+				continue;             //guards - if particle E, PA is zero, it wasnt detected - just skip it
+			if (partEnerg >= E_max || //if particle is outside E, PA measured limits - skip it
+				partEnerg <  E_min ||
+				partPitch >= A_max || //PA shouldn't be an issue, there just in case
+				partPitch <  A_min)   //also, code counts how many are outside limits for diagnostics
 			{
+				if (partPitch >= 180.0 ||
+					partPitch <  0.0)
+				{
+					throw logic_error("Bins::binParticleList: particle outside 0-180 degrees - partPitch: " + to_string(partPitch));
+				}
+				
 				outsideLimits++;
 				continue;
 			}
-
+			
 			//calculate bin index for E, PA of particle
-			size_t angbin{ static_cast<size_t>(std::floor(partPitch / dangle_bin)) }; //this should give the bin index
-			size_t enybin{ static_cast<size_t>(std::floor((log10(partEnerg) - (log10(Emin) - 0.5 * dlogE_bin)) / dlogE_bin)) }; //ditto
-			if (!Eascending) enybin = E.size() - 1 - enybin; //reverses the bin index if E is descending
-			if (!Aascending) angbin = PA.size() - 1 - angbin; //ditto for PA
-
-			if (partEnerg >= pow(10, log10(E.at(enybin)) - 0.5 * dlogE_bin) && //E bin min
-				partEnerg <  pow(10, log10(E.at(enybin)) + 0.5 * dlogE_bin) && //E bin max
-				partPitch >= PA.at(angbin) - 0.5 * dangle_bin && //A bin min
-				partPitch <  PA.at(angbin) + 0.5 * dangle_bin) //A bin max
+			size_t angbin{ static_cast<size_t>(partPitch / dangle_bin) }; //this should give the bin index
+			size_t enybin{ static_cast<size_t>((log10(partEnerg) - log10(E_ascending ? E_bounds.front().lower : E_bounds.back().lower)) / dlogE_bin) }; //ditto
+			if (!E_ascending) enybin = E.size() - 1 - enybin; //reverses the bin index if E is descending
+			if (!A_ascending) angbin = PA.size() - 1 - angbin; //ditto for PA
+			
+			const auto putInBin = [&](const size_t abin, const size_t ebin)
 			{
+				if (partEnerg >= E_bounds.at(ebin).lower && //E bin min
+					partEnerg <  E_bounds.at(ebin).upper && //E bin max
+					partPitch >= PA_bounds.at(abin).lower && //A bin min
+					partPitch <  PA_bounds.at(abin).upper)   //A bin max
+				{
+					try
+					{
+						conditionCheck(ret.binnedData.at(abin).at(ebin));
+					}
+					catch (std::exception& e)
+					{
+						cout << "Condition Check failed.  " << e.what() << "\n";
+						exit(1);
+					}
+
+					ret.binnedData.at(abin).at(ebin) += weightPerParticle.at(part);
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			};
+			
+			if (!putInBin(angbin, enybin)) //has side effect of putting in bin / running this lambda
+			{
+				/*stringstream ss;
+
+				ss << "================  PitchA  ================\n\n";
+
+				ss << std::fixed;
+				ss << std::setprecision(16);
+				ss << "\npartPitch: " << partPitch << "\n";
+				ss << "dangle_Bin: " << dangle_bin << "\n";
+				ss << "partPitch / dangle_bin: " << partPitch / dangle_bin << "\n";
+				ss << "static_cast<size_t> ^^: " << static_cast<size_t>(partPitch / dangle_bin) << "\n\n";
+
+				ss << "A_ascending: " << A_ascending << "\n";
+				ss << "pa bin:                 " << angbin << "\n";
+				ss << "pa at bin:              " << PA.at(angbin) << "\n";
+				ss << "0.5 * dangle_bin:       " << 0.5 * dangle_bin << "\n\n";
+
+
+
+				ss << "================  Energy  ================\n\n";
+
+				ss << "\npartEnerg: " << partEnerg << "\n";
+				ss << "dlogE_Bin: " << dlogE_bin << "\n";
+				ss << "E_ascending ? E_bounds.front().lower : E_bounds.back().lower" << (E_ascending ? E_bounds.front().lower : E_bounds.back().lower) << "\n";
+				ss << "log10(partEnerg) - log10(low) / dlogE_bin: " << (log10(partEnerg) - log10(E_ascending ? E_bounds.front().lower : E_bounds.back().lower)) / dlogE_bin << "\n";
+				ss << "static_cast<size_t> ^^: " << static_cast<size_t>((log10(partEnerg) - log10(E_ascending ? E_bounds.front().lower : E_bounds.back().lower)) / dlogE_bin) << "\n\n";
+
+				ss << "E_ascending: " << E_ascending << "\n";
+				ss << "E bin:                 " << enybin << "\n";
+				ss << "E  at bin:             " << E.at(enybin) << "\n";
+				ss << "0.5 * dlogE_bin:       " << 0.5 * dlogE_bin << "\n\n";
+
+				ss << "gte energy: " << partEnerg << " >= " << pow(10, log10(E.at(enybin)) - 0.5 * dlogE_bin);
+				ss << "  " << (partEnerg >= pow(10, log10(E.at(enybin)) - 0.5 * dlogE_bin)) << "\n";
+				ss << "lt  energy: " << partEnerg << " < " << pow(10, log10(E.at(enybin)) + 0.5 * dlogE_bin);
+				ss << "  " << (partEnerg < pow(10, log10(E.at(enybin)) + 0.5 * dlogE_bin)) << "\n";
+				ss << "gte pitch: " << partPitch << " >= " << PA.at(angbin) - 0.5 * dangle_bin;
+				ss << "  " << (partPitch >= PA.at(angbin) - 0.5 * dangle_bin) << "\n";
+				ss << "gte pitch diff: " << partPitch - (PA.at(angbin) - 0.5 * dangle_bin) << "\n";
+				ss << "lt  pitch: " << partPitch << " < " << PA.at(angbin) + 0.5 * dangle_bin;
+				ss << "  " << (partPitch < PA.at(angbin) + 0.5 * dangle_bin) << "\n";
+				ss << "lt  pitch diff: " << (PA.at(angbin) + 0.5 * dangle_bin) - partPitch << "\n";
+
+				ss << "index: " << part << "\n";
+				ss << "ang: " << partPitch << "\n";
+				ss << "eny: " << partEnerg << "\n";
+
+				ss << "\n================================================================\n\n";
+				
+				cout << ss.str();
+
+				exit(1);*/
+
+				if (partEnerg < E_bounds.at(enybin).lower) enybin -= E_ascending ? 1 : -1;
+				else if (partEnerg >= E_bounds.at(enybin).upper) enybin += E_ascending ? 1 : -1;
+
+				if (partPitch < PA_bounds.at(angbin).lower) angbin -= A_ascending ? 1 : -1;
+				else if (partPitch >= PA_bounds.at(angbin).upper) angbin += A_ascending ? 1 : -1;
+				
 				try
 				{
-					conditionCheck(ret.binnedData.at(angbin).at(enybin));
+					if (enybin > E.size() - 1)
+						throw logic_error("enybin");
+					if (angbin > PA.size() - 1)
+						throw logic_error("angbin");
 				}
 				catch (std::exception& e)
 				{
-					eV      oldPartEnerg{ particles.energy.at(ret.binnedData.at(angbin).at(enybin)) };
-					degrees oldPartPitch{ particles.pitch.at(ret.binnedData.at(angbin).at(enybin)) };
-					size_t  oldangbin{ static_cast<size_t>(std::floor(oldPartPitch / dangle_bin)) };
-					size_t  oldenybin{ static_cast<size_t>(std::floor((log10(oldPartEnerg) - (log10(Emin) - 0.5 * dlogE_bin)) / dlogE_bin)) };
-					if (!Eascending) oldenybin = E.size() - 1 - oldenybin; //reverses the bin index if E is descending
-					if (!Aascending) oldangbin = PA.size() - 1 - oldangbin; //ditto for PA
-
 					cout << e.what() << "\n";
-					cout << "part idx:   " << part << "\n";
-					cout << "bin val:    " << ret.binnedData.at(angbin).at(enybin) << "\n";
-
-					cout << "\n======== particle in bin  ========\n";
-					cout << "part pitch: " << oldPartPitch << ", part eng: " << oldPartEnerg << "\n";
-					cout << "ang bin:   " << oldangbin << "\n";
-					cout << "eny bin:   " << oldenybin << "\n";
-					cout << "ang min:   " << PA.at(oldangbin) - 0.5 * dangle_bin << ", ang max: "
-						<< PA.at(oldangbin) + 0.5 * dangle_bin << "\n";
-					cout << "eny min:   " << pow(10, log10(E.at(oldenybin)) - 0.5 * dlogE_bin) << ", eny max: " 
-						<< pow(10, log10(E.at(oldenybin)) + 0.5 * dlogE_bin) << "\n";
-					
-					cout << "\n======== current particle ========\n";
-					cout << "part pitch: " << partPitch << ", part eng: " << partEnerg << "\n";
-					cout << "ang bin:    " << angbin << "\n";
-					cout << "eny bin:    " << enybin << "\n";
-					cout << "ang min:   " << PA.at(angbin) - 0.5 * dangle_bin << ", ang max: "
-						<< PA.at(angbin) + 0.5 * dangle_bin << "\n";
-					cout << "eny min:   " << pow(10, log10(E.at(enybin)) - 0.5 * dlogE_bin) << ", eny max: "
-						<< pow(10, log10(E.at(enybin)) + 0.5 * dlogE_bin) << "\n";
+					//cout << ss.str();
 					exit(1);
 				}
 
-				ret.binnedData.at(angbin).at(enybin) += weightPerParticle.at(part);
+				FPE++;
+				
+				if (!putInBin(angbin, enybin))
+				{
+					cout << std::fixed;
+					cout << std::setprecision(16);
+					cout << "\npartPitch: " << partPitch << "\n";
+					cout << "dangle_Bin: " << dangle_bin << "\n";
+					cout << "partPitch / dangle_bin: " << partPitch / dangle_bin << "\n";
+					cout << "static_cast<size_t> ^^: " << static_cast<size_t>(partPitch / dangle_bin) << "\n\n";
+
+					cout << "pa at bin:              " << PA.at(angbin) << "\n";
+					cout << "0.5 * dangle_bin:       " << 0.5 * dangle_bin << "\n\n";
+
+					cout << "pa at bin precise:      " << PA.at(angbin) << "\n\n\n";
+
+					cout << "gte energy: " << partEnerg << " >= " << pow(10, log10(E.at(enybin)) - 0.5 * dlogE_bin);
+					cout << "  " << (partEnerg >= pow(10, log10(E.at(enybin)) - 0.5 * dlogE_bin)) << "\n";
+					cout << "lt  energy: " << partEnerg << " < " << pow(10, log10(E.at(enybin)) + 0.5 * dlogE_bin);
+					cout << "  " << (partEnerg < pow(10, log10(E.at(enybin)) + 0.5 * dlogE_bin)) << "\n";
+					cout << "gte pitch: " << partPitch << " >= " << PA.at(angbin) - 0.5 * dangle_bin;
+					cout << "  " << (partPitch >= PA.at(angbin) - 0.5 * dangle_bin) << "\n";
+					cout << "gte pitch diff: " << partPitch - (PA.at(angbin) - 0.5 * dangle_bin) << "\n";
+					cout << "lt  pitch: " << partPitch << " < " << PA.at(angbin) + 0.5 * dangle_bin;
+					cout << "  " << (partPitch < PA.at(angbin) + 0.5 * dangle_bin) << "\n";
+					cout << "lt  pitch diff: " << (PA.at(angbin) + 0.5 * dangle_bin) - partPitch << "\n";
+
+					cout << "index: " << part << "\n";
+					cout << "ang: " << partPitch << "\n";
+					cout << "eny: " << partEnerg << "\n";
+					exit(1);
+					throw logic_error("ionosphere::binning::binWeighted: Particle does not belong in bin identified for it.");
+				}
 			}
-			else //this shouldn't ever execute, guards should prevent zero and out of limits values
-				throw logic_error("ionosphere::binning::binWeighted: Particle does not belong in bin identified for it.");
 		}
 
-		if (outsideLimits > 0) clog << "ionosphere::binning::binWeighted : Particles out of limits: " << outsideLimits << "\n";
-
+		if (outsideLimits > 0) cout << "ionosphere::binning::binWeighted : Particles out of limits: " << outsideLimits << "\n";
+		if (FPE > 0) cout << "ionosphere::binning::binWeighted : Particles encountering FPE: " << FPE << "\n";
+		
 		return ret;
 	}
 
@@ -401,22 +539,29 @@ namespace ionosphere
 		size_t vparaind{ particle->getAttrIndByName("vpara") };
 		size_t vperpind{ particle->getAttrIndByName("vperp") };
 		size_t sind{ particle->getAttrIndByName("s") };
-		
-		initial = ParticleList(particle->__data(true).at(vparaind), particle->__data(true).at(vperpind), mass);
-		initial.s_pos = particle->__data(true).at(sind);
-		ionosph = ParticleList(sat_btm->__data().at(vparaind), sat_btm->__data().at(vperpind), mass);
-		ionosph.s_pos = move(sat_btm->__data().at(sind));
-		upgoing = ParticleList(sat_upg->__data().at(vparaind), sat_upg->__data().at(vperpind), mass);
-		upgoing.s_pos = move(sat_upg->__data().at(sind));
-		dngoing = ParticleList(sat_dng->__data().at(vparaind), sat_dng->__data().at(vperpind), mass);
-		dngoing.s_pos = move(sat_dng->__data().at(sind));
-		
+
+		initial = ParticleList(particle->data(true).at(vparaind), particle->data(true).at(vperpind), mass);
+		initial.s_pos = particle->data(true).at(sind);
+		ionosph = ParticleList(sat_btm->data().at(vparaind), sat_btm->data().at(vperpind), mass);
+		ionosph.s_pos = move(sat_btm->data().at(sind));
+		upgoing = ParticleList(sat_upg->data().at(vparaind), sat_upg->data().at(vperpind), mass);
+		upgoing.s_pos = move(sat_upg->data().at(sind));
+		dngoing = ParticleList(sat_dng->data().at(vparaind), sat_dng->data().at(vperpind), mass);
+		dngoing.s_pos = move(sat_dng->data().at(sind));
+
+		//
+		//
+		//
 		vector<size_t> idx;
 		for (size_t part = 0; part < initial.energy.size(); part++)
 			idx.push_back(part);
 
-		function<bool(size_t)> cond = [](size_t a) { if (a != 0) throw logic_error("Bins::binParticleList: idx already assigned - " + to_string(a)); return true; };
-		initial1DToDistbins2DMapping = distbins.binParticleList(initial, idx, cond);
+		//function<bool(size_t)> cond = [](size_t a) { if (a != 0) throw logic_error("Bins::binParticleList: idx already assigned - " + to_string(a)); return true; };
+		//function<bool(size_t)> cond = [](size_t a) { return true; };
+		initial1DToDistbins2DMapping = distbins.binParticleList(initial, idx);// , cond);
+		//
+		//
+		//
 
 		ionsph.altToS(sim->Bmodel());
 		ionsph.setB(sim->Bmodel(), 0.0);
